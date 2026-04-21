@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PresetSparkbars } from "@/components/ranking/preset-sparkbars";
+import { PresetChips } from "@/components/ranking/preset-chips";
 import { useCompareTray } from "@/lib/hooks/use-compare-tray";
 
 export interface RankingRow {
@@ -128,10 +128,10 @@ export function RankingTable({
               </th>
               {!compact && (
                 <th
-                  className="w-[108px] px-2 py-1.5 text-left"
-                  title="條長＝在該流派池內的分位（100 = 該流派冠軍）"
+                  className="w-[132px] px-2 py-1.5 text-left"
+                  title="在該流派池內分位 ≥ 80 才上主標籤；副標籤需 ≥ 75"
                 >
-                  流派分位
+                  流派
                 </th>
               )}
               <th className="w-32 px-2 py-1.5 text-center">操作</th>
@@ -168,8 +168,7 @@ export function RankingTable({
                   </td>
                   {!compact && (
                     <td className="px-2 py-1.5">
-                      <PresetSparkbars
-                        scores={row.presetScores}
+                      <PresetChips
                         percentiles={row.presetPercentiles}
                         activePresetId={activePresetId ?? (sortKey !== "current" ? sortKey : null)}
                       />
