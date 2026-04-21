@@ -4,15 +4,19 @@ import type { Metadata } from "next";
 import {
   getItemById,
   getItemRands,
+  getItemRandsByIds,
   getItemsByType,
 } from "@/lib/queries/items";
 import { getMonstersByDropItem } from "@/lib/queries/monsters";
+import type { Item, ItemRand } from "@/lib/types/item";
+import { presets, scoreItem } from "@/lib/scoring";
 import { ItemDetail } from "@/components/items/item-detail";
 import { ItemRandTable } from "@/components/items/item-rand-table";
 import { ItemDropList } from "@/components/items/item-drop-list";
 import { CompareButton } from "@/components/items/compare-button";
 import { StatBarChart } from "@/components/items/stat-bar-chart";
 import { ItemTags } from "@/components/items/item-tags";
+import { PresetPercentile } from "@/components/items/preset-percentile";
 
 const PHASE2_TYPES = new Set(["座騎", "背飾"]);
 
@@ -43,12 +47,28 @@ export default async function ItemDetailPage({ params }: PageProps) {
 
   const isPhase2Type = item.type !== null && PHASE2_TYPES.has(item.type);
   const maxValues: Record<string, number> = {};
+  const itemScores: Record<string, number> = {};
+  const poolScores: Record<string, number[]> = {};
   if (isPhase2Type && item.type) {
     const pool = getItemsByType(item.type);
     for (const it of pool) {
       for (const [k, v] of Object.entries(it)) {
         if (typeof v === "number") maxValues[k] = Math.max(maxValues[k] ?? 0, v);
       }
+    }
+    const poolRands = getItemRandsByIds(pool.map((p) => p.id));
+    const randsByItem = new Map<number, ItemRand[]>();
+    for (const r of poolRands) {
+      const k = Number(r.id);
+      const arr = randsByItem.get(k);
+      if (arr) arr.push(r);
+      else randsByItem.set(k, [r]);
+    }
+    for (const p of presets) {
+      itemScores[p.id] = scoreItem(item, rands, p.weights).score;
+      poolScores[p.id] = pool.map((pi) =>
+        scoreItem(pi as unknown as Item, randsByItem.get(pi.id) ?? [], p.weights).score
+      );
     }
   }
 
@@ -83,6 +103,16 @@ export default async function ItemDetailPage({ params }: PageProps) {
             values={item as unknown as Record<string, number>}
             maxValues={maxValues}
           />
+        </div>
+      )}
+
+      {isPhase2Type && (
+        <div className="rounded-lg border border-border/60 bg-card p-4">
+          <div className="mb-2 text-sm font-medium">流派分位</div>
+          <PresetPercentile itemScores={itemScores} poolScores={poolScores} />
+          <p className="mt-2 text-xs text-muted-foreground">
+            於同類型裝備池中的百分位；越靠右代表此流派下此件越強。
+          </p>
         </div>
       )}
 
