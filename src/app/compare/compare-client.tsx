@@ -4,6 +4,9 @@ import { useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Item, ItemRand } from "@/lib/types/item";
 import type { RankingItem } from "@/lib/queries/items";
+import { groupRandsByItemId, computePoolMaxValues } from "@/lib/scoring";
+import { COMPARE_TRAY_MAX } from "@/lib/constants/compare";
+import { PHASE2_TYPES, type Phase2Type } from "@/lib/constants/item-types";
 import { ItemPicker } from "@/components/compare/item-picker";
 import { CompareMatrix } from "@/components/compare/compare-matrix";
 import { ComparePresets } from "@/components/compare/compare-presets";
@@ -11,10 +14,8 @@ import { CompareRadar } from "@/components/compare/compare-radar";
 import { StatBarChart } from "@/components/items/stat-bar-chart";
 import { Button } from "@/components/ui/button";
 
-const MAX_ITEMS = 5;
-
 interface Props {
-  activeType: "座騎" | "背飾";
+  activeType: Phase2Type;
   initialItems: Item[];
   initialRands: ItemRand[];
   initialIds: number[];
@@ -25,26 +26,8 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
   const router = useRouter();
   const search = useSearchParams();
 
-  const randsByItem = useMemo(() => {
-    const map = new Map<number, ItemRand[]>();
-    for (const r of initialRands) {
-      const key = Number(r.id);
-      const arr = map.get(key);
-      if (arr) arr.push(r);
-      else map.set(key, [r]);
-    }
-    return map;
-  }, [initialRands]);
-
-  const maxValues = useMemo(() => {
-    const m: Record<string, number> = {};
-    for (const it of pool) {
-      for (const [k, v] of Object.entries(it)) {
-        if (typeof v === "number") m[k] = Math.max(m[k] ?? 0, v);
-      }
-    }
-    return m;
-  }, [pool]);
+  const randsByItem = useMemo(() => groupRandsByItemId(initialRands), [initialRands]);
+  const maxValues = useMemo(() => computePoolMaxValues(pool), [pool]);
 
   const updateIds = useCallback(
     (ids: number[]) => {
@@ -58,7 +41,7 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
 
   const handlePick = (picked: RankingItem) => {
     if (initialIds.includes(picked.id)) return;
-    if (initialIds.length >= MAX_ITEMS) return;
+    if (initialIds.length >= COMPARE_TRAY_MAX) return;
     updateIds([...initialIds, picked.id]);
   };
 
@@ -71,32 +54,31 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
-        {(["座騎", "背飾"] as const).map((t) => (
-          <Button
-            key={t}
-            variant={t === activeType ? "default" : "outline"}
-            size="sm"
-            onClick={() =>
-              router.replace(`/compare?type=${encodeURIComponent(t)}`)
-            }
-            disabled={initialIds.length > 0 && t !== activeType}
-            title={
-              initialIds.length > 0 && t !== activeType
-                ? "清空比較盤後才能切換類型"
-                : undefined
-            }
-          >
-            {t}
-          </Button>
-        ))}
+        {PHASE2_TYPES.map((t) => {
+          const locked = initialIds.length > 0 && t !== activeType;
+          return (
+            <Button
+              key={t}
+              variant={t === activeType ? "default" : "outline"}
+              size="sm"
+              onClick={() =>
+                router.replace(`/compare?type=${encodeURIComponent(t)}`)
+              }
+              disabled={locked}
+              title={locked ? "清空比較盤後才能切換類型" : undefined}
+            >
+              {t}
+            </Button>
+          );
+        })}
         <div className="flex-1 min-w-[12rem]">
           <ItemPicker
             pool={pool}
             excludeIds={initialIds}
             onPick={handlePick}
             placeholder={
-              initialIds.length >= MAX_ITEMS
-                ? `已達 ${MAX_ITEMS} 件上限`
+              initialIds.length >= COMPARE_TRAY_MAX
+                ? `已達 ${COMPARE_TRAY_MAX} 件上限`
                 : "搜尋裝備名稱或 ID…"
             }
           />
@@ -127,7 +109,7 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
         ))}
         {initialItems.length === 0 && (
           <span className="text-sm text-muted-foreground">
-            尚未加入裝備。用上方搜尋框加入 1~{MAX_ITEMS} 件。
+            尚未加入裝備。用上方搜尋框加入 1~{COMPARE_TRAY_MAX} 件。
           </span>
         )}
       </div>
@@ -165,10 +147,7 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
             {initialItems.map((it) => (
               <div key={it.id} className="rounded-md border border-border/60 p-3">
                 <div className="mb-2 text-sm font-medium">{it.name}</div>
-                <StatBarChart
-                  values={it as unknown as Record<string, number>}
-                  maxValues={maxValues}
-                />
+                <StatBarChart values={it} maxValues={maxValues} />
               </div>
             ))}
           </div>

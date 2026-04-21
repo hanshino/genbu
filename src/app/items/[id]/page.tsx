@@ -8,8 +8,15 @@ import {
   getItemsByType,
 } from "@/lib/queries/items";
 import { getMonstersByDropItem } from "@/lib/queries/monsters";
-import type { Item, ItemRand } from "@/lib/types/item";
-import { presets, scoreItem } from "@/lib/scoring";
+import {
+  presets,
+  scoreItemAcrossPresets,
+  groupRandsByItemId,
+  computePoolMaxValues,
+  expectedRandom,
+  scoreWithShared,
+} from "@/lib/scoring";
+import { isPhase2Type } from "@/lib/constants/item-types";
 import { ItemDetail } from "@/components/items/item-detail";
 import { ItemRandTable } from "@/components/items/item-rand-table";
 import { ItemDropList } from "@/components/items/item-drop-list";
@@ -17,8 +24,6 @@ import { CompareButton } from "@/components/items/compare-button";
 import { StatBarChart } from "@/components/items/stat-bar-chart";
 import { ItemTags } from "@/components/items/item-tags";
 import { PresetPercentile } from "@/components/items/preset-percentile";
-
-const PHASE2_TYPES = new Set(["座騎", "背飾"]);
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -45,30 +50,20 @@ export default async function ItemDetailPage({ params }: PageProps) {
   const rands = getItemRands(String(item.id));
   const sources = getMonstersByDropItem(item.id);
 
-  const isPhase2Type = item.type !== null && PHASE2_TYPES.has(item.type);
-  const maxValues: Record<string, number> = {};
-  const itemScores: Record<string, number> = {};
+  const phase2 = isPhase2Type(item.type);
+  let maxValues: Record<string, number> = {};
+  let itemScores: Record<string, number> = {};
   const poolScores: Record<string, number[]> = {};
-  if (isPhase2Type && item.type) {
+  if (phase2 && item.type) {
     const pool = getItemsByType(item.type);
-    for (const it of pool) {
-      for (const [k, v] of Object.entries(it)) {
-        if (typeof v === "number") maxValues[k] = Math.max(maxValues[k] ?? 0, v);
-      }
-    }
-    const poolRands = getItemRandsByIds(pool.map((p) => p.id));
-    const randsByItem = new Map<number, ItemRand[]>();
-    for (const r of poolRands) {
-      const k = Number(r.id);
-      const arr = randsByItem.get(k);
-      if (arr) arr.push(r);
-      else randsByItem.set(k, [r]);
-    }
+    maxValues = computePoolMaxValues(pool);
+
+    const randsByItem = groupRandsByItemId(getItemRandsByIds(pool.map((p) => p.id)));
+    itemScores = scoreItemAcrossPresets(item, rands);
+
+    const poolExpected = pool.map((pi) => expectedRandom(randsByItem.get(pi.id) ?? []));
     for (const p of presets) {
-      itemScores[p.id] = scoreItem(item, rands, p.weights).score;
-      poolScores[p.id] = pool.map((pi) =>
-        scoreItem(pi as unknown as Item, randsByItem.get(pi.id) ?? [], p.weights).score
-      );
+      poolScores[p.id] = pool.map((pi, i) => scoreWithShared(pi, poolExpected[i], p.weights));
     }
   }
 
@@ -84,7 +79,7 @@ export default async function ItemDetailPage({ params }: PageProps) {
 
       <ItemTags item={item} rands={rands} />
 
-      {isPhase2Type && (
+      {phase2 && (
         <div className="flex flex-wrap items-center gap-2">
           <CompareButton itemId={item.id} />
           <Link
@@ -96,17 +91,14 @@ export default async function ItemDetailPage({ params }: PageProps) {
         </div>
       )}
 
-      {isPhase2Type && (
+      {phase2 && (
         <div className="rounded-lg border border-border/60 bg-card p-4">
           <div className="mb-2 text-sm font-medium">屬性形狀</div>
-          <StatBarChart
-            values={item as unknown as Record<string, number>}
-            maxValues={maxValues}
-          />
+          <StatBarChart values={item} maxValues={maxValues} />
         </div>
       )}
 
-      {isPhase2Type && (
+      {phase2 && (
         <div className="rounded-lg border border-border/60 bg-card p-4">
           <div className="mb-2 text-sm font-medium">流派分位</div>
           <PresetPercentile itemScores={itemScores} poolScores={poolScores} />

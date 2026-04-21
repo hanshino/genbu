@@ -1,7 +1,7 @@
 import { itemAttributeNames } from "@/lib/constants/i18n";
 
 export interface StatBarChartProps {
-  values: Record<string, number>;
+  values: object;
   maxValues: Record<string, number>;
   // Optional: restrict which keys to render and in what order
   keys?: readonly string[];
@@ -14,13 +14,17 @@ const DEFAULT_KEYS = [
 ] as const;
 
 export function StatBarChart({ values, maxValues, keys = DEFAULT_KEYS }: StatBarChartProps) {
+  const record = values as Readonly<Record<string, unknown>>;
   const rows = keys
-    .map((k) => ({
-      key: k,
-      label: itemAttributeNames[k] ?? k,
-      value: values[k] ?? 0,
-      max: Math.max(1, maxValues[k] ?? 0),
-    }))
+    .map((k) => {
+      const raw = record[k];
+      return {
+        key: k,
+        label: itemAttributeNames[k] ?? k,
+        value: typeof raw === "number" ? raw : 0,
+        max: Math.max(1, maxValues[k] ?? 0),
+      };
+    })
     .filter((r) => r.value !== 0 || (maxValues[r.key] ?? 0) !== 0);
 
   if (rows.length === 0) return null;

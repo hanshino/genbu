@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { getItemsByIds, getItemRandsByIds, getItemsByType } from "@/lib/queries/items";
+import { isPhase2Type, type Phase2Type } from "@/lib/constants/item-types";
+import { COMPARE_TRAY_MAX } from "@/lib/constants/compare";
 import { CompareClient } from "./compare-client";
 
 export const metadata: Metadata = {
@@ -17,24 +19,23 @@ function parseIds(raw: unknown): number[] {
     .split(",")
     .map((s) => Number(s.trim()))
     .filter((n) => Number.isInteger(n) && n > 0)
-    .slice(0, 5);
+    .slice(0, COMPARE_TRAY_MAX);
 }
-
-const SUPPORTED_TYPES = ["座騎", "背飾"] as const;
-type SupportedType = (typeof SUPPORTED_TYPES)[number];
 
 export default async function ComparePage({ searchParams }: Props) {
   const params = await searchParams;
   const ids = parseIds(params.ids);
-  const items = getItemsByIds(ids);
-  items.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+  const items = [...getItemsByIds(ids)].sort(
+    (a, b) => ids.indexOf(a.id) - ids.indexOf(b.id)
+  );
   const rands = getItemRandsByIds(ids);
 
   // Pool for the picker: driven by items[0].type, or by ?type query, or default 座騎
-  const rawType = typeof params.type === "string" ? params.type : undefined;
-  const activeType: SupportedType =
-    (items[0]?.type as SupportedType | undefined) ??
-    (SUPPORTED_TYPES.includes(rawType as SupportedType) ? (rawType as SupportedType) : "座騎");
+  const firstType = items[0]?.type;
+  const fromUrl = isPhase2Type(params.type) ? params.type : null;
+  const activeType: Phase2Type = isPhase2Type(firstType)
+    ? firstType
+    : fromUrl ?? "座騎";
   const pool = getItemsByType(activeType);
 
   return (

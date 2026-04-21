@@ -1,7 +1,7 @@
 "use client";
 
 import type { Item, ItemRand } from "@/lib/types/item";
-import { presets, scoreItem } from "@/lib/scoring";
+import { presets, expectedRandom, scoreWithShared } from "@/lib/scoring";
 import { heatmapCell } from "@/lib/utils";
 
 interface Props {
@@ -12,12 +12,11 @@ interface Props {
 export function ComparePresets({ items, randsByItem }: Props) {
   if (items.length === 0) return null;
 
-  const rows = presets.map((p) => {
-    const scores = items.map((it) =>
-      scoreItem(it, randsByItem.get(it.id) ?? [], p.weights).score
-    );
-    return { preset: p, scores };
-  });
+  const expectedByItem = items.map((it) => expectedRandom(randsByItem.get(it.id) ?? []));
+  const rows = presets.map((p) => ({
+    preset: p,
+    scores: items.map((it, i) => scoreWithShared(it, expectedByItem[i], p.weights)),
+  }));
 
   return (
     <div className="overflow-x-auto rounded-md border border-border/60">

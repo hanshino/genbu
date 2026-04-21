@@ -7,8 +7,6 @@ export interface ItemTagsProps {
   rands?: readonly ItemRand[];
 }
 
-// Phase 2: classifier stub returns []. Renders nothing today, but the UI
-// slot is wired so Phase 2.5 can light up tags without structural changes.
 export function ItemTags({ item, rands = [] }: ItemTagsProps) {
   const tags = classify({ item, rands });
   if (tags.length === 0) return null;
