@@ -1,13 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Noto_Sans_TC, Noto_Serif_TC } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { CompareBar } from "@/components/compare/compare-bar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const notoSansTC = Noto_Sans_TC({
   subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-sans-tc",
+  display: "swap",
+});
+
+const notoSerifTC = Noto_Serif_TC({
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  variable: "--font-serif-tc",
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -28,7 +37,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-TW"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${notoSansTC.variable} ${notoSerifTC.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <Navbar />

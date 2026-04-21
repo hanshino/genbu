@@ -11,8 +11,8 @@ export function Navbar() {
   return (
     <header className="border-b border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <span className="text-lg">玄武</span>
+        <Link href="/" className="flex items-baseline gap-2 tracking-tight">
+          <span className="font-heading text-xl font-bold text-primary">玄武</span>
           <span className="text-muted-foreground text-xs">Genbu</span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
