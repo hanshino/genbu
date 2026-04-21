@@ -19,10 +19,15 @@ const features: Feature[] = [
     phase: "Phase 1",
   },
   {
+    title: "流派排行",
+    description: "七大流派加權，即時調整權重與等級區間",
+    href: "/ranking",
+    phase: "Phase 2",
+  },
+  {
     title: "裝備比較",
-    description: "七種流派加權排行與多件裝備並排比較",
-    href: "/items/compare",
-    disabled: true,
+    description: "同時比對多件座騎 / 背飾的雷達圖與流派分數",
+    href: "/compare",
     phase: "Phase 2",
   },
   {
@@ -55,20 +60,27 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
-      <section className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">玄武</h1>
-        <p className="mt-3 text-lg text-muted-foreground">武林同萌傳 · 玩家資料庫</p>
-        <p className="mx-auto mt-6 max-w-xl text-sm text-muted-foreground">
+      <section className="flex flex-col items-center text-center">
+        <span
+          aria-hidden
+          className="inline-flex h-24 w-24 items-center justify-center rounded-md border-2 border-primary bg-primary/5 text-5xl font-bold text-primary shadow-sm [font-family:var(--font-heading)]"
+          title="玄武印"
+        >
+          玄
+        </span>
+        <h1 className="mt-5 text-4xl font-bold tracking-tight sm:text-5xl">玄武</h1>
+        <p className="mt-2 text-sm text-muted-foreground">武林同萌傳 · 玩家資料庫</p>
+        <p className="mx-auto mt-6 max-w-xl text-sm leading-relaxed text-muted-foreground">
           道具查詢、裝備流派比較、副本解謎工具 — 集中一處、即時查得。
         </p>
       </section>
 
-      <section className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {features.map((f) => {
           const card = (
             <Card
               className={`h-full transition-colors ${
-                f.disabled ? "opacity-60" : "hover:border-foreground/30"
+                f.disabled ? "opacity-60" : "hover:border-primary/50"
               }`}
             >
               <CardHeader>
@@ -109,7 +121,7 @@ export default function HomePage() {
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-lg border border-border/60 bg-card p-6 text-center">
-      <p className="text-3xl font-semibold">{value.toLocaleString()}</p>
+      <p className="text-3xl font-semibold font-mono tabular-nums">{value.toLocaleString()}</p>
       <p className="mt-1 text-sm text-muted-foreground">{label}</p>
     </div>
   );
