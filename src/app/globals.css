@@ -128,3 +128,5 @@
     @apply font-sans;
   }
 }
+
+body.has-compare-bar { padding-bottom: 5rem; }
