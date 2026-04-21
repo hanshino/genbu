@@ -32,7 +32,14 @@ export function StatBarChart({ values, maxValues, keys = DEFAULT_KEYS }: StatBar
         return (
           <div key={r.key} className="grid grid-cols-[4rem_1fr_3rem] items-center gap-2 text-xs">
             <span className="text-muted-foreground">{r.label}</span>
-            <div className="h-2 rounded-sm bg-muted overflow-hidden">
+            <div
+                className="h-2 rounded-sm bg-muted overflow-hidden"
+                role="meter"
+                aria-label={r.label}
+                aria-valuenow={r.value}
+                aria-valuemin={0}
+                aria-valuemax={r.max}
+              >
               <div
                 className="h-full bg-primary/70 transition-[width] motion-reduce:transition-none"
                 style={{ width: `${pct}%` }}
