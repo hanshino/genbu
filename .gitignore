@@ -49,3 +49,6 @@ next-env.d.ts
 
 # omc
 .omc/
+
+# playwright-mcp scratch
+.playwright-mcp/

@@ -7,6 +7,7 @@ import type { RankingItem } from "@/lib/queries/items";
 import { ItemPicker } from "@/components/compare/item-picker";
 import { CompareMatrix } from "@/components/compare/compare-matrix";
 import { ComparePresets } from "@/components/compare/compare-presets";
+import { CompareRadar } from "@/components/compare/compare-radar";
 import { StatBarChart } from "@/components/items/stat-bar-chart";
 import { Button } from "@/components/ui/button";
 
@@ -130,6 +131,18 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
           </span>
         )}
       </div>
+
+      {initialItems.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-lg font-semibold">屬性雷達</h2>
+          <div className="rounded-md border border-border/60 bg-card p-3">
+            <CompareRadar items={initialItems} maxValues={maxValues} />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            數值為相對同類型裝備池最大值的百分比；精確數字見下方屬性矩陣。
+          </p>
+        </section>
+      )}
 
       {initialItems.length > 0 && (
         <section className="space-y-2">
