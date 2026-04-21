@@ -70,3 +70,15 @@ export function getGroupForType(type: string | null): TypeGroup | null {
   if (!type) return null;
   return itemTypeGroups.find((g) => g.types.includes(type)) ?? null;
 }
+
+// Item types eligible for Phase 2 scoring / ranking / comparison.
+export const PHASE2_TYPES = ["座騎", "背飾"] as const;
+
+export type Phase2Type = (typeof PHASE2_TYPES)[number];
+
+export function isPhase2Type(value: unknown): value is Phase2Type {
+  return (
+    typeof value === "string" &&
+    (PHASE2_TYPES as readonly string[]).includes(value)
+  );
+}
