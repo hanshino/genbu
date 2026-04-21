@@ -47,14 +47,19 @@ export function RankingClient({ type, items, rands }: Props) {
   const [isPending, startTransition] = useTransition();
 
   // --- URL → initial state ---------------------------------------------------
+  const urlWeights = parseWeights(search.get("weights"));
   const initialPresetId = search.get("preset") ?? "pure-str";
-  const initialWeights = parseWeights(search.get("weights"))
+  const initialWeights = urlWeights
     ?? getPresetById(initialPresetId)?.weights
     ?? presets[0].weights;
 
   const [weights, setWeights] = useState<Weights>(initialWeights);
   const [selection, setSelection] = useState<PresetSelection>(
-    getPresetById(initialPresetId) ? { kind: "builtin", id: initialPresetId } : { kind: "ad-hoc" }
+    urlWeights
+      ? { kind: "ad-hoc" }
+      : getPresetById(initialPresetId)
+        ? { kind: "builtin", id: initialPresetId }
+        : { kind: "ad-hoc" }
   );
 
   const levelRange = useMemo(() => {
@@ -186,11 +191,7 @@ export function RankingClient({ type, items, rands }: Props) {
               variant={t === type ? "default" : "outline"}
               size="sm"
               className="flex-1"
-              onClick={() =>
-              startTransition(() =>
-                router.replace(`/ranking?type=${encodeURIComponent(t)}`)
-              )
-            }
+              onClick={() => pushUrl({ type: t })}
             >
               {t}
             </Button>
