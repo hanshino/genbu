@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { startTransition, useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { RankingItem } from "@/lib/queries/items";
 import type { ItemRand } from "@/lib/types/item";
@@ -8,18 +8,23 @@ import {
   scoreItem,
   presets,
   getPresetById,
+  groupRandsByItemId,
+  expectedRandom,
+  scoreWithShared,
   type Weights,
 } from "@/lib/scoring";
+import type { Phase2Type } from "@/lib/constants/item-types";
 import { useCustomPresets } from "@/lib/hooks/use-custom-presets";
 import { PresetSelector, type PresetSelection } from "@/components/ranking/preset-selector";
 import { WeightEditor } from "@/components/ranking/weight-editor";
 import { LevelRange } from "@/components/ranking/level-range";
-import { ThresholdFilters, thresholdKeys, type Thresholds } from "@/components/ranking/threshold-filters";
+import { ThresholdFilters } from "@/components/ranking/threshold-filters";
+import { THRESHOLD_KEYS as thresholdKeys, type Thresholds } from "@/lib/constants/ranking";
 import { RankingTable, type RankingRow } from "@/components/ranking/ranking-table";
 import { Button } from "@/components/ui/button";
 
 interface Props {
-  type: "座騎" | "背飾";
+  type: Phase2Type;
   items: RankingItem[];
   rands: ItemRand[];
 }
@@ -41,12 +46,19 @@ function serializeWeights(w: Weights): string {
   return Object.entries(w).map(([k, v]) => `${k}:${v}`).join(",");
 }
 
+function resolveInitialSelection(
+  urlWeights: Weights | null,
+  initialPresetId: string
+): PresetSelection {
+  if (urlWeights) return { kind: "ad-hoc" };
+  if (getPresetById(initialPresetId)) return { kind: "builtin", id: initialPresetId };
+  return { kind: "ad-hoc" };
+}
+
 export function RankingClient({ type, items, rands }: Props) {
   const router = useRouter();
   const search = useSearchParams();
-  const [isPending, startTransition] = useTransition();
 
-  // --- URL → initial state ---------------------------------------------------
   const urlWeights = parseWeights(search.get("weights"));
   const initialPresetId = search.get("preset") ?? "pure-str";
   const initialWeights = urlWeights
@@ -55,11 +67,7 @@ export function RankingClient({ type, items, rands }: Props) {
 
   const [weights, setWeights] = useState<Weights>(initialWeights);
   const [selection, setSelection] = useState<PresetSelection>(
-    urlWeights
-      ? { kind: "ad-hoc" }
-      : getPresetById(initialPresetId)
-        ? { kind: "builtin", id: initialPresetId }
-        : { kind: "ad-hoc" }
+    resolveInitialSelection(urlWeights, initialPresetId)
   );
 
   const levelRange = useMemo(() => {
@@ -90,7 +98,6 @@ export function RankingClient({ type, items, rands }: Props) {
   const highlightId = Number(search.get("highlight")) || null;
   const { presets: customPresets, save: saveCustom } = useCustomPresets();
 
-  // --- Sync state → URL ------------------------------------------------------
   const pushUrl = useCallback(
     (patch: Record<string, string | null>) => {
       const params = new URLSearchParams(search.toString());
@@ -126,49 +133,46 @@ export function RankingClient({ type, items, rands }: Props) {
 
   const handleWeightsChange = (next: Weights) => {
     setWeights(next);
-    // Any manual edit drops us into ad-hoc unless the new weights match the current builtin.
     setSelection({ kind: "ad-hoc" });
     pushUrl({ preset: null, weights: serializeWeights(next) });
   };
 
-  // --- Scoring ---------------------------------------------------------------
-  const randsByItem = useMemo(() => {
-    const map = new Map<number, ItemRand[]>();
-    for (const r of rands) {
-      const key = Number(r.id);
-      const arr = map.get(key);
-      if (arr) arr.push(r);
-      else map.set(key, [r]);
+  const randsByItem = useMemo(() => groupRandsByItemId(rands), [rands]);
+
+  // Preset scores depend only on (items, randsByItem) — hoist them out of the
+  // weights-sensitive memo so slider drags don't rescore the universe.
+  const presetScoresByItem = useMemo(() => {
+    const map = new Map<number, Record<string, number>>();
+    for (const it of items) {
+      const expected = expectedRandom(randsByItem.get(it.id) ?? []);
+      const scores: Record<string, number> = {};
+      for (const p of presets) {
+        scores[p.id] = scoreWithShared(it, expected, p.weights);
+      }
+      map.set(it.id, scores);
     }
     return map;
-  }, [rands]);
+  }, [items, randsByItem]);
 
   const rows = useMemo<RankingRow[]>(() => {
     return items
       .filter((it) => it.level >= minLv && it.level <= maxLv)
       .filter((it) => {
-        const rec = it as unknown as Record<string, number>;
-        for (const [k, v] of Object.entries(thresholds)) {
-          if (v !== undefined && (rec[k] ?? 0) < v) return false;
+        for (const k of thresholdKeys) {
+          const min = thresholds[k];
+          if (min !== undefined && (it[k] ?? 0) < min) return false;
         }
         return true;
       })
-      .map((it) => {
-        const its = it as unknown as import("@/lib/types/item").Item;
-        const rs = randsByItem.get(it.id) ?? [];
-        const scored = scoreItem(its, rs, weights);
-        const presetScores: Record<string, number> = {};
-        for (const p of presets) {
-          presetScores[p.id] = scoreItem(its, rs, p.weights).score;
-        }
-        return { scored, presetScores };
-      })
+      .map((it) => ({
+        scored: scoreItem(it, randsByItem.get(it.id) ?? [], weights),
+        presetScores: presetScoresByItem.get(it.id) ?? {},
+      }))
       .filter((r) => r.scored.score !== 0);
-  }, [items, randsByItem, weights, minLv, maxLv, thresholds]);
+  }, [items, randsByItem, presetScoresByItem, weights, minLv, maxLv, thresholds]);
 
   const activePresetId = selection.kind === "builtin" ? selection.id : null;
 
-  // --- Save as custom --------------------------------------------------------
   const onSaveCustom = () => {
     const name = window.prompt("為這組權重命名：");
     if (!name) return;
@@ -176,12 +180,7 @@ export function RankingClient({ type, items, rands }: Props) {
   };
 
   return (
-    <div
-      className={
-        "grid gap-6 md:grid-cols-[18rem_1fr] transition-opacity motion-reduce:transition-none " +
-        (isPending ? "opacity-60" : "")
-      }
-    >
+    <div className="grid gap-6 md:grid-cols-[18rem_1fr]">
       <aside className="space-y-5 md:sticky md:top-16 md:self-start">
         {/* Type tabs */}
         <div className="flex gap-1">
