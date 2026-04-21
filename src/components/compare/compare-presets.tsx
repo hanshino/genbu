@@ -2,6 +2,7 @@
 
 import type { Item, ItemRand } from "@/lib/types/item";
 import { presets, scoreItem } from "@/lib/scoring";
+import { heatmapCell } from "@/lib/utils";
 
 interface Props {
   items: Item[];
@@ -35,17 +36,19 @@ export function ComparePresets({ items, randsByItem }: Props) {
           {rows.map((r) => {
             const max = Math.max(...r.scores);
             const min = Math.min(...r.scores);
+            const span = max - min;
             return (
               <tr key={r.preset.id} className="border-t border-border/40">
                 <td className="px-2 py-1.5 text-muted-foreground">{r.preset.label}</td>
                 {r.scores.map((s, i) => (
                   <td
                     key={items[i].id}
+                    style={heatmapCell(s, min, max)}
                     className={
                       "px-2 py-1.5 text-right font-mono " +
-                      (s === max && max !== min
-                        ? "bg-primary/10 font-semibold text-primary"
-                        : s === min && max !== min
+                      (s === max && span > 0
+                        ? "font-semibold text-primary"
+                        : s === min && span > 0
                         ? "text-muted-foreground"
                         : "")
                     }

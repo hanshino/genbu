@@ -2,6 +2,7 @@
 
 import type { Item } from "@/lib/types/item";
 import { itemAttributeNames, displayableAttributeKeys } from "@/lib/constants/i18n";
+import { heatmapCell } from "@/lib/utils";
 
 interface Props {
   items: Item[];
@@ -36,16 +37,19 @@ export function CompareMatrix({ items }: Props) {
         <tbody>
           {rows.map((r) => {
             const max = Math.max(...r.values);
+            const min = Math.min(...r.values);
+            const span = max - min;
             return (
               <tr key={r.key} className="border-t border-border/40">
                 <td className="px-2 py-1.5 text-muted-foreground">{r.label}</td>
                 {r.values.map((v, i) => (
                   <td
                     key={items[i].id}
+                    style={heatmapCell(v, min, max)}
                     className={
                       "px-2 py-1.5 text-right font-mono " +
-                      (v === max && v > 0
-                        ? "bg-primary/10 font-semibold text-primary"
+                      (v === max && v > 0 && span > 0
+                        ? "font-semibold text-primary"
                         : "")
                     }
                   >
