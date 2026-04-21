@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { act, renderHook } from "@testing-library/react";
-import { useCompareTray, COMPARE_TRAY_MAX } from "../use-compare-tray";
+import { useCompareTray } from "../use-compare-tray";
+import { COMPARE_TRAY_MAX } from "@/lib/constants/compare";
 
 beforeEach(() => window.localStorage.clear());
 

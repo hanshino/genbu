@@ -1,9 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
+import { COMPARE_TRAY_MAX } from "@/lib/constants/compare";
 
 const STORAGE_KEY = "genbu.compareTray";
-const MAX_ITEMS = 5;
+const MAX_ITEMS = COMPARE_TRAY_MAX;
+
+type Listener = () => void;
+const listeners = new Set<Listener>();
+let snapshot: number[] = [];
+const SERVER_SNAPSHOT: number[] = [];
 
 function readStorage(): number[] {
   if (typeof window === "undefined") return [];
@@ -27,6 +33,31 @@ function writeStorage(ids: number[]) {
   }
 }
 
+function setIds(next: number[]) {
+  snapshot = next;
+  writeStorage(next);
+  for (const l of listeners) l();
+}
+
+function subscribe(listener: Listener): () => void {
+  // When the first consumer subscribes, resync from localStorage so stale
+  // in-memory state (e.g. between tests, or after all consumers unmount) is
+  // replaced by the persisted source of truth.
+  if (listeners.size === 0) snapshot = readStorage();
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot(): number[] {
+  return snapshot;
+}
+
+function getServerSnapshot(): number[] {
+  return SERVER_SNAPSHOT;
+}
+
 export interface CompareTray {
   ids: number[];
   isFull: boolean;
@@ -37,45 +68,21 @@ export interface CompareTray {
 }
 
 export function useCompareTray(): CompareTray {
-  const [ids, setIds] = useState<number[]>([]);
+  const ids = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional SSR-safe hydration from localStorage
-    setIds(readStorage());
+  const add = useCallback((id: number) => {
+    if (snapshot.includes(id) || snapshot.length >= MAX_ITEMS) return;
+    setIds([...snapshot, id]);
   }, []);
 
-  const commit = useCallback((next: number[]) => {
-    setIds(next);
-    writeStorage(next);
+  const remove = useCallback((id: number) => {
+    if (!snapshot.includes(id)) return;
+    setIds(snapshot.filter((x) => x !== id));
   }, []);
 
-  const add = useCallback(
-    (id: number) => {
-      setIds((prev) => {
-        if (prev.includes(id) || prev.length >= MAX_ITEMS) return prev;
-        const next = [...prev, id];
-        writeStorage(next);
-        return next;
-      });
-    },
-    []
-  );
-
-  const remove = useCallback(
-    (id: number) => {
-      setIds((prev) => {
-        const next = prev.filter((x) => x !== id);
-        writeStorage(next);
-        return next;
-      });
-    },
-    []
-  );
-
-  const clear = useCallback(() => commit([]), [commit]);
+  const clear = useCallback(() => setIds([]), []);
   const has = useCallback((id: number) => ids.includes(id), [ids]);
 
   return { ids, isFull: ids.length >= MAX_ITEMS, has, add, remove, clear };
 }
 
-export { MAX_ITEMS as COMPARE_TRAY_MAX };
