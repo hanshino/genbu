@@ -38,6 +38,12 @@ export const presets: readonly Preset[] = [
     label: "手甲",
     weights: { dex: 15, hit: 5, atk: 7 },
   },
+  // genbu-only addition (not in LINE bot config)
+  {
+    id: "medic",
+    label: "根骨醫毒",
+    weights: { vit: 6, matk: 1 },
+  },
 ] as const;
 
 export function getPresetById(id: string): Preset | null {

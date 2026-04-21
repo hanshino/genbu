@@ -13,7 +13,9 @@ import {
 } from "@/components/ui/select";
 
 const MIN_WEIGHT = -2;
-const MAX_WEIGHT = 3;
+// Built-in presets go up to 15 (手甲 dex) — slider must cover that range or
+// loading a preset pegs the thumb at max while the stored value overflows.
+const MAX_WEIGHT = 15;
 const STEP = 0.25;
 
 interface Row { key: string; value: number }

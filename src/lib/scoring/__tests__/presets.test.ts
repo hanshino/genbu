@@ -36,8 +36,15 @@ const lineBotConfig = [
 ];
 
 describe("presets parity with LINE bot weighted.config.js", () => {
-  it("has the same number of presets", () => {
-    expect(presets.length).toBe(lineBotConfig.length);
+  // Every LINE bot preset must remain present with identical weights;
+  // genbu-only additions (extras) are allowed.
+  it("includes every LINE bot preset", () => {
+    for (const cfg of lineBotConfig) {
+      expect(
+        presets.find((p) => p.label === cfg.type),
+        `preset ${cfg.type}`
+      ).toBeDefined();
+    }
   });
 
   for (const cfg of lineBotConfig) {
