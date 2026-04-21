@@ -33,7 +33,7 @@ export function PresetSparkbars({ scores, activePresetId }: Props) {
             key={p.id}
             title={`${p.label}: ${Math.round(v)}`}
             className={cn(
-              "w-2 rounded-sm transition-colors motion-reduce:transition-none",
+              "w-2 rounded-sm",
               isActive ? "bg-primary" : "bg-primary/30"
             )}
             style={{ height: `${20 + pct * 80}%` }}
