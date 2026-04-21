@@ -1,10 +1,9 @@
 "use client";
 
 import { itemAttributeNames } from "@/lib/constants/i18n";
-
-const THRESHOLD_KEYS = ["hit", "def", "mdef", "dodge"] as const;
-export type ThresholdKey = (typeof THRESHOLD_KEYS)[number];
-export type Thresholds = Partial<Record<ThresholdKey, number>>;
+import { THRESHOLD_KEYS, type Thresholds } from "@/lib/constants/ranking";
+import { Input } from "@/components/ui/input";
+import { useDebouncedCommit } from "@/lib/hooks/use-debounced-commit";
 
 interface Props {
   values: Thresholds;
@@ -12,6 +11,8 @@ interface Props {
 }
 
 export function ThresholdFilters({ values, onChange }: Props) {
+  const [local, setLocal, commitNow] = useDebouncedCommit(values, onChange);
+
   return (
     <div className="space-y-1.5">
       <label className="text-sm font-medium">硬性門檻</label>
@@ -22,19 +23,24 @@ export function ThresholdFilters({ values, onChange }: Props) {
             <span className="text-xs text-muted-foreground">
               {itemAttributeNames[k]} ≥
             </span>
-            <input
+            <Input
               type="number"
               inputMode="numeric"
-              value={values[k] ?? ""}
+              value={local[k] ?? ""}
               placeholder="—"
               onChange={(e) => {
                 const raw = e.target.value.trim();
-                const next = { ...values };
+                const next = { ...local };
                 if (raw === "") delete next[k];
                 else next[k] = Number(raw) || 0;
-                onChange(next);
+                setLocal(next);
               }}
-              className="min-h-[44px] rounded-md border border-border bg-background px-2 py-1 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onBlur={() => commitNow()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitNow();
+              }}
+              aria-label={`${itemAttributeNames[k]} 門檻`}
+              className="font-mono"
             />
           </div>
         ))}
@@ -42,5 +48,3 @@ export function ThresholdFilters({ values, onChange }: Props) {
     </div>
   );
 }
-
-export const thresholdKeys = THRESHOLD_KEYS;
