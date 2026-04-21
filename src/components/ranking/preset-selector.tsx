@@ -2,6 +2,15 @@
 
 import { presets } from "@/lib/scoring";
 import type { CustomPreset } from "@/lib/hooks/use-custom-presets";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export type PresetSelection =
   | { kind: "builtin"; id: string }
@@ -23,30 +32,53 @@ export function PresetSelector({ value, onChange, customPresets }: Props) {
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium">流派</label>
-      <select
-        className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+      <Select
         value={currentValue}
-        onChange={(e) => {
-          const v = e.target.value;
+        onValueChange={(v) => {
+          if (!v) return;
           if (v === "ad-hoc") return onChange({ kind: "ad-hoc" });
           const [kind, id] = v.split(":", 2);
           if (kind === "builtin" || kind === "custom") onChange({ kind, id });
         }}
       >
-        <optgroup label="預設">
-          {presets.map((p) => (
-            <option key={p.id} value={`builtin:${p.id}`}>{p.label}</option>
-          ))}
-        </optgroup>
-        {customPresets.length > 0 && (
-          <optgroup label="我的配方">
-            {customPresets.map((p) => (
-              <option key={p.id} value={`custom:${p.id}`}>{p.name}</option>
+        <SelectTrigger className="w-full" aria-label="流派">
+          <SelectValue>
+            {(val) => {
+              if (val === "ad-hoc") return "自訂（手動權重）";
+              if (typeof val !== "string") return null;
+              const [kind, id] = val.split(":", 2);
+              if (kind === "builtin") {
+                return presets.find((p) => p.id === id)?.label ?? val;
+              }
+              if (kind === "custom") {
+                return customPresets.find((p) => p.id === id)?.name ?? val;
+              }
+              return val;
+            }}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectLabel>預設</SelectLabel>
+            {presets.map((p) => (
+              <SelectItem key={p.id} value={`builtin:${p.id}`}>
+                {p.label}
+              </SelectItem>
             ))}
-          </optgroup>
-        )}
-        <option value="ad-hoc">自訂（手動權重）</option>
-      </select>
+          </SelectGroup>
+          {customPresets.length > 0 && (
+            <SelectGroup>
+              <SelectLabel>我的配方</SelectLabel>
+              {customPresets.map((p) => (
+                <SelectItem key={p.id} value={`custom:${p.id}`}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          )}
+          <SelectItem value="ad-hoc">自訂（手動權重）</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 }

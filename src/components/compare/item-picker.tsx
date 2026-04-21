@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { RankingItem } from "@/lib/queries/items";
+import { Input } from "@/components/ui/input";
 
 interface Props {
   pool: RankingItem[];
@@ -30,13 +31,12 @@ export function ItemPicker({ pool, excludeIds, onPick, placeholder = "搜尋裝�
 
   return (
     <div className="relative">
-      <input
+      <Input
         type="text"
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder={placeholder}
         aria-label="搜尋裝備"
-        className="min-h-[44px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       />
       {matches.length > 0 && (
         <ul className="absolute z-10 mt-1 w-full rounded-md border border-border bg-popover shadow-md">

@@ -2,9 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { CheckIcon, PlusIcon } from "lucide-react";
 import { presets } from "@/lib/scoring";
 import type { ScoredItem } from "@/lib/scoring";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PresetSparkbars } from "@/components/ranking/preset-sparkbars";
 import { useCompareTray } from "@/lib/hooks/use-compare-tray";
 
@@ -61,20 +69,31 @@ export function RankingTable({
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <div className="flex items-center gap-2">
-          <label htmlFor="rank-sort">排序：</label>
-          <select
-            id="rank-sort"
+          <span id="rank-sort-label">排序：</span>
+          <Select
             value={sortKey}
-            onChange={(e) => setSortKey(e.target.value)}
-            className="min-h-[36px] rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onValueChange={(v) => {
+              if (v) setSortKey(v);
+            }}
           >
-            <option value="current">目前流派</option>
-            {presets.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger size="sm" aria-labelledby="rank-sort-label">
+              <SelectValue>
+                {(val) => {
+                  if (val === "current") return "目前流派";
+                  if (typeof val !== "string") return null;
+                  return presets.find((p) => p.id === val)?.label ?? val;
+                }}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="current">目前流派</SelectItem>
+              {presets.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex items-center gap-2">
           <span>顯示：</span>
@@ -124,7 +143,7 @@ export function RankingTable({
                 <tr
                   key={item.id}
                   className={
-                    "border-t border-border/40 hover:bg-muted/20 " +
+                    "group border-t border-border/40 hover:bg-muted/40 " +
                     (isHighlighted ? "bg-yellow-50 dark:bg-yellow-900/20" : "")
                   }
                 >
@@ -132,7 +151,7 @@ export function RankingTable({
                   <td className="px-2 py-1.5">
                     <Link
                       href={`/items/${item.id}`}
-                      className="inline-flex min-h-[44px] items-center hover:underline focus-visible:underline focus-visible:outline-none"
+                      className="inline-flex min-h-[44px] items-center text-foreground transition-colors hover:text-primary hover:underline focus-visible:underline focus-visible:text-primary focus-visible:outline-none"
                     >
                       {item.name}
                     </Link>
@@ -150,17 +169,30 @@ export function RankingTable({
                     </td>
                   )}
                   <td className="px-2 py-1.5 text-center">
-                    <Button
-                      size="sm"
-                      variant={tray.has(item.id) ? "secondary" : "outline"}
-                      onClick={() =>
-                        tray.has(item.id) ? tray.remove(item.id) : tray.add(item.id)
-                      }
-                      disabled={!tray.has(item.id) && tray.isFull}
-                      className="min-h-[44px]"
-                    >
-                      {tray.has(item.id) ? "已在比較" : "加入比較"}
-                    </Button>
+                    {tray.has(item.id) ? (
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        onClick={() => tray.remove(item.id)}
+                        aria-label="移出比較盤"
+                        title="移出比較盤"
+                        className="h-7 w-7"
+                      >
+                        <CheckIcon className="size-3.5" />
+                      </Button>
+                    ) : (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => tray.add(item.id)}
+                        disabled={tray.isFull}
+                        aria-label={tray.isFull ? "比較盤已滿" : "加入比較"}
+                        title={tray.isFull ? "比較盤已滿（最多 5 件）" : "加入比較"}
+                        className="h-7 w-7 opacity-100 transition-opacity focus-visible:opacity-100 disabled:opacity-40 md:opacity-0 md:group-hover:opacity-100 motion-reduce:transition-none"
+                      >
+                        <PlusIcon className="size-3.5" />
+                      </Button>
+                    )}
                   </td>
                 </tr>
               );
