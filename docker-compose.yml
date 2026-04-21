@@ -1,0 +1,8 @@
+services:
+  genbu:
+    image: genbu:latest
+    build: .
+    container_name: genbu
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
