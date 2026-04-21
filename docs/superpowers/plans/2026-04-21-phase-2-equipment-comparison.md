@@ -1160,7 +1160,7 @@ export function StatBarChart({ values, maxValues, keys = DEFAULT_KEYS }: StatBar
             <span className="text-muted-foreground">{r.label}</span>
             <div className="h-2 rounded-sm bg-muted overflow-hidden">
               <div
-                className="h-full bg-primary/70 transition-[width]"
+                className="h-full bg-primary/70 transition-[width] motion-reduce:transition-none"
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -1530,7 +1530,7 @@ export function WeightEditor({ weights, onChange }: Props) {
       {rows.map((r) => (
         <div key={r.key} className="grid grid-cols-[1fr_5rem_2rem] items-center gap-1.5">
           <select
-            className="rounded-md border border-border bg-background px-2 py-1 text-sm"
+            className="min-h-[44px] rounded-md border border-border bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={r.key}
             onChange={(e) => setRowKey(r.key, e.target.value)}
           >
@@ -1541,8 +1541,9 @@ export function WeightEditor({ weights, onChange }: Props) {
           </select>
           <input
             type="number"
+            inputMode="decimal"
             step="0.25"
-            className="rounded-md border border-border bg-background px-2 py-1 text-sm font-mono"
+            className="min-h-[44px] rounded-md border border-border bg-background px-2 py-1 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={r.value}
             onChange={(e) => {
               const v = Number(e.target.value);
@@ -1551,10 +1552,11 @@ export function WeightEditor({ weights, onChange }: Props) {
           />
           <Button
             type="button"
-            size="sm"
+            size="icon"
             variant="ghost"
             onClick={() => removeRow(r.key)}
             aria-label={`移除 ${r.key}`}
+            className="min-h-[44px] min-w-[44px]"
           >
             ×
           </Button>
@@ -1604,6 +1606,7 @@ export function LevelRange({ min, max, absoluteMin, absoluteMax, onChange }: Pro
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         <input
           type="number"
+          inputMode="numeric"
           min={absoluteMin}
           max={absoluteMax}
           value={min}
@@ -1611,11 +1614,12 @@ export function LevelRange({ min, max, absoluteMin, absoluteMax, onChange }: Pro
             const v = clamp(Number(e.target.value) || absoluteMin);
             onChange({ min: Math.min(v, max), max });
           }}
-          className="rounded-md border border-border bg-background px-2 py-1 text-sm font-mono"
+          className="min-h-[44px] rounded-md border border-border bg-background px-2 py-1 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
         <span className="text-muted-foreground text-xs">~</span>
         <input
           type="number"
+          inputMode="numeric"
           min={absoluteMin}
           max={absoluteMax}
           value={max}
@@ -1623,7 +1627,7 @@ export function LevelRange({ min, max, absoluteMin, absoluteMax, onChange }: Pro
             const v = clamp(Number(e.target.value) || absoluteMax);
             onChange({ min, max: Math.max(v, min) });
           }}
-          className="rounded-md border border-border bg-background px-2 py-1 text-sm font-mono"
+          className="min-h-[44px] rounded-md border border-border bg-background px-2 py-1 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       </div>
       <p className="text-xs text-muted-foreground">
@@ -1680,6 +1684,7 @@ export function ThresholdFilters({ values, onChange }: Props) {
             </span>
             <input
               type="number"
+              inputMode="numeric"
               value={values[k] ?? ""}
               placeholder="—"
               onChange={(e) => {
@@ -1689,7 +1694,7 @@ export function ThresholdFilters({ values, onChange }: Props) {
                 else next[k] = Number(raw) || 0;
                 onChange(next);
               }}
-              className="rounded-md border border-border bg-background px-2 py-1 text-sm font-mono"
+              className="min-h-[44px] rounded-md border border-border bg-background px-2 py-1 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
         ))}
@@ -1724,7 +1729,7 @@ Create `src/components/ranking/ranking-table.tsx`:
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { presets } from "@/lib/scoring";
 import type { ScoredItem } from "@/lib/scoring";
 import { Button } from "@/components/ui/button";
@@ -1747,6 +1752,17 @@ interface Props {
   showingAll?: boolean;
 }
 
+// Auto-collapse preset columns on narrow viewports; user can override.
+function useInitialCompactMode() {
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 768px)");
+    setCompact(mq.matches);
+  }, []);
+  return [compact, setCompact] as const;
+}
+
 export function RankingTable({
   rows,
   activePresetId,
@@ -1756,106 +1772,154 @@ export function RankingTable({
   showingAll,
 }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("current");
+  const [compact, setCompact] = useInitialCompactMode();
   const tray = useCompareTray();
 
   const sorted = useMemo(() => {
-    const compare = (a: RankingRow, b: RankingRow) =>
+    const compareFn = (a: RankingRow, b: RankingRow) =>
       sortKey === "current"
         ? b.scored.score - a.scored.score
         : (b.presetScores[sortKey] ?? 0) - (a.presetScores[sortKey] ?? 0);
-    return [...rows].sort(compare);
+    return [...rows].sort(compareFn);
   }, [rows, sortKey]);
 
   const shown = showingAll ? sorted : sorted.slice(0, limit);
 
+  // In compact mode, only show the "current" column and (if a preset is active)
+  // that preset's column. Other preset columns are hidden.
+  const visiblePresets = compact
+    ? presets.filter((p) => p.id === activePresetId)
+    : presets;
+
   return (
-    <div className="overflow-x-auto rounded-md border border-border/60">
-      <table className="w-full text-sm">
-        <thead className="bg-muted/40">
-          <tr>
-            <th className="px-2 py-1.5 text-left w-10">#</th>
-            <th className="px-2 py-1.5 text-left">名稱</th>
-            <th className="px-2 py-1.5 text-right w-14">等級</th>
-            <th
-              className="px-2 py-1.5 text-right w-20 cursor-pointer hover:bg-muted"
-              onClick={() => setSortKey("current")}
-              title="依目前流派排序"
-            >
-              目前 {sortKey === "current" ? "▼" : ""}
-            </th>
-            {presets.map((p) => (
+    <div className="space-y-2">
+      <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+        <span>顯示：</span>
+        <Button
+          size="sm"
+          variant={compact ? "default" : "outline"}
+          onClick={() => setCompact(true)}
+        >
+          簡潔
+        </Button>
+        <Button
+          size="sm"
+          variant={compact ? "outline" : "default"}
+          onClick={() => setCompact(false)}
+        >
+          完整
+        </Button>
+      </div>
+      <div className="overflow-x-auto rounded-md border border-border/60">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/40">
+            <tr>
+              <th className="px-2 py-1.5 text-left w-10">#</th>
+              <th className="px-2 py-1.5 text-left">名稱</th>
+              <th className="px-2 py-1.5 text-right w-14">等級</th>
               <th
-                key={p.id}
-                className={
-                  "px-2 py-1.5 text-right w-20 cursor-pointer hover:bg-muted " +
-                  (activePresetId === p.id ? "bg-primary/5 text-primary" : "")
-                }
-                onClick={() => setSortKey(p.id)}
-                title={`依 ${p.label} 分數排序`}
+                className="px-2 py-1.5 text-right w-20 cursor-pointer hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                role="button"
+                tabIndex={0}
+                onClick={() => setSortKey("current")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSortKey("current");
+                  }
+                }}
+                aria-label="依目前流派排序"
+                title="依目前流派排序"
               >
-                {p.label.replace("系列", "")} {sortKey === p.id ? "▼" : ""}
+                目前 {sortKey === "current" ? "▼" : ""}
               </th>
-            ))}
-            <th className="px-2 py-1.5 text-center w-32">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          {shown.map((row, i) => {
-            const { item } = row.scored;
-            const isHighlighted = highlightId === item.id;
-            return (
-              <tr
-                key={item.id}
-                className={
-                  "border-t border-border/40 hover:bg-muted/20 " +
-                  (isHighlighted ? "bg-yellow-50 dark:bg-yellow-900/20" : "")
-                }
-              >
-                <td className="px-2 py-1.5 text-muted-foreground">{i + 1}</td>
-                <td className="px-2 py-1.5">
-                  <Link href={`/items/${item.id}`} className="hover:underline">
-                    {item.name}
-                  </Link>
-                </td>
-                <td className="px-2 py-1.5 text-right font-mono">{item.level}</td>
-                <td className="px-2 py-1.5 text-right font-mono">
-                  {Math.round(row.scored.score)}
-                </td>
-                {presets.map((p) => (
-                  <td
-                    key={p.id}
-                    className={
-                      "px-2 py-1.5 text-right font-mono " +
-                      (activePresetId === p.id ? "bg-primary/5 font-semibold" : "")
+              {visiblePresets.map((p) => (
+                <th
+                  key={p.id}
+                  className={
+                    "px-2 py-1.5 text-right w-20 cursor-pointer hover:bg-muted focus-visible:bg-muted focus-visible:outline-none " +
+                    (activePresetId === p.id ? "bg-primary/5 text-primary" : "")
+                  }
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSortKey(p.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSortKey(p.id);
                     }
-                  >
-                    {Math.round(row.presetScores[p.id] ?? 0)}
+                  }}
+                  aria-label={`依 ${p.label} 分數排序`}
+                  title={`依 ${p.label} 分數排序`}
+                >
+                  {p.label.replace("系列", "")} {sortKey === p.id ? "▼" : ""}
+                </th>
+              ))}
+              <th className="px-2 py-1.5 text-center w-32">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((row, i) => {
+              const { item } = row.scored;
+              const isHighlighted = highlightId === item.id;
+              return (
+                <tr
+                  key={item.id}
+                  className={
+                    "border-t border-border/40 hover:bg-muted/20 " +
+                    (isHighlighted ? "bg-yellow-50 dark:bg-yellow-900/20" : "")
+                  }
+                >
+                  <td className="px-2 py-1.5 text-muted-foreground">{i + 1}</td>
+                  <td className="px-2 py-1.5">
+                    <Link
+                      href={`/items/${item.id}`}
+                      className="inline-flex min-h-[44px] items-center hover:underline focus-visible:underline focus-visible:outline-none"
+                    >
+                      {item.name}
+                    </Link>
                   </td>
-                ))}
-                <td className="px-2 py-1.5 text-center space-x-1">
-                  <Button
-                    size="sm"
-                    variant={tray.has(item.id) ? "secondary" : "outline"}
-                    onClick={() =>
-                      tray.has(item.id) ? tray.remove(item.id) : tray.add(item.id)
-                    }
-                    disabled={!tray.has(item.id) && tray.isFull}
-                  >
-                    {tray.has(item.id) ? "已在比較" : "加入比較"}
-                  </Button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      {!showingAll && sorted.length > limit && onShowAll && (
-        <div className="p-2 text-center">
-          <Button variant="ghost" size="sm" onClick={onShowAll}>
-            顯示全部（{sorted.length} 件）
-          </Button>
-        </div>
-      )}
+                  <td className="px-2 py-1.5 text-right font-mono">{item.level}</td>
+                  <td className="px-2 py-1.5 text-right font-mono">
+                    {Math.round(row.scored.score)}
+                  </td>
+                  {visiblePresets.map((p) => (
+                    <td
+                      key={p.id}
+                      className={
+                        "px-2 py-1.5 text-right font-mono " +
+                        (activePresetId === p.id ? "bg-primary/5 font-semibold" : "")
+                      }
+                    >
+                      {Math.round(row.presetScores[p.id] ?? 0)}
+                    </td>
+                  ))}
+                  <td className="px-2 py-1.5 text-center">
+                    <Button
+                      size="sm"
+                      variant={tray.has(item.id) ? "secondary" : "outline"}
+                      onClick={() =>
+                        tray.has(item.id) ? tray.remove(item.id) : tray.add(item.id)
+                      }
+                      disabled={!tray.has(item.id) && tray.isFull}
+                      className="min-h-[44px]"
+                    >
+                      {tray.has(item.id) ? "已在比較" : "加入比較"}
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {!showingAll && sorted.length > limit && onShowAll && (
+          <div className="p-2 text-center">
+            <Button variant="ghost" size="sm" onClick={onShowAll}>
+              顯示全部（{sorted.length} 件）
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1883,7 +1947,7 @@ Overwrite `src/app/ranking/ranking-client.tsx`:
 ```tsx
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { RankingItem } from "@/lib/queries/items";
 import type { ItemRand } from "@/lib/types/item";
@@ -1927,6 +1991,7 @@ function serializeWeights(w: Weights): string {
 export function RankingClient({ type, items, rands }: Props) {
   const router = useRouter();
   const search = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   // --- URL → initial state ---------------------------------------------------
   const initialPresetId = search.get("preset") ?? "pure-str";
@@ -1975,7 +2040,9 @@ export function RankingClient({ type, items, rands }: Props) {
         if (v === null || v === "") params.delete(k);
         else params.set(k, v);
       }
-      router.replace(`/ranking?${params.toString()}`, { scroll: false });
+      startTransition(() => {
+        router.replace(`/ranking?${params.toString()}`, { scroll: false });
+      });
     },
     [router, search]
   );
@@ -2051,7 +2118,12 @@ export function RankingClient({ type, items, rands }: Props) {
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-[18rem_1fr]">
+    <div
+      className={
+        "grid gap-6 md:grid-cols-[18rem_1fr] transition-opacity motion-reduce:transition-none " +
+        (isPending ? "opacity-60" : "")
+      }
+    >
       <aside className="space-y-5 md:sticky md:top-16 md:self-start">
         {/* Type tabs */}
         <div className="flex gap-1">
@@ -2061,7 +2133,11 @@ export function RankingClient({ type, items, rands }: Props) {
               variant={t === type ? "default" : "outline"}
               size="sm"
               className="flex-1"
-              onClick={() => router.replace(`/ranking?type=${encodeURIComponent(t)}`)}
+              onClick={() =>
+              startTransition(() =>
+                router.replace(`/ranking?type=${encodeURIComponent(t)}`)
+              )
+            }
             >
               {t}
             </Button>
@@ -2100,19 +2176,25 @@ export function RankingClient({ type, items, rands }: Props) {
         </Button>
       </aside>
       <div className="space-y-2">
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-muted-foreground" role="status" aria-live="polite">
           {rows.length} 件符合條件
         </div>
-        <RankingTable
-          rows={rows}
-          activePresetId={activePresetId}
-          highlightId={highlightId}
-          showingAll={showAll}
-          onShowAll={() => {
-            setShowAll(true);
-            pushUrl({ showAll: "1" });
-          }}
-        />
+        {rows.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
+            沒有符合條件的裝備。試試放寬等級區間或移除門檻。
+          </div>
+        ) : (
+          <RankingTable
+            rows={rows}
+            activePresetId={activePresetId}
+            highlightId={highlightId}
+            showingAll={showAll}
+            onShowAll={() => {
+              setShowAll(true);
+              pushUrl({ showAll: "1" });
+            }}
+          />
+        )}
       </div>
     </div>
   );
@@ -2264,18 +2346,20 @@ interface Props {
 export function ItemPicker({ pool, excludeIds, onPick, placeholder = "搜尋裝備名稱或 ID…" }: Props) {
   const [q, setQ] = useState("");
 
+  const trimmed = q.trim();
   const matches = useMemo(() => {
-    const qq = q.trim();
-    if (qq.length === 0) return [] as RankingItem[];
-    const asNum = Number(qq);
+    if (trimmed.length === 0) return [] as RankingItem[];
+    const asNum = Number(trimmed);
     return pool
       .filter((it) => !excludeIds.includes(it.id))
       .filter((it) =>
         (Number.isInteger(asNum) && it.id === asNum) ||
-        it.name.includes(qq)
+        it.name.includes(trimmed)
       )
       .slice(0, 10);
-  }, [pool, excludeIds, q]);
+  }, [pool, excludeIds, trimmed]);
+
+  const showEmpty = trimmed.length > 0 && matches.length === 0;
 
   return (
     <div className="relative">
@@ -2284,7 +2368,8 @@ export function ItemPicker({ pool, excludeIds, onPick, placeholder = "搜尋裝�
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+        aria-label="搜尋裝備"
+        className="min-h-[44px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       />
       {matches.length > 0 && (
         <ul className="absolute z-10 mt-1 w-full rounded-md border border-border bg-popover shadow-md">
@@ -2292,7 +2377,7 @@ export function ItemPicker({ pool, excludeIds, onPick, placeholder = "搜尋裝�
             <li key={it.id}>
               <button
                 type="button"
-                className="flex w-full items-center justify-between px-3 py-1.5 text-left text-sm hover:bg-muted"
+                className="flex min-h-[44px] w-full items-center justify-between px-3 py-1.5 text-left text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
                 onClick={() => {
                   onPick(it);
                   setQ("");
@@ -2306,6 +2391,15 @@ export function ItemPicker({ pool, excludeIds, onPick, placeholder = "搜尋裝�
             </li>
           ))}
         </ul>
+      )}
+      {showEmpty && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="absolute z-10 mt-1 w-full rounded-md border border-border bg-popover px-3 py-2 text-xs text-muted-foreground shadow-md"
+        >
+          查無符合「{trimmed}」的裝備
+        </div>
       )}
     </div>
   );
@@ -2536,20 +2630,35 @@ Create `src/components/compare/compare-bar.tsx`:
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useCompareTray } from "@/lib/hooks/use-compare-tray";
 
 export function CompareBar() {
   const tray = useCompareTray();
+
+  // When the bar is visible, reserve bottom padding on <body> so its fixed
+  // position does not cover the last row of table / chart content.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const hasItems = tray.ids.length > 0;
+    document.body.classList.toggle("has-compare-bar", hasItems);
+    return () => document.body.classList.remove("has-compare-bar");
+  }, [tray.ids.length]);
+
   if (tray.ids.length === 0) return null;
   return (
-    <div className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-full border border-border bg-background/95 px-4 py-2 shadow-lg backdrop-blur flex items-center gap-3 text-sm">
+    <div
+      role="region"
+      aria-label="比較盤"
+      className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-full border border-border bg-background/95 px-4 py-2 shadow-lg backdrop-blur flex items-center gap-3 text-sm"
+    >
       <span className="text-muted-foreground">
         比較盤：{tray.ids.length} 件
       </span>
       <Link
         href={`/compare?ids=${tray.ids.join(",")}`}
-        className="rounded-md bg-primary px-2 py-1 text-primary-foreground text-xs"
+        className="min-h-[44px] inline-flex items-center rounded-md bg-primary px-3 py-1 text-primary-foreground text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         去比較 →
       </Link>
@@ -2557,13 +2666,18 @@ export function CompareBar() {
         variant="ghost"
         size="sm"
         onClick={tray.clear}
-        className="h-auto px-2 py-0.5 text-xs"
+        className="min-h-[44px] px-2 text-xs"
       >
         清空
       </Button>
     </div>
   );
 }
+```
+
+Add the matching CSS rule in `src/app/globals.css` (append at the bottom):
+```css
+body.has-compare-bar { padding-bottom: 5rem; }
 ```
 
 - [ ] **Step 3: Mount `<CompareBar>` globally**
@@ -2779,14 +2893,14 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
         {initialItems.map((it) => (
           <span
             key={it.id}
-            className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-sm"
+            className="inline-flex items-center gap-1 rounded-full border border-border pl-3 pr-1 py-1 text-sm"
           >
             {it.name}
             <button
               type="button"
               aria-label={`移除 ${it.name}`}
               onClick={() => handleRemove(it.id)}
-              className="text-muted-foreground hover:text-foreground"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               ×
             </button>
@@ -3029,7 +3143,14 @@ With `npm run dev` running, confirm every item in this list:
 - [ ] Dev tools → Application → localStorage shows `genbu.compareTray` + `genbu.ranking.customPresets` populated
 - [ ] Open private window → no crash, state ephemeral (localStorage calls no-op)
 - [ ] Throttle to slow 3G → first-load time acceptable (<3s for `/ranking`)
-- [ ] Mobile viewport (375px wide) → ranking table horizontally scrollable, sidebar stacks above table
+- [ ] Mobile viewport (375px wide) → ranking table defaults to 簡潔 mode; sidebar stacks above table
+- [ ] Keyboard-only navigation: Tab through filter sidebar → preset column headers → action buttons; every focused element shows a visible ring
+- [ ] Sortable `<th>` reachable via keyboard and activated by Enter / Space
+- [ ] `prefers-reduced-motion: reduce` in DevTools → bar chart bars still work but no width transition
+- [ ] Zero-match state: clear all weights → "沒有符合條件的裝備" empty state renders
+- [ ] Picker with no matches → "查無符合「xxx」的裝備" live region announces
+- [ ] Switching 座騎↔背飾: whole panel briefly dims (`isPending` opacity-60) during SSR re-render
+- [ ] CompareBar visible → `<body>` gains `has-compare-bar` class and last table row is not covered
 
 - [ ] **Step 5: Commit verification notes (if any adjustments needed)**
 
