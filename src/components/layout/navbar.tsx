@@ -3,6 +3,8 @@ import Link from "next/link";
 const navItems = [
   { href: "/", label: "首頁" },
   { href: "/items", label: "道具查詢" },
+  { href: "/ranking", label: "排行榜" },
+  { href: "/compare", label: "比較" },
 ];
 
 export function Navbar() {
