@@ -5,26 +5,25 @@ import { useEffect, useMemo, useState } from "react";
 import { presets } from "@/lib/scoring";
 import type { ScoredItem } from "@/lib/scoring";
 import { Button } from "@/components/ui/button";
+import { PresetSparkbars } from "@/components/ranking/preset-sparkbars";
 import { useCompareTray } from "@/lib/hooks/use-compare-tray";
 
 export interface RankingRow {
   scored: ScoredItem;
-  // Score under every built-in preset, keyed by preset.id
   presetScores: Record<string, number>;
 }
 
-type SortKey = "current" | string; // "current" or preset id
+type SortKey = "current" | string;
 
 interface Props {
   rows: RankingRow[];
-  activePresetId: string | null; // null = custom / ad-hoc
+  activePresetId: string | null;
   highlightId?: number | null;
   limit?: number;
   onShowAll?: () => void;
   showingAll?: boolean;
 }
 
-// Auto-collapse preset columns on narrow viewports; user can override.
 function useInitialCompactMode() {
   const [compact, setCompact] = useState(false);
   useEffect(() => {
@@ -58,83 +57,69 @@ export function RankingTable({
 
   const shown = showingAll ? sorted : sorted.slice(0, limit);
 
-  // In compact mode, only show the "current" column and (if a preset is active)
-  // that preset's column. Other preset columns are hidden.
-  const visiblePresets = compact
-    ? presets.filter((p) => p.id === activePresetId)
-    : presets;
-
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-        <span>顯示：</span>
-        <Button
-          size="sm"
-          variant={compact ? "default" : "outline"}
-          onClick={() => setCompact(true)}
-        >
-          簡潔
-        </Button>
-        <Button
-          size="sm"
-          variant={compact ? "outline" : "default"}
-          onClick={() => setCompact(false)}
-        >
-          完整
-        </Button>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <label htmlFor="rank-sort">排序：</label>
+          <select
+            id="rank-sort"
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value)}
+            className="min-h-[36px] rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="current">目前流派</option>
+            {presets.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <span>顯示：</span>
+          <Button
+            size="sm"
+            variant={compact ? "default" : "outline"}
+            onClick={() => setCompact(true)}
+          >
+            簡潔
+          </Button>
+          <Button
+            size="sm"
+            variant={compact ? "outline" : "default"}
+            onClick={() => setCompact(false)}
+          >
+            完整
+          </Button>
+        </div>
       </div>
       <div className="overflow-x-auto rounded-md border border-border/60">
         <table className="w-full text-sm">
           <thead className="bg-muted/40">
             <tr>
-              <th className="px-2 py-1.5 text-left w-10">#</th>
+              <th className="w-10 px-2 py-1.5 text-left">#</th>
               <th className="px-2 py-1.5 text-left">名稱</th>
-              <th className="px-2 py-1.5 text-right w-14">等級</th>
-              <th
-                className="px-2 py-1.5 text-right w-20 cursor-pointer hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
-                role="button"
-                tabIndex={0}
-                onClick={() => setSortKey("current")}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setSortKey("current");
-                  }
-                }}
-                aria-label="依目前流派排序"
-                title="依目前流派排序"
-              >
-                目前 {sortKey === "current" ? "▼" : ""}
+              <th className="w-14 px-2 py-1.5 text-right">等級</th>
+              <th className="w-20 px-2 py-1.5 text-right">
+                {sortKey === "current"
+                  ? "目前"
+                  : presets.find((p) => p.id === sortKey)?.label.replace("系列", "") ?? "分數"}
               </th>
-              {visiblePresets.map((p) => (
-                <th
-                  key={p.id}
-                  className={
-                    "px-2 py-1.5 text-right w-20 cursor-pointer hover:bg-muted focus-visible:bg-muted focus-visible:outline-none " +
-                    (activePresetId === p.id ? "bg-primary/5 text-primary" : "")
-                  }
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setSortKey(p.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setSortKey(p.id);
-                    }
-                  }}
-                  aria-label={`依 ${p.label} 分數排序`}
-                  title={`依 ${p.label} 分數排序`}
-                >
-                  {p.label.replace("系列", "")} {sortKey === p.id ? "▼" : ""}
-                </th>
-              ))}
-              <th className="px-2 py-1.5 text-center w-32">操作</th>
+              {!compact && (
+                <th className="w-[108px] px-2 py-1.5 text-left">流派剪影</th>
+              )}
+              <th className="w-32 px-2 py-1.5 text-center">操作</th>
             </tr>
           </thead>
           <tbody>
             {shown.map((row, i) => {
               const { item } = row.scored;
               const isHighlighted = highlightId === item.id;
+              const displayScore =
+                sortKey === "current"
+                  ? row.scored.score
+                  : row.presetScores[sortKey] ?? 0;
               return (
                 <tr
                   key={item.id}
@@ -153,20 +138,17 @@ export function RankingTable({
                     </Link>
                   </td>
                   <td className="px-2 py-1.5 text-right font-mono">{item.level}</td>
-                  <td className="px-2 py-1.5 text-right font-mono">
-                    {Math.round(row.scored.score)}
+                  <td className="px-2 py-1.5 text-right font-mono font-semibold">
+                    {Math.round(displayScore)}
                   </td>
-                  {visiblePresets.map((p) => (
-                    <td
-                      key={p.id}
-                      className={
-                        "px-2 py-1.5 text-right font-mono " +
-                        (activePresetId === p.id ? "bg-primary/5 font-semibold" : "")
-                      }
-                    >
-                      {Math.round(row.presetScores[p.id] ?? 0)}
+                  {!compact && (
+                    <td className="px-2 py-1.5">
+                      <PresetSparkbars
+                        scores={row.presetScores}
+                        activePresetId={activePresetId ?? (sortKey !== "current" ? sortKey : null)}
+                      />
                     </td>
-                  ))}
+                  )}
                   <td className="px-2 py-1.5 text-center">
                     <Button
                       size="sm"
