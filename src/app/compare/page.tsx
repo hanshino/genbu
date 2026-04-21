@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getItemsByIds, getItemRandsByIds } from "@/lib/queries/items";
+import { getItemsByIds, getItemRandsByIds, getItemsByType } from "@/lib/queries/items";
 import { CompareClient } from "./compare-client";
 
 export const metadata: Metadata = {
@@ -20,23 +20,38 @@ function parseIds(raw: unknown): number[] {
     .slice(0, 5);
 }
 
+const SUPPORTED_TYPES = ["座騎", "背飾"] as const;
+type SupportedType = (typeof SUPPORTED_TYPES)[number];
+
 export default async function ComparePage({ searchParams }: Props) {
   const params = await searchParams;
   const ids = parseIds(params.ids);
   const items = getItemsByIds(ids);
-  const rands = getItemRandsByIds(ids);
-  // Preserve original order from URL (query order)
   items.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+  const rands = getItemRandsByIds(ids);
+
+  // Pool for the picker: driven by items[0].type, or by ?type query, or default 座騎
+  const rawType = typeof params.type === "string" ? params.type : undefined;
+  const activeType: SupportedType =
+    (items[0]?.type as SupportedType | undefined) ??
+    (SUPPORTED_TYPES.includes(rawType as SupportedType) ? (rawType as SupportedType) : "座騎");
+  const pool = getItemsByType(activeType);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
       <header>
         <h1 className="text-2xl font-semibold">裝備比較</h1>
         <p className="text-sm text-muted-foreground">
-          可比較 1~5 件同類型裝備。由物品詳情頁「加入比較」累積，或在本頁搜尋加入。
+          可比較 1~5 件同類型裝備。目前類型：{activeType}。
         </p>
       </header>
-      <CompareClient initialItems={items} initialRands={rands} initialIds={ids} />
+      <CompareClient
+        activeType={activeType}
+        initialItems={items}
+        initialRands={rands}
+        initialIds={ids}
+        pool={pool}
+      />
     </div>
   );
 }
