@@ -19,14 +19,20 @@ function read(): CustomPreset[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (p): p is CustomPreset =>
-        typeof p === "object" && p !== null &&
-        typeof (p as CustomPreset).id === "string" &&
-        typeof (p as CustomPreset).name === "string" &&
-        typeof (p as CustomPreset).type === "string" &&
-        typeof (p as CustomPreset).weights === "object"
-    );
+    return parsed.filter((p): p is CustomPreset => {
+      if (typeof p !== "object" || p === null) return false;
+      const c = p as CustomPreset;
+      if (typeof c.id !== "string") return false;
+      if (typeof c.name !== "string") return false;
+      if (typeof c.type !== "string") return false;
+      if (typeof c.weights !== "object" || c.weights === null) return false;
+      // Reject if any weight value is not a finite number — prevents silent NaN
+      // downstream in scoreItem when localStorage is corrupted or hand-edited.
+      for (const v of Object.values(c.weights)) {
+        if (typeof v !== "number" || !Number.isFinite(v)) return false;
+      }
+      return true;
+    });
   } catch {
     return [];
   }

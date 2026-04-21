@@ -25,4 +25,16 @@ describe("useCustomPresets", () => {
     const { result } = renderHook(() => useCustomPresets());
     expect(result.current.presets).toEqual([]);
   });
+
+  it("rejects presets with non-number weight values", () => {
+    // Hand-crafted corrupted data that would pass the old object-only guard
+    window.localStorage.setItem(
+      "genbu.ranking.customPresets",
+      JSON.stringify([
+        { id: "bad", name: "Bad", type: "座騎", weights: { str: "eleven" } },
+      ])
+    );
+    const { result } = renderHook(() => useCustomPresets());
+    expect(result.current.presets).toEqual([]);
+  });
 });
