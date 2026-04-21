@@ -139,19 +139,47 @@ export function RankingClient({ type, items, rands }: Props) {
 
   const randsByItem = useMemo(() => groupRandsByItemId(rands), [rands]);
 
-  // Preset scores depend only on (items, randsByItem) — hoist them out of the
-  // weights-sensitive memo so slider drags don't rescore the universe.
-  const presetScoresByItem = useMemo(() => {
-    const map = new Map<number, Record<string, number>>();
+  // Preset scores + percentiles depend only on (items, randsByItem) — hoist
+  // them out of the weights-sensitive memo so slider drags don't rescore the
+  // universe. Percentile is computed per preset against the full type pool
+  // (ignores level/threshold filters) so a gear's "position in its universe"
+  // stays stable when filters narrow the visible rows.
+  const { presetScoresByItem, presetPercentilesByItem } = useMemo(() => {
+    const scoresByItem = new Map<number, Record<string, number>>();
     for (const it of items) {
       const expected = expectedRandom(randsByItem.get(it.id) ?? []);
       const scores: Record<string, number> = {};
       for (const p of presets) {
         scores[p.id] = scoreWithShared(it, expected, p.weights);
       }
-      map.set(it.id, scores);
+      scoresByItem.set(it.id, scores);
     }
-    return map;
+
+    const percentilesByItem = new Map<number, Record<string, number>>();
+    for (const it of items) percentilesByItem.set(it.id, {});
+    const n = items.length;
+    for (const p of presets) {
+      if (n === 0) continue;
+      const sorted = items
+        .map((it) => ({
+          id: it.id,
+          score: scoresByItem.get(it.id)?.[p.id] ?? 0,
+        }))
+        .sort((a, b) => a.score - b.score);
+      // Assign tied scores the same percentile (max-rank of the tie group).
+      let i = 0;
+      while (i < n) {
+        let j = i;
+        while (j < n && sorted[j].score === sorted[i].score) j++;
+        const pct = (j / n) * 100;
+        for (let k = i; k < j; k++) {
+          percentilesByItem.get(sorted[k].id)![p.id] = pct;
+        }
+        i = j;
+      }
+    }
+
+    return { presetScoresByItem: scoresByItem, presetPercentilesByItem: percentilesByItem };
   }, [items, randsByItem]);
 
   const rows = useMemo<RankingRow[]>(() => {
@@ -167,9 +195,10 @@ export function RankingClient({ type, items, rands }: Props) {
       .map((it) => ({
         scored: scoreItem(it, randsByItem.get(it.id) ?? [], weights),
         presetScores: presetScoresByItem.get(it.id) ?? {},
+        presetPercentiles: presetPercentilesByItem.get(it.id) ?? {},
       }))
       .filter((r) => r.scored.score !== 0);
-  }, [items, randsByItem, presetScoresByItem, weights, minLv, maxLv, thresholds]);
+  }, [items, randsByItem, presetScoresByItem, presetPercentilesByItem, weights, minLv, maxLv, thresholds]);
 
   const activePresetId = selection.kind === "builtin" ? selection.id : null;
 

@@ -5,38 +5,34 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   scores: Record<string, number>;
+  percentiles: Record<string, number>;
   activePresetId?: string | null;
 }
 
-export function PresetSparkbars({ scores, activePresetId }: Props) {
-  const values = presets.map((p) => scores[p.id] ?? 0);
-  const max = Math.max(...values, 1);
-  const min = Math.min(...values);
-  const span = max - min;
-
+export function PresetSparkbars({ scores, percentiles, activePresetId }: Props) {
   const label = presets
-    .map((p, i) => `${p.label}${Math.round(values[i])}`)
+    .map((p) => `${p.label}分位${Math.round(percentiles[p.id] ?? 0)}`)
     .join(" ");
 
   return (
     <div
       className="flex h-5 items-end gap-[2px]"
       role="img"
-      aria-label={`流派剪影 ${label}`}
+      aria-label={`流派分位 ${label}`}
     >
-      {presets.map((p, i) => {
-        const v = values[i];
-        const pct = span > 0 ? (v - min) / span : 0.5;
+      {presets.map((p) => {
+        const pct = Math.max(0, Math.min(100, percentiles[p.id] ?? 0));
+        const score = scores[p.id] ?? 0;
         const isActive = activePresetId === p.id;
         return (
           <span
             key={p.id}
-            title={`${p.label}: ${Math.round(v)}`}
+            title={`${p.label}：分位 ${Math.round(pct)}（分 ${Math.round(score)}）`}
             className={cn(
               "w-2 rounded-sm",
               isActive ? "bg-primary" : "bg-primary/30"
             )}
-            style={{ height: `${20 + pct * 80}%` }}
+            style={{ height: `${20 + pct * 0.8}%` }}
           />
         );
       })}

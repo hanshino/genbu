@@ -19,6 +19,7 @@ import { useCompareTray } from "@/lib/hooks/use-compare-tray";
 export interface RankingRow {
   scored: ScoredItem;
   presetScores: Record<string, number>;
+  presetPercentiles: Record<string, number>;
 }
 
 type SortKey = "current" | string;
@@ -126,7 +127,12 @@ export function RankingTable({
                   : presets.find((p) => p.id === sortKey)?.label.replace("系列", "") ?? "分數"}
               </th>
               {!compact && (
-                <th className="w-[108px] px-2 py-1.5 text-left">流派剪影</th>
+                <th
+                  className="w-[108px] px-2 py-1.5 text-left"
+                  title="條長＝在該流派池內的分位（100 = 該流派冠軍）"
+                >
+                  流派分位
+                </th>
               )}
               <th className="w-32 px-2 py-1.5 text-center">操作</th>
             </tr>
@@ -164,6 +170,7 @@ export function RankingTable({
                     <td className="px-2 py-1.5">
                       <PresetSparkbars
                         scores={row.presetScores}
+                        percentiles={row.presetPercentiles}
                         activePresetId={activePresetId ?? (sortKey !== "current" ? sortKey : null)}
                       />
                     </td>
