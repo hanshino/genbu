@@ -50,7 +50,10 @@ function write(list: CustomPreset[]) {
 export function useCustomPresets() {
   const [presets, setPresets] = useState<CustomPreset[]>([]);
 
-  useEffect(() => setPresets(read()), []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional SSR-safe hydration from localStorage
+    setPresets(read());
+  }, []);
 
   const save = useCallback((preset: Omit<CustomPreset, "id">) => {
     setPresets((prev) => {

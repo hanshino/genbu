@@ -30,6 +30,7 @@ function useInitialCompactMode() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const mq = window.matchMedia("(max-width: 768px)");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional SSR-safe hydration of matchMedia default
     setCompact(mq.matches);
   }, []);
   return [compact, setCompact] as const;

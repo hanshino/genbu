@@ -42,7 +42,7 @@ export default async function ItemDetailPage({ params }: PageProps) {
   const sources = getMonstersByDropItem(item.id);
 
   const isPhase2Type = item.type !== null && PHASE2_TYPES.has(item.type);
-  let maxValues: Record<string, number> = {};
+  const maxValues: Record<string, number> = {};
   if (isPhase2Type && item.type) {
     const pool = getItemsByType(item.type);
     for (const it of pool) {

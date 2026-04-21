@@ -40,6 +40,7 @@ export function useCompareTray(): CompareTray {
   const [ids, setIds] = useState<number[]>([]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional SSR-safe hydration from localStorage
     setIds(readStorage());
   }, []);
 
