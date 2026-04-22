@@ -85,4 +85,3 @@ export function useCompareTray(): CompareTray {
 
   return { ids, isFull: ids.length >= MAX_ITEMS, has, add, remove, clear };
 }
-

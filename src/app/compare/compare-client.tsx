@@ -37,7 +37,7 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
       else params.set("ids", ids.join(","));
       router.replace(`/compare?${params.toString()}`, { scroll: false });
     },
-    [router, search]
+    [router, search],
   );
 
   const handlePick = (picked: RankingItem) => {
@@ -62,9 +62,7 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
               key={t}
               variant={t === activeType ? "default" : "outline"}
               size="sm"
-              onClick={() =>
-                router.replace(`/compare?type=${encodeURIComponent(t)}`)
-              }
+              onClick={() => router.replace(`/compare?type=${encodeURIComponent(t)}`)}
               disabled={locked}
               title={locked ? "清空比較盤後才能切換類型" : undefined}
             >
@@ -121,7 +119,8 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <h2 className="text-lg font-semibold">流派適配</h2>
             <span className="text-xs text-muted-foreground">
-              條形＝該列相對強度；<span className="text-primary/80">+N%</span> ＝勝者領先第二名的幅度
+              條形＝該列相對強度；<span className="text-primary/80">+N%</span>{" "}
+              ＝勝者領先第二名的幅度
             </span>
           </div>
           <ComparePresets items={initialItems} randsByItem={randsByItem} />

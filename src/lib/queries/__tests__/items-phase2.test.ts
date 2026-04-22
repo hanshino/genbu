@@ -6,8 +6,8 @@ describe("getItemsByType", () => {
     const rows = getItemsByType("座騎");
     expect(rows.length).toBeGreaterThan(0);
     const sample = rows[0] as Record<string, unknown>;
-    expect(sample.picture).toBeUndefined();   // trimmed
-    expect(sample.summary).toBeUndefined();   // trimmed
+    expect(sample.picture).toBeUndefined(); // trimmed
+    expect(sample.summary).toBeUndefined(); // trimmed
     expect(typeof sample.str).toBe("number"); // kept
   });
 });

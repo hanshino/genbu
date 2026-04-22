@@ -92,6 +92,7 @@
 ```
 
 **互動行為**:
+
 - 點擊格子 → 彈出數字選擇 (1-9) 或直接鍵盤輸入
 - 選擇總和 (12 或 15) → 帝格自動更新
 - 填入 2 個已知格後，「解題」按鈕啟用
@@ -113,7 +114,7 @@
 ```typescript
 function solveSevenStar(num: number): ("開" | "關")[] {
   const binary = num.toString(2).padStart(7, "0");
-  return binary.split("").map(b => b === "1" ? "開" : "關");
+  return binary.split("").map((b) => (b === "1" ? "開" : "關"));
 }
 ```
 
@@ -138,6 +139,7 @@ function solveSevenStar(num: number): ("開" | "關")[] {
 ```
 
 **互動行為**:
+
 - 數字輸入框，即時計算（不需按鈕）
 - 7 個星星視覺化：開=亮(黃色)，關=暗(灰色)
 - 輸入超出範圍顯示錯誤提示
@@ -203,6 +205,7 @@ export function solveGodQuest(sum: number, leak: number): number[] | null {
 ```
 
 **互動行為**:
+
 - 輸入總和 (兩位數) 和封印數字 (1-9)
 - 點擊計算後顯示 3×3 結果
 - 封印數字的替代位置以紅色/特殊樣式標記
@@ -279,7 +282,7 @@ src/lib/
 // forest-matrix.ts
 export function solveForestMatrix(
   sum: 12 | 15,
-  knownRooms: { name: string; value: number }[]
+  knownRooms: { name: string; value: number }[],
 ): { name: string; value: number }[];
 
 // seven-star.ts

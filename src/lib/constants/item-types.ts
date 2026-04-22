@@ -27,8 +27,20 @@ export const itemTypeGroups: readonly TypeGroup[] = [
     id: "weapon",
     label: "裝備 — 武器",
     types: [
-      "刀", "劍", "匕首", "拳刃", "盾", "手套", "法杖",
-      "扇", "雙手刀", "拂塵", "手甲", "棍", "雙劍", "暗器",
+      "刀",
+      "劍",
+      "匕首",
+      "拳刃",
+      "盾",
+      "手套",
+      "法杖",
+      "扇",
+      "雙手刀",
+      "拂塵",
+      "手甲",
+      "棍",
+      "雙劍",
+      "暗器",
     ],
   },
   {
@@ -50,8 +62,15 @@ export const itemTypeGroups: readonly TypeGroup[] = [
     id: "skin",
     label: "外裝",
     types: [
-      "座騎[外裝]", "背飾[外裝]", "帽[外裝]", "衣[外裝]",
-      "鞋[外裝]", "右武器[外裝]", "左武器[外裝]", "飾品[外裝]", "盾[外裝]",
+      "座騎[外裝]",
+      "背飾[外裝]",
+      "帽[外裝]",
+      "衣[外裝]",
+      "鞋[外裝]",
+      "右武器[外裝]",
+      "左武器[外裝]",
+      "飾品[外裝]",
+      "盾[外裝]",
     ],
   },
   {
@@ -61,9 +80,7 @@ export const itemTypeGroups: readonly TypeGroup[] = [
   },
 ] as const;
 
-export const allItemTypes: readonly string[] = itemTypeGroups.flatMap(
-  (g) => g.types
-);
+export const allItemTypes: readonly string[] = itemTypeGroups.flatMap((g) => g.types);
 
 // 依 type 字串反查所屬群組
 export function getGroupForType(type: string | null): TypeGroup | null {
@@ -77,8 +94,5 @@ export const PHASE2_TYPES = ["座騎", "背飾"] as const;
 export type Phase2Type = (typeof PHASE2_TYPES)[number];
 
 export function isPhase2Type(value: unknown): value is Phase2Type {
-  return (
-    typeof value === "string" &&
-    (PHASE2_TYPES as readonly string[]).includes(value)
-  );
+  return typeof value === "string" && (PHASE2_TYPES as readonly string[]).includes(value);
 }

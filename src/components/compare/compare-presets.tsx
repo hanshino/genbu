@@ -43,16 +43,11 @@ export function ComparePresets({ items, randsByItem }: Props) {
             const winnerIdx = max > 0 ? r.scores.indexOf(max) : -1;
             const sortedDesc = [...r.scores].sort((a, b) => b - a);
             const second = sortedDesc[1] ?? 0;
-            const marginPct =
-              winnerIdx >= 0 && second > 0
-                ? ((max - second) / second) * 100
-                : null;
+            const marginPct = winnerIdx >= 0 && second > 0 ? ((max - second) / second) * 100 : null;
 
             return (
               <TableRow key={r.preset.id}>
-                <TableCell className="text-muted-foreground">
-                  {r.preset.label}
-                </TableCell>
+                <TableCell className="text-muted-foreground">{r.preset.label}</TableCell>
                 {r.scores.map((s, i) => {
                   const isWinner = i === winnerIdx;
                   const widthPct = max > 0 ? (s / max) * 100 : 0;
@@ -63,7 +58,7 @@ export function ComparePresets({ items, randsByItem }: Props) {
                           <div
                             className={cn(
                               "h-full transition-all",
-                              isWinner ? "bg-primary" : "bg-primary/25"
+                              isWinner ? "bg-primary" : "bg-primary/25",
                             )}
                             style={{ width: `${widthPct}%` }}
                           />
@@ -71,9 +66,7 @@ export function ComparePresets({ items, randsByItem }: Props) {
                         <span
                           className={cn(
                             "min-w-[3.25rem] text-right font-mono tabular-nums",
-                            isWinner
-                              ? "font-semibold text-primary"
-                              : "text-foreground/70"
+                            isWinner ? "font-semibold text-primary" : "text-foreground/70",
                           )}
                         >
                           {Math.round(s)}

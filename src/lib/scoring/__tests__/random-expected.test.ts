@@ -19,10 +19,7 @@ describe("expectedRandom", () => {
     // From spec §3.2: 外功 with (3~5 @ rate 970000) and (6~6 @ rate 30000)
     // totalRate = 1_000_000
     // E[str] = 4 * 0.97 + 6 * 0.03 = 3.88 + 0.18 = 4.06
-    const rands = [
-      mkRand("外功", 3, 5, 970000),
-      mkRand("外功", 6, 6, 30000),
-    ];
+    const rands = [mkRand("外功", 3, 5, 970000), mkRand("外功", 6, 6, 30000)];
     const e = expectedRandom(rands);
     expect(e.str).toBeCloseTo(4.06, 4);
   });
@@ -31,8 +28,8 @@ describe("expectedRandom", () => {
     // item has both 外功 and 技巧 random pools; each is guaranteed for this
     // item (it rolls one of each), so totalRate spans both attributes.
     const rands = [
-      mkRand("外功", 2, 4, 500000),   // E[str contribution] = 3 * 0.5 = 1.5
-      mkRand("技巧", 1, 3, 500000),   // E[dex contribution] = 2 * 0.5 = 1.0
+      mkRand("外功", 2, 4, 500000), // E[str contribution] = 3 * 0.5 = 1.5
+      mkRand("技巧", 1, 3, 500000), // E[dex contribution] = 2 * 0.5 = 1.0
     ];
     const e = expectedRandom(rands);
     expect(e.str).toBeCloseTo(1.5, 4);
@@ -40,10 +37,7 @@ describe("expectedRandom", () => {
   });
 
   it("ignores unknown attribute labels (does not throw)", () => {
-    const rands = [
-      mkRand("外功", 1, 3, 500000),
-      mkRand("虛構屬性", 1, 3, 500000),
-    ];
+    const rands = [mkRand("外功", 1, 3, 500000), mkRand("虛構屬性", 1, 3, 500000)];
     const e = expectedRandom(rands);
     expect(e.str).toBeCloseTo(2 * 0.5, 4);
     // Unknown label contributes nothing to output keys.

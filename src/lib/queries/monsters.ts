@@ -37,7 +37,7 @@ export function getMonstersByDropItem(itemId: number): MonsterDropSource[] {
       `SELECT n.id, n.name, n.level, m.drop_item
        FROM monsters m
        JOIN npc n ON m.id = n.id
-       WHERE m.drop_item IS NOT NULL AND m.drop_item LIKE ?`
+       WHERE m.drop_item IS NOT NULL AND m.drop_item LIKE ?`,
     )
     .all(`%"${itemId}"%`) as Array<{ id: number; name: string; level: number; drop_item: string }>;
 

@@ -68,7 +68,7 @@ export const PRESET_PRIMARY_STATS: ReadonlyMap<string, readonly string[]> = new 
       .filter(([, w]) => w >= threshold)
       .map(([k]) => k);
     return [p.id, identities];
-  })
+  }),
 );
 
 export function getPresetById(id: string): Preset | null {

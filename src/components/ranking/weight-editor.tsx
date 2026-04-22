@@ -20,7 +20,10 @@ const MIN_WEIGHT = -2;
 const MAX_WEIGHT = 15;
 const STEP = 0.25;
 
-interface Row { key: string; value: number }
+interface Row {
+  key: string;
+  value: number;
+}
 
 interface Props {
   weights: Weights;
@@ -30,12 +33,12 @@ interface Props {
 export function WeightEditor({ weights, onChange }: Props) {
   const rows: Row[] = useMemo(
     () => Object.entries(weights).map(([key, value]) => ({ key, value })),
-    [weights]
+    [weights],
   );
 
   const availableKeys = useMemo(
     () => displayableAttributeKeys.filter((k) => !(k in weights)),
-    [weights]
+    [weights],
   );
 
   const setRowKey = (oldKey: string, newKey: string) => {
@@ -77,17 +80,12 @@ export function WeightEditor({ weights, onChange }: Props) {
           + 新增屬性
         </Button>
       </div>
-      {rows.length === 0 && (
-        <p className="text-xs text-muted-foreground">尚未設定權重</p>
-      )}
+      {rows.length === 0 && <p className="text-xs text-muted-foreground">尚未設定權重</p>}
       <div className="space-y-2.5">
         {rows.map((r) => {
           const label = itemAttributeNames[r.key] ?? r.key;
           return (
-            <div
-              key={r.key}
-              className="rounded-md border border-border/60 bg-card/50 px-2 py-1.5"
-            >
+            <div key={r.key} className="rounded-md border border-border/60 bg-card/50 px-2 py-1.5">
               <div className="flex items-center gap-1.5">
                 <Select
                   value={r.key}
@@ -97,11 +95,7 @@ export function WeightEditor({ weights, onChange }: Props) {
                 >
                   <SelectTrigger className="flex-1" aria-label={`屬性：${label}`}>
                     <SelectValue>
-                      {(val) =>
-                        typeof val === "string"
-                          ? (itemAttributeNames[val] ?? val)
-                          : null
-                      }
+                      {(val) => (typeof val === "string" ? (itemAttributeNames[val] ?? val) : null)}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>

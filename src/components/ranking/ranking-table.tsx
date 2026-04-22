@@ -135,7 +135,7 @@ export function RankingTable({
               <TableHead className="w-20 py-1.5 text-right">
                 {sortKey === "current"
                   ? "目前"
-                  : presets.find((p) => p.id === sortKey)?.label.replace("系列", "") ?? "分數"}
+                  : (presets.find((p) => p.id === sortKey)?.label.replace("系列", "") ?? "分數")}
               </TableHead>
               {!compact && (
                 <TableHead
@@ -153,16 +153,11 @@ export function RankingTable({
               const { item } = row.scored;
               const isHighlighted = highlightId === item.id;
               const displayScore =
-                sortKey === "current"
-                  ? row.scored.score
-                  : row.presetScores[sortKey] ?? 0;
+                sortKey === "current" ? row.scored.score : (row.presetScores[sortKey] ?? 0);
               return (
                 <TableRow
                   key={item.id}
-                  className={cn(
-                    "group",
-                    isHighlighted && "bg-yellow-50 dark:bg-yellow-900/20"
-                  )}
+                  className={cn("group", isHighlighted && "bg-yellow-50 dark:bg-yellow-900/20")}
                 >
                   <TableCell className="py-1.5 text-muted-foreground">{i + 1}</TableCell>
                   <TableCell className="py-1.5">

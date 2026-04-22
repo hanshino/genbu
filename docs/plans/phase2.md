@@ -12,15 +12,15 @@
 
 從 LINE Bot `weighted.config.js` 移植，每種流派對不同屬性給予不同權重：
 
-| 流派 | 權重公式 |
-|------|---------|
-| **純玄系列** | wis×7 + dex×3 + hit×1 + def×0.5 + mdef×0.25 |
-| **純外系列** | str×11 + atk×1 + dex×3 + hit×1 + def×0.5 + mdef×0.5 |
-| **純內系列** | pow×9 + matk×1 + dex×3 + hit×1 + def×0.5 + mdef×0.5 |
+| 流派         | 權重公式                                                     |
+| ------------ | ------------------------------------------------------------ |
+| **純玄系列** | wis×7 + dex×3 + hit×1 + def×0.5 + mdef×0.25                  |
+| **純外系列** | str×11 + atk×1 + dex×3 + hit×1 + def×0.5 + mdef×0.5          |
+| **純內系列** | pow×9 + matk×1 + dex×3 + hit×1 + def×0.5 + mdef×0.5          |
 | **玄內系列** | wis×7 + pow×5 + matk×1 + dex×3 + hit×1 + def×0.5 + mdef×0.25 |
-| **玄外系列** | wis×7 + str×5 + atk×1 + dex×3 + hit×1 + def×0.5 + mdef×0.5 |
-| **爆刀** | agi×7 + str×7 + critical×5 + def×0.75 + mdef×0.75 |
-| **手甲** | dex×15 + hit×5 + atk×7 |
+| **玄外系列** | wis×7 + str×5 + atk×1 + dex×3 + hit×1 + def×0.5 + mdef×0.5   |
+| **爆刀**     | agi×7 + str×7 + critical×5 + def×0.75 + mdef×0.75            |
+| **手甲**     | dex×15 + hit×5 + atk×7                                       |
 
 ### 1.2 Custom Weight Support
 
@@ -34,9 +34,29 @@
 
 ```typescript
 // 限定 key 為 Item 中的數值屬性欄位，確保 TypeScript 類型安全
-type NumericItemKey = "hp" | "mp" | "str" | "pow" | "vit" | "dex" | "agi" | "wis"
-  | "atk" | "matk" | "def" | "mdef" | "dodge" | "uncanny_dodge" | "critical"
-  | "hit" | "speed" | "fire" | "water" | "thunder" | "tree" | "freeze";
+type NumericItemKey =
+  | "hp"
+  | "mp"
+  | "str"
+  | "pow"
+  | "vit"
+  | "dex"
+  | "agi"
+  | "wis"
+  | "atk"
+  | "matk"
+  | "def"
+  | "mdef"
+  | "dodge"
+  | "uncanny_dodge"
+  | "critical"
+  | "hit"
+  | "speed"
+  | "fire"
+  | "water"
+  | "thunder"
+  | "tree"
+  | "freeze";
 
 interface WeightParam {
   key: NumericItemKey;
@@ -80,6 +100,7 @@ function calculateScore(item: Item, params: WeightParam[]): number {
 ```
 
 **行為**:
+
 - 預設顯示「座騎」+「純外系列」排行
 - 切換流派時即時重新計算
 - 自訂權重欄位可新增/移除屬性
@@ -88,6 +109,7 @@ function calculateScore(item: Item, params: WeightParam[]): number {
 - URL 參數: `?type=座騎&preset=純外系列` 或 `?type=座騎&w=str:11,atk:1,dex:3`
 
 **支援的裝備類別**:
+
 - 座騎、背飾、左飾、中飾、右飾、帽、衣、鞋
 - 武器類: 刀、劍、匕首、拳刃、盾、手套、法杖、扇、雙手刀、拂塵、手甲、棍、雙劍、暗器
 
@@ -120,6 +142,7 @@ function calculateScore(item: Item, params: WeightParam[]): number {
 ```
 
 **行為**:
+
 - 搜尋框輸入名稱，autocomplete 下拉選擇
 - 最多同時比較 4 件裝備
 - 屬性差異以第一件為基準，正值綠色、負值紅色

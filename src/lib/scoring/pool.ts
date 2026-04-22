@@ -4,9 +4,7 @@ import { presets } from "./presets";
 import { scoreItemWithExpected, type ScoreInput } from "./score";
 import type { Weights } from "./types";
 
-export function groupRandsByItemId(
-  rands: readonly ItemRand[]
-): Map<number, ItemRand[]> {
+export function groupRandsByItemId(rands: readonly ItemRand[]): Map<number, ItemRand[]> {
   const map = new Map<number, ItemRand[]>();
   for (const r of rands) {
     const key = Number(r.id);
@@ -31,7 +29,7 @@ export function computePoolMaxValues(pool: readonly object[]): Record<string, nu
 // computation across presets instead of recomputing it per preset.
 export function scoreItemAcrossPresets(
   item: ScoreInput,
-  rands: readonly ItemRand[]
+  rands: readonly ItemRand[],
 ): Record<string, number> {
   const expected = expectedRandom(rands);
   const out: Record<string, number> = {};
@@ -46,7 +44,7 @@ export function scoreItemAcrossPresets(
 export function scoreWithShared(
   item: ScoreInput,
   expected: Readonly<Record<string, number>>,
-  weights: Weights
+  weights: Weights,
 ): number {
   return scoreItemWithExpected(item, expected, weights).score;
 }

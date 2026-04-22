@@ -6,9 +6,9 @@ import type { Weights } from "@/lib/scoring";
 const STORAGE_KEY = "genbu.ranking.customPresets";
 
 export interface CustomPreset {
-  id: string;             // generated: `${Date.now()}-${crypto.random}` or name-based
+  id: string; // generated: `${Date.now()}-${crypto.random}` or name-based
   name: string;
-  type: string;           // 座騎 | 背飾 | ...
+  type: string; // 座騎 | 背飾 | ...
   weights: Weights;
 }
 

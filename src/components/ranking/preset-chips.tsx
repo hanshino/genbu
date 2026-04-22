@@ -53,9 +53,7 @@ export function PresetChips({
     // No primary-aligned preset hit the ≥80 gate. If the item still ranks
     // strongly on any preset (via secondary overlap), label it 通用 — it's
     // broad-spectrum with no single flavour owner.
-    const broadStrong = presets.some(
-      (p) => (percentiles[p.id] ?? 0) >= PRIMARY_MIN
-    );
+    const broadStrong = presets.some((p) => (percentiles[p.id] ?? 0) >= PRIMARY_MIN);
     if (!broadStrong) {
       return <span className="text-xs text-muted-foreground">—</span>;
     }
@@ -91,9 +89,7 @@ export function PresetChips({
   if (second && second.strength / (top.strength || 1) >= GENERALIST_STRENGTH_RATIO) {
     const breakdown = qualified
       .slice(0, 3)
-      .map(
-        (r) => `${r.preset.label.replace("系列", "")} ${r.strength.toFixed(0)}`
-      )
+      .map((r) => `${r.preset.label.replace("系列", "")} ${r.strength.toFixed(0)}`)
       .join("、");
     return (
       <span
@@ -126,7 +122,7 @@ export function PresetChips({
               "inline-flex items-center rounded-sm px-1.5 py-0.5 text-xs",
               isActive
                 ? "bg-primary/15 text-primary ring-1 ring-primary/40"
-                : "bg-muted text-foreground/80 ring-1 ring-border/60"
+                : "bg-muted text-foreground/80 ring-1 ring-border/60",
             )}
           >
             {preset.label.replace("系列", "")}

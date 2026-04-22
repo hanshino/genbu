@@ -27,22 +27,16 @@ export function ItemDropList({ sources }: { sources: MonsterDropSource[] }) {
           <TableBody>
             {sources.map((m) => (
               <TableRow key={m.id}>
-                <TableCell className="font-mono text-xs text-muted-foreground">
-                  {m.id}
-                </TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground">{m.id}</TableCell>
                 <TableCell className="font-medium">{m.name}</TableCell>
                 <TableCell className="text-right">{m.level}</TableCell>
-                <TableCell className="text-right font-mono">
-                  {m.rate.toLocaleString()}
-                </TableCell>
+                <TableCell className="text-right font-mono">{m.rate.toLocaleString()}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
-      <p className="text-xs text-muted-foreground">
-        掉落率為遊戲原始數值，數值越高機率越大
-      </p>
+      <p className="text-xs text-muted-foreground">掉落率為遊戲原始數值，數值越高機率越大</p>
     </section>
   );
 }

@@ -13,16 +13,7 @@ import {
 import type { Item } from "@/lib/types/item";
 import { itemAttributeNames } from "@/lib/constants/i18n";
 
-const RADAR_KEYS = [
-  "str",
-  "pow",
-  "wis",
-  "agi",
-  "atk",
-  "matk",
-  "def",
-  "mdef",
-] as const;
+const RADAR_KEYS = ["str", "pow", "wis", "agi", "atk", "matk", "def", "mdef"] as const;
 
 const SERIES_COLORS = [
   "var(--chart-1)",
@@ -99,11 +90,7 @@ export function CompareRadar({ items, maxValues }: Props) {
               return [`${n}%`, "相對強度"];
             }}
           />
-          <Legend
-            iconType="circle"
-            iconSize={10}
-            wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
-          />
+          <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
         </RadarChart>
       </ResponsiveContainer>
     </div>

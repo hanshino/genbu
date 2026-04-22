@@ -13,6 +13,7 @@
 `magic` table (6,142 rows) 每筆技能可有多個等級（同 id 不同 level）。
 
 主要顯示欄位：
+
 - 基本: name, id, level, clan (職業), target, range
 - 消耗: spend_mp, spend_hp
 - 傷害: func_dmg, func_dmg_p1~p5
@@ -24,18 +25,18 @@
 
 從 LINE Bot `advance.config.js` 移植：
 
-| 派系 | 二階技能書 ID | 三階技能書 ID |
-|------|-------------|-------------|
-| 刀法 | 28225-28231, 31183 | 31215-31218, 31260-31263 |
-| 惡術 | 28232-28238, 31212 | 31211-31214, 31256-31259 |
-| 掌法 | 28239-28247, 31181 | 31219-31223, 31264-31268 |
-| 劍法 | 28248-28256, 31182 | 31224-31228, 31269-31272 |
-| 匕首 | 28257-28265, 31185 | 31229-31233, 31274-31278 |
-| 醫毒 | 28266-28276, 31186 | 31234-31239, 31279-31284 |
-| 野性 | 31080-31087 | 31248-31251, 31293-31296 |
-| 法術 | 31088-31095 | 31252-31255, 31297-31300 |
-| 劍扇 | 31163-31170 | 31240-31243, 31285-31288 |
-| 靈種 | 31171-31178 | 31244-31247, 31289-31292 |
+| 派系 | 二階技能書 ID            | 三階技能書 ID            |
+| ---- | ------------------------ | ------------------------ |
+| 刀法 | 28225-28231, 31183       | 31215-31218, 31260-31263 |
+| 惡術 | 28232-28238, 31212       | 31211-31214, 31256-31259 |
+| 掌法 | 28239-28247, 31181       | 31219-31223, 31264-31268 |
+| 劍法 | 28248-28256, 31182       | 31224-31228, 31269-31272 |
+| 匕首 | 28257-28265, 31185       | 31229-31233, 31274-31278 |
+| 醫毒 | 28266-28276, 31186       | 31234-31239, 31279-31284 |
+| 野性 | 31080-31087              | 31248-31251, 31293-31296 |
+| 法術 | 31088-31095              | 31252-31255, 31297-31300 |
+| 劍扇 | 31163-31170              | 31240-31243, 31285-31288 |
+| 靈種 | 31171-31178              | 31244-31247, 31289-31292 |
 | 戰體 | 31403-31406, 31411-31414 | 31419-31422, 31427-31430 |
 | 禁術 | 31407-31410, 31415-31418 | 31423-31426, 31431-31434 |
 | 劍刃 | 34099-34102, 34107-34110 | 34115-34118, 34123-34126 |
@@ -62,6 +63,7 @@
 ```
 
 **行為**:
+
 - 搜尋支援 ID 或名稱（模糊搜尋）
 - 派系篩選：14 個派系 + 全部
 - 表格欄位: 編號、名稱、派系、目標、MP 消耗
@@ -96,6 +98,7 @@
 ```
 
 **行為**:
+
 - 等級切換以 Tab/Button group 呈現（比 LINE Bot 的逐級切換更方便）
 - 切換等級時即時更新下方屬性值
 - 只顯示非零/有意義的屬性欄位
@@ -126,6 +129,7 @@
 ```
 
 **行為**:
+
 - 14 個派系以 Tab 切換
 - 每個派系顯示二階和三階技能書
 - 技能書名稱從 items 表查詢（透過 ID 對應）
@@ -138,10 +142,12 @@
 ### 3.1 Data Structure
 
 兩個表都有怪物資料，共用相同的 `id` 主鍵：
+
 - `npc` (5,071 rows) — 主資料來源，包含完整屬性（六維、攻防、元素抗性、狀態抗性等），**無** drop_item 欄位
 - `monsters` (2,829 rows) — 補充資料，包含 `drop_item` JSON 欄位和 `drop_exp`、`drop_money_min/max`
 
 **查詢策略（雙表查詢）**:
+
 - 怪物列表/詳情: 以 `npc` 表為主
 - 掉落物品: 從 `monsters` 表查 `drop_item`，以 `monsters.id = npc.id` 關聯
 - 怪物詳情頁需兩次查詢: (1) `SELECT * FROM npc WHERE id = ?` 取屬性 (2) `SELECT drop_item FROM monsters WHERE id = ?` 取掉落
@@ -181,6 +187,7 @@
 ```
 
 **行為**:
+
 - 搜尋支援 ID 或名稱
 - 等級範圍篩選（雙滑桿或兩個輸入框）
 - 屬性篩選: 火、水、雷、木、無
@@ -192,16 +199,19 @@
 **三個區塊**:
 
 **A. 基本資訊**
+
 - 名稱、編號、等級、屬性、HP
 - 六維屬性 (str, pow, vit, dex, agi, wis)
 
 **B. 戰鬥資訊**
+
 - 攻擊: 傷害範圍 (min~max), 內勁傷害範圍, 攻速, 攻擊距離
 - 防禦: 防禦, 護勁, 命中, 閃躲, 重擊, 拆招
 - 抗性: 火抗, 水抗, 雷抗, 木抗
 - 狀態抗性: 虛弱, 僵直, 變形, 出血
 
 **C. 掉落物品**
+
 - 解析 drop_item JSON
 - 表格: 道具名稱（連結到 `/items/[id]`）、掉落率
 - 掉落金幣範圍: drop_money_min ~ drop_money_max
@@ -340,12 +350,21 @@ export interface MonsterDrop {
 
 ```typescript
 // src/lib/queries/skills.ts
-function getSkills(params: { search?: string; clan?: string; page?: number }): { skills: Magic[]; total: number };
-function getSkillById(id: number): Magic[];  // 回傳所有等級
+function getSkills(params: { search?: string; clan?: string; page?: number }): {
+  skills: Magic[];
+  total: number;
+};
+function getSkillById(id: number): Magic[]; // 回傳所有等級
 function getSkillBookItems(bookIds: number[]): Item[];
 
 // src/lib/queries/monsters.ts (擴充)
-function getMonsters(params: { search?: string; levelMin?: number; levelMax?: number; elemental?: string; page?: number }): { monsters: Npc[]; total: number };
+function getMonsters(params: {
+  search?: string;
+  levelMin?: number;
+  levelMax?: number;
+  elemental?: string;
+  page?: number;
+}): { monsters: Npc[]; total: number };
 function getMonsterById(id: number): Npc | null;
 function getMonsterDrops(monsterId: number): MonsterDrop[];
 ```

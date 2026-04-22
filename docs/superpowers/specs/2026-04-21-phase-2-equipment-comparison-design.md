@@ -18,16 +18,17 @@
 
 LINE bot 的 Top 30 加權排行是穩定的基礎，但有 4 個可在網頁版改進的盲點：
 
-| LINE bot 盲點 | 網頁版改良 |
-|---|---|
-| 單一分數壓平多維屬性 | 排行表多欄顯示 7 流派分數，可任欄排序 |
-| 僅 pairwise 比較 | N 件比較矩陣 |
-| 純數字缺乏直觀 | 屬性 bar chart |
-| 線性加權表達力有限 | 加「硬性門檻」過濾（HIT ≥ X, DEF ≥ Y 等）再套加權分數 |
+| LINE bot 盲點        | 網頁版改良                                            |
+| -------------------- | ----------------------------------------------------- |
+| 單一分數壓平多維屬性 | 排行表多欄顯示 7 流派分數，可任欄排序                 |
+| 僅 pairwise 比較     | N 件比較矩陣                                          |
+| 純數字缺乏直觀       | 屬性 bar chart                                        |
+| 線性加權表達力有限   | 加「硬性門檻」過濾（HIT ≥ X, DEF ≥ Y 等）再套加權分數 |
 
 ### 1.3 預留但不實作
 
 **裝備標籤分類（`classifier`）** 放到 Phase 2.5。Phase 2 只：
+
 - 建立 `src/lib/classifier/` 模組骨架（`types.ts` + `classify()` 回空陣列）
 - UI 預留 `<ItemTags />` 槽位（渲染 null）
 - 排行頁 filter 面板預留「標籤過濾」區塊（隱藏）
@@ -45,10 +46,12 @@ LINE bot 的 Top 30 加權排行是穩定的基礎，但有 4 個可在網頁版
 ### 2.2 資料量與取捨
 
 實測（Phase 1 DB）：
+
 - 座騎：407 列；背飾：366 列
 - item_rand（兩類合計）：148 列
 
 取資料策略：
+
 - `/ranking` 頁：按當前 tab（座騎 或 背飾）一次撈該 type 全部 items + item_rand
 - Server 端 **trim 欄位**（排除 `picture / icon / summary / note / durability / value`），只保留分數計算 + 顯示欄位，預估壓縮後 ~15-25 KB
 - 切換 type tab 時重新 fetch（或 React `cache()` / `swr` 快取）
@@ -67,6 +70,7 @@ base(item, weights) = Σ weights[key] × item[key]
 ### 3.2 隨機素質期望值
 
 對單一 item：
+
 ```
 totalRate = Σ row.rate                 // 該 item 全部 rand rows 的 rate 總和
 E_random[attrKey X] = Σ ((row.min + row.max) / 2) × (row.rate / totalRate)
@@ -108,15 +112,15 @@ score(item, rands, weights) = Σ weights[key] × (item[key] + E_random[key])
 
 從 `tthol-line-bot/src/configs/weighted.config.js` 搬到 `src/lib/scoring/presets.ts`：
 
-| 流派 | 主要權重 |
-|---|---|
-| 純玄系列 | wis:7, dex:3, hit:1, def:0.5, mdef:0.25 |
-| 純外系列 | str:11, atk:1, dex:3, hit:1, def:0.5, mdef:0.5 |
-| 純內系列 | pow:9, matk:1, dex:3, hit:1, def:0.5, mdef:0.5 |
+| 流派     | 主要權重                                               |
+| -------- | ------------------------------------------------------ |
+| 純玄系列 | wis:7, dex:3, hit:1, def:0.5, mdef:0.25                |
+| 純外系列 | str:11, atk:1, dex:3, hit:1, def:0.5, mdef:0.5         |
+| 純內系列 | pow:9, matk:1, dex:3, hit:1, def:0.5, mdef:0.5         |
 | 玄內系列 | wis:7, pow:5, matk:1, dex:3, hit:1, def:0.5, mdef:0.25 |
-| 玄外系列 | wis:7, str:5, atk:1, dex:3, hit:1, def:0.5, mdef:0.5 |
-| 爆刀 | agi:7, str:7, critical:5, def:0.75, mdef:0.75 |
-| 手甲 | dex:15, hit:5, atk:7 |
+| 玄外系列 | wis:7, str:5, atk:1, dex:3, hit:1, def:0.5, mdef:0.5   |
+| 爆刀     | agi:7, str:7, critical:5, def:0.75, mdef:0.75          |
+| 手甲     | dex:15, hit:5, atk:7                                   |
 
 需撰寫單元測試逐項驗證與 LINE bot 原始設定一致。
 
@@ -129,6 +133,7 @@ score(item, rands, weights) = Σ weights[key] × (item[key] + E_random[key])
 **布局**：左側 filter 面板（sticky），右側排行表。
 
 **Filter 面板元件**：
+
 - Type tab：`[座騎] [背飾]`（互斥）
 - 等級範圍：雙滑桿，上/下限依當前 type 的實際等級分布動態設定（座騎實測 max=140、背飾 max=185）；預設選取區間統一為 min=50 max=100 以聚焦主流裝備
 - 流派 radio：7 流派 + `自訂`
@@ -137,12 +142,14 @@ score(item, rands, weights) = Σ weights[key] × (item[key] + E_random[key])
 - 「儲存為我的配方」按鈕（localStorage）、「載入配方」下拉
 
 **排行表欄位**：
+
 - 排名、名稱、等級、(7 流派分數各一欄)、目前流派分數（高亮）、操作（詳情 / 加入比較）
 - 每欄可點擊切換排序；目前排序欄加 arrow 指示
 - 點 row 展開顯示 `<StatBarChart>` + 關鍵屬性摘要
 - 預設 Top 30，可切「顯示全部」
 
 **URL state**（single source of truth）：
+
 ```
 /ranking?type=座騎
        &preset=純外              （或 custom）
@@ -155,6 +162,7 @@ score(item, rands, weights) = Σ weights[key] × (item[key] + E_random[key])
 ```
 
 **localStorage keys**：
+
 - `genbu.ranking.customPresets`：自訂配方清單 `[{name, type, weights}]`
 
 ### 5.2 `/compare` 頁
@@ -162,6 +170,7 @@ score(item, rands, weights) = Σ weights[key] × (item[key] + E_random[key])
 **布局**：上方加入區，下方三個 section。
 
 **元件**：
+
 - `<ItemPicker>`：type-ahead 搜尋框，限制同類型（第一件決定 type，後續只能加同 type）
 - 已選裝備 chip 列（可移除、清空）
 - Section 1：屬性矩陣。每屬性一列，每裝備一欄，列末顯示「最高值」badge，差異染色（當前件 vs 該列最高值）
@@ -177,12 +186,14 @@ score(item, rands, weights) = Σ weights[key] × (item[key] + E_random[key])
 條件：`item.type ∈ {座騎, 背飾}`
 
 新增元件：
+
 - `<CompareButton>`：切換 localStorage 比較盤；已加入時顯示「移除」；盤滿 5 件時 disable
 - 「在排行榜中查看」連結 → `/ranking?type=X&highlight=<id>`
 - `<StatBarChart>`：屬性視覺化
 - `<ItemTags>`：Phase 2 渲染 null，為 Phase 2.5 預留
 
 **localStorage key**：
+
 - `genbu.compareTray`：`number[]`（item id 陣列），最多 5 件
 
 ### 5.4 共用元件
@@ -245,6 +256,7 @@ src/
 ```
 
 **依賴方向規則**：
+
 - `classifier → scoring` ✓（之後可依賴）
 - `scoring → classifier` ✗（絕對不可）
 - `components/* → lib/*` ✓
@@ -294,6 +306,7 @@ UI 視覺回歸測試。
 ## 8. 非目標（Out of Scope）
 
 以下 Phase 2 刻意不做，留待後續：
+
 - 裝備標籤規則引擎（Phase 2.5，僅預留 API）
 - 帽/衣/鞋/飾/武器 的排行與比較（模組已可擴展，但 Phase 2 不啟用）
 - Pareto frontier 散點圖
@@ -306,19 +319,20 @@ UI 視覺回歸測試。
 
 ## 9. 風險與緩解
 
-| 風險 | 緩解 |
-|---|---|
-| Client 端資料量（~15-25 KB per type）在慢網路下首載偏慢 | Server 端欄位 trim，且只在切換 type 時重抓 |
-| 權重拖動造成重排行計算卡頓（O(N) N=400） | 純乘加運算輕量，不擔心；若出現可加 `useDeferredValue` |
-| localStorage 在無痕模式拋錯 | `use-*` hook 內 try/catch 降級為純 in-memory state |
-| URL 過長（7 流派權重全塞 custom） | 只在 `preset=custom` 時塞 weights；預設流派僅帶 preset 名 |
-| 未來加入新裝備類型時 preset 不適用 | Preset 資料模型附 `applicableTypes: string[]`，Phase 2 先全部設為 `['座騎', '背飾']` |
+| 風險                                                    | 緩解                                                                                 |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Client 端資料量（~15-25 KB per type）在慢網路下首載偏慢 | Server 端欄位 trim，且只在切換 type 時重抓                                           |
+| 權重拖動造成重排行計算卡頓（O(N) N=400）                | 純乘加運算輕量，不擔心；若出現可加 `useDeferredValue`                                |
+| localStorage 在無痕模式拋錯                             | `use-*` hook 內 try/catch 降級為純 in-memory state                                   |
+| URL 過長（7 流派權重全塞 custom）                       | 只在 `preset=custom` 時塞 weights；預設流派僅帶 preset 名                            |
+| 未來加入新裝備類型時 preset 不適用                      | Preset 資料模型附 `applicableTypes: string[]`，Phase 2 先全部設為 `['座騎', '背飾']` |
 
 ---
 
 ## 10. 交付檢核
 
 Phase 2 可視為完成，當：
+
 - [ ] `/ranking` 與 `/compare` 上線並可從 navbar 進入
 - [ ] 物品詳情頁「加入比較」+ bar chart 生效
 - [ ] 7 流派加權測試通過

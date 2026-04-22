@@ -6,13 +6,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export function ItemPagination({
-  page,
-  totalPages,
-}: {
-  page: number;
-  totalPages: number;
-}) {
+export function ItemPagination({ page, totalPages }: { page: number; totalPages: number }) {
   const searchParams = useSearchParams();
 
   function hrefForPage(p: number): string {

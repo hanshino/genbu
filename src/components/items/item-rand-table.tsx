@@ -36,9 +36,7 @@ export function ItemRandTable({ rands }: { rands: ItemRand[] }) {
                   <TableCell>{label}</TableCell>
                   <TableCell className="text-right font-mono">{row.min}</TableCell>
                   <TableCell className="text-right font-mono">{row.max}</TableCell>
-                  <TableCell className="text-right font-mono">
-                    {probability.toFixed(1)}%
-                  </TableCell>
+                  <TableCell className="text-right font-mono">{probability.toFixed(1)}%</TableCell>
                 </TableRow>
               );
             })}

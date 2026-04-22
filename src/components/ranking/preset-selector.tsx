@@ -24,10 +24,7 @@ interface Props {
 }
 
 export function PresetSelector({ value, onChange, customPresets }: Props) {
-  const currentValue =
-    value.kind === "ad-hoc"
-      ? "ad-hoc"
-      : `${value.kind}:${value.id}`;
+  const currentValue = value.kind === "ad-hoc" ? "ad-hoc" : `${value.kind}:${value.id}`;
 
   return (
     <div className="space-y-2">

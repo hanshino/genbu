@@ -45,11 +45,7 @@ export function CompareBreadcrumb({ activeType }: Props) {
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink
-            render={
-              <Link href={fallbackHref} onClick={handleClick} />
-            }
-          >
+          <BreadcrumbLink render={<Link href={fallbackHref} onClick={handleClick} />}>
             排行榜
           </BreadcrumbLink>
         </BreadcrumbItem>

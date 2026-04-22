@@ -15,6 +15,7 @@
 ## File Map
 
 **Created:**
+
 - `vitest.config.ts`, `vitest.setup.ts`
 - `src/lib/scoring/types.ts`
 - `src/lib/scoring/attribute-alias.ts`
@@ -46,6 +47,7 @@
 - Plus `__tests__` companion files for each scoring module.
 
 **Modified:**
+
 - `package.json` — add vitest, testing-library
 - `src/lib/queries/items.ts` — add `getItemsByType`, `getItemsByIds`, `getItemRandsByIds`
 - `src/components/layout/navbar.tsx` — add Ranking/Compare links
@@ -56,6 +58,7 @@
 ## Task 1: Add test infrastructure (vitest)
 
 **Files:**
+
 - Create: `vitest.config.ts`
 - Create: `vitest.setup.ts`
 - Modify: `package.json`
@@ -63,6 +66,7 @@
 - [ ] **Step 1: Install vitest and testing-library**
 
 Run:
+
 ```bash
 npm install -D vitest @vitejs/plugin-react jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event
 ```
@@ -99,6 +103,7 @@ import "@testing-library/jest-dom/vitest";
 - [ ] **Step 4: Add scripts to `package.json`**
 
 Edit `package.json` scripts section to add:
+
 ```json
 "test": "vitest run",
 "test:watch": "vitest"
@@ -107,10 +112,13 @@ Edit `package.json` scripts section to add:
 - [ ] **Step 5: Smoke-test the runner**
 
 Create `src/lib/__tests__/sanity.test.ts`:
+
 ```ts
 import { describe, it, expect } from "vitest";
 describe("vitest sanity", () => {
-  it("runs", () => { expect(1 + 1).toBe(2); });
+  it("runs", () => {
+    expect(1 + 1).toBe(2);
+  });
 });
 ```
 
@@ -131,11 +139,13 @@ git commit -m "chore: add vitest + testing-library for phase 2"
 ## Task 2: Scoring types
 
 **Files:**
+
 - Create: `src/lib/scoring/types.ts`
 
 - [ ] **Step 1: Write the type module**
 
 Create `src/lib/scoring/types.ts`:
+
 ```ts
 import type { Item, ItemRand } from "@/lib/types/item";
 
@@ -154,8 +164,8 @@ export interface Preset {
 
 export interface ScoredItem {
   item: Item;
-  baseScore: number;          // fixed-attr-only score
-  score: number;              // baseScore + random expected contribution
+  baseScore: number; // fixed-attr-only score
+  score: number; // baseScore + random expected contribution
   expectedRandom: Record<string, number>; // per-attribute expected value
 }
 
@@ -178,12 +188,14 @@ git commit -m "feat(scoring): add type definitions for Weights, Preset, ScoredIt
 ## Task 3: Attribute alias reverse lookup (TDD)
 
 **Files:**
+
 - Create: `src/lib/scoring/attribute-alias.ts`
 - Test: `src/lib/scoring/__tests__/attribute-alias.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 Create `src/lib/scoring/__tests__/attribute-alias.test.ts`:
+
 ```ts
 import { describe, it, expect } from "vitest";
 import { labelToKey, knownRandLabels } from "../attribute-alias";
@@ -192,18 +204,37 @@ describe("labelToKey", () => {
   it("resolves every rand attribute label observed in production data", () => {
     // Labels actually present in item_rand for 座騎+背飾 (measured from DB)
     const observed = [
-      "內力", "內勁", "外功", "技巧", "根骨", "物攻",
-      "玄學", "真氣", "護勁", "身法", "重擊", "防禦", "體力",
+      "內力",
+      "內勁",
+      "外功",
+      "技巧",
+      "根骨",
+      "物攻",
+      "玄學",
+      "真氣",
+      "護勁",
+      "身法",
+      "重擊",
+      "防禦",
+      "體力",
     ];
     for (const label of observed) {
       expect(labelToKey(label), `${label} should resolve`).not.toBeNull();
     }
   });
 
-  it("maps 外功 → str", () => { expect(labelToKey("外功")).toBe("str"); });
-  it("maps 技巧 → dex", () => { expect(labelToKey("技巧")).toBe("dex"); });
-  it("maps 內力 → pow", () => { expect(labelToKey("內力")).toBe("pow"); });
-  it("maps 物攻 → atk", () => { expect(labelToKey("物攻")).toBe("atk"); });
+  it("maps 外功 → str", () => {
+    expect(labelToKey("外功")).toBe("str");
+  });
+  it("maps 技巧 → dex", () => {
+    expect(labelToKey("技巧")).toBe("dex");
+  });
+  it("maps 內力 → pow", () => {
+    expect(labelToKey("內力")).toBe("pow");
+  });
+  it("maps 物攻 → atk", () => {
+    expect(labelToKey("物攻")).toBe("atk");
+  });
   it("returns null for unknown labels", () => {
     expect(labelToKey("中二屬性")).toBeNull();
   });
@@ -223,12 +254,13 @@ Expected: FAIL — module does not exist.
 - [ ] **Step 3: Implement `attribute-alias.ts`**
 
 Create `src/lib/scoring/attribute-alias.ts`:
+
 ```ts
 import { itemAttributeNames } from "@/lib/constants/i18n";
 
 // Reverse map: 中文標籤 → DB column key
 const labelToKeyMap: ReadonlyMap<string, string> = new Map(
-  Object.entries(itemAttributeNames).map(([key, label]) => [label, key])
+  Object.entries(itemAttributeNames).map(([key, label]) => [label, key]),
 );
 
 export function labelToKey(label: string): string | null {
@@ -255,12 +287,14 @@ git commit -m "feat(scoring): reverse lookup for item_rand attribute labels"
 ## Task 4: Random-attribute expected value (TDD)
 
 **Files:**
+
 - Create: `src/lib/scoring/random-expected.ts`
 - Test: `src/lib/scoring/__tests__/random-expected.test.ts`
 
 - [ ] **Step 1: Write failing tests**
 
 Create `src/lib/scoring/__tests__/random-expected.test.ts`:
+
 ```ts
 import { describe, it, expect } from "vitest";
 import { expectedRandom } from "../random-expected";
@@ -283,10 +317,7 @@ describe("expectedRandom", () => {
     // From spec §3.2: 外功 with (3~5 @ rate 970000) and (6~6 @ rate 30000)
     // totalRate = 1_000_000
     // E[str] = 4 * 0.97 + 6 * 0.03 = 3.88 + 0.18 = 4.06
-    const rands = [
-      mkRand("外功", 3, 5, 970000),
-      mkRand("外功", 6, 6, 30000),
-    ];
+    const rands = [mkRand("外功", 3, 5, 970000), mkRand("外功", 6, 6, 30000)];
     const e = expectedRandom(rands);
     expect(e.str).toBeCloseTo(4.06, 4);
   });
@@ -295,8 +326,8 @@ describe("expectedRandom", () => {
     // item has both 外功 and 技巧 random pools; each is guaranteed for this
     // item (it rolls one of each), so totalRate spans both attributes.
     const rands = [
-      mkRand("外功", 2, 4, 500000),   // E[str contribution] = 3 * 0.5 = 1.5
-      mkRand("技巧", 1, 3, 500000),   // E[dex contribution] = 2 * 0.5 = 1.0
+      mkRand("外功", 2, 4, 500000), // E[str contribution] = 3 * 0.5 = 1.5
+      mkRand("技巧", 1, 3, 500000), // E[dex contribution] = 2 * 0.5 = 1.0
     ];
     const e = expectedRandom(rands);
     expect(e.str).toBeCloseTo(1.5, 4);
@@ -304,10 +335,7 @@ describe("expectedRandom", () => {
   });
 
   it("ignores unknown attribute labels (does not throw)", () => {
-    const rands = [
-      mkRand("外功", 1, 3, 500000),
-      mkRand("虛構屬性", 1, 3, 500000),
-    ];
+    const rands = [mkRand("外功", 1, 3, 500000), mkRand("虛構屬性", 1, 3, 500000)];
     const e = expectedRandom(rands);
     expect(e.str).toBeCloseTo(2 * 0.5, 4);
     // Unknown label contributes nothing to output keys.
@@ -329,6 +357,7 @@ Expected: FAIL — module does not exist.
 - [ ] **Step 3: Implement `random-expected.ts`**
 
 Create `src/lib/scoring/random-expected.ts`:
+
 ```ts
 import type { ItemRand } from "@/lib/types/item";
 import { labelToKey } from "./attribute-alias";
@@ -374,12 +403,14 @@ git commit -m "feat(scoring): compute rate-weighted random attribute expectation
 ## Task 5: Score function (TDD)
 
 **Files:**
+
 - Create: `src/lib/scoring/score.ts`
 - Test: `src/lib/scoring/__tests__/score.test.ts`
 
 - [ ] **Step 1: Write failing tests**
 
 Create `src/lib/scoring/__tests__/score.test.ts`:
+
 ```ts
 import { describe, it, expect } from "vitest";
 import { scoreItem } from "../score";
@@ -388,13 +419,43 @@ import type { Item, ItemRand } from "@/lib/types/item";
 // Helper: build an Item with only the fields that matter, zero for others
 function mkItem(partial: Partial<Item>): Item {
   const base: Item = {
-    id: 1, name: "T", note: null, type: "座騎", summary: null,
-    level: 80, weight: 0, hp: 0, mp: 0, str: 0, pow: 0, vit: 0,
-    dex: 0, agi: 0, wis: 0, atk: 0, matk: 0, def: 0, mdef: 0,
-    dodge: 0, uncanny_dodge: 0, critical: 0, hit: 0, speed: 0,
-    fire: 0, water: 0, thunder: 0, tree: 0, freeze: 0,
-    min_damage: 0, max_damage: 0, min_pdamage: 0, max_pdamage: 0,
-    picture: 0, icon: 0, value: 0, durability: 0,
+    id: 1,
+    name: "T",
+    note: null,
+    type: "座騎",
+    summary: null,
+    level: 80,
+    weight: 0,
+    hp: 0,
+    mp: 0,
+    str: 0,
+    pow: 0,
+    vit: 0,
+    dex: 0,
+    agi: 0,
+    wis: 0,
+    atk: 0,
+    matk: 0,
+    def: 0,
+    mdef: 0,
+    dodge: 0,
+    uncanny_dodge: 0,
+    critical: 0,
+    hit: 0,
+    speed: 0,
+    fire: 0,
+    water: 0,
+    thunder: 0,
+    tree: 0,
+    freeze: 0,
+    min_damage: 0,
+    max_damage: 0,
+    min_pdamage: 0,
+    max_pdamage: 0,
+    picture: 0,
+    icon: 0,
+    value: 0,
+    durability: 0,
   };
   return { ...base, ...partial };
 }
@@ -454,6 +515,7 @@ Expected: FAIL — module does not exist.
 - [ ] **Step 3: Implement `score.ts`**
 
 Create `src/lib/scoring/score.ts`:
+
 ```ts
 import type { Item, ItemRand } from "@/lib/types/item";
 import type { ScoredItem, Weights } from "./types";
@@ -464,11 +526,7 @@ import { expectedRandom } from "./random-expected";
  * random-attribute expectations. Weight keys missing from the item are
  * ignored. Missing keys in weights contribute 0 (no weight).
  */
-export function scoreItem(
-  item: Item,
-  rands: readonly ItemRand[],
-  weights: Weights
-): ScoredItem {
+export function scoreItem(item: Item, rands: readonly ItemRand[], weights: Weights): ScoredItem {
   const asRecord = item as unknown as Record<string, number | string | null>;
   const expected = expectedRandom(rands);
 
@@ -502,6 +560,7 @@ git commit -m "feat(scoring): scoreItem combines fixed attributes with random ex
 ## Task 6: 7 preset playstyles + parity with LINE bot
 
 **Files:**
+
 - Create: `src/lib/scoring/presets.ts`
 - Test: `src/lib/scoring/__tests__/presets.test.ts`
 - Create: `src/lib/scoring/index.ts`
@@ -509,6 +568,7 @@ git commit -m "feat(scoring): scoreItem combines fixed attributes with random ex
 - [ ] **Step 1: Implement presets**
 
 Create `src/lib/scoring/presets.ts`:
+
 ```ts
 import type { Preset } from "./types";
 
@@ -564,6 +624,7 @@ export function getPresetByLabel(label: string): Preset | null {
 - [ ] **Step 2: Write parity test against LINE bot config**
 
 Create `src/lib/scoring/__tests__/presets.test.ts`:
+
 ```ts
 import { describe, it, expect } from "vitest";
 import { presets, getPresetById, getPresetByLabel } from "../presets";
@@ -571,35 +632,80 @@ import { presets, getPresetById, getPresetByLabel } from "../presets";
 // Snapshot of LINE bot's weighted.config.js at the time of porting
 // (../tthol-line-bot/src/configs/weighted.config.js).
 const lineBotConfig = [
-  { type: "純玄系列", params: [
-    { key: "wis", value: 7 }, { key: "dex", value: 3 }, { key: "hit", value: 1 },
-    { key: "def", value: 0.5 }, { key: "mdef", value: 0.25 },
-  ]},
-  { type: "純外系列", params: [
-    { key: "str", value: 11 }, { key: "atk", value: 1 }, { key: "dex", value: 3 },
-    { key: "hit", value: 1 }, { key: "def", value: 0.5 }, { key: "mdef", value: 0.5 },
-  ]},
-  { type: "純內系列", params: [
-    { key: "pow", value: 9 }, { key: "matk", value: 1 }, { key: "dex", value: 3 },
-    { key: "hit", value: 1 }, { key: "def", value: 0.5 }, { key: "mdef", value: 0.5 },
-  ]},
-  { type: "玄內系列", params: [
-    { key: "wis", value: 7 }, { key: "pow", value: 5 }, { key: "matk", value: 1 },
-    { key: "dex", value: 3 }, { key: "hit", value: 1 }, { key: "def", value: 0.5 },
-    { key: "mdef", value: 0.25 },
-  ]},
-  { type: "玄外系列", params: [
-    { key: "wis", value: 7 }, { key: "str", value: 5 }, { key: "atk", value: 1 },
-    { key: "dex", value: 3 }, { key: "hit", value: 1 }, { key: "def", value: 0.5 },
-    { key: "mdef", value: 0.5 },
-  ]},
-  { type: "爆刀", params: [
-    { key: "agi", value: 7 }, { key: "str", value: 7 }, { key: "critical", value: 5 },
-    { key: "def", value: 0.75 }, { key: "mdef", value: 0.75 },
-  ]},
-  { type: "手甲", params: [
-    { key: "dex", value: 15 }, { key: "hit", value: 5 }, { key: "atk", value: 7 },
-  ]},
+  {
+    type: "純玄系列",
+    params: [
+      { key: "wis", value: 7 },
+      { key: "dex", value: 3 },
+      { key: "hit", value: 1 },
+      { key: "def", value: 0.5 },
+      { key: "mdef", value: 0.25 },
+    ],
+  },
+  {
+    type: "純外系列",
+    params: [
+      { key: "str", value: 11 },
+      { key: "atk", value: 1 },
+      { key: "dex", value: 3 },
+      { key: "hit", value: 1 },
+      { key: "def", value: 0.5 },
+      { key: "mdef", value: 0.5 },
+    ],
+  },
+  {
+    type: "純內系列",
+    params: [
+      { key: "pow", value: 9 },
+      { key: "matk", value: 1 },
+      { key: "dex", value: 3 },
+      { key: "hit", value: 1 },
+      { key: "def", value: 0.5 },
+      { key: "mdef", value: 0.5 },
+    ],
+  },
+  {
+    type: "玄內系列",
+    params: [
+      { key: "wis", value: 7 },
+      { key: "pow", value: 5 },
+      { key: "matk", value: 1 },
+      { key: "dex", value: 3 },
+      { key: "hit", value: 1 },
+      { key: "def", value: 0.5 },
+      { key: "mdef", value: 0.25 },
+    ],
+  },
+  {
+    type: "玄外系列",
+    params: [
+      { key: "wis", value: 7 },
+      { key: "str", value: 5 },
+      { key: "atk", value: 1 },
+      { key: "dex", value: 3 },
+      { key: "hit", value: 1 },
+      { key: "def", value: 0.5 },
+      { key: "mdef", value: 0.5 },
+    ],
+  },
+  {
+    type: "爆刀",
+    params: [
+      { key: "agi", value: 7 },
+      { key: "str", value: 7 },
+      { key: "critical", value: 5 },
+      { key: "def", value: 0.75 },
+      { key: "mdef", value: 0.75 },
+    ],
+  },
+  {
+    type: "手甲",
+    params: [
+      { key: "dex", value: 15 },
+      { key: "hit", value: 5 },
+      { key: "atk", value: 7 },
+    ],
+  },
 ];
 
 describe("presets parity with LINE bot weighted.config.js", () => {
@@ -639,6 +745,7 @@ Expected: PASS (7 parity cases + 3 lookup cases).
 - [ ] **Step 4: Create scoring barrel export**
 
 Create `src/lib/scoring/index.ts`:
+
 ```ts
 export * from "./types";
 export * from "./score";
@@ -659,6 +766,7 @@ git commit -m "feat(scoring): 7 preset playstyles ported from LINE bot with pari
 ## Task 7: Classifier stub (Phase 2.5 placeholder)
 
 **Files:**
+
 - Create: `src/lib/classifier/types.ts`
 - Create: `src/lib/classifier/index.ts`
 - Test: `src/lib/classifier/__tests__/index.test.ts`
@@ -666,6 +774,7 @@ git commit -m "feat(scoring): 7 preset playstyles ported from LINE bot with pari
 - [ ] **Step 1: Define types**
 
 Create `src/lib/classifier/types.ts`:
+
 ```ts
 import type { Item, ItemRand } from "@/lib/types/item";
 
@@ -689,6 +798,7 @@ export interface ClassifierInput {
 - [ ] **Step 2: Implement empty classifier with placeholder test**
 
 Create `src/lib/classifier/index.ts`:
+
 ```ts
 import type { ClassifierInput, Tag } from "./types";
 
@@ -703,6 +813,7 @@ export function classify(_input: ClassifierInput): Tag[] {
 ```
 
 Create `src/lib/classifier/__tests__/index.test.ts`:
+
 ```ts
 import { describe, it, expect } from "vitest";
 import { classify } from "../index";
@@ -735,6 +846,7 @@ git commit -m "feat(classifier): stub module reserving Phase 2.5 tag API"
 ## Task 8: Extend item queries
 
 **Files:**
+
 - Modify: `src/lib/queries/items.ts`
 
 Server-side batch queries for the ranking and compare pages. The ranking page needs a trimmed item payload (drop `picture`, `icon`, `summary`, `note`, `durability`, `value`) to keep the wire size low.
@@ -742,18 +854,43 @@ Server-side batch queries for the ranking and compare pages. The ranking page ne
 - [ ] **Step 1: Add trimmed payload type**
 
 Open `src/lib/queries/items.ts` and add at the top (after existing imports):
+
 ```ts
 // Columns required by ranking/compare UI: identity + level + all numeric
 // attributes used in scoring/display. Excludes picture/icon/summary/note/
 // durability/value to reduce payload size.
 export const RANKING_ITEM_COLUMNS = [
-  "id", "name", "type", "level", "weight",
-  "hp", "mp",
-  "str", "pow", "vit", "dex", "agi", "wis",
-  "atk", "matk", "def", "mdef",
-  "dodge", "uncanny_dodge", "critical", "hit", "speed",
-  "fire", "water", "thunder", "tree", "freeze",
-  "min_damage", "max_damage", "min_pdamage", "max_pdamage",
+  "id",
+  "name",
+  "type",
+  "level",
+  "weight",
+  "hp",
+  "mp",
+  "str",
+  "pow",
+  "vit",
+  "dex",
+  "agi",
+  "wis",
+  "atk",
+  "matk",
+  "def",
+  "mdef",
+  "dodge",
+  "uncanny_dodge",
+  "critical",
+  "hit",
+  "speed",
+  "fire",
+  "water",
+  "thunder",
+  "tree",
+  "freeze",
+  "min_damage",
+  "max_damage",
+  "min_pdamage",
+  "max_pdamage",
 ] as const;
 
 export type RankingItem = Pick<Item, (typeof RANKING_ITEM_COLUMNS)[number]>;
@@ -762,6 +899,7 @@ export type RankingItem = Pick<Item, (typeof RANKING_ITEM_COLUMNS)[number]>;
 - [ ] **Step 2: Add `getItemsByType`**
 
 Append to the same file:
+
 ```ts
 export function getItemsByType(type: string): RankingItem[] {
   const db = getDb();
@@ -779,9 +917,7 @@ export function getItemsByIds(ids: readonly number[]): Item[] {
   if (ids.length === 0) return [];
   const db = getDb();
   const placeholders = ids.map(() => "?").join(",");
-  return db
-    .prepare(`SELECT * FROM items WHERE id IN (${placeholders})`)
-    .all(...ids) as Item[];
+  return db.prepare(`SELECT * FROM items WHERE id IN (${placeholders})`).all(...ids) as Item[];
 }
 
 export function getItemRandsByIds(ids: readonly number[]): ItemRand[] {
@@ -798,6 +934,7 @@ export function getItemRandsByIds(ids: readonly number[]): ItemRand[] {
 - [ ] **Step 4: Smoke-test in a unit test**
 
 Create `src/lib/queries/__tests__/items-phase2.test.ts`:
+
 ```ts
 import { describe, it, expect } from "vitest";
 import { getItemsByType, getItemsByIds, getItemRandsByIds } from "../items";
@@ -807,8 +944,8 @@ describe("getItemsByType", () => {
     const rows = getItemsByType("座騎");
     expect(rows.length).toBeGreaterThan(0);
     const sample = rows[0] as Record<string, unknown>;
-    expect(sample.picture).toBeUndefined();   // trimmed
-    expect(sample.summary).toBeUndefined();   // trimmed
+    expect(sample.picture).toBeUndefined(); // trimmed
+    expect(sample.summary).toBeUndefined(); // trimmed
     expect(typeof sample.str).toBe("number"); // kept
   });
 });
@@ -850,6 +987,7 @@ git commit -m "feat(queries): trimmed getItemsByType + batch getItemsByIds/getIt
 ## Task 9: localStorage hooks
 
 **Files:**
+
 - Create: `src/lib/hooks/use-compare-tray.ts`
 - Create: `src/lib/hooks/use-custom-presets.ts`
 - Test: `src/lib/hooks/__tests__/use-compare-tray.test.tsx`
@@ -860,6 +998,7 @@ Both hooks gracefully degrade when `localStorage` is unavailable (private mode /
 - [ ] **Step 1: Implement `use-compare-tray`**
 
 Create `src/lib/hooks/use-compare-tray.ts`:
+
 ```ts
 "use client";
 
@@ -911,28 +1050,22 @@ export function useCompareTray(): CompareTray {
     writeStorage(next);
   }, []);
 
-  const add = useCallback(
-    (id: number) => {
-      setIds((prev) => {
-        if (prev.includes(id) || prev.length >= MAX_ITEMS) return prev;
-        const next = [...prev, id];
-        writeStorage(next);
-        return next;
-      });
-    },
-    []
-  );
+  const add = useCallback((id: number) => {
+    setIds((prev) => {
+      if (prev.includes(id) || prev.length >= MAX_ITEMS) return prev;
+      const next = [...prev, id];
+      writeStorage(next);
+      return next;
+    });
+  }, []);
 
-  const remove = useCallback(
-    (id: number) => {
-      setIds((prev) => {
-        const next = prev.filter((x) => x !== id);
-        writeStorage(next);
-        return next;
-      });
-    },
-    []
-  );
+  const remove = useCallback((id: number) => {
+    setIds((prev) => {
+      const next = prev.filter((x) => x !== id);
+      writeStorage(next);
+      return next;
+    });
+  }, []);
 
   const clear = useCallback(() => commit([]), [commit]);
   const has = useCallback((id: number) => ids.includes(id), [ids]);
@@ -946,6 +1079,7 @@ export { MAX_ITEMS as COMPARE_TRAY_MAX };
 - [ ] **Step 2: Write test for `use-compare-tray`**
 
 Create `src/lib/hooks/__tests__/use-compare-tray.test.tsx`:
+
 ```tsx
 import { describe, it, expect, beforeEach } from "vitest";
 import { act, renderHook } from "@testing-library/react";
@@ -994,6 +1128,7 @@ describe("useCompareTray", () => {
 - [ ] **Step 3: Implement `use-custom-presets`**
 
 Create `src/lib/hooks/use-custom-presets.ts`:
+
 ```ts
 "use client";
 
@@ -1003,9 +1138,9 @@ import type { Weights } from "@/lib/scoring";
 const STORAGE_KEY = "genbu.ranking.customPresets";
 
 export interface CustomPreset {
-  id: string;             // generated: `${Date.now()}-${crypto.random}` or name-based
+  id: string; // generated: `${Date.now()}-${crypto.random}` or name-based
   name: string;
-  type: string;           // 座騎 | 背飾 | ...
+  type: string; // 座騎 | 背飾 | ...
   weights: Weights;
 }
 
@@ -1018,11 +1153,12 @@ function read(): CustomPreset[] {
     if (!Array.isArray(parsed)) return [];
     return parsed.filter(
       (p): p is CustomPreset =>
-        typeof p === "object" && p !== null &&
+        typeof p === "object" &&
+        p !== null &&
         typeof (p as CustomPreset).id === "string" &&
         typeof (p as CustomPreset).name === "string" &&
         typeof (p as CustomPreset).type === "string" &&
-        typeof (p as CustomPreset).weights === "object"
+        typeof (p as CustomPreset).weights === "object",
     );
   } catch {
     return [];
@@ -1067,6 +1203,7 @@ export function useCustomPresets() {
 - [ ] **Step 4: Write test for `use-custom-presets`**
 
 Create `src/lib/hooks/__tests__/use-custom-presets.test.tsx`:
+
 ```tsx
 import { describe, it, expect, beforeEach } from "vitest";
 import { act, renderHook } from "@testing-library/react";
@@ -1082,7 +1219,7 @@ describe("useCustomPresets", () => {
         name: "My 外功",
         type: "座騎",
         weights: { str: 11, atk: 1 },
-      })
+      }),
     );
     expect(result.current.presets).toHaveLength(1);
     const { id } = result.current.presets[0];
@@ -1115,6 +1252,7 @@ git commit -m "feat(hooks): localStorage-backed compare tray + custom presets"
 ## Task 10: `<StatBarChart>` and `<ItemTags>` shared components
 
 **Files:**
+
 - Create: `src/components/items/stat-bar-chart.tsx`
 - Create: `src/components/items/item-tags.tsx`
 
@@ -1123,6 +1261,7 @@ git commit -m "feat(hooks): localStorage-backed compare tray + custom presets"
 A dependency-free horizontal bar chart. Each row shows attribute label, numeric value, and a bar whose width is `value / maxValue * 100%`.
 
 Create `src/components/items/stat-bar-chart.tsx`:
+
 ```tsx
 import { itemAttributeNames } from "@/lib/constants/i18n";
 
@@ -1134,9 +1273,19 @@ export interface StatBarChartProps {
 }
 
 const DEFAULT_KEYS = [
-  "str", "pow", "wis", "agi", "dex", "vit",
-  "atk", "matk", "def", "mdef",
-  "hit", "dodge", "critical",
+  "str",
+  "pow",
+  "wis",
+  "agi",
+  "dex",
+  "vit",
+  "atk",
+  "matk",
+  "def",
+  "mdef",
+  "hit",
+  "dodge",
+  "critical",
 ] as const;
 
 export function StatBarChart({ values, maxValues, keys = DEFAULT_KEYS }: StatBarChartProps) {
@@ -1176,6 +1325,7 @@ export function StatBarChart({ values, maxValues, keys = DEFAULT_KEYS }: StatBar
 - [ ] **Step 2: Implement `<ItemTags>` placeholder**
 
 Create `src/components/items/item-tags.tsx`:
+
 ```tsx
 import { classify } from "@/lib/classifier";
 import type { Item, ItemRand } from "@/lib/types/item";
@@ -1215,11 +1365,13 @@ git commit -m "feat(items): shared StatBarChart + ItemTags placeholder"
 ## Task 11: Configs re-export
 
 **Files:**
+
 - Create: `src/configs/weighted.ts`
 
 - [ ] **Step 1: Write the re-export**
 
 Create `src/configs/weighted.ts`:
+
 ```ts
 // CLAUDE.md documents this directory for weighted formulas & constants.
 // The canonical source lives in src/lib/scoring/presets.ts; this module
@@ -1240,6 +1392,7 @@ git commit -m "chore(configs): re-export weighted presets for discoverability"
 ## Task 12: Navbar — add Ranking + Compare links
 
 **Files:**
+
 - Modify: `src/components/layout/navbar.tsx`
 
 - [ ] **Step 1: Add entries**
@@ -1272,6 +1425,7 @@ git commit -m "feat(nav): add Ranking and Compare links"
 ## Task 13: Ranking page shell (Server Component)
 
 **Files:**
+
 - Create: `src/app/ranking/page.tsx`
 
 At this stage the page renders a placeholder client component so we can verify type=座騎 data fetches correctly before building the full filter UI.
@@ -1279,6 +1433,7 @@ At this stage the page renders a placeholder client component so we can verify t
 - [ ] **Step 1: Write the Server Component**
 
 Create `src/app/ranking/page.tsx`:
+
 ```tsx
 import type { Metadata } from "next";
 import { getItemsByType, getItemRandsByIds, type RankingItem } from "@/lib/queries/items";
@@ -1326,6 +1481,7 @@ export default async function RankingPage({ searchParams }: Props) {
 - [ ] **Step 2: Placeholder `ranking-client.tsx`**
 
 Create `src/app/ranking/ranking-client.tsx`:
+
 ```tsx
 "use client";
 
@@ -1367,6 +1523,7 @@ git commit -m "feat(ranking): SSR shell with type routing and data plumbing"
 ## Task 14: `<PresetSelector>` component
 
 **Files:**
+
 - Create: `src/components/ranking/preset-selector.tsx`
 
 Dropdown/radio selector for the 7 presets + 自訂 + 我的配方 (names from `useCustomPresets`).
@@ -1374,6 +1531,7 @@ Dropdown/radio selector for the 7 presets + 自訂 + 我的配方 (names from `u
 - [ ] **Step 1: Implement**
 
 Create `src/components/ranking/preset-selector.tsx`:
+
 ```tsx
 "use client";
 
@@ -1392,10 +1550,7 @@ interface Props {
 }
 
 export function PresetSelector({ value, onChange, customPresets }: Props) {
-  const currentValue =
-    value.kind === "ad-hoc"
-      ? "ad-hoc"
-      : `${value.kind}:${value.id}`;
+  const currentValue = value.kind === "ad-hoc" ? "ad-hoc" : `${value.kind}:${value.id}`;
 
   return (
     <div className="space-y-2">
@@ -1412,13 +1567,17 @@ export function PresetSelector({ value, onChange, customPresets }: Props) {
       >
         <optgroup label="預設">
           {presets.map((p) => (
-            <option key={p.id} value={`builtin:${p.id}`}>{p.label}</option>
+            <option key={p.id} value={`builtin:${p.id}`}>
+              {p.label}
+            </option>
           ))}
         </optgroup>
         {customPresets.length > 0 && (
           <optgroup label="我的配方">
             {customPresets.map((p) => (
-              <option key={p.id} value={`custom:${p.id}`}>{p.name}</option>
+              <option key={p.id} value={`custom:${p.id}`}>
+                {p.name}
+              </option>
             ))}
           </optgroup>
         )}
@@ -1441,6 +1600,7 @@ git commit -m "feat(ranking): PresetSelector with builtin + custom groups"
 ## Task 15: `<WeightEditor>` component
 
 **Files:**
+
 - Create: `src/components/ranking/weight-editor.tsx`
 
 Editable table of attribute → weight pairs. Each row has an attribute dropdown (restricted to scoreable keys) and a numeric input. User can add/remove rows.
@@ -1448,6 +1608,7 @@ Editable table of attribute → weight pairs. Each row has an attribute dropdown
 - [ ] **Step 1: Implement**
 
 Create `src/components/ranking/weight-editor.tsx`:
+
 ```tsx
 "use client";
 
@@ -1459,15 +1620,38 @@ import { Button } from "@/components/ui/button";
 // Attributes that make sense as scoring inputs. Excludes metadata (id/name/type)
 // and non-stat fields (weight/value/durability/picture/icon).
 const SCOREABLE_KEYS = [
-  "hp", "mp",
-  "str", "pow", "vit", "dex", "agi", "wis",
-  "atk", "matk", "def", "mdef",
-  "dodge", "uncanny_dodge", "critical", "hit", "speed",
-  "fire", "water", "thunder", "tree", "freeze",
-  "min_damage", "max_damage", "min_pdamage", "max_pdamage",
+  "hp",
+  "mp",
+  "str",
+  "pow",
+  "vit",
+  "dex",
+  "agi",
+  "wis",
+  "atk",
+  "matk",
+  "def",
+  "mdef",
+  "dodge",
+  "uncanny_dodge",
+  "critical",
+  "hit",
+  "speed",
+  "fire",
+  "water",
+  "thunder",
+  "tree",
+  "freeze",
+  "min_damage",
+  "max_damage",
+  "min_pdamage",
+  "max_pdamage",
 ] as const;
 
-interface Row { key: string; value: number }
+interface Row {
+  key: string;
+  value: number;
+}
 
 interface Props {
   weights: Weights;
@@ -1477,13 +1661,10 @@ interface Props {
 export function WeightEditor({ weights, onChange }: Props) {
   const rows: Row[] = useMemo(
     () => Object.entries(weights).map(([key, value]) => ({ key, value })),
-    [weights]
+    [weights],
   );
 
-  const availableKeys = useMemo(
-    () => SCOREABLE_KEYS.filter((k) => !(k in weights)),
-    [weights]
-  );
+  const availableKeys = useMemo(() => SCOREABLE_KEYS.filter((k) => !(k in weights)), [weights]);
 
   const setRowKey = (oldKey: string, newKey: string) => {
     if (oldKey === newKey) return;
@@ -1524,9 +1705,7 @@ export function WeightEditor({ weights, onChange }: Props) {
           + 新增屬性
         </Button>
       </div>
-      {rows.length === 0 && (
-        <p className="text-xs text-muted-foreground">尚未設定權重</p>
-      )}
+      {rows.length === 0 && <p className="text-xs text-muted-foreground">尚未設定權重</p>}
       {rows.map((r) => (
         <div key={r.key} className="grid grid-cols-[1fr_5rem_2rem] items-center gap-1.5">
           <select
@@ -1536,7 +1715,9 @@ export function WeightEditor({ weights, onChange }: Props) {
           >
             <option value={r.key}>{itemAttributeNames[r.key] ?? r.key}</option>
             {availableKeys.map((k) => (
-              <option key={k} value={k}>{itemAttributeNames[k] ?? k}</option>
+              <option key={k} value={k}>
+                {itemAttributeNames[k] ?? k}
+              </option>
             ))}
           </select>
           <input
@@ -1579,6 +1760,7 @@ git commit -m "feat(ranking): WeightEditor with scoreable-attribute dropdowns"
 ## Task 16: `<LevelRange>` component
 
 **Files:**
+
 - Create: `src/components/ranking/level-range.tsx`
 
 Dual number input for min/max level (simpler + more precise than a slider for TT players targeting specific breakpoints; can be upgraded later).
@@ -1586,6 +1768,7 @@ Dual number input for min/max level (simpler + more precise than a slider for TT
 - [ ] **Step 1: Implement**
 
 Create `src/components/ranking/level-range.tsx`:
+
 ```tsx
 "use client";
 
@@ -1650,6 +1833,7 @@ git commit -m "feat(ranking): LevelRange dual-input component"
 ## Task 17: `<ThresholdFilters>` component
 
 **Files:**
+
 - Create: `src/components/ranking/threshold-filters.tsx`
 
 "Hard threshold" numeric inputs for `hit / def / mdef / dodge` — leaving an input empty means "no threshold".
@@ -1657,6 +1841,7 @@ git commit -m "feat(ranking): LevelRange dual-input component"
 - [ ] **Step 1: Implement**
 
 Create `src/components/ranking/threshold-filters.tsx`:
+
 ```tsx
 "use client";
 
@@ -1679,9 +1864,7 @@ export function ThresholdFilters({ values, onChange }: Props) {
       <div className="space-y-1.5">
         {THRESHOLD_KEYS.map((k) => (
           <div key={k} className="grid grid-cols-[4rem_1fr] items-center gap-2">
-            <span className="text-xs text-muted-foreground">
-              {itemAttributeNames[k]} ≥
-            </span>
+            <span className="text-xs text-muted-foreground">{itemAttributeNames[k]} ≥</span>
             <input
               type="number"
               inputMode="numeric"
@@ -1718,6 +1901,7 @@ git commit -m "feat(ranking): ThresholdFilters for hit/def/mdef/dodge"
 ## Task 18: `<RankingTable>` component
 
 **Files:**
+
 - Create: `src/components/ranking/ranking-table.tsx`
 
 Renders the scored item list. Columns: rank, name, level, active-preset score (highlighted), each of the 7 preset scores (sortable), actions (詳情 / 加入比較).
@@ -1725,6 +1909,7 @@ Renders the scored item list. Columns: rank, name, level, active-preset score (h
 - [ ] **Step 1: Implement**
 
 Create `src/components/ranking/ranking-table.tsx`:
+
 ```tsx
 "use client";
 
@@ -1787,9 +1972,7 @@ export function RankingTable({
 
   // In compact mode, only show the "current" column and (if a preset is active)
   // that preset's column. Other preset columns are hidden.
-  const visiblePresets = compact
-    ? presets.filter((p) => p.id === activePresetId)
-    : presets;
+  const visiblePresets = compact ? presets.filter((p) => p.id === activePresetId) : presets;
 
   return (
     <div className="space-y-2">
@@ -1898,9 +2081,7 @@ export function RankingTable({
                     <Button
                       size="sm"
                       variant={tray.has(item.id) ? "secondary" : "outline"}
-                      onClick={() =>
-                        tray.has(item.id) ? tray.remove(item.id) : tray.add(item.id)
-                      }
+                      onClick={() => (tray.has(item.id) ? tray.remove(item.id) : tray.add(item.id))}
                       disabled={!tray.has(item.id) && tray.isFull}
                       className="min-h-[44px]"
                     >
@@ -1937,6 +2118,7 @@ git commit -m "feat(ranking): RankingTable with 7-preset score columns and sort"
 ## Task 19: Wire the ranking page together
 
 **Files:**
+
 - Modify: `src/app/ranking/ranking-client.tsx`
 
 Replace the placeholder with the full client implementation: URL-state wiring, preset/custom handling, scoring, threshold filtering, table.
@@ -1944,6 +2126,7 @@ Replace the placeholder with the full client implementation: URL-state wiring, p
 - [ ] **Step 1: Rewrite `ranking-client.tsx`**
 
 Overwrite `src/app/ranking/ranking-client.tsx`:
+
 ```tsx
 "use client";
 
@@ -1951,17 +2134,16 @@ import { useCallback, useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { RankingItem } from "@/lib/queries/items";
 import type { ItemRand } from "@/lib/types/item";
-import {
-  scoreItem,
-  presets,
-  getPresetById,
-  type Weights,
-} from "@/lib/scoring";
+import { scoreItem, presets, getPresetById, type Weights } from "@/lib/scoring";
 import { useCustomPresets } from "@/lib/hooks/use-custom-presets";
 import { PresetSelector, type PresetSelection } from "@/components/ranking/preset-selector";
 import { WeightEditor } from "@/components/ranking/weight-editor";
 import { LevelRange } from "@/components/ranking/level-range";
-import { ThresholdFilters, thresholdKeys, type Thresholds } from "@/components/ranking/threshold-filters";
+import {
+  ThresholdFilters,
+  thresholdKeys,
+  type Thresholds,
+} from "@/components/ranking/threshold-filters";
 import { RankingTable, type RankingRow } from "@/components/ranking/ranking-table";
 import { Button } from "@/components/ui/button";
 
@@ -1985,7 +2167,9 @@ function parseWeights(raw: string | null): Weights | null {
 }
 
 function serializeWeights(w: Weights): string {
-  return Object.entries(w).map(([k, v]) => `${k}:${v}`).join(",");
+  return Object.entries(w)
+    .map(([k, v]) => `${k}:${v}`)
+    .join(",");
 }
 
 export function RankingClient({ type, items, rands }: Props) {
@@ -1995,13 +2179,14 @@ export function RankingClient({ type, items, rands }: Props) {
 
   // --- URL → initial state ---------------------------------------------------
   const initialPresetId = search.get("preset") ?? "pure-str";
-  const initialWeights = parseWeights(search.get("weights"))
-    ?? getPresetById(initialPresetId)?.weights
-    ?? presets[0].weights;
+  const initialWeights =
+    parseWeights(search.get("weights")) ??
+    getPresetById(initialPresetId)?.weights ??
+    presets[0].weights;
 
   const [weights, setWeights] = useState<Weights>(initialWeights);
   const [selection, setSelection] = useState<PresetSelection>(
-    getPresetById(initialPresetId) ? { kind: "builtin", id: initialPresetId } : { kind: "ad-hoc" }
+    getPresetById(initialPresetId) ? { kind: "builtin", id: initialPresetId } : { kind: "ad-hoc" },
   );
 
   const levelRange = useMemo(() => {
@@ -2012,12 +2197,8 @@ export function RankingClient({ type, items, rands }: Props) {
     };
   }, [items]);
 
-  const [minLv, setMinLv] = useState<number>(
-    Number(search.get("minLv")) || 50
-  );
-  const [maxLv, setMaxLv] = useState<number>(
-    Number(search.get("maxLv")) || 100
-  );
+  const [minLv, setMinLv] = useState<number>(Number(search.get("minLv")) || 50);
+  const [maxLv, setMaxLv] = useState<number>(Number(search.get("maxLv")) || 100);
 
   const [thresholds, setThresholds] = useState<Thresholds>(() => {
     const out: Thresholds = {};
@@ -2044,7 +2225,7 @@ export function RankingClient({ type, items, rands }: Props) {
         router.replace(`/ranking?${params.toString()}`, { scroll: false });
       });
     },
-    [router, search]
+    [router, search],
   );
 
   const handlePresetChange = (next: PresetSelection) => {
@@ -2134,10 +2315,8 @@ export function RankingClient({ type, items, rands }: Props) {
               size="sm"
               className="flex-1"
               onClick={() =>
-              startTransition(() =>
-                router.replace(`/ranking?type=${encodeURIComponent(t)}`)
-              )
-            }
+                startTransition(() => router.replace(`/ranking?type=${encodeURIComponent(t)}`))
+              }
             >
               {t}
             </Button>
@@ -2204,6 +2383,7 @@ export function RankingClient({ type, items, rands }: Props) {
 - [ ] **Step 2: Visual QA**
 
 Run: `npm run dev` (background), visit `http://localhost:3000/ranking`:
+
 - Default renders with preset `pure-str` (純外) and shows 30 items for 座騎.
 - Toggle 背飾 tab — URL becomes `/ranking?type=背飾`, table repopulates.
 - Change `純外` to `純玄` in PresetSelector — top rows shuffle.
@@ -2231,12 +2411,14 @@ git commit -m "feat(ranking): wire filters, presets, scoring, URL state"
 ## Task 20: Compare page shell (Server Component)
 
 **Files:**
+
 - Create: `src/app/compare/page.tsx`
 - Create: `src/app/compare/compare-client.tsx`
 
 - [ ] **Step 1: Write Server Component**
 
 Create `src/app/compare/page.tsx`:
+
 ```tsx
 import type { Metadata } from "next";
 import { getItemsByIds, getItemRandsByIds } from "@/lib/queries/items";
@@ -2285,6 +2467,7 @@ export default async function ComparePage({ searchParams }: Props) {
 - [ ] **Step 2: Placeholder client**
 
 Create `src/app/compare/compare-client.tsx`:
+
 ```tsx
 "use client";
 
@@ -2323,6 +2506,7 @@ git commit -m "feat(compare): SSR shell with id routing and data plumbing"
 ## Task 21: `<ItemPicker>` component
 
 **Files:**
+
 - Create: `src/components/compare/item-picker.tsx`
 
 Simple combobox: select `type` first (if the tray is empty), then search-as-you-type over that type's items.
@@ -2330,6 +2514,7 @@ Simple combobox: select `type` first (if the tray is empty), then search-as-you-
 - [ ] **Step 1: Implement**
 
 Create `src/components/compare/item-picker.tsx`:
+
 ```tsx
 "use client";
 
@@ -2343,7 +2528,12 @@ interface Props {
   placeholder?: string;
 }
 
-export function ItemPicker({ pool, excludeIds, onPick, placeholder = "搜尋裝備名稱或 ID…" }: Props) {
+export function ItemPicker({
+  pool,
+  excludeIds,
+  onPick,
+  placeholder = "搜尋裝備名稱或 ID…",
+}: Props) {
   const [q, setQ] = useState("");
 
   const trimmed = q.trim();
@@ -2352,10 +2542,7 @@ export function ItemPicker({ pool, excludeIds, onPick, placeholder = "搜尋裝�
     const asNum = Number(trimmed);
     return pool
       .filter((it) => !excludeIds.includes(it.id))
-      .filter((it) =>
-        (Number.isInteger(asNum) && it.id === asNum) ||
-        it.name.includes(trimmed)
-      )
+      .filter((it) => (Number.isInteger(asNum) && it.id === asNum) || it.name.includes(trimmed))
       .slice(0, 10);
   }, [pool, excludeIds, trimmed]);
 
@@ -2418,6 +2605,7 @@ git commit -m "feat(compare): ItemPicker with name/id search"
 ## Task 22: `<CompareMatrix>` component
 
 **Files:**
+
 - Create: `src/components/compare/compare-matrix.tsx`
 
 Attribute rows × items cols. Each row: label, then one cell per item. Per-row, highlight the max value.
@@ -2425,6 +2613,7 @@ Attribute rows × items cols. Each row: label, then one cell per item. Per-row, 
 - [ ] **Step 1: Implement**
 
 Create `src/components/compare/compare-matrix.tsx`:
+
 ```tsx
 "use client";
 
@@ -2472,9 +2661,7 @@ export function CompareMatrix({ items }: Props) {
                     key={items[i].id}
                     className={
                       "px-2 py-1.5 text-right font-mono " +
-                      (v === max && v > 0
-                        ? "bg-primary/10 font-semibold text-primary"
-                        : "")
+                      (v === max && v > 0 ? "bg-primary/10 font-semibold text-primary" : "")
                     }
                   >
                     {v}
@@ -2502,6 +2689,7 @@ git commit -m "feat(compare): CompareMatrix with per-row max highlight"
 ## Task 23: `<ComparePresets>` component
 
 **Files:**
+
 - Create: `src/components/compare/compare-presets.tsx`
 
 7-preset × N-item score matrix.
@@ -2509,6 +2697,7 @@ git commit -m "feat(compare): CompareMatrix with per-row max highlight"
 - [ ] **Step 1: Implement**
 
 Create `src/components/compare/compare-presets.tsx`:
+
 ```tsx
 "use client";
 
@@ -2524,9 +2713,7 @@ export function ComparePresets({ items, randsByItem }: Props) {
   if (items.length === 0) return null;
 
   const rows = presets.map((p) => {
-    const scores = items.map((it) =>
-      scoreItem(it, randsByItem.get(it.id) ?? [], p.weights).score
-    );
+    const scores = items.map((it) => scoreItem(it, randsByItem.get(it.id) ?? [], p.weights).score);
     return { preset: p, scores };
   });
 
@@ -2558,8 +2745,8 @@ export function ComparePresets({ items, randsByItem }: Props) {
                       (s === max && max !== min
                         ? "bg-primary/10 font-semibold text-primary"
                         : s === min && max !== min
-                        ? "text-muted-foreground"
-                        : "")
+                          ? "text-muted-foreground"
+                          : "")
                     }
                   >
                     {Math.round(s)}
@@ -2587,6 +2774,7 @@ git commit -m "feat(compare): ComparePresets with per-preset max/min color"
 ## Task 24: `<CompareBar>` + `<CompareButton>` (tray UI)
 
 **Files:**
+
 - Create: `src/components/items/compare-button.tsx`
 - Create: `src/components/compare/compare-bar.tsx`
 
@@ -2595,6 +2783,7 @@ git commit -m "feat(compare): ComparePresets with per-preset max/min color"
 - [ ] **Step 1: Implement `<CompareButton>`**
 
 Create `src/components/items/compare-button.tsx`:
+
 ```tsx
 "use client";
 
@@ -2626,6 +2815,7 @@ export function CompareButton({ itemId }: Props) {
 - [ ] **Step 2: Implement `<CompareBar>`**
 
 Create `src/components/compare/compare-bar.tsx`:
+
 ```tsx
 "use client";
 
@@ -2653,21 +2843,14 @@ export function CompareBar() {
       aria-label="比較盤"
       className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-full border border-border bg-background/95 px-4 py-2 shadow-lg backdrop-blur flex items-center gap-3 text-sm"
     >
-      <span className="text-muted-foreground">
-        比較盤：{tray.ids.length} 件
-      </span>
+      <span className="text-muted-foreground">比較盤：{tray.ids.length} 件</span>
       <Link
         href={`/compare?ids=${tray.ids.join(",")}`}
         className="min-h-[44px] inline-flex items-center rounded-md bg-primary px-3 py-1 text-primary-foreground text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         去比較 →
       </Link>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={tray.clear}
-        className="min-h-[44px] px-2 text-xs"
-      >
+      <Button variant="ghost" size="sm" onClick={tray.clear} className="min-h-[44px] px-2 text-xs">
         清空
       </Button>
     </div>
@@ -2676,18 +2859,23 @@ export function CompareBar() {
 ```
 
 Add the matching CSS rule in `src/app/globals.css` (append at the bottom):
+
 ```css
-body.has-compare-bar { padding-bottom: 5rem; }
+body.has-compare-bar {
+  padding-bottom: 5rem;
+}
 ```
 
 - [ ] **Step 3: Mount `<CompareBar>` globally**
 
 Edit `src/app/layout.tsx` — add import and render:
+
 ```tsx
 import { CompareBar } from "@/components/compare/compare-bar";
 ```
 
 Inside `<body>`, after `<Footer />`:
+
 ```tsx
 <CompareBar />
 ```
@@ -2708,6 +2896,7 @@ git commit -m "feat(compare): CompareButton + sticky CompareBar tray UI"
 ## Task 25: Wire the compare page
 
 **Files:**
+
 - Modify: `src/app/compare/compare-client.tsx`
 - Modify: `src/app/compare/page.tsx`
 
@@ -2716,6 +2905,7 @@ The compare page needs: the currently-picked items (full `Item` type), their ran
 - [ ] **Step 1: Extend server page to also fetch pool**
 
 Update `src/app/compare/page.tsx` — replace body with:
+
 ```tsx
 import type { Metadata } from "next";
 import { getItemsByIds, getItemRandsByIds, getItemsByType } from "@/lib/queries/items";
@@ -2779,6 +2969,7 @@ export default async function ComparePage({ searchParams }: Props) {
 - [ ] **Step 2: Rewrite `compare-client.tsx`**
 
 Overwrite `src/app/compare/compare-client.tsx`:
+
 ```tsx
 "use client";
 
@@ -2834,7 +3025,7 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
       else params.set("ids", ids.join(","));
       router.replace(`/compare?${params.toString()}`, { scroll: false });
     },
-    [router, search]
+    [router, search],
   );
 
   const handlePick = (picked: RankingItem) => {
@@ -2857,14 +3048,10 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
             key={t}
             variant={t === activeType ? "default" : "outline"}
             size="sm"
-            onClick={() =>
-              router.replace(`/compare?type=${encodeURIComponent(t)}`)
-            }
+            onClick={() => router.replace(`/compare?type=${encodeURIComponent(t)}`)}
             disabled={initialIds.length > 0 && t !== activeType}
             title={
-              initialIds.length > 0 && t !== activeType
-                ? "清空比較盤後才能切換類型"
-                : undefined
+              initialIds.length > 0 && t !== activeType ? "清空比較盤後才能切換類型" : undefined
             }
           >
             {t}
@@ -2876,9 +3063,7 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
             excludeIds={initialIds}
             onPick={handlePick}
             placeholder={
-              initialIds.length >= MAX_ITEMS
-                ? `已達 ${MAX_ITEMS} 件上限`
-                : "搜尋裝備名稱或 ID…"
+              initialIds.length >= MAX_ITEMS ? `已達 ${MAX_ITEMS} 件上限` : "搜尋裝備名稱或 ID…"
             }
           />
         </div>
@@ -2951,6 +3136,7 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
 - [ ] **Step 3: Visual QA**
 
 `npm run dev`, visit:
+
 - `/compare` → empty state, picker visible
 - Add 2 座騎 → matrix + preset + bar chart render
 - Try to switch to 背飾 tab while items present → button disabled
@@ -2975,6 +3161,7 @@ git commit -m "feat(compare): wire picker, matrix, preset grid, stat bars, URL s
 ## Task 26: Enhance item detail page
 
 **Files:**
+
 - Modify: `src/app/items/[id]/page.tsx`
 
 For 座騎/背飾 items, add `<CompareButton>`, `<StatBarChart>` (using this type's pool for max scale), `<ItemTags>`, and a "在排行中查看" link. For other types, render the existing layout unchanged.
@@ -2987,11 +3174,7 @@ Edit `src/app/items/[id]/page.tsx`:
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import {
-  getItemById,
-  getItemRands,
-  getItemsByType,
-} from "@/lib/queries/items";
+import { getItemById, getItemRands, getItemsByType } from "@/lib/queries/items";
 import { getMonstersByDropItem } from "@/lib/queries/monsters";
 import { ItemDetail } from "@/components/items/item-detail";
 import { ItemRandTable } from "@/components/items/item-rand-table";
@@ -3065,10 +3248,7 @@ export default async function ItemDetailPage({ params }: PageProps) {
       {isPhase2Type && (
         <div className="rounded-lg border border-border/60 bg-card p-4">
           <div className="mb-2 text-sm font-medium">屬性形狀</div>
-          <StatBarChart
-            values={item as unknown as Record<string, number>}
-            maxValues={maxValues}
-          />
+          <StatBarChart values={item as unknown as Record<string, number>} maxValues={maxValues} />
         </div>
       )}
 
@@ -3083,6 +3263,7 @@ export default async function ItemDetailPage({ params }: PageProps) {
 - [ ] **Step 2: Visual QA**
 
 `npm run dev`, visit a 座騎 item (e.g. `/items/21766`):
+
 - "加入比較" button appears; click toggles tray sticky bar
 - StatBarChart renders with proportional bars
 - "在排行榜中查看 →" link goes to `/ranking?type=座騎&highlight=21766` with row highlighted

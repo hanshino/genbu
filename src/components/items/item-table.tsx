@@ -34,20 +34,13 @@ export function ItemTable({ items }: { items: Item[] }) {
         <TableBody>
           {items.map((item) => (
             <TableRow key={item.id}>
-              <TableCell className="font-mono text-xs text-muted-foreground">
-                {item.id}
-              </TableCell>
+              <TableCell className="font-mono text-xs text-muted-foreground">{item.id}</TableCell>
               <TableCell>
-                <Link
-                  href={`/items/${item.id}`}
-                  className="font-medium hover:underline"
-                >
+                <Link href={`/items/${item.id}`} className="font-medium hover:underline">
                   {item.name}
                 </Link>
                 {item.note && (
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    {item.note}
-                  </span>
+                  <span className="ml-2 text-xs text-muted-foreground">{item.note}</span>
                 )}
               </TableCell>
               <TableCell>

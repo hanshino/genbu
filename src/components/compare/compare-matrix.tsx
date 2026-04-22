@@ -59,8 +59,8 @@ export function CompareMatrix({ items }: Props) {
                         isWinner
                           ? "font-semibold text-primary"
                           : v === 0
-                          ? "text-muted-foreground/50"
-                          : "text-foreground/80"
+                            ? "text-muted-foreground/50"
+                            : "text-foreground/80",
                       )}
                     >
                       {v === 0 ? "—" : v}

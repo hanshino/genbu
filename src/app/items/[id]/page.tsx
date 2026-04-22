@@ -2,12 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import {
-  getItemById,
-  getItemRands,
-  getItemRandsByIds,
-  getItemsByType,
-} from "@/lib/queries/items";
+import { getItemById, getItemRands, getItemRandsByIds, getItemsByType } from "@/lib/queries/items";
 import { getMonstersByDropItem } from "@/lib/queries/monsters";
 import {
   presets,

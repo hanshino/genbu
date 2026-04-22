@@ -54,9 +54,7 @@ export function PresetPercentile({ itemScores, poolScores }: Props) {
                 style={{ left: `${percentile}%` }}
               />
             </div>
-            <span className="text-right font-mono tabular-nums">
-              勝過 {percentile}%
-            </span>
+            <span className="text-right font-mono tabular-nums">勝過 {percentile}%</span>
           </div>
         );
       })}

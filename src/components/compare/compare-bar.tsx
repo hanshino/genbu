@@ -36,9 +36,7 @@ export function CompareBar() {
       aria-label="比較盤"
       className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-full border border-border bg-background/95 px-4 py-2 shadow-lg backdrop-blur flex items-center gap-3 text-sm"
     >
-      <span className="text-muted-foreground">
-        比較盤：{tray.ids.length} 件
-      </span>
+      <span className="text-muted-foreground">比較盤：{tray.ids.length} 件</span>
       <Link
         href={`/compare?ids=${tray.ids.join(",")}`}
         className={cn(buttonVariants({ size: "sm" }))}
@@ -46,11 +44,7 @@ export function CompareBar() {
         去比較
         <ChevronRightIcon aria-hidden />
       </Link>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={tray.clear}
-      >
+      <Button variant="ghost" size="sm" onClick={tray.clear}>
         清空
       </Button>
     </div>

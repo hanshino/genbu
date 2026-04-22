@@ -8,9 +8,19 @@ export interface StatBarChartProps {
 }
 
 const DEFAULT_KEYS = [
-  "str", "pow", "wis", "agi", "dex", "vit",
-  "atk", "matk", "def", "mdef",
-  "hit", "dodge", "critical",
+  "str",
+  "pow",
+  "wis",
+  "agi",
+  "dex",
+  "vit",
+  "atk",
+  "matk",
+  "def",
+  "mdef",
+  "hit",
+  "dodge",
+  "critical",
 ] as const;
 
 export function StatBarChart({ values, maxValues, keys = DEFAULT_KEYS }: StatBarChartProps) {
@@ -37,13 +47,13 @@ export function StatBarChart({ values, maxValues, keys = DEFAULT_KEYS }: StatBar
           <div key={r.key} className="grid grid-cols-[4rem_1fr_3rem] items-center gap-2 text-xs">
             <span className="text-muted-foreground">{r.label}</span>
             <div
-                className="h-2 rounded-sm bg-muted overflow-hidden"
-                role="meter"
-                aria-label={r.label}
-                aria-valuenow={r.value}
-                aria-valuemin={0}
-                aria-valuemax={r.max}
-              >
+              className="h-2 rounded-sm bg-muted overflow-hidden"
+              role="meter"
+              aria-label={r.label}
+              aria-valuenow={r.value}
+              aria-valuemin={0}
+              aria-valuemax={r.max}
+            >
               <div
                 className="h-full bg-primary/70 transition-[width] motion-reduce:transition-none"
                 style={{ width: `${pct}%` }}

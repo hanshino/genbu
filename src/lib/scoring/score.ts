@@ -10,7 +10,7 @@ export type ScoreInput = { id: number; name: string };
 export function scoreItemWithExpected(
   item: ScoreInput,
   expected: Readonly<Record<string, number>>,
-  weights: Weights
+  weights: Weights,
 ): ScoredItem {
   const record = item as unknown as Readonly<Record<string, unknown>>;
   let baseScore = 0;
@@ -27,7 +27,7 @@ export function scoreItemWithExpected(
 export function scoreItem(
   item: ScoreInput,
   rands: readonly ItemRand[],
-  weights: Weights
+  weights: Weights,
 ): ScoredItem {
   return scoreItemWithExpected(item, expectedRandom(rands), weights);
 }

@@ -5,13 +5,37 @@ import type { Item, ItemRand } from "@/lib/types/item";
 // attributes used in scoring/display. Excludes picture/icon/summary/note/
 // durability/value to reduce payload size.
 export const RANKING_ITEM_COLUMNS = [
-  "id", "name", "type", "level", "weight",
-  "hp", "mp",
-  "str", "pow", "vit", "dex", "agi", "wis",
-  "atk", "matk", "def", "mdef",
-  "dodge", "uncanny_dodge", "critical", "hit", "speed",
-  "fire", "water", "thunder", "tree", "freeze",
-  "min_damage", "max_damage", "min_pdamage", "max_pdamage",
+  "id",
+  "name",
+  "type",
+  "level",
+  "weight",
+  "hp",
+  "mp",
+  "str",
+  "pow",
+  "vit",
+  "dex",
+  "agi",
+  "wis",
+  "atk",
+  "matk",
+  "def",
+  "mdef",
+  "dodge",
+  "uncanny_dodge",
+  "critical",
+  "hit",
+  "speed",
+  "fire",
+  "water",
+  "thunder",
+  "tree",
+  "freeze",
+  "min_damage",
+  "max_damage",
+  "min_pdamage",
+  "max_pdamage",
 ] as const;
 
 export type RankingItem = Pick<Item, (typeof RANKING_ITEM_COLUMNS)[number]>;
@@ -67,9 +91,7 @@ export function getItems(params: GetItemsParams = {}): GetItemsResult {
   ).c;
 
   const items = db
-    .prepare(
-      `SELECT * FROM items ${whereSql} ORDER BY level DESC, id ASC LIMIT ? OFFSET ?`
-    )
+    .prepare(`SELECT * FROM items ${whereSql} ORDER BY level DESC, id ASC LIMIT ? OFFSET ?`)
     .all(...args, pageSize, offset) as Item[];
 
   return {
@@ -106,9 +128,7 @@ export function getItemsByIds(ids: readonly number[]): Item[] {
   if (ids.length === 0) return [];
   const db = getDb();
   const placeholders = ids.map(() => "?").join(",");
-  return db
-    .prepare(`SELECT * FROM items WHERE id IN (${placeholders})`)
-    .all(...ids) as Item[];
+  return db.prepare(`SELECT * FROM items WHERE id IN (${placeholders})`).all(...ids) as Item[];
 }
 
 export function getItemRandsByIds(ids: readonly number[]): ItemRand[] {

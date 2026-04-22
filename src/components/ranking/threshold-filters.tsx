@@ -20,9 +20,7 @@ export function ThresholdFilters({ values, onChange }: Props) {
       <div className="space-y-1.5">
         {THRESHOLD_KEYS.map((k) => (
           <div key={k} className="grid grid-cols-[4rem_1fr] items-center gap-2">
-            <span className="text-xs text-muted-foreground">
-              {itemAttributeNames[k]} ≥
-            </span>
+            <span className="text-xs text-muted-foreground">{itemAttributeNames[k]} ≥</span>
             <Input
               type="number"
               inputMode="numeric"

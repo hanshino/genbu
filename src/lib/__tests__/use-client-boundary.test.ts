@@ -44,7 +44,7 @@ function findValueExports(content: string): Violation[] {
   // `export const X = ...`, `export let X = ...`, `export var X = ...`
   // Flag unless the RHS is clearly a function expression (arrow or `function`).
   for (const m of content.matchAll(
-    /^export\s+(const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=]+)?=\s*(.*)$/gm
+    /^export\s+(const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=]+)?=\s*(.*)$/gm,
   )) {
     const [, kind, name, rhs] = m;
     const isFn =
@@ -90,7 +90,7 @@ describe("use-client module boundary discipline", () => {
           `proxies when imported from Server Components. Move these to a plain ` +
           `module (e.g. src/lib/constants/). Violations: ${violations
             .map((v) => `${v.kind} ${v.name}`)
-            .join(", ")}`
+            .join(", ")}`,
       ).toEqual([]);
     });
   }

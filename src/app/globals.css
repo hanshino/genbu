@@ -9,7 +9,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans-tc), system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-serif-tc), "Songti TC", "PingFang TC", "Source Han Serif", Georgia, serif;
+  --font-heading:
+    var(--font-serif-tc), "Songti TC", "PingFang TC", "Source Han Serif", Georgia, serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -50,13 +51,13 @@
 
 /* 武俠古風 / wuxia palette — 宣紙 (rice paper) + 墨 (ink) + 朱砂 (cinnabar seal red) */
 :root {
-  --background: oklch(0.975 0.008 85);       /* 宣紙 aged paper */
-  --foreground: oklch(0.22 0.015 260);       /* 墨 cool ink */
+  --background: oklch(0.975 0.008 85); /* 宣紙 aged paper */
+  --foreground: oklch(0.22 0.015 260); /* 墨 cool ink */
   --card: oklch(0.985 0.006 85);
   --card-foreground: oklch(0.22 0.015 260);
   --popover: oklch(0.99 0.004 85);
   --popover-foreground: oklch(0.22 0.015 260);
-  --primary: oklch(0.52 0.17 27);            /* 朱砂 cinnabar */
+  --primary: oklch(0.52 0.17 27); /* 朱砂 cinnabar */
   --primary-foreground: oklch(0.975 0.008 85);
   --secondary: oklch(0.935 0.012 85);
   --secondary-foreground: oklch(0.28 0.015 260);
@@ -65,14 +66,14 @@
   --accent: oklch(0.93 0.015 85);
   --accent-foreground: oklch(0.28 0.015 260);
   --destructive: oklch(0.55 0.2 22);
-  --border: oklch(0.88 0.012 85);            /* brush line */
+  --border: oklch(0.88 0.012 85); /* brush line */
   --input: oklch(0.88 0.012 85);
-  --ring: oklch(0.65 0.15 27);               /* cinnabar echo on focus */
-  --chart-1: oklch(0.56 0.17 28);            /* 朱砂 cinnabar */
-  --chart-2: oklch(0.62 0.08 165);           /* 青瓷 celadon */
-  --chart-3: oklch(0.48 0.10 250);           /* 靛青 indigo */
-  --chart-4: oklch(0.70 0.12 78);            /* 鎏金 antique gold */
-  --chart-5: oklch(0.48 0.09 320);           /* 墨紫 ink plum */
+  --ring: oklch(0.65 0.15 27); /* cinnabar echo on focus */
+  --chart-1: oklch(0.56 0.17 28); /* 朱砂 cinnabar */
+  --chart-2: oklch(0.62 0.08 165); /* 青瓷 celadon */
+  --chart-3: oklch(0.48 0.1 250); /* 靛青 indigo */
+  --chart-4: oklch(0.7 0.12 78); /* 鎏金 antique gold */
+  --chart-5: oklch(0.48 0.09 320); /* 墨紫 ink plum */
   --radius: 0.625rem;
   --sidebar: oklch(0.965 0.01 85);
   --sidebar-foreground: oklch(0.22 0.015 260);
@@ -85,13 +86,13 @@
 }
 
 .dark {
-  --background: oklch(0.165 0.015 260);      /* 玄 deep night-blue */
-  --foreground: oklch(0.92 0.012 85);        /* 燭光 candlelit ivory */
+  --background: oklch(0.165 0.015 260); /* 玄 deep night-blue */
+  --foreground: oklch(0.92 0.012 85); /* 燭光 candlelit ivory */
   --card: oklch(0.21 0.018 260);
   --card-foreground: oklch(0.92 0.012 85);
   --popover: oklch(0.23 0.018 260);
   --popover-foreground: oklch(0.92 0.012 85);
-  --primary: oklch(0.65 0.18 28);            /* 朱砂 on dark reads brighter */
+  --primary: oklch(0.65 0.18 28); /* 朱砂 on dark reads brighter */
   --primary-foreground: oklch(0.17 0.015 260);
   --secondary: oklch(0.27 0.015 260);
   --secondary-foreground: oklch(0.92 0.012 85);
@@ -103,11 +104,11 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.62 0.15 28);
-  --chart-1: oklch(0.66 0.18 28);            /* cinnabar bright */
-  --chart-2: oklch(0.72 0.09 165);           /* celadon bright */
-  --chart-3: oklch(0.62 0.13 250);           /* indigo bright */
-  --chart-4: oklch(0.78 0.13 78);            /* gold bright */
-  --chart-5: oklch(0.60 0.11 320);           /* plum bright */
+  --chart-1: oklch(0.66 0.18 28); /* cinnabar bright */
+  --chart-2: oklch(0.72 0.09 165); /* celadon bright */
+  --chart-3: oklch(0.62 0.13 250); /* indigo bright */
+  --chart-4: oklch(0.78 0.13 78); /* gold bright */
+  --chart-5: oklch(0.6 0.11 320); /* plum bright */
   --sidebar: oklch(0.21 0.018 260);
   --sidebar-foreground: oklch(0.92 0.012 85);
   --sidebar-primary: oklch(0.65 0.18 28);
@@ -128,9 +129,13 @@
   html {
     @apply font-sans;
   }
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     @apply font-heading tracking-tight;
   }
 }
 
-body.has-compare-bar { padding-bottom: 5rem; }
+body.has-compare-bar {
+  padding-bottom: 5rem;
+}

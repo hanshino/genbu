@@ -12,7 +12,7 @@ describe("useCustomPresets", () => {
         name: "My 外功",
         type: "座騎",
         weights: { str: 11, atk: 1 },
-      })
+      }),
     );
     expect(result.current.presets).toHaveLength(1);
     const { id } = result.current.presets[0];
@@ -30,9 +30,7 @@ describe("useCustomPresets", () => {
     // Hand-crafted corrupted data that would pass the old object-only guard
     window.localStorage.setItem(
       "genbu.ranking.customPresets",
-      JSON.stringify([
-        { id: "bad", name: "Bad", type: "座騎", weights: { str: "eleven" } },
-      ])
+      JSON.stringify([{ id: "bad", name: "Bad", type: "座騎", weights: { str: "eleven" } }]),
     );
     const { result } = renderHook(() => useCustomPresets());
     expect(result.current.presets).toEqual([]);

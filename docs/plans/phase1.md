@@ -112,22 +112,22 @@ export interface Item {
   // 六維屬性
   hp: number;
   mp: number;
-  str: number;   // 外功
-  pow: number;   // 內力
-  vit: number;   // 根骨
-  dex: number;   // 技巧
-  agi: number;   // 身法
-  wis: number;   // 玄學
+  str: number; // 外功
+  pow: number; // 內力
+  vit: number; // 根骨
+  dex: number; // 技巧
+  agi: number; // 身法
+  wis: number; // 玄學
   // 戰鬥屬性
-  atk: number;   // 物攻
-  matk: number;  // 內勁
-  def: number;   // 防禦
-  mdef: number;  // 護勁
+  atk: number; // 物攻
+  matk: number; // 內勁
+  def: number; // 防禦
+  mdef: number; // 護勁
   dodge: number; // 閃躲
   uncanny_dodge: number; // 拆招
-  critical: number;      // 重擊
-  hit: number;           // 命中
-  speed: number;         // 移動
+  critical: number; // 重擊
+  hit: number; // 命中
+  speed: number; // 移動
   // 抗性
   fire: number;
   water: number;
@@ -161,12 +161,10 @@ export interface ItemRand {
 
 ```typescript
 // 列表查詢 — 支援搜尋、分類篩選、分頁
-function getItems(params: {
-  search?: string;
-  type?: string;
-  page?: number;
-  pageSize?: number;
-}): { items: Item[]; total: number };
+function getItems(params: { search?: string; type?: string; page?: number; pageSize?: number }): {
+  items: Item[];
+  total: number;
+};
 
 // 單筆詳情
 function getItemById(id: number): Item | null;
@@ -228,17 +226,17 @@ export const itemAttributeNames: Record<string, string> = {
 
 從資料庫整理出的 45 種道具分類：
 
-| 分類 | 數量 | 群組 |
-|------|------|------|
-| **裝備 — 防具** | 帽(445), 衣(260), 鞋(160) | armor |
-| **裝備 — 飾品** | 左飾(179), 中飾(170), 右飾(293) | accessory |
-| **裝備 — 特殊** | 座騎(407), 背飾(366) | special |
-| **裝備 — 武器** | 刀(122), 劍(117), 匕首(116), 拳刃(132), 盾(131), 手套(120), 法杖(102), 扇(90), 雙手刀(87), 拂塵(85), 手甲(85), 棍(83), 雙劍(53), 暗器(28) | weapon |
-| **消耗品** | 藥品(403), 卷軸(41) | consumable |
-| **寶箱** | 寶箱(1838) | chest |
-| **寵物飾品** | 火寵飾(20), 水寵飾(10), 木寵飾(23), 雷寵飾(15) | pet |
-| **外裝** | 座騎[外裝](243), 背飾[外裝](254), 帽[外裝](126), 衣[外裝](139), 鞋[外裝](135), 右武器[外裝](78), 左武器[外裝](14), 飾品[外裝](36), 盾[外裝](7) | skin |
-| **其他** | 真元/魂石(1352), 娃娃(940), 機關人(6), 未知1/2/3 | misc |
+| 分類            | 數量                                                                                                                                           | 群組       |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| **裝備 — 防具** | 帽(445), 衣(260), 鞋(160)                                                                                                                      | armor      |
+| **裝備 — 飾品** | 左飾(179), 中飾(170), 右飾(293)                                                                                                                | accessory  |
+| **裝備 — 特殊** | 座騎(407), 背飾(366)                                                                                                                           | special    |
+| **裝備 — 武器** | 刀(122), 劍(117), 匕首(116), 拳刃(132), 盾(131), 手套(120), 法杖(102), 扇(90), 雙手刀(87), 拂塵(85), 手甲(85), 棍(83), 雙劍(53), 暗器(28)      | weapon     |
+| **消耗品**      | 藥品(403), 卷軸(41)                                                                                                                            | consumable |
+| **寶箱**        | 寶箱(1838)                                                                                                                                     | chest      |
+| **寵物飾品**    | 火寵飾(20), 水寵飾(10), 木寵飾(23), 雷寵飾(15)                                                                                                 | pet        |
+| **外裝**        | 座騎[外裝](243), 背飾[外裝](254), 帽[外裝](126), 衣[外裝](139), 鞋[外裝](135), 右武器[外裝](78), 左武器[外裝](14), 飾品[外裝](36), 盾[外裝](7) | skin       |
+| **其他**        | 真元/魂石(1352), 娃娃(940), 機關人(6), 未知1/2/3                                                                                               | misc       |
 
 UI 上以群組做第一層篩選，展開後可選擇子分類。
 
@@ -273,14 +271,17 @@ UI 上以群組做第一層篩選，展開後可選擇子分類。
 三個區塊：
 
 **A. 基本資訊**
+
 - 名稱、編號、類型、等級、重量、描述
 - 若有非零數值的屬性，以 grid 排列顯示（只顯示有值的）
 
 **B. 隨機屬性** (若 item_rand 有資料)
+
 - 表格顯示: 屬性名、最小值、最大值、機率 (probability)
 - 機率由 rate 欄位計算（所有 rate 加總為分母，個別 rate 為分子，轉百分比顯示 probability）
 
 **C. 掉落來源** (查 monsters 表的 drop_item JSON)
+
 - 列出哪些怪物會掉落此道具
 - `drop_item` 格式: `["1", "15", "26024", "7976", "20102", "60000", ...]`
   - `[0]`: 固定值 "1"

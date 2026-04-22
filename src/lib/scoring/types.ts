@@ -15,8 +15,8 @@ export interface Preset {
 
 export interface ScoredItem {
   item: Item;
-  baseScore: number;          // fixed-attr-only score
-  score: number;              // baseScore + random expected contribution
+  baseScore: number; // fixed-attr-only score
+  score: number; // baseScore + random expected contribution
   expectedRandom: Record<string, number>; // per-attribute expected value
 }
 

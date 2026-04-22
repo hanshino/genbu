@@ -44,12 +44,14 @@ function parseWeights(raw: string | null): Weights | null {
 }
 
 function serializeWeights(w: Weights): string {
-  return Object.entries(w).map(([k, v]) => `${k}:${v}`).join(",");
+  return Object.entries(w)
+    .map(([k, v]) => `${k}:${v}`)
+    .join(",");
 }
 
 function resolveInitialSelection(
   urlWeights: Weights | null,
-  initialPresetId: string
+  initialPresetId: string,
 ): PresetSelection {
   if (urlWeights) return { kind: "ad-hoc" };
   if (getPresetById(initialPresetId)) return { kind: "builtin", id: initialPresetId };
@@ -62,13 +64,12 @@ export function RankingClient({ type, items, rands }: Props) {
 
   const urlWeights = parseWeights(search.get("weights"));
   const initialPresetId = search.get("preset") ?? "pure-str";
-  const initialWeights = urlWeights
-    ?? getPresetById(initialPresetId)?.weights
-    ?? presets[0].weights;
+  const initialWeights =
+    urlWeights ?? getPresetById(initialPresetId)?.weights ?? presets[0].weights;
 
   const [weights, setWeights] = useState<Weights>(initialWeights);
   const [selection, setSelection] = useState<PresetSelection>(
-    resolveInitialSelection(urlWeights, initialPresetId)
+    resolveInitialSelection(urlWeights, initialPresetId),
   );
 
   const levelRange = useMemo(() => {
@@ -79,12 +80,8 @@ export function RankingClient({ type, items, rands }: Props) {
     };
   }, [items]);
 
-  const [minLv, setMinLv] = useState<number>(
-    Number(search.get("minLv")) || 60
-  );
-  const [maxLv, setMaxLv] = useState<number>(
-    Number(search.get("maxLv")) || 140
-  );
+  const [minLv, setMinLv] = useState<number>(Number(search.get("minLv")) || 60);
+  const [maxLv, setMaxLv] = useState<number>(Number(search.get("maxLv")) || 140);
 
   const [thresholds, setThresholds] = useState<Thresholds>(() => {
     const out: Thresholds = {};
@@ -110,7 +107,7 @@ export function RankingClient({ type, items, rands }: Props) {
         router.replace(`/ranking?${params.toString()}`, { scroll: false });
       });
     },
-    [router, search]
+    [router, search],
   );
 
   const handlePresetChange = (next: PresetSelection) => {
@@ -287,7 +284,18 @@ export function RankingClient({ type, items, rands }: Props) {
         primaryStrengths: primaryStrengthByItem.get(it.id) ?? {},
       }))
       .filter((r) => r.scored.score !== 0);
-  }, [items, randsByItem, presetScoresByItem, presetPercentilesByItem, alignedPresetsByItem, primaryStrengthByItem, weights, minLv, maxLv, thresholds]);
+  }, [
+    items,
+    randsByItem,
+    presetScoresByItem,
+    presetPercentilesByItem,
+    alignedPresetsByItem,
+    primaryStrengthByItem,
+    weights,
+    minLv,
+    maxLv,
+    thresholds,
+  ]);
 
   const activePresetId = selection.kind === "builtin" ? selection.id : null;
 

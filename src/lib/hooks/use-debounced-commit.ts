@@ -10,11 +10,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * `local`) — useful when the consumer computes a clamped/normalized value
  * it wants to commit before React's async setState lands.
  */
-export function useDebouncedCommit<T>(
-  external: T,
-  commit: (next: T) => void,
-  delayMs = 300,
-) {
+export function useDebouncedCommit<T>(external: T, commit: (next: T) => void, delayMs = 300) {
   const [local, setLocal] = useState(external);
 
   const commitRef = useRef(commit);
@@ -34,9 +30,12 @@ export function useDebouncedCommit<T>(
     return () => clearTimeout(handle);
   }, [local, external, delayMs]);
 
-  const flush = useCallback((override?: T) => {
-    commitRef.current(override === undefined ? local : override);
-  }, [local]);
+  const flush = useCallback(
+    (override?: T) => {
+      commitRef.current(override === undefined ? local : override);
+    },
+    [local],
+  );
 
   return [local, setLocal, flush] as const;
 }
