@@ -20,6 +20,8 @@ export interface RankingRow {
   scored: ScoredItem;
   presetScores: Record<string, number>;
   presetPercentiles: Record<string, number>;
+  alignedPresets: readonly string[];
+  primaryStrengths: Record<string, number>;
 }
 
 type SortKey = "current" | string;
@@ -129,12 +131,12 @@ export function RankingTable({
               {!compact && (
                 <th
                   className="w-[132px] px-2 py-1.5 text-left"
-                  title="分位 ≥ 80 上主標；副標 ≥ 75。前三流派分位差 < 5 視為通用裝。"
+                  title="分位 ≥ 80 為合格，依主屬性在 pool 中的稀有度排序主標（如 str 罕見、atk 常見）。前 2 名稀有度接近視為通用裝。"
                 >
                   流派
                 </th>
               )}
-              <th className="w-32 px-2 py-1.5 text-center">操作</th>
+              <th className="w-20 px-2 py-1.5 text-center">加入比較</th>
             </tr>
           </thead>
           <tbody>
@@ -170,6 +172,8 @@ export function RankingTable({
                     <td className="px-2 py-1.5">
                       <PresetChips
                         percentiles={row.presetPercentiles}
+                        primaryStrengths={row.primaryStrengths}
+                        alignedPresets={row.alignedPresets}
                         activePresetId={activePresetId ?? (sortKey !== "current" ? sortKey : null)}
                       />
                     </td>
@@ -189,12 +193,12 @@ export function RankingTable({
                     ) : (
                       <Button
                         size="icon"
-                        variant="ghost"
+                        variant="outline"
                         onClick={() => tray.add(item.id)}
                         disabled={tray.isFull}
                         aria-label={tray.isFull ? "比較盤已滿" : "加入比較"}
                         title={tray.isFull ? "比較盤已滿（最多 5 件）" : "加入比較"}
-                        className="h-7 w-7 opacity-100 transition-opacity focus-visible:opacity-100 disabled:opacity-40 md:opacity-0 md:group-hover:opacity-100 motion-reduce:transition-none"
+                        className="h-7 w-7 text-muted-foreground transition-colors hover:text-foreground group-hover:border-primary/40 group-hover:text-primary disabled:opacity-40"
                       >
                         <PlusIcon className="size-3.5" />
                       </Button>

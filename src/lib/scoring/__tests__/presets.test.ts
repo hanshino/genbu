@@ -3,6 +3,8 @@ import { presets, getPresetById, getPresetByLabel } from "../presets";
 
 // Snapshot of LINE bot's weighted.config.js at the time of porting
 // (../tthol-line-bot/src/configs/weighted.config.js).
+// 手甲 is intentionally excluded — genbu re-tuned it per player interview
+// (物攻 > 技巧 > 命中) and no longer mirrors the LINE bot config.
 const lineBotConfig = [
   { type: "純玄系列", params: [
     { key: "wis", value: 7 }, { key: "dex", value: 3 }, { key: "hit", value: 1 },
@@ -29,9 +31,6 @@ const lineBotConfig = [
   { type: "爆刀", params: [
     { key: "agi", value: 7 }, { key: "str", value: 7 }, { key: "critical", value: 5 },
     { key: "def", value: 0.75 }, { key: "mdef", value: 0.75 },
-  ]},
-  { type: "手甲", params: [
-    { key: "dex", value: 15 }, { key: "hit", value: 5 }, { key: "atk", value: 7 },
   ]},
 ];
 

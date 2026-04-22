@@ -11,6 +11,7 @@ import {
   groupRandsByItemId,
   expectedRandom,
   scoreWithShared,
+  PRESET_PRIMARY_STATS,
   type Weights,
 } from "@/lib/scoring";
 import type { Phase2Type } from "@/lib/constants/item-types";
@@ -79,10 +80,10 @@ export function RankingClient({ type, items, rands }: Props) {
   }, [items]);
 
   const [minLv, setMinLv] = useState<number>(
-    Number(search.get("minLv")) || 50
+    Number(search.get("minLv")) || 60
   );
   const [maxLv, setMaxLv] = useState<number>(
-    Number(search.get("maxLv")) || 100
+    Number(search.get("maxLv")) || 140
   );
 
   const [thresholds, setThresholds] = useState<Thresholds>(() => {
@@ -144,15 +145,41 @@ export function RankingClient({ type, items, rands }: Props) {
   // universe. Percentile is computed per preset against the full type pool
   // (ignores level/threshold filters) so a gear's "position in its universe"
   // stays stable when filters narrow the visible rows.
-  const { presetScoresByItem, presetPercentilesByItem } = useMemo(() => {
+  const {
+    presetScoresByItem,
+    presetPercentilesByItem,
+    alignedPresetsByItem,
+    primaryStrengthByItem,
+  } = useMemo(() => {
     const scoresByItem = new Map<number, Record<string, number>>();
+    const alignedByItem = new Map<number, string[]>();
+    // Effective stat values (base + expected random) per item, used both for
+    // alignment checks and for rarity percentiles below.
+    const effectiveStatsByItem = new Map<number, Record<string, number>>();
     for (const it of items) {
       const expected = expectedRandom(randsByItem.get(it.id) ?? []);
       const scores: Record<string, number> = {};
+      const aligned: string[] = [];
+      const record = it as unknown as Record<string, unknown>;
+      const effective: Record<string, number> = {};
       for (const p of presets) {
         scores[p.id] = scoreWithShared(it, expected, p.weights);
+        const primaries = PRESET_PRIMARY_STATS.get(p.id) ?? [];
+        for (const stat of primaries) {
+          if (effective[stat] !== undefined) continue;
+          const base = record[stat];
+          const baseN = typeof base === "number" ? base : 0;
+          effective[stat] = baseN + (expected[stat] ?? 0);
+        }
+        // All primary-weight stats (max-weight stats, possibly tied) must be
+        // nonzero. Presets with multiple tied primaries (e.g. 爆刀 agi+str)
+        // need both; otherwise an item that has just one half is mislabeled.
+        const hit = primaries.length > 0 && primaries.every((stat) => (effective[stat] ?? 0) > 0);
+        if (hit) aligned.push(p.id);
       }
       scoresByItem.set(it.id, scores);
+      alignedByItem.set(it.id, aligned);
+      effectiveStatsByItem.set(it.id, effective);
     }
 
     const percentilesByItem = new Map<number, Record<string, number>>();
@@ -179,7 +206,67 @@ export function RankingClient({ type, items, rands }: Props) {
       }
     }
 
-    return { presetScoresByItem: scoresByItem, presetPercentilesByItem: percentilesByItem };
+    // Per-stat rarity percentile across the full pool, for every stat that
+    // appears as any preset's primary. This is the key signal for chip
+    // identity: a stat most of the pool lacks (e.g. str on 座騎) is a
+    // distinctive "specialist" signal when present, while a stat every item
+    // has (atk) carries less information. Ties → max-rank tie percentile.
+    const relevantStats = new Set<string>();
+    for (const primaries of PRESET_PRIMARY_STATS.values()) {
+      for (const s of primaries) relevantStats.add(s);
+    }
+    const statPercentilesByItem = new Map<number, Record<string, number>>();
+    for (const it of items) statPercentilesByItem.set(it.id, {});
+    for (const stat of relevantStats) {
+      if (n === 0) continue;
+      const sorted = items
+        .map((it) => ({
+          id: it.id,
+          val: effectiveStatsByItem.get(it.id)?.[stat] ?? 0,
+        }))
+        .sort((a, b) => a.val - b.val);
+      let i = 0;
+      while (i < n) {
+        let j = i;
+        while (j < n && sorted[j].val === sorted[i].val) j++;
+        const pct = (j / n) * 100;
+        for (let k = i; k < j; k++) {
+          statPercentilesByItem.get(sorted[k].id)![stat] = pct;
+        }
+        i = j;
+      }
+    }
+
+    // Per (item, preset): strength = the MIN rarity percentile across the
+    // preset's primary stats. The weakest primary caps the specialist signal
+    // — e.g. a 爆刀 item with great agi but weak str is not a strong 爆刀
+    // fit. For single-primary presets this degenerates to that stat's pct.
+    const strengthByItem = new Map<number, Record<string, number>>();
+    for (const it of items) {
+      const statPcts = statPercentilesByItem.get(it.id) ?? {};
+      const strengths: Record<string, number> = {};
+      for (const p of presets) {
+        const primaries = PRESET_PRIMARY_STATS.get(p.id) ?? [];
+        if (primaries.length === 0) {
+          strengths[p.id] = 0;
+          continue;
+        }
+        let min = Infinity;
+        for (const s of primaries) {
+          const pct = statPcts[s] ?? 0;
+          if (pct < min) min = pct;
+        }
+        strengths[p.id] = min === Infinity ? 0 : min;
+      }
+      strengthByItem.set(it.id, strengths);
+    }
+
+    return {
+      presetScoresByItem: scoresByItem,
+      presetPercentilesByItem: percentilesByItem,
+      alignedPresetsByItem: alignedByItem,
+      primaryStrengthByItem: strengthByItem,
+    };
   }, [items, randsByItem]);
 
   const rows = useMemo<RankingRow[]>(() => {
@@ -196,9 +283,11 @@ export function RankingClient({ type, items, rands }: Props) {
         scored: scoreItem(it, randsByItem.get(it.id) ?? [], weights),
         presetScores: presetScoresByItem.get(it.id) ?? {},
         presetPercentiles: presetPercentilesByItem.get(it.id) ?? {},
+        alignedPresets: alignedPresetsByItem.get(it.id) ?? [],
+        primaryStrengths: primaryStrengthByItem.get(it.id) ?? {},
       }))
       .filter((r) => r.scored.score !== 0);
-  }, [items, randsByItem, presetScoresByItem, presetPercentilesByItem, weights, minLv, maxLv, thresholds]);
+  }, [items, randsByItem, presetScoresByItem, presetPercentilesByItem, alignedPresetsByItem, primaryStrengthByItem, weights, minLv, maxLv, thresholds]);
 
   const activePresetId = selection.kind === "builtin" ? selection.id : null;
 
