@@ -19,6 +19,7 @@ import { ItemDropList } from "@/components/items/item-drop-list";
 import { CompareButton } from "@/components/items/compare-button";
 import { ItemTags } from "@/components/items/item-tags";
 import { PresetPercentile } from "@/components/items/preset-percentile";
+import { imageOfItem } from "@/lib/equipment-images";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -46,6 +47,7 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
 
   const rands = getItemRands(String(item.id));
   const sources = getMonstersByDropItem(item.id);
+  const cover = imageOfItem(item);
 
   const phase2 = isPhase2Type(item.type);
   let maxValues: Record<string, number> = {};
@@ -76,7 +78,7 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
         </Link>
       </nav>
 
-      <ItemDetail item={item} maxValues={phase2 ? maxValues : undefined} />
+      <ItemDetail item={item} maxValues={phase2 ? maxValues : undefined} cover={cover} />
 
       <ItemTags item={item} rands={rands} />
 

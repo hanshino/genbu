@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { CheckIcon, PlusIcon } from "lucide-react";
 import { presets } from "@/lib/scoring";
 import type { ScoredItem } from "@/lib/scoring";
+import { imageOfItem } from "@/lib/equipment-images";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -24,6 +26,20 @@ import {
 import { PresetChips } from "@/components/ranking/preset-chips";
 import { useCompareTray } from "@/lib/hooks/use-compare-tray";
 import { cn } from "@/lib/utils";
+
+function ItemThumbnail({ itemId }: { itemId: number }) {
+  const cover = imageOfItem({ id: itemId });
+  if (!cover) {
+    return (
+      <div className="h-9 w-9 shrink-0 rounded border border-border/30 bg-muted/20" aria-hidden />
+    );
+  }
+  return (
+    <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded border border-border/50 bg-muted/30">
+      <Image src={cover.src} alt="" fill sizes="36px" className="object-contain" aria-hidden />
+    </div>
+  );
+}
 
 export interface RankingRow {
   scored: ScoredItem;
@@ -163,9 +179,10 @@ export function RankingTable({
                   <TableCell className="py-1.5">
                     <Link
                       href={`/items/${item.id}?from=ranking`}
-                      className="inline-flex min-h-[44px] items-center text-foreground transition-colors hover:text-primary hover:underline focus-visible:underline focus-visible:text-primary focus-visible:outline-none"
+                      className="inline-flex min-h-[44px] items-center gap-2 text-foreground transition-colors hover:text-primary hover:underline focus-visible:underline focus-visible:text-primary focus-visible:outline-none"
                     >
-                      {item.name}
+                      <ItemThumbnail itemId={item.id} />
+                      <span>{item.name}</span>
                     </Link>
                   </TableCell>
                   <TableCell className="py-1.5 text-right font-mono">{item.level}</TableCell>

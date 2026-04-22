@@ -1,13 +1,16 @@
 import { Badge } from "@/components/ui/badge";
+import { ItemCover } from "@/components/items/item-cover";
 import type { Item } from "@/lib/types/item";
 import { displayableAttributeKeys, itemAttributeNames } from "@/lib/constants/i18n";
+import type { EquipmentImage } from "@/lib/equipment-images";
 
 interface ItemDetailProps {
   item: Item;
   maxValues?: Record<string, number>;
+  cover?: EquipmentImage | null;
 }
 
-export function ItemDetail({ item, maxValues }: ItemDetailProps) {
+export function ItemDetail({ item, maxValues, cover }: ItemDetailProps) {
   const attributes = displayableAttributeKeys
     .map((key) => {
       const value = (item as unknown as Record<string, number | null>)[key];
@@ -17,29 +20,36 @@ export function ItemDetail({ item, maxValues }: ItemDetailProps) {
 
   return (
     <section className="space-y-6">
-      <header className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">{item.name}</h1>
-          {item.type && <Badge variant="secondary">{item.type}</Badge>}
-        </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          <span className="font-mono">#{item.id}</span>
-          <span>等級 {item.level}</span>
-          <span>重量 {item.weight}</span>
-          {item.value > 0 && <span>販售價 {item.value}</span>}
-          {item.durability > 0 && <span>耐久 {item.durability}</span>}
-        </div>
-        {item.note && (
-          <p className="whitespace-pre-line text-sm text-muted-foreground">
-            {item.note.replace(/\\n/g, "\n")}
-          </p>
+      <div className="flex flex-col gap-4 sm:flex-row-reverse sm:items-start">
+        {cover && (
+          <div className="shrink-0 self-center sm:self-start">
+            <ItemCover cover={cover} alt={item.name} />
+          </div>
         )}
-        {item.summary && (
-          <p className="whitespace-pre-line text-sm leading-relaxed">
-            {item.summary.replace(/\\n/g, "\n")}
-          </p>
-        )}
-      </header>
+        <header className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight">{item.name}</h1>
+            {item.type && <Badge variant="secondary">{item.type}</Badge>}
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <span className="font-mono">#{item.id}</span>
+            <span>等級 {item.level}</span>
+            <span>重量 {item.weight}</span>
+            {item.value > 0 && <span>販售價 {item.value}</span>}
+            {item.durability > 0 && <span>耐久 {item.durability}</span>}
+          </div>
+          {item.note && (
+            <p className="whitespace-pre-line text-sm text-muted-foreground">
+              {item.note.replace(/\\n/g, "\n")}
+            </p>
+          )}
+          {item.summary && (
+            <p className="whitespace-pre-line text-sm leading-relaxed">
+              {item.summary.replace(/\\n/g, "\n")}
+            </p>
+          )}
+        </header>
+      </div>
 
       {attributes.length > 0 && (
         <div className="rounded-lg border border-border/60 bg-card">
