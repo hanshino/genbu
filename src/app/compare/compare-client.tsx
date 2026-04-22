@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ChevronDownIcon, XIcon } from "lucide-react";
 import type { Item, ItemRand } from "@/lib/types/item";
 import type { RankingItem } from "@/lib/queries/items";
 import { groupRandsByItemId, computePoolMaxValues } from "@/lib/scoring";
@@ -11,7 +12,7 @@ import { ItemPicker } from "@/components/compare/item-picker";
 import { CompareMatrix } from "@/components/compare/compare-matrix";
 import { ComparePresets } from "@/components/compare/compare-presets";
 import { CompareRadar } from "@/components/compare/compare-radar";
-import { StatBarChart } from "@/components/items/stat-bar-chart";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 interface Props {
@@ -90,22 +91,23 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {initialItems.map((it) => (
-          <span
+          <Badge
             key={it.id}
-            className="inline-flex items-center gap-1 rounded-full border border-border pl-3 pr-1 py-1 text-sm"
+            variant="secondary"
+            className="h-7 gap-1 rounded-full py-0 pl-3 pr-1 text-sm font-normal"
           >
             {it.name}
             <button
               type="button"
               aria-label={`移除 ${it.name}`}
               onClick={() => handleRemove(it.id)}
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="ml-0.5 inline-flex size-5 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              ×
+              <XIcon className="size-3" aria-hidden />
             </button>
-          </span>
+          </Badge>
         ))}
         {initialItems.length === 0 && (
           <span className="text-sm text-muted-foreground">
@@ -116,41 +118,42 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
 
       {initialItems.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold">屬性雷達</h2>
-          <div className="rounded-md border border-border/60 bg-card p-3">
-            <CompareRadar items={initialItems} maxValues={maxValues} />
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h2 className="text-lg font-semibold">流派適配</h2>
+            <span className="text-xs text-muted-foreground">
+              條形＝該列相對強度；<span className="text-primary/80">+N%</span> ＝勝者領先第二名的幅度
+            </span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            數值為相對同類型裝備池最大值的百分比；精確數字見下方屬性矩陣。
-          </p>
-        </section>
-      )}
-
-      {initialItems.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold">屬性矩陣</h2>
-          <CompareMatrix items={initialItems} />
-        </section>
-      )}
-
-      {initialItems.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold">7 流派分數</h2>
           <ComparePresets items={initialItems} randsByItem={randsByItem} />
         </section>
       )}
 
       {initialItems.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold">屬性形狀</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {initialItems.map((it) => (
-              <div key={it.id} className="rounded-md border border-border/60 p-3">
-                <div className="mb-2 text-sm font-medium">{it.name}</div>
-                <StatBarChart values={it} maxValues={maxValues} />
-              </div>
-            ))}
+          <h2 className="text-lg font-semibold">屬性雷達</h2>
+          <div className="rounded-md border border-border/60 bg-card p-3">
+            <CompareRadar items={initialItems} maxValues={maxValues} />
           </div>
+          <p className="text-xs text-muted-foreground">
+            數值為相對同類型裝備池最大值的百分比；精確數字見下方屬性細項。
+          </p>
+        </section>
+      )}
+
+      {initialItems.length > 0 && (
+        <section>
+          <details className="group rounded-md border border-border/60 bg-card">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-sm font-semibold text-foreground/90 hover:bg-muted/30 [&::-webkit-details-marker]:hidden">
+              <span>屬性細項（完整數值）</span>
+              <ChevronDownIcon
+                className="size-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180"
+                aria-hidden
+              />
+            </summary>
+            <div className="border-t border-border/40 [&>div]:rounded-none [&>div]:border-0">
+              <CompareMatrix items={initialItems} />
+            </div>
+          </details>
         </section>
       )}
     </div>

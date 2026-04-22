@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronRightIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getDb } from "@/lib/db";
@@ -93,8 +94,15 @@ export default function HomePage() {
                 <CardDescription className="mt-2">{f.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-xs text-muted-foreground">
-                  {f.disabled ? "即將推出" : "立即查詢 →"}
+                <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  {f.disabled ? (
+                    "即將推出"
+                  ) : (
+                    <>
+                      立即查詢
+                      <ChevronRightIcon className="size-3" aria-hidden />
+                    </>
+                  )}
                 </p>
               </CardContent>
             </Card>

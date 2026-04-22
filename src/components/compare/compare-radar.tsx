@@ -55,12 +55,12 @@ export function CompareRadar({ items, maxValues }: Props) {
 
   return (
     <div
-      className="h-[360px] w-full"
+      className="h-[280px] w-full"
       role="img"
       aria-label="各裝備主要屬性雷達圖，精確數值見下方屬性矩陣"
     >
       <ResponsiveContainer>
-        <RadarChart data={data} outerRadius="72%">
+        <RadarChart data={data} outerRadius="78%">
           <PolarGrid stroke="var(--border)" />
           <PolarAngleAxis
             dataKey="label"

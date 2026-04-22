@@ -4,6 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { MouseEvent } from "react";
 import type { Phase2Type } from "@/lib/constants/item-types";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface Props {
   activeType: Phase2Type;
@@ -34,22 +42,22 @@ export function CompareBreadcrumb({ activeType }: Props) {
   };
 
   return (
-    <nav aria-label="breadcrumb" className="text-sm text-muted-foreground">
-      <ol className="flex flex-wrap items-center gap-1.5">
-        <li>
-          <Link
-            href={fallbackHref}
-            onClick={handleClick}
-            className="transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:underline"
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink
+            render={
+              <Link href={fallbackHref} onClick={handleClick} />
+            }
           >
             排行榜
-          </Link>
-        </li>
-        <li aria-hidden="true" className="text-muted-foreground/50">
-          ›
-        </li>
-        <li className="text-foreground">比較 · {activeType}</li>
-      </ol>
-    </nav>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>比較 · {activeType}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 }

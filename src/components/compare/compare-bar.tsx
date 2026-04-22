@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { ChevronRightIcon } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useCompareTray } from "@/lib/hooks/use-compare-tray";
 
 // The bar only earns its screen real estate on routes where the tray is
@@ -39,15 +41,15 @@ export function CompareBar() {
       </span>
       <Link
         href={`/compare?ids=${tray.ids.join(",")}`}
-        className="min-h-[44px] inline-flex items-center rounded-md bg-primary px-3 py-1 text-primary-foreground text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className={cn(buttonVariants({ size: "sm" }))}
       >
-        去比較 →
+        去比較
+        <ChevronRightIcon aria-hidden />
       </Link>
       <Button
         variant="ghost"
         size="sm"
         onClick={tray.clear}
-        className="min-h-[44px] px-2 text-xs"
       >
         清空
       </Button>

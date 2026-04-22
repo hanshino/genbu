@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +37,8 @@ export function ItemPagination({
         className={cn(baseBtn, prevDisabled && "pointer-events-none opacity-50")}
         tabIndex={prevDisabled ? -1 : 0}
       >
-        ← 上一頁
+        <ChevronLeftIcon aria-hidden />
+        上一頁
       </Link>
       <span className="text-muted-foreground">
         第 {page} / {totalPages} 頁
@@ -47,7 +49,8 @@ export function ItemPagination({
         className={cn(baseBtn, nextDisabled && "pointer-events-none opacity-50")}
         tabIndex={nextDisabled ? -1 : 0}
       >
-        下一頁 →
+        下一頁
+        <ChevronRightIcon aria-hidden />
       </Link>
     </nav>
   );

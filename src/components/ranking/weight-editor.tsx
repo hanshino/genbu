@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { XIcon } from "lucide-react";
 import { itemAttributeNames, displayableAttributeKeys } from "@/lib/constants/i18n";
 import type { Weights } from "@/lib/scoring";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 
 const MIN_WEIGHT = -2;
 // Built-in presets go up to 15 (手甲 dex) — slider must cover that range or
@@ -119,22 +121,21 @@ export function WeightEditor({ weights, onChange }: Props) {
                   aria-label={`移除 ${label}`}
                   className="min-h-[36px] min-w-[36px] shrink-0"
                 >
-                  ×
+                  <XIcon className="size-4" aria-hidden />
                 </Button>
               </div>
               <div className="mt-1.5 flex items-center gap-2">
-                <input
-                  type="range"
+                <Slider
                   min={MIN_WEIGHT}
                   max={MAX_WEIGHT}
                   step={STEP}
-                  value={r.value}
-                  onChange={(e) => {
-                    const v = Number(e.target.value);
-                    setRowValue(r.key, Number.isFinite(v) ? v : 0);
+                  value={[r.value]}
+                  onValueChange={(v) => {
+                    const next = Array.isArray(v) ? v[0] : v;
+                    setRowValue(r.key, Number.isFinite(next) ? next : 0);
                   }}
                   aria-label={`${label} 權重`}
-                  className="h-6 flex-1 cursor-pointer accent-foreground/70"
+                  className="flex-1"
                 />
                 <output
                   className="w-10 text-right font-mono text-xs tabular-nums text-muted-foreground"

@@ -2,7 +2,15 @@
 
 import type { Item } from "@/lib/types/item";
 import { itemAttributeNames, displayableAttributeKeys } from "@/lib/constants/i18n";
-import { heatmapCell } from "@/lib/utils";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 interface Props {
   items: Item[];
@@ -22,45 +30,48 @@ export function CompareMatrix({ items }: Props) {
   if (items.length === 0) return null;
 
   return (
-    <div className="overflow-x-auto rounded-md border border-border/60">
-      <table className="w-full text-sm">
-        <thead className="bg-muted/40">
-          <tr>
-            <th className="px-2 py-1.5 text-left">屬性</th>
+    <div className="overflow-hidden rounded-lg border border-border/60">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[6rem]">屬性</TableHead>
             {items.map((it) => (
-              <th key={it.id} className="px-2 py-1.5 text-right">
+              <TableHead key={it.id} className="text-right">
                 {it.name}
-              </th>
+              </TableHead>
             ))}
-          </tr>
-        </thead>
-        <tbody>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.map((r) => {
             const max = Math.max(...r.values);
-            const min = Math.min(...r.values);
-            const span = max - min;
+            const span = max - Math.min(...r.values);
             return (
-              <tr key={r.key} className="border-t border-border/40">
-                <td className="px-2 py-1.5 text-muted-foreground">{r.label}</td>
-                {r.values.map((v, i) => (
-                  <td
-                    key={items[i].id}
-                    style={heatmapCell(v, min, max)}
-                    className={
-                      "px-2 py-1.5 text-right font-mono " +
-                      (v === max && v > 0 && span > 0
-                        ? "font-semibold text-primary"
-                        : "")
-                    }
-                  >
-                    {v}
-                  </td>
-                ))}
-              </tr>
+              <TableRow key={r.key} className="odd:bg-muted/15">
+                <TableCell className="text-muted-foreground">{r.label}</TableCell>
+                {r.values.map((v, i) => {
+                  const isWinner = v === max && v > 0 && span > 0;
+                  return (
+                    <TableCell
+                      key={items[i].id}
+                      className={cn(
+                        "text-right font-mono tabular-nums",
+                        isWinner
+                          ? "font-semibold text-primary"
+                          : v === 0
+                          ? "text-muted-foreground/50"
+                          : "text-foreground/80"
+                      )}
+                    >
+                      {v === 0 ? "—" : v}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

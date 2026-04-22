@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import {
   getItemById,
   getItemRands,
@@ -70,8 +71,9 @@ export default async function ItemDetailPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
       <nav className="text-sm text-muted-foreground">
-        <Link href="/items" className="hover:underline">
-          ← 返回道具列表
+        <Link href="/items" className="inline-flex items-center gap-1 hover:underline">
+          <ChevronLeftIcon className="size-3.5" aria-hidden />
+          返回道具列表
         </Link>
       </nav>
 
@@ -84,9 +86,10 @@ export default async function ItemDetailPage({ params }: PageProps) {
           <CompareButton itemId={item.id} />
           <Link
             href={`/ranking?type=${encodeURIComponent(item.type!)}&highlight=${item.id}`}
-            className="text-sm text-muted-foreground underline hover:text-foreground"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground underline hover:text-foreground"
           >
-            在排行榜中查看 →
+            在排行榜中查看
+            <ChevronRightIcon className="size-3.5" aria-hidden />
           </Link>
         </div>
       )}

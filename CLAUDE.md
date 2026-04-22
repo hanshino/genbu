@@ -48,7 +48,26 @@ npm run lint      # ESLint
 - Use Traditional Chinese (zh-tw) for all user-facing text
 - Follow Next.js App Router patterns (Server Components by default, 'use client' only when needed)
 - Keep components small and focused
-- Use shadcn/ui components as base building blocks
+
+### UI Components: shadcn-first, hand-roll last resort
+
+Before writing any custom markup for a UI element, go through this decision order:
+
+1. **Check `src/components/ui/`** for an existing shadcn primitive. Current inventory:
+   `Button`, `Badge`, `Card`, `Input`, `Select`, `Separator`, `Table` family, `Tabs`.
+2. **Check `@base-ui/react`** (already installed via shadcn) for primitives not yet wrapped:
+   `Popover`, `Menu`, `Dialog`, `Tooltip`, `Collapsible`, `Checkbox`, `Switch`, etc.
+   Wrap them as shadcn components under `src/components/ui/` so they're reusable.
+3. **Check `lucide-react`** for icons — never use Unicode glyphs (`×`, `▾`, `✓`) or emojis.
+4. **Only hand-roll if** (a) no shadcn primitive fits AND (b) no base-ui primitive fits,
+   OR forcing one would require overriding so much that the semantic becomes wrong.
+5. **When hand-rolling**, match the visual vocabulary of nearby shadcn primitives:
+   `rounded-md` / `rounded-lg`, `border-border/60`, `bg-card`, `text-muted-foreground`,
+   `hover:bg-muted/50`, focus-visible ring via `ring-ring`.
+
+Rule of thumb: if you catch yourself writing `<table>`, `<ul class="...dropdown...">`,
+`<span class="...pill/chip...">`, or `<button>×</button>` by hand — stop and go back to
+step 1. These have shadcn/base-ui equivalents.
 
 ## Phase Plan
 

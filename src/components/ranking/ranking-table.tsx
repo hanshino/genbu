@@ -13,8 +13,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { PresetChips } from "@/components/ranking/preset-chips";
 import { useCompareTray } from "@/lib/hooks/use-compare-tray";
+import { cn } from "@/lib/utils";
 
 export interface RankingRow {
   scored: ScoredItem;
@@ -116,30 +125,30 @@ export function RankingTable({
           </Button>
         </div>
       </div>
-      <div className="overflow-x-auto rounded-md border border-border/60">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/40">
-            <tr>
-              <th className="w-10 px-2 py-1.5 text-left">#</th>
-              <th className="px-2 py-1.5 text-left">名稱</th>
-              <th className="w-14 px-2 py-1.5 text-right">等級</th>
-              <th className="w-20 px-2 py-1.5 text-right">
+      <div className="rounded-md border border-border/60 overflow-hidden">
+        <Table>
+          <TableHeader className="bg-muted/40">
+            <TableRow>
+              <TableHead className="w-10 py-1.5">#</TableHead>
+              <TableHead className="py-1.5">名稱</TableHead>
+              <TableHead className="w-14 py-1.5 text-right">等級</TableHead>
+              <TableHead className="w-20 py-1.5 text-right">
                 {sortKey === "current"
                   ? "目前"
                   : presets.find((p) => p.id === sortKey)?.label.replace("系列", "") ?? "分數"}
-              </th>
+              </TableHead>
               {!compact && (
-                <th
-                  className="w-[132px] px-2 py-1.5 text-left"
+                <TableHead
+                  className="w-[132px] py-1.5"
                   title="分位 ≥ 80 為合格，依主屬性在 pool 中的稀有度排序主標（如 str 罕見、atk 常見）。前 2 名稀有度接近視為通用裝。"
                 >
                   流派
-                </th>
+                </TableHead>
               )}
-              <th className="w-20 px-2 py-1.5 text-center">加入比較</th>
-            </tr>
-          </thead>
-          <tbody>
+              <TableHead className="w-20 py-1.5 text-center">加入比較</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {shown.map((row, i) => {
               const { item } = row.scored;
               const isHighlighted = highlightId === item.id;
@@ -148,37 +157,37 @@ export function RankingTable({
                   ? row.scored.score
                   : row.presetScores[sortKey] ?? 0;
               return (
-                <tr
+                <TableRow
                   key={item.id}
-                  className={
-                    "group border-t border-border/40 hover:bg-muted/40 " +
-                    (isHighlighted ? "bg-yellow-50 dark:bg-yellow-900/20" : "")
-                  }
+                  className={cn(
+                    "group",
+                    isHighlighted && "bg-yellow-50 dark:bg-yellow-900/20"
+                  )}
                 >
-                  <td className="px-2 py-1.5 text-muted-foreground">{i + 1}</td>
-                  <td className="px-2 py-1.5">
+                  <TableCell className="py-1.5 text-muted-foreground">{i + 1}</TableCell>
+                  <TableCell className="py-1.5">
                     <Link
                       href={`/items/${item.id}`}
                       className="inline-flex min-h-[44px] items-center text-foreground transition-colors hover:text-primary hover:underline focus-visible:underline focus-visible:text-primary focus-visible:outline-none"
                     >
                       {item.name}
                     </Link>
-                  </td>
-                  <td className="px-2 py-1.5 text-right font-mono">{item.level}</td>
-                  <td className="px-2 py-1.5 text-right font-mono font-semibold">
+                  </TableCell>
+                  <TableCell className="py-1.5 text-right font-mono">{item.level}</TableCell>
+                  <TableCell className="py-1.5 text-right font-mono font-semibold">
                     {Math.round(displayScore)}
-                  </td>
+                  </TableCell>
                   {!compact && (
-                    <td className="px-2 py-1.5">
+                    <TableCell className="py-1.5">
                       <PresetChips
                         percentiles={row.presetPercentiles}
                         primaryStrengths={row.primaryStrengths}
                         alignedPresets={row.alignedPresets}
                         activePresetId={activePresetId ?? (sortKey !== "current" ? sortKey : null)}
                       />
-                    </td>
+                    </TableCell>
                   )}
-                  <td className="px-2 py-1.5 text-center">
+                  <TableCell className="py-1.5 text-center">
                     {tray.has(item.id) ? (
                       <Button
                         size="icon"
@@ -203,12 +212,12 @@ export function RankingTable({
                         <PlusIcon className="size-3.5" />
                       </Button>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
         {!showingAll && sorted.length > limit && onShowAll && (
           <div className="p-2 text-center">
             <Button variant="ghost" size="sm" onClick={onShowAll}>
