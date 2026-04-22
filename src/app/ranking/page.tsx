@@ -4,7 +4,7 @@ import { isPhase2Type, type Phase2Type } from "@/lib/constants/item-types";
 import { RankingClient } from "./ranking-client";
 
 export const metadata: Metadata = {
-  title: "加權排行榜 · 玄武",
+  title: "裝備排行榜 · 玄武",
   description: "座騎 / 背飾 的自訂加權排行",
 };
 
@@ -25,9 +25,10 @@ export default async function RankingPage({ searchParams }: Props) {
   return (
     <div className="mx-auto max-w-6xl space-y-4 px-4 py-8">
       <header>
-        <h1 className="font-heading text-3xl md:text-4xl font-bold tracking-tight">加權排行榜</h1>
+        <h1 className="font-heading text-3xl md:text-4xl font-bold tracking-tight">裝備排行榜</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          目前類型：<span className="font-medium text-foreground">{type}</span>。切換類型、調整權重、設定門檻後立即重排。
+          目前類型：<span className="font-medium text-foreground">{type}</span>
+          。切換類型、調整權重、設定門檻後立即重排。
         </p>
       </header>
       <RankingClient type={type} items={items} rands={rands} />
