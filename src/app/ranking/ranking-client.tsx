@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useCallback, useMemo, useState } from "react";
+import { startTransition, useCallback, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { RankingItem } from "@/lib/queries/items";
 import type { ItemRand } from "@/lib/types/item";
@@ -23,6 +23,17 @@ import { ThresholdFilters } from "@/components/ranking/threshold-filters";
 import { THRESHOLD_KEYS as thresholdKeys, type Thresholds } from "@/lib/constants/ranking";
 import { RankingTable, type RankingRow } from "@/components/ranking/ranking-table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogCloseButton,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPopup,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Props {
   type: Phase2Type;
@@ -94,7 +105,10 @@ export function RankingClient({ type, items, rands }: Props) {
 
   const [showAll, setShowAll] = useState(search.get("showAll") === "1");
   const highlightId = Number(search.get("highlight")) || null;
-  const { presets: customPresets, save: saveCustom } = useCustomPresets();
+  const { presets: customPresets, save: saveCustom, remove: removeCustom } = useCustomPresets();
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [presetName, setPresetName] = useState("");
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const pushUrl = useCallback(
     (patch: Record<string, string | null>) => {
@@ -299,10 +313,12 @@ export function RankingClient({ type, items, rands }: Props) {
 
   const activePresetId = selection.kind === "builtin" ? selection.id : null;
 
-  const onSaveCustom = () => {
-    const name = window.prompt("為這組權重命名：");
+  const onConfirmSave = () => {
+    const name = presetName.trim();
     if (!name) return;
     saveCustom({ name, type, weights });
+    setPresetName("");
+    setSaveDialogOpen(false);
   };
 
   return (
@@ -337,6 +353,7 @@ export function RankingClient({ type, items, rands }: Props) {
           value={selection}
           onChange={handlePresetChange}
           customPresets={customPresets}
+          onDeleteCustomPreset={removeCustom}
         />
         <WeightEditor weights={weights} onChange={handleWeightsChange} />
         <ThresholdFilters
@@ -350,9 +367,54 @@ export function RankingClient({ type, items, rands }: Props) {
             pushUrl(patch);
           }}
         />
-        <Button variant="outline" size="sm" className="w-full" onClick={onSaveCustom}>
-          儲存為我的配方
-        </Button>
+        <Dialog
+          open={saveDialogOpen}
+          onOpenChange={(open) => {
+            setSaveDialogOpen(open);
+            if (!open) setPresetName("");
+          }}
+        >
+          <DialogTrigger
+            render={
+              <Button variant="outline" size="sm" className="w-full">
+                儲存為我的配方
+              </Button>
+            }
+          />
+          <DialogPopup>
+            <DialogCloseButton />
+            <DialogHeader>
+              <DialogTitle>儲存配方</DialogTitle>
+              <DialogDescription>為目前的權重設定命名，儲存到「我的配方」。</DialogDescription>
+            </DialogHeader>
+            <Input
+              ref={nameInputRef}
+              placeholder="輸入配方名稱"
+              value={presetName}
+              onChange={(e) => setPresetName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onConfirmSave();
+              }}
+              autoFocus
+            />
+            <DialogFooter>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSaveDialogOpen(false)}
+              >
+                取消
+              </Button>
+              <Button
+                size="sm"
+                disabled={!presetName.trim()}
+                onClick={onConfirmSave}
+              >
+                儲存
+              </Button>
+            </DialogFooter>
+          </DialogPopup>
+        </Dialog>
       </aside>
       <div className="space-y-2">
         <div className="text-sm text-muted-foreground" role="status" aria-live="polite">

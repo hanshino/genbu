@@ -1,7 +1,9 @@
 "use client";
 
+import { Trash2Icon } from "lucide-react";
 import { presets } from "@/lib/scoring";
 import type { CustomPreset } from "@/lib/hooks/use-custom-presets";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -21,9 +23,10 @@ interface Props {
   value: PresetSelection;
   onChange: (s: PresetSelection) => void;
   customPresets: readonly CustomPreset[];
+  onDeleteCustomPreset?: (id: string) => void;
 }
 
-export function PresetSelector({ value, onChange, customPresets }: Props) {
+export function PresetSelector({ value, onChange, customPresets, onDeleteCustomPreset }: Props) {
   const currentValue = value.kind === "ad-hoc" ? "ad-hoc" : `${value.kind}:${value.id}`;
 
   return (
@@ -76,6 +79,43 @@ export function PresetSelector({ value, onChange, customPresets }: Props) {
           <SelectItem value="ad-hoc">自訂（手動權重）</SelectItem>
         </SelectContent>
       </Select>
+
+      {customPresets.length > 0 && onDeleteCustomPreset && (
+        <div className="space-y-1 pt-1">
+          <p className="text-xs text-muted-foreground">我的配方</p>
+          {customPresets.map((p) => {
+            const isActive = value.kind === "custom" && value.id === p.id;
+            return (
+              <div
+                key={p.id}
+                className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 transition-colors ${
+                  isActive
+                    ? "border-primary/40 bg-primary/5"
+                    : "border-border/60 bg-card/50 hover:bg-muted/40"
+                }`}
+              >
+                <button
+                  type="button"
+                  className="flex-1 truncate text-left text-sm"
+                  onClick={() => onChange({ kind: "custom", id: p.id })}
+                >
+                  {p.name}
+                </button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="size-6 shrink-0 text-muted-foreground hover:text-destructive"
+                  onClick={() => onDeleteCustomPreset(p.id)}
+                  aria-label={`刪除配方 ${p.name}`}
+                >
+                  <Trash2Icon className="size-3.5" aria-hidden />
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
