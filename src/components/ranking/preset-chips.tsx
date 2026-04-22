@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 
 const PRIMARY_MIN = 80;
 const SECONDARY_MIN = 75;
+// Top-3 within this range → no single flavour, call it 通用.
+const GENERALIST_GAP = 5;
 
 interface Props {
   percentiles: Record<string, number>;
@@ -16,15 +18,32 @@ export function PresetChips({ percentiles, activePresetId }: Props) {
     .map((p) => ({ preset: p, pct: percentiles[p.id] ?? 0 }))
     .sort((a, b) => b.pct - a.pct);
 
-  const chips: typeof ranked = [];
-  if (ranked[0] && ranked[0].pct >= PRIMARY_MIN) chips.push(ranked[0]);
-  if (chips.length > 0 && ranked[1] && ranked[1].pct >= SECONDARY_MIN) {
-    chips.push(ranked[1]);
+  const top = ranked[0];
+  if (!top || top.pct < PRIMARY_MIN) {
+    return <span className="text-xs text-muted-foreground">—</span>;
   }
 
-  if (chips.length === 0) {
-    return <span className="text-xs text-muted-foreground">通用</span>;
+  // Three+ presets essentially tied at the top = broad-spectrum gear; a
+  // single 通用 tag is more honest than cherry-picking whichever two
+  // happened to win by noise.
+  const third = ranked[2];
+  if (third && top.pct - third.pct < GENERALIST_GAP) {
+    const breakdown = ranked
+      .filter((r) => r.pct >= PRIMARY_MIN)
+      .map((r) => `${r.preset.label.replace("系列", "")} ${Math.round(r.pct)}`)
+      .join("、");
+    return (
+      <span
+        title={`跨流派強勢：${breakdown}`}
+        className="inline-flex items-center rounded-sm bg-amber-100 px-1.5 py-0.5 text-xs text-amber-900 ring-1 ring-amber-300/80 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-800/60"
+      >
+        通用
+      </span>
+    );
   }
+
+  const chips: typeof ranked = [top];
+  if (ranked[1] && ranked[1].pct >= SECONDARY_MIN) chips.push(ranked[1]);
 
   return (
     <div className="flex flex-wrap gap-1">

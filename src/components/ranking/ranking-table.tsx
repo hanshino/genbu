@@ -129,7 +129,7 @@ export function RankingTable({
               {!compact && (
                 <th
                   className="w-[132px] px-2 py-1.5 text-left"
-                  title="在該流派池內分位 ≥ 80 才上主標籤；副標籤需 ≥ 75"
+                  title="分位 ≥ 80 上主標；副標 ≥ 75。前三流派分位差 < 5 視為通用裝。"
                 >
                   流派
                 </th>
