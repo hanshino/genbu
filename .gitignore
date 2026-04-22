@@ -55,3 +55,7 @@ next-env.d.ts
 
 # dev screenshots at repo root
 /*.png
+
+# 裝備圖由 sync:images 從 Google Sheet 產生，不進版控
+/public/equipment/*
+!/public/equipment/.gitkeep

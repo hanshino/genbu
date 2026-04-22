@@ -26,3 +26,13 @@ LINE bot 版本：[tthol-line-bot](https://github.com/hanshino/tthol-line-bot)
 ## 關於資料
 
 資料抓自遊戲公開資訊加上玩家社群整理，不保證跟得上每次改版。本站跟遊戲廠商沒任何關係。
+
+## 自己跑一份
+
+```bash
+npm install
+npm run sync:images   # 從 Google Sheet 抓裝備圖到 public/equipment
+npm run dev
+```
+
+裝備圖沒進 repo，第一次 clone 要先跑 `sync:images` 才看得到圖。之後遊戲出新裝再跑一次就更新。
