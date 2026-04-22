@@ -1,0 +1,14 @@
+.next
+out
+build
+node_modules
+coverage
+package-lock.json
+tthol.sqlite
+public
+*.png
+*.jpg
+*.jpeg
+*.svg
+.omc
+CHANGELOG.md
