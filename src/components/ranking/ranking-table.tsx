@@ -162,7 +162,7 @@ export function RankingTable({
                   <TableCell className="py-1.5 text-muted-foreground">{i + 1}</TableCell>
                   <TableCell className="py-1.5">
                     <Link
-                      href={`/items/${item.id}`}
+                      href={`/items/${item.id}?from=ranking`}
                       className="inline-flex min-h-[44px] items-center text-foreground transition-colors hover:text-primary hover:underline focus-visible:underline focus-visible:text-primary focus-visible:outline-none"
                     >
                       {item.name}

@@ -17,12 +17,12 @@ import { ItemDetail } from "@/components/items/item-detail";
 import { ItemRandTable } from "@/components/items/item-rand-table";
 import { ItemDropList } from "@/components/items/item-drop-list";
 import { CompareButton } from "@/components/items/compare-button";
-import { StatBarChart } from "@/components/items/stat-bar-chart";
 import { ItemTags } from "@/components/items/item-tags";
 import { PresetPercentile } from "@/components/items/preset-percentile";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -35,8 +35,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function ItemDetailPage({ params }: PageProps) {
+export default async function ItemDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const { from } = await searchParams;
   const itemId = Number(id);
   if (!Number.isInteger(itemId) || itemId <= 0) notFound();
 
@@ -66,13 +67,16 @@ export default async function ItemDetailPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
       <nav className="text-sm text-muted-foreground">
-        <Link href="/items" className="inline-flex items-center gap-1 hover:underline">
+        <Link
+          href={from === "ranking" ? "/ranking" : "/items"}
+          className="inline-flex items-center gap-1 hover:underline"
+        >
           <ChevronLeftIcon className="size-3.5" aria-hidden />
-          返回道具列表
+          {from === "ranking" ? "返回排行榜" : "返回道具列表"}
         </Link>
       </nav>
 
-      <ItemDetail item={item} />
+      <ItemDetail item={item} maxValues={phase2 ? maxValues : undefined} />
 
       <ItemTags item={item} rands={rands} />
 
@@ -86,13 +90,6 @@ export default async function ItemDetailPage({ params }: PageProps) {
             在排行榜中查看
             <ChevronRightIcon className="size-3.5" aria-hidden />
           </Link>
-        </div>
-      )}
-
-      {phase2 && (
-        <div className="rounded-lg border border-border/60 bg-card p-4">
-          <div className="mb-2 text-sm font-medium">屬性形狀</div>
-          <StatBarChart values={item} maxValues={maxValues} />
         </div>
       )}
 

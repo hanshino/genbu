@@ -2,7 +2,12 @@ import { Badge } from "@/components/ui/badge";
 import type { Item } from "@/lib/types/item";
 import { displayableAttributeKeys, itemAttributeNames } from "@/lib/constants/i18n";
 
-export function ItemDetail({ item }: { item: Item }) {
+interface ItemDetailProps {
+  item: Item;
+  maxValues?: Record<string, number>;
+}
+
+export function ItemDetail({ item, maxValues }: ItemDetailProps) {
   const attributes = displayableAttributeKeys
     .map((key) => {
       const value = (item as unknown as Record<string, number | null>)[key];
@@ -24,23 +29,67 @@ export function ItemDetail({ item }: { item: Item }) {
           {item.value > 0 && <span>販售價 {item.value}</span>}
           {item.durability > 0 && <span>耐久 {item.durability}</span>}
         </div>
-        {item.note && <p className="text-sm text-muted-foreground">{item.note}</p>}
-        {item.summary && <p className="text-sm leading-relaxed">{item.summary}</p>}
+        {item.note && (
+          <p className="whitespace-pre-line text-sm text-muted-foreground">
+            {item.note.replace(/\\n/g, "\n")}
+          </p>
+        )}
+        {item.summary && (
+          <p className="whitespace-pre-line text-sm leading-relaxed">
+            {item.summary.replace(/\\n/g, "\n")}
+          </p>
+        )}
       </header>
 
       {attributes.length > 0 && (
         <div className="rounded-lg border border-border/60 bg-card">
           <div className="border-b border-border/60 px-4 py-2 text-sm font-medium">屬性</div>
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 p-4 sm:grid-cols-3 md:grid-cols-4">
-            {attributes.map((row) => (
-              <div key={row.key} className="flex items-baseline justify-between gap-2">
-                <dt className="text-sm text-muted-foreground">{row.label}</dt>
-                <dd className="font-mono text-sm font-medium">
-                  {row.value! > 0 ? `+${row.value}` : row.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          {maxValues ? (
+            <div className="space-y-2 p-4">
+              {attributes.map((row) => {
+                const max = Math.max(1, maxValues[row.key] ?? 0);
+                const pct = Math.max(0, Math.min(100, ((row.value ?? 0) / max) * 100));
+                return (
+                  <div
+                    key={row.key}
+                    className="grid grid-cols-[5rem_1fr_4.5rem] items-center gap-3"
+                  >
+                    <span className="text-xs text-muted-foreground">{row.label}</span>
+                    <div
+                      className="h-1.5 overflow-hidden rounded-full bg-muted"
+                      role="meter"
+                      aria-label={row.label}
+                      aria-valuenow={row.value ?? 0}
+                      aria-valuemin={0}
+                      aria-valuemax={max}
+                    >
+                      <div
+                        className="h-full bg-primary/70 transition-[width] motion-reduce:transition-none"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <span className="font-mono text-right text-sm font-medium">
+                      {(row.value ?? 0) > 0 ? `+${row.value}` : row.value}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2 p-4">
+              {attributes.map((row) => (
+                <div
+                  key={row.key}
+                  className="flex flex-col items-center rounded-md border border-border/60 bg-muted/30 px-4 py-2.5 text-center"
+                >
+                  <span className="font-mono text-sm font-semibold">
+                    {(row.value ?? 0) > 0 ? `+${row.value}` : row.value}
+                  </span>
+                  <span className="mt-0.5 text-xs text-muted-foreground">{row.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </section>
