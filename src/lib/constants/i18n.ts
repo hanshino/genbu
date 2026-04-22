@@ -37,8 +37,14 @@ export const itemAttributeNames: Record<string, string> = {
   durability: "耐久",
 };
 
+import type { Item } from "@/lib/types/item";
+
+type NumericItemKey = {
+  [K in keyof Item]: Item[K] extends number ? K : never;
+}[keyof Item];
+
 // 在詳情頁要顯示的屬性順序
-export const displayableAttributeKeys: readonly string[] = [
+export const displayableAttributeKeys: readonly NumericItemKey[] = [
   "hp",
   "mp",
   "str",

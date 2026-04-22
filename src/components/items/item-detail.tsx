@@ -10,13 +10,12 @@ interface ItemDetailProps {
   cover?: EquipmentImage | null;
 }
 
+const formatSigned = (value: number) => (value > 0 ? `+${value}` : String(value));
+
 export function ItemDetail({ item, maxValues, cover }: ItemDetailProps) {
   const attributes = displayableAttributeKeys
-    .map((key) => {
-      const value = (item as unknown as Record<string, number | null>)[key];
-      return { key, label: itemAttributeNames[key] ?? key, value };
-    })
-    .filter((row) => typeof row.value === "number" && row.value !== 0);
+    .map((key) => ({ key, label: itemAttributeNames[key] ?? key, value: item[key] }))
+    .filter((row) => row.value !== 0);
 
   return (
     <section className="space-y-6">
@@ -58,7 +57,7 @@ export function ItemDetail({ item, maxValues, cover }: ItemDetailProps) {
             <div className="space-y-2 p-4">
               {attributes.map((row) => {
                 const max = Math.max(1, maxValues[row.key] ?? 0);
-                const pct = Math.max(0, Math.min(100, ((row.value ?? 0) / max) * 100));
+                const pct = Math.max(0, Math.min(100, (row.value / max) * 100));
                 return (
                   <div
                     key={row.key}
@@ -69,7 +68,7 @@ export function ItemDetail({ item, maxValues, cover }: ItemDetailProps) {
                       className="h-1.5 overflow-hidden rounded-full bg-muted"
                       role="meter"
                       aria-label={row.label}
-                      aria-valuenow={row.value ?? 0}
+                      aria-valuenow={row.value}
                       aria-valuemin={0}
                       aria-valuemax={max}
                     >
@@ -79,7 +78,7 @@ export function ItemDetail({ item, maxValues, cover }: ItemDetailProps) {
                       />
                     </div>
                     <span className="font-mono text-right text-sm font-medium">
-                      {(row.value ?? 0) > 0 ? `+${row.value}` : row.value}
+                      {formatSigned(row.value)}
                     </span>
                   </div>
                 );
@@ -92,9 +91,7 @@ export function ItemDetail({ item, maxValues, cover }: ItemDetailProps) {
                   key={row.key}
                   className="flex flex-col items-center rounded-md border border-border/60 bg-muted/30 px-4 py-2.5 text-center"
                 >
-                  <span className="font-mono text-sm font-semibold">
-                    {(row.value ?? 0) > 0 ? `+${row.value}` : row.value}
-                  </span>
+                  <span className="font-mono text-sm font-semibold">{formatSigned(row.value)}</span>
                   <span className="mt-0.5 text-xs text-muted-foreground">{row.label}</span>
                 </div>
               ))}

@@ -17,8 +17,7 @@ interface Props {
 }
 
 export function ItemCover({ cover, alt }: Props) {
-  const width = cover.width ?? 400;
-  const height = cover.height ?? 300;
+  const { width, height } = cover;
   return (
     <Dialog>
       <DialogTrigger
