@@ -1,23 +1,33 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useCompareTray } from "@/lib/hooks/use-compare-tray";
 
+// The bar only earns its screen real estate on routes where the tray is
+// actionable: ranking (add), item list + detail (add). On the home page it's
+// noise, and on /compare itself it's redundant with the in-page tag pills.
+function isRelevantRoute(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return pathname === "/ranking" || pathname.startsWith("/items");
+}
+
 export function CompareBar() {
   const tray = useCompareTray();
+  const pathname = usePathname();
+  const visible = tray.ids.length > 0 && isRelevantRoute(pathname);
 
   // When the bar is visible, reserve bottom padding on <body> so its fixed
   // position does not cover the last row of table / chart content.
   useEffect(() => {
     if (typeof document === "undefined") return;
-    const hasItems = tray.ids.length > 0;
-    document.body.classList.toggle("has-compare-bar", hasItems);
+    document.body.classList.toggle("has-compare-bar", visible);
     return () => document.body.classList.remove("has-compare-bar");
-  }, [tray.ids.length]);
+  }, [visible]);
 
-  if (tray.ids.length === 0) return null;
+  if (!visible) return null;
   return (
     <div
       role="region"

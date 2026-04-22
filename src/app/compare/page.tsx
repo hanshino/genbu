@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getItemsByIds, getItemRandsByIds, getItemsByType } from "@/lib/queries/items";
 import { isPhase2Type, type Phase2Type } from "@/lib/constants/item-types";
 import { COMPARE_TRAY_MAX } from "@/lib/constants/compare";
+import { CompareBreadcrumb } from "@/components/compare/compare-breadcrumb";
 import { CompareClient } from "./compare-client";
 
 export const metadata: Metadata = {
@@ -40,7 +41,8 @@ export default async function ComparePage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-      <header>
+      <header className="space-y-2">
+        <CompareBreadcrumb activeType={activeType} />
         <h1 className="text-2xl font-semibold">裝備比較</h1>
         <p className="text-sm text-muted-foreground">
           可比較 1~5 件同類型裝備。目前類型：{activeType}。
