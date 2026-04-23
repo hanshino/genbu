@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "sync:images": "node scripts/sync-equipment-images.mjs"
+    "sync:images": "node scripts/sync-equipment-images.mjs",
+    "deploy": "node --env-file=.env scripts/deploy.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
