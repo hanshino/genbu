@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { CheckIcon, PlusIcon } from "lucide-react";
@@ -36,7 +35,15 @@ function ItemThumbnail({ itemId }: { itemId: number }) {
   }
   return (
     <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded border border-border/50 bg-muted/30">
-      <Image src={cover.src} alt="" fill sizes="36px" className="object-contain" aria-hidden />
+      {/* eslint-disable-next-line @next/next/no-img-element -- hotlink 直連；走 next/image 會集中到 Vercel optimizer IP，對 tthol.uj.com.tw 反而更易被限流 */}
+      <img
+        src={cover.src}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-contain"
+        aria-hidden
+      />
     </div>
   );
 }
