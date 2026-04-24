@@ -11,16 +11,17 @@ import {
 } from "@/lib/solvers/seven-star";
 import { InlineAlert } from "./inline-alert";
 
-// Big Dipper (北斗七星) layout — positions in percentages of the 2:1 aspect container.
-// Star 1-4 form the bowl (勺); 4-5-6-7 trace the handle (柄).
+// Big Dipper (北斗七星) layout — oriented to match the in-game view (bowl at
+// bottom-left, handle extending up-right). Positions are percentages of a
+// square container. Stars 1-4 form the bowl (勺); 4→5→6→7 trace the handle (柄).
 const STAR_POSITIONS: ReadonlyArray<{ x: number; y: number; name: string }> = [
-  { x: 88, y: 55, name: "天樞" },
-  { x: 88, y: 88, name: "天璇" },
-  { x: 52, y: 88, name: "天璣" },
-  { x: 52, y: 55, name: "天權" },
-  { x: 36, y: 40, name: "玉衡" },
-  { x: 22, y: 28, name: "開陽" },
-  { x: 10, y: 20, name: "搖光" },
+  { x: 55, y: 88, name: "天樞" },
+  { x: 15, y: 88, name: "天璇" },
+  { x: 15, y: 55, name: "天璣" },
+  { x: 55, y: 55, name: "天權" },
+  { x: 68, y: 40, name: "玉衡" },
+  { x: 80, y: 25, name: "開陽" },
+  { x: 90, y: 12, name: "搖光" },
 ];
 
 function isValid(n: number) {
@@ -66,7 +67,7 @@ export function SevenStarSolver() {
         {rawInvalid && <InlineAlert>數字須介於 1~127 且為整數</InlineAlert>}
       </div>
 
-      <div className="relative mx-auto aspect-[2/1] w-full max-w-[560px] rounded-lg border border-border/50 bg-muted/20">
+      <div className="relative mx-auto aspect-square w-full max-w-[480px] rounded-lg border border-border/50 bg-muted/20">
         <svg
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
@@ -74,13 +75,13 @@ export function SevenStarSolver() {
           aria-hidden="true"
         >
           <polyline
-            points="52,55 36,40 22,28 10,20"
+            points="55,55 68,40 80,25 90,12"
             className="stroke-border fill-none"
             strokeWidth="1"
             vectorEffect="non-scaling-stroke"
           />
           <polygon
-            points="88,55 88,88 52,88 52,55"
+            points="55,88 15,88 15,55 55,55"
             className="stroke-border fill-none"
             strokeWidth="1"
             vectorEffect="non-scaling-stroke"
