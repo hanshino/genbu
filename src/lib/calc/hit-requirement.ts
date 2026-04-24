@@ -5,8 +5,6 @@
 // 需要命中也會隨等級變化：p1 越高、需要越低。所以輸出一個範圍。
 
 export interface HitRequirement {
-  minP1: number;
-  maxP1: number;
   /** 最寬鬆的需命中：p1 = maxP1 的情況 */
   minRequired: number;
   /** 最嚴格的需命中：p1 = minP1 的情況（整條等級都穩打中的門檻） */
@@ -17,8 +15,6 @@ export function computeHitRequirement(dodge: number, minP1: number, maxP1: numbe
   const safeMin = Math.max(1, minP1);
   const safeMax = Math.max(1, maxP1);
   return {
-    minP1: safeMin,
-    maxP1: safeMax,
     minRequired: Math.ceil((dodge * 100) / safeMax),
     maxRequired: Math.ceil((dodge * 100) / safeMin),
   };

@@ -206,22 +206,25 @@ export function getSkillHitInfoBatch(
 ): SkillHitInfo[] {
   if (picks.length === 0) return [];
   const db = getDb();
-  const stmt = db.prepare(
-    `SELECT MIN(func_hit_p1) AS minP1, MAX(func_hit_p1) AS maxP1
-     FROM magic
-     WHERE id = ? AND name = ? AND func_hit_p1 IS NOT NULL AND func_hit_p1 > 0`,
-  );
+  const placeholders = picks.map(() => "(?,?)").join(",");
+  const args: (number | string)[] = [];
+  for (const p of picks) args.push(p.id, p.name);
+  const rows = db
+    .prepare(
+      `SELECT id, name, MIN(func_hit_p1) AS minP1, MAX(func_hit_p1) AS maxP1
+       FROM magic
+       WHERE (id, name) IN (VALUES ${placeholders})
+         AND func_hit_p1 IS NOT NULL AND func_hit_p1 > 0
+       GROUP BY id, name`,
+    )
+    .all(...args) as { id: number; name: string; minP1: number; maxP1: number }[];
+  const byKey = new Map(rows.map((r) => [`${r.id}::${r.name}`, r]));
+  // 依 picks 傳入順序回傳（和 SKILL_PICKS 的編排一致）；找不到的直接略過。
   return picks
     .map((p) => {
-      const row = stmt.get(p.id, p.name) as { minP1: number | null; maxP1: number | null };
-      if (row.minP1 == null || row.maxP1 == null) return null;
-      return {
-        id: p.id,
-        name: p.name,
-        firstLevel: p.firstLevel,
-        minP1: row.minP1,
-        maxP1: row.maxP1,
-      };
+      const r = byKey.get(`${p.id}::${p.name}`);
+      if (!r) return null;
+      return { id: p.id, name: p.name, firstLevel: p.firstLevel, minP1: r.minP1, maxP1: r.maxP1 };
     })
     .filter((x): x is SkillHitInfo => x !== null);
 }
