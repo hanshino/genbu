@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { solveSevenStar, sevenStarToNumber, type SevenStarState } from "../seven-star";
+import { solveSevenStar, sevenStarToNumber } from "../seven-star";
 
 describe("solveSevenStar", () => {
   it("maps number to 7 booleans with star 1 = LSB", () => {

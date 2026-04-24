@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { solveForestMatrix, ROOM_NAMES, type RoomName } from "../forest-matrix";
+import { solveForestMatrix, ROOM_NAMES } from "../forest-matrix";
 
 const ok = (r: ReturnType<typeof solveForestMatrix>) => {
   if (!r.ok) throw new Error("expected ok result, got " + r.reason);
