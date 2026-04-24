@@ -32,10 +32,15 @@ const features: Feature[] = [
     phase: "Phase 2",
   },
   {
-    title: "技能 & 怪物",
-    description: "14 門派技能瀏覽、怪物查詢與掉落回查",
+    title: "技能瀏覽",
+    description: "14 門派技能瀏覽、等級成長對照",
     href: "/skills",
-    disabled: true,
+    phase: "Phase 3",
+  },
+  {
+    title: "怪物查詢",
+    description: "等級、屬性、掉落反查一次找齊",
+    href: "/monsters",
     phase: "Phase 3",
   },
   {

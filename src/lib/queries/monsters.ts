@@ -194,7 +194,8 @@ export function getDropsForMonster(monsterId: number): MonsterDropItem[] {
     | { drop_item: string | null }
     | undefined;
   if (!row) return [];
-  const pairs = parseDropItem(row.drop_item);
+  // itemId=0 在遊戲掉落表代表「空槽（沒掉落）」，機率通常最高，不應顯示為道具。
+  const pairs = parseDropItem(row.drop_item).filter((p) => p.itemId !== 0);
   if (pairs.length === 0) return [];
 
   const ids = pairs.map((p) => p.itemId);
