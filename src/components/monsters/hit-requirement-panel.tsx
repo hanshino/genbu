@@ -18,15 +18,17 @@ interface HitRequirementPanelProps {
 }
 
 export function HitRequirementPanel({ dodge, school }: HitRequirementPanelProps) {
-  // 怪物沒記閃躲值 → 無法算命中需求，只顯示說明讓玩家知道為什麼空著
+  // 怪物沒閃躲資料 → 算不出命中需求，仍保留 header 讓玩家知道有這個功能只是不適用
   if (dodge == null || dodge <= 0) {
     return (
-      <section className="space-y-2">
-        <PanelHeader school={school} />
-        <div className="rounded-lg border border-border/60 bg-card px-6 py-8 text-center text-sm text-muted-foreground">
-          此怪物沒有閃躲資料
+      <div className="space-y-2">
+        <div className="overflow-x-auto rounded-lg border border-border/60">
+          <PanelHeader school={school} />
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+            此怪物沒有閃躲資料
+          </div>
         </div>
-      </section>
+      </div>
     );
   }
 
@@ -39,15 +41,15 @@ export function HitRequirementPanel({ dodge, school }: HitRequirementPanelProps)
   });
 
   return (
-    <section className="space-y-2">
-      <PanelHeader school={school} />
+    <div className="space-y-2">
       <div className="overflow-x-auto rounded-lg border border-border/60">
+        <PanelHeader school={school} />
         <Table className="min-w-[480px]">
           <TableHeader>
             <TableRow>
               <TableHead>技能</TableHead>
-              <TableHead className="w-[110px] text-right">命中率參數1</TableHead>
-              <TableHead className="w-[120px] text-right">需要命中</TableHead>
+              <TableHead className="w-[110px] text-right">命中率</TableHead>
+              <TableHead className="w-[120px] text-right">需撐命中</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -69,7 +71,7 @@ export function HitRequirementPanel({ dodge, school }: HitRequirementPanelProps)
                     </Link>
                   </TableCell>
                   <TableCell className="text-right font-mono tabular-nums">
-                    {r.minP1 === r.maxP1 ? r.minP1 : `${r.minP1}→${r.maxP1}`}
+                    {r.minP1 === r.maxP1 ? r.minP1 : `${r.minP1}–${r.maxP1}`}
                   </TableCell>
                   <TableCell className="text-right font-mono tabular-nums">
                     {r.minRequired === r.maxRequired
@@ -83,16 +85,16 @@ export function HitRequirementPanel({ dodge, school }: HitRequirementPanelProps)
         </Table>
       </div>
       <p className="text-xs text-muted-foreground">
-        閃躲 {dodge.toLocaleString()} · 公式：需要命中 = ⌈怪閃 × 100 ÷ 命中率參數1⌉；跨級成長的技能顯示範圍（p1 越高需命中越低）。
+        此怪閃躲 {dodge.toLocaleString()}，需撐命中 = 怪閃 × 100 ÷ 技能命中率（無條件進位）；技能跨級若有成長則顯示範圍。
       </p>
-    </section>
+    </div>
   );
 }
 
 function PanelHeader({ school }: { school: SkillSchool }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <h2 className="text-base font-semibold">命中需求</h2>
+    <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-card px-4 py-2">
+      <span className="text-sm font-medium">命中需求 · {school}</span>
       <SchoolSelect value={school} />
     </div>
   );
