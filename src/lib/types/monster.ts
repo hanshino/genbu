@@ -89,3 +89,10 @@ export interface MonsterDropItem {
   level: number | null;
   rate: number;
 }
+
+// 怪物掉落表完整回傳：drops 已過濾掉 itemId=0 的空槽，
+// totalWeight 是所有 slot 權重總和（含空槽），用來算真實百分比。
+export interface MonsterDropTable {
+  drops: MonsterDropItem[];
+  totalWeight: number;
+}

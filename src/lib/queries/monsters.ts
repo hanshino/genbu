@@ -3,6 +3,7 @@ import type {
   MonsterDetail,
   MonsterDropItem,
   MonsterDropSource,
+  MonsterDropTable,
   MonsterSummary,
   NpcRow,
 } from "@/lib/types/monster";
@@ -187,16 +188,21 @@ export function getMonsterById(id: number): MonsterDetail | null {
   return row ?? null;
 }
 
-// 怪物掉落物清單（rate 降冪，JOIN items 取名稱）
-export function getDropsForMonster(monsterId: number): MonsterDropItem[] {
+// 怪物掉落物清單（rate 降冪，JOIN items 取名稱）。
+// totalWeight 包含 itemId=0 空槽 —— 是算真實百分比（含不掉落機率）的正確分母。
+export function getDropsForMonster(monsterId: number): MonsterDropTable {
   const db = getDb();
   const row = db.prepare(`SELECT drop_item FROM monsters WHERE id = ?`).get(monsterId) as
     | { drop_item: string | null }
     | undefined;
-  if (!row) return [];
-  // itemId=0 在遊戲掉落表代表「空槽（沒掉落）」，機率通常最高，不應顯示為道具。
-  const pairs = parseDropItem(row.drop_item).filter((p) => p.itemId !== 0);
-  if (pairs.length === 0) return [];
+  if (!row) return { drops: [], totalWeight: 0 };
+
+  const allPairs = parseDropItem(row.drop_item);
+  const totalWeight = allPairs.reduce((s, p) => s + p.rate, 0);
+
+  // itemId=0 代表「空槽（沒掉落）」，不列為道具但仍計入 totalWeight。
+  const pairs = allPairs.filter((p) => p.itemId !== 0);
+  if (pairs.length === 0) return { drops: [], totalWeight };
 
   const ids = pairs.map((p) => p.itemId);
   const placeholders = ids.map(() => "?").join(",");
@@ -210,7 +216,7 @@ export function getDropsForMonster(monsterId: number): MonsterDropItem[] {
   }>;
   const itemMap = new Map(items.map((i) => [i.id, i]));
 
-  return pairs
+  const drops: MonsterDropItem[] = pairs
     .map((p) => {
       const item = itemMap.get(p.itemId);
       return {
@@ -222,6 +228,8 @@ export function getDropsForMonster(monsterId: number): MonsterDropItem[] {
       };
     })
     .sort((a, b) => b.rate - a.rate);
+
+  return { drops, totalWeight };
 }
 
 // npc.type 有出現的值（facet 用）

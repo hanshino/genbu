@@ -49,10 +49,13 @@ export interface Magic {
   confine_state: number | null;
 }
 
-// 列表頁投影：每個 skill 一列，聚合最高 level
+// 列表頁投影：每個 skill 一列，依 (id, name) 分組。
+// DB 裡同一個 id 可能塞了多個毫不相關的技能（極端如 id=553 有 32 個），
+// 只靠 id 會混到別的技能；firstLevel 是此技能的最低等級，用來當 URL 上的 disambiguator。
 export interface MagicSummary {
   id: number;
   name: string;
+  firstLevel: number;
   maxLevel: number;
   clan: string | null;
   clan2: string | null;

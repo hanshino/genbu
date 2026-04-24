@@ -111,19 +111,23 @@ describe("getDropsForMonster", () => {
     // Find a monster known to have drops
     const withDrop = getMonsters({ hasDrop: true, pageSize: 1 }).monsters[0];
     expect(withDrop).toBeDefined();
-    const drops = getDropsForMonster(withDrop.id);
+    const { drops, totalWeight } = getDropsForMonster(withDrop.id);
     expect(drops.length).toBeGreaterThan(0);
     // Sorted desc by rate
     for (let i = 1; i < drops.length; i++) {
       expect(drops[i - 1].rate).toBeGreaterThanOrEqual(drops[i].rate);
     }
+    // totalWeight must include empty slot → ≥ sum of visible rates
+    const visibleSum = drops.reduce((s, d) => s + d.rate, 0);
+    expect(totalWeight).toBeGreaterThanOrEqual(visibleSum);
   });
 
-  it("returns empty array for monster with no drops", () => {
+  it("returns empty drops array for monster with no drops", () => {
     // Pick a monster via getMonsters with hasDrop=false
     const noDrop = getMonsters({ pageSize: 50 }).monsters.find((m) => !m.hasDrop);
     expect(noDrop).toBeDefined();
-    expect(getDropsForMonster(noDrop!.id)).toEqual([]);
+    const result = getDropsForMonster(noDrop!.id);
+    expect(result.drops).toEqual([]);
   });
 });
 
@@ -131,7 +135,7 @@ describe("getMonstersByDropItem (existing — regression guard)", () => {
   it("round-trips: pick a drop item, look up monsters, confirm the monster exists in them", () => {
     const withDrop = getMonsters({ hasDrop: true, pageSize: 20 }).monsters;
     for (const m of withDrop) {
-      const drops = getDropsForMonster(m.id);
+      const { drops } = getDropsForMonster(m.id);
       if (drops.length === 0) continue;
       const first = drops[0];
       const sources = getMonstersByDropItem(first.itemId);

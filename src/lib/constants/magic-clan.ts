@@ -4,7 +4,7 @@
 
 export const MAGIC_CLAN_LABELS: Record<string, string> = {
   CLASS_SHAULIN: "少林",
-  CLASS_MONTO: "蔓陀蘿",
+  CLASS_MONTO: "曼陀",
   CLASS_MONTO_KYLIN: "麒麟",
   CLASS_SKY: "天外天",
   CLASS_FLOWER: "移花宮",
@@ -44,4 +44,21 @@ export const MAGIC_CLAN_ORDER: readonly string[] = [
 export function magicClanLabel(clan: string | null | undefined): string {
   if (!clan) return "生活/商業";
   return MAGIC_CLAN_LABELS[clan] ?? clan;
+}
+
+// 列表顯示用：clan 為 null 時會進一步看 skill_type 區分兩種語意。
+// - clan != null                                → 門派中文名
+// - clan == null && skill_type == null          → "生活/商業"（修練類、被動、生活商業技）
+// - clan == null && skill_type != null          → "未分類"（原檔漏填門派的戰技，例如禪宗棍法）
+export function magicClanListLabel(
+  clan: string | null | undefined,
+  skillType: number | null | undefined,
+): { label: string; kind: "clan" | "general" | "unclassified" } {
+  if (clan) {
+    return { label: MAGIC_CLAN_LABELS[clan] ?? clan, kind: "clan" };
+  }
+  if (skillType == null) {
+    return { label: "生活/商業", kind: "general" };
+  }
+  return { label: "未分類", kind: "unclassified" };
 }
