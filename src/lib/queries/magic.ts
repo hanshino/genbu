@@ -189,3 +189,39 @@ export function getDistinctSkillTypes(): number[] {
     .all() as { skill_type: number }[];
   return rows.map((r) => r.skill_type);
 }
+
+// 一批技能的命中率參數1 分布（給怪物頁的命中需求面板用）。
+// 每筆 pick 以 (id, name) 定位；同 name 若有玩家版 + 特效版（例如 落英紛飛 id=714 vs id=1133 p1=500），
+// picks 已經指向玩家 id，這裡不再做二次過濾。
+export interface SkillHitInfo {
+  id: number;
+  name: string;
+  firstLevel: number;
+  minP1: number;
+  maxP1: number;
+}
+
+export function getSkillHitInfoBatch(
+  picks: readonly { id: number; name: string; firstLevel: number }[],
+): SkillHitInfo[] {
+  if (picks.length === 0) return [];
+  const db = getDb();
+  const stmt = db.prepare(
+    `SELECT MIN(func_hit_p1) AS minP1, MAX(func_hit_p1) AS maxP1
+     FROM magic
+     WHERE id = ? AND name = ? AND func_hit_p1 IS NOT NULL AND func_hit_p1 > 0`,
+  );
+  return picks
+    .map((p) => {
+      const row = stmt.get(p.id, p.name) as { minP1: number | null; maxP1: number | null };
+      if (row.minP1 == null || row.maxP1 == null) return null;
+      return {
+        id: p.id,
+        name: p.name,
+        firstLevel: p.firstLevel,
+        minP1: row.minP1,
+        maxP1: row.maxP1,
+      };
+    })
+    .filter((x): x is SkillHitInfo => x !== null);
+}
