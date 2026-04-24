@@ -1,22 +1,20 @@
 "use client";
 
-import * as React from "react";
-import { useState } from "react";
+import { useState, type ReactElement } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 
 type Props = {
   value: number | null;
-  disabled?: boolean;
-  trigger: React.ReactElement;
+  trigger: ReactElement;
   onPick: (n: number | null) => void;
 };
 
-export function NumberPadPopover({ value, disabled, trigger, onPick }: Props) {
+export function NumberPadPopover({ value, trigger, onPick }: Props) {
   const [open, setOpen] = useState(false);
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger render={trigger} disabled={disabled} />
+      <PopoverTrigger render={trigger} />
       <PopoverContent className="w-auto p-2">
         <div className="grid grid-cols-3 gap-1">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (

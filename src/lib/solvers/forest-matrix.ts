@@ -42,7 +42,6 @@ export function solveForestMatrix(input: ForestMatrixInput): ForestMatrixResult 
     if (!Number.isInteger(k.value) || k.value < 1 || k.value > 9) {
       return { ok: false, reason: "invalid_value" };
     }
-    if (!(k.room in COEFFICIENTS)) return { ok: false, reason: "invalid_value" };
   }
 
   if (known[0].room === known[1].room) return { ok: false, reason: "same_room" };
