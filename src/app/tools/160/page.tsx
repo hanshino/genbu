@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ForestMatrixSolver } from "@/components/tools/forest-matrix-solver";
+import { ToolsBreadcrumb } from "@/components/tools/tools-breadcrumb";
 
 export const metadata: Metadata = {
   title: "160 迷霧九宮格 | Genbu",
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
 
 export default function ForestMatrixPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
+      <ToolsBreadcrumb current="160 迷霧九宮格" />
       <header className="mb-6">
         <h1 className="font-heading text-3xl font-bold">160 副本 — 迷霧九宮格</h1>
         <p className="text-muted-foreground mt-2 text-sm">

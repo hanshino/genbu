@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,8 @@ const REASON_MESSAGE: Record<
 };
 
 export function GodQuestSolver() {
+  const sumLabelId = useId();
+  const leakId = useId();
   const [sum, setSum] = useState<number>(19);
   const [leakInput, setLeakInput] = useState("1");
   const [result, setResult] = useState<MagicTriangleResult | null>(null);
@@ -48,9 +50,11 @@ export function GodQuestSolver() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium">總和</label>
+          <label id={sumLabelId} className="text-sm font-medium">
+            總和
+          </label>
           <Select value={String(sum)} onValueChange={(v) => setSum(Number(v))}>
-            <SelectTrigger className="w-28">
+            <SelectTrigger className="w-28" aria-labelledby={sumLabelId}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -63,8 +67,11 @@ export function GodQuestSolver() {
           </Select>
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium">封印數字（左上中）</label>
+          <label htmlFor={leakId} className="text-sm font-medium">
+            封印數字（左上中）
+          </label>
           <Input
+            id={leakId}
             type="number"
             inputMode="numeric"
             min={1}

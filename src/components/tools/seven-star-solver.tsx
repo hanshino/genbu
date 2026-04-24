@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import {
   solveSevenStar,
   sevenStarToNumber,
@@ -11,11 +11,24 @@ import {
 } from "@/lib/solvers/seven-star";
 import { InlineAlert } from "./inline-alert";
 
+// Big Dipper (北斗七星) layout — positions in percentages of the 2:1 aspect container.
+// Star 1-4 form the bowl (勺); 4-5-6-7 trace the handle (柄).
+const STAR_POSITIONS: ReadonlyArray<{ x: number; y: number; name: string }> = [
+  { x: 88, y: 55, name: "天樞" },
+  { x: 88, y: 88, name: "天璇" },
+  { x: 52, y: 88, name: "天璣" },
+  { x: 52, y: 55, name: "天權" },
+  { x: 36, y: 40, name: "玉衡" },
+  { x: 22, y: 28, name: "開陽" },
+  { x: 10, y: 20, name: "搖光" },
+];
+
 function isValid(n: number) {
   return Number.isInteger(n) && n >= 1 && n <= 127;
 }
 
 export function SevenStarSolver() {
+  const inputId = useId();
   const [states, setStates] = useState<SevenStarState>(() => solveSevenStar(1));
   const [raw, setRaw] = useState("1");
 
@@ -37,8 +50,11 @@ export function SevenStarSolver() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <label className="text-sm font-medium">輸入數字（1~127）</label>
+        <label htmlFor={inputId} className="text-sm font-medium">
+          輸入數字（1~127）
+        </label>
         <Input
+          id={inputId}
           type="number"
           inputMode="numeric"
           min={1}
@@ -50,22 +66,54 @@ export function SevenStarSolver() {
         {rawInvalid && <InlineAlert>數字須介於 1~127 且為整數</InlineAlert>}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {states.map((on, i) => (
-          <Button
-            key={i}
-            variant="ghost"
-            size="lg"
-            onClick={() => toggleStar(i)}
-            aria-label={`星 ${i + 1} ${on ? "開" : "關"}`}
-            className="flex h-16 w-16 flex-col gap-1 p-1"
-          >
-            <Star
-              className={on ? "h-8 w-8 fill-amber-400 text-amber-400" : "text-muted-foreground h-8 w-8"}
-            />
-            <span className="text-xs">星{i + 1}</span>
-          </Button>
-        ))}
+      <div className="relative mx-auto aspect-[2/1] w-full max-w-[560px] rounded-lg border border-border/50 bg-muted/20">
+        <svg
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          className="absolute inset-0 h-full w-full"
+          aria-hidden="true"
+        >
+          <polyline
+            points="52,55 36,40 22,28 10,20"
+            className="stroke-border fill-none"
+            strokeWidth="1"
+            vectorEffect="non-scaling-stroke"
+          />
+          <polygon
+            points="88,55 88,88 52,88 52,55"
+            className="stroke-border fill-none"
+            strokeWidth="1"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+        {STAR_POSITIONS.map((pos, i) => {
+          const on = states[i];
+          return (
+            <button
+              key={i}
+              type="button"
+              style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+              onClick={() => toggleStar(i)}
+              aria-label={`星 ${i + 1} ${pos.name} ${on ? "開" : "關"}`}
+              aria-pressed={on}
+              className={cn(
+                "absolute flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center",
+                "rounded-full border bg-background/90 backdrop-blur-sm transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "cursor-pointer",
+                on ? "border-amber-500/60 bg-amber-50 dark:bg-amber-950/40" : "border-border hover:bg-muted",
+              )}
+            >
+              <Star
+                className={cn(
+                  "h-5 w-5",
+                  on ? "fill-amber-400 text-amber-500" : "text-muted-foreground",
+                )}
+              />
+              <span className="mt-0.5 text-[9px] leading-none font-medium">{i + 1}</span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="text-muted-foreground font-mono text-sm">

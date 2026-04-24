@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { GodQuestSolver } from "@/components/tools/god-quest-solver";
+import { ToolsBreadcrumb } from "@/components/tools/tools-breadcrumb";
 
 export const metadata: Metadata = {
   title: "180 神武禁地 | Genbu",
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
 
 export default function GodQuestPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
+      <ToolsBreadcrumb current="180 神武禁地" />
       <header className="mb-6">
         <h1 className="font-heading text-3xl font-bold">180 副本 — 神武禁地</h1>
         <p className="text-muted-foreground mt-2 text-sm">
