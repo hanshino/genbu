@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { magicClanLabel } from "@/lib/constants/magic-clan";
+import { magicClanListLabel } from "@/lib/constants/magic-clan";
 import { magicTargetLabel } from "@/lib/constants/magic-target";
 import { magicAttribLabel, MAGIC_ATTRIB_COLOR } from "@/lib/constants/magic-attrib";
 import { magicSkillTypeLabel } from "@/lib/constants/magic-skill-type";
@@ -24,8 +24,8 @@ export function SkillTable({ skills }: { skills: MagicSummary[] }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border/60">
-      <Table>
+    <div className="overflow-x-auto rounded-lg border border-border/60">
+      <Table className="min-w-[720px]">
         <TableHeader>
           <TableRow>
             <TableHead className="w-[90px]">編號</TableHead>
@@ -41,21 +41,25 @@ export function SkillTable({ skills }: { skills: MagicSummary[] }) {
           {skills.map((s) => {
             const attribLabel = magicAttribLabel(s.attrib);
             const attribColor = s.attrib != null ? MAGIC_ATTRIB_COLOR[s.attrib] : null;
+            const clanDisplay = magicClanListLabel(s.clan, s.skill_type);
             return (
-              <TableRow key={s.id}>
+              <TableRow key={`${s.id}-${s.firstLevel}`}>
                 <TableCell className="font-mono text-xs text-muted-foreground">{s.id}</TableCell>
                 <TableCell>
-                  <Link href={`/skills/${s.id}`} className="font-medium hover:underline">
+                  <Link
+                    href={`/skills/${s.id}?level=${s.firstLevel}`}
+                    className="font-medium hover:underline"
+                  >
                     {s.name}
                   </Link>
                 </TableCell>
                 <TableCell>
-                  {s.clan ? (
+                  {clanDisplay.kind === "clan" ? (
                     <Badge variant="secondary" className="font-normal">
-                      {magicClanLabel(s.clan)}
+                      {clanDisplay.label}
                     </Badge>
                   ) : (
-                    <span className="text-muted-foreground">生活/商業</span>
+                    <span className="text-muted-foreground">{clanDisplay.label}</span>
                   )}
                 </TableCell>
                 <TableCell className="text-muted-foreground">

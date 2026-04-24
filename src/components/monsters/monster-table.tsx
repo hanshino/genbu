@@ -21,8 +21,8 @@ export function MonsterTable({ monsters }: { monsters: MonsterSummary[] }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border/60">
-      <Table>
+    <div className="overflow-x-auto rounded-lg border border-border/60">
+      <Table className="min-w-[720px]">
         <TableHeader>
           <TableRow>
             <TableHead className="w-[90px]">編號</TableHead>

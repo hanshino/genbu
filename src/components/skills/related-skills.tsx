@@ -19,9 +19,9 @@ export function RelatedSkills({ clan, skills }: RelatedSkillsProps) {
       </div>
       <ul className="divide-y divide-border/60">
         {skills.map((s) => (
-          <li key={s.id}>
+          <li key={`${s.id}-${s.name}`}>
             <Link
-              href={`/skills/${s.id}`}
+              href={`/skills/${s.id}?level=${s.firstLevel}`}
               className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm hover:bg-muted/40"
             >
               <span className="truncate">{s.name}</span>
