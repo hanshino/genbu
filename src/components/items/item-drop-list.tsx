@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -28,7 +29,11 @@ export function ItemDropList({ sources }: { sources: MonsterDropSource[] }) {
             {sources.map((m) => (
               <TableRow key={m.id}>
                 <TableCell className="font-mono text-xs text-muted-foreground">{m.id}</TableCell>
-                <TableCell className="font-medium">{m.name}</TableCell>
+                <TableCell>
+                  <Link href={`/monsters/${m.id}`} className="font-medium hover:underline">
+                    {m.name}
+                  </Link>
+                </TableCell>
                 <TableCell className="text-right">{m.level}</TableCell>
                 <TableCell className="text-right font-mono">{m.rate.toLocaleString()}</TableCell>
               </TableRow>

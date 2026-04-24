@@ -68,7 +68,9 @@ export function ItemFilters({
         }}
       >
         <SelectTrigger className="sm:w-[220px]">
-          <SelectValue placeholder="全部類別" />
+          <SelectValue>
+            {(v: unknown) => (v == null || v === ALL_TYPES ? "全部類別" : String(v))}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL_TYPES}>全部類別</SelectItem>

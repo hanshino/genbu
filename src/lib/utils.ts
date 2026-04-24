@@ -15,3 +15,13 @@ export function heatmapCell(value: number, min: number, max: number): CSSPropert
     backgroundColor: `color-mix(in oklch, var(--primary) ${(alpha * 100).toFixed(1)}%, transparent)`,
   };
 }
+
+// 小機率時需要更多小數位才看得出差距；極小值顯示「<0.01%」避免變成 0.00%。
+export function formatPercent(rate: number, total: number): string {
+  if (total <= 0) return "—";
+  const pct = (rate / total) * 100;
+  if (pct >= 10) return `${pct.toFixed(1)}%`;
+  if (pct >= 0.1) return `${pct.toFixed(2)}%`;
+  if (pct >= 0.01) return `${pct.toFixed(3)}%`;
+  return "<0.01%";
+}

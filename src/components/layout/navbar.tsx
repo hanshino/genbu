@@ -4,9 +4,11 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "首頁" },
-  { href: "/items", label: "道具查詢" },
+  { href: "/items", label: "道具" },
   { href: "/ranking", label: "排行榜" },
   { href: "/compare", label: "比較" },
+  { href: "/skills", label: "技能" },
+  { href: "/monsters", label: "怪物" },
 ];
 
 export function Navbar() {
