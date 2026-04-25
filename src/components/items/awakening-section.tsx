@@ -35,9 +35,8 @@ export function AwakeningSection({ item }: { item: Item }) {
 
   const cumulative = computeCumulative(path.stages);
 
-  // 此 prefix 提供的所有 bonus types — 取 +1 那階即可（每階屬性集合相同）。
-  const bonusTypes = path.stages[0]?.bonuses.map((b) => b.bonusType) ?? [];
-  const bonusLabels = path.stages[0]?.bonuses.map((b) => b.label) ?? [];
+  // 此 prefix 提供的所有 bonus 欄位 — 取 +1 那階即可（每階屬性集合相同）。
+  const bonusColumns = path.stages[0]?.bonuses ?? [];
 
   return (
     <section className="space-y-3">
@@ -53,9 +52,9 @@ export function AwakeningSection({ item }: { item: Item }) {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[70px]">階段</TableHead>
-              {bonusLabels.map((label) => (
-                <TableHead key={label} className="text-right">
-                  {label}
+              {bonusColumns.map((b) => (
+                <TableHead key={b.bonusType} className="text-right">
+                  {b.label}
                 </TableHead>
               ))}
               <TableHead className="text-right">此階金錢</TableHead>
@@ -67,8 +66,7 @@ export function AwakeningSection({ item }: { item: Item }) {
           </TableHeader>
           <TableBody>
             {cumulative.map((row) => {
-              const stage = path.stages.find((s) => s.stage === row.stage)!;
-              const bonusByType = new Map(stage.bonuses.map((b) => [b.bonusType, b.value]));
+              const bonusByType = new Map(row.bonuses.map((b) => [b.bonusType, b.value]));
               const isMilestone = MILESTONE_STAGES.has(row.stage);
               return (
                 <TableRow
@@ -76,9 +74,9 @@ export function AwakeningSection({ item }: { item: Item }) {
                   className={isMilestone ? "bg-muted/50 font-medium" : undefined}
                 >
                   <TableCell className="font-mono">+{row.stage}</TableCell>
-                  {bonusTypes.map((t) => (
-                    <TableCell key={t} className="text-right font-mono">
-                      {bonusByType.has(t) ? `+${bonusByType.get(t)}` : "—"}
+                  {bonusColumns.map((b) => (
+                    <TableCell key={b.bonusType} className="text-right font-mono">
+                      {bonusByType.has(b.bonusType) ? `+${bonusByType.get(b.bonusType)}` : "—"}
                     </TableCell>
                   ))}
                   <TableCell className="text-right font-mono text-xs">
