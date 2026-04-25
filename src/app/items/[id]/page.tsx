@@ -17,6 +17,7 @@ import { isPhase2Type } from "@/lib/constants/item-types";
 import { ItemDetail } from "@/components/items/item-detail";
 import { ItemRandTable } from "@/components/items/item-rand-table";
 import { ItemDropList } from "@/components/items/item-drop-list";
+import { AwakeningSection } from "@/components/items/awakening-section";
 import { CompareButton } from "@/components/items/compare-button";
 import { ItemTags } from "@/components/items/item-tags";
 import { PresetPercentile } from "@/components/items/preset-percentile";
@@ -105,6 +106,8 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
       <ItemRandTable rands={rands} />
 
       <ItemDropList sources={sources} />
+
+      <AwakeningSection item={item} />
     </div>
   );
 }
