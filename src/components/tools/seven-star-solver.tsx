@@ -11,17 +11,18 @@ import {
 } from "@/lib/solvers/seven-star";
 import { InlineAlert } from "./inline-alert";
 
-// Big Dipper (北斗七星) layout — oriented to match the in-game view (bowl at
-// bottom-left, handle extending up-right). Positions are percentages of a
-// square container. Stars 1-4 form the bowl (勺); 4→5→6→7 trace the handle (柄).
+// Big Dipper (北斗七星) layout — positions copied directly from the LINE bot
+// template (questTemplate.js genSevenStarBubble), matching the in-game view:
+// star 1 (天樞) at bottom-right = 起點, star 7 (搖光) at top-left = 終點.
+// Player follows sequence 1 → 2 → 3 → 4 → 5 → 6 → 7.
 const STAR_POSITIONS: ReadonlyArray<{ x: number; y: number; name: string }> = [
-  { x: 55, y: 88, name: "天樞" },
-  { x: 15, y: 88, name: "天璇" },
-  { x: 15, y: 55, name: "天璣" },
-  { x: 55, y: 55, name: "天權" },
-  { x: 68, y: 40, name: "玉衡" },
-  { x: 80, y: 25, name: "開陽" },
-  { x: 90, y: 12, name: "搖光" },
+  { x: 75, y: 90, name: "天樞" },
+  { x: 30, y: 70, name: "天璇" },
+  { x: 20, y: 50, name: "天璣" },
+  { x: 19, y: 30, name: "天權" },
+  { x: 80, y: 30, name: "玉衡" },
+  { x: 80, y: 10, name: "開陽" },
+  { x: 20, y: 10, name: "搖光" },
 ];
 
 function isValid(n: number) {
@@ -67,21 +68,19 @@ export function SevenStarSolver() {
         {rawInvalid && <InlineAlert>數字須介於 1~127 且為整數</InlineAlert>}
       </div>
 
-      <div className="relative mx-auto aspect-square w-full max-w-[480px] rounded-lg border border-border/50 bg-muted/20">
+      <div
+        style={{ aspectRatio: "4 / 5" }}
+        className="relative mx-auto w-full max-w-[380px] rounded-lg border border-border/50 bg-muted/20"
+      >
         <svg
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
           className="absolute inset-0 h-full w-full"
           aria-hidden="true"
         >
+          {/* sequence path 1 → 2 → 3 → 4 → 5 → 6 → 7 */}
           <polyline
-            points="55,55 68,40 80,25 90,12"
-            className="stroke-border fill-none"
-            strokeWidth="1"
-            vectorEffect="non-scaling-stroke"
-          />
-          <polygon
-            points="55,88 15,88 15,55 55,55"
+            points="75,90 30,70 20,50 19,30 80,30 80,10 20,10"
             className="stroke-border fill-none"
             strokeWidth="1"
             vectorEffect="non-scaling-stroke"
