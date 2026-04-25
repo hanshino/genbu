@@ -41,7 +41,7 @@ export default async function SkillsPage({ searchParams }: PageProps) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">技能瀏覽</h1>
+        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">技能瀏覽</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           共 {result.total.toLocaleString()} 個技能{hasFilter ? "（符合條件）" : ""}
         </p>

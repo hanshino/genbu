@@ -42,7 +42,7 @@ export default async function ComparePage({ searchParams }: Props) {
           返回排行榜
         </BackLink>
       </nav>
-      <h1 className="text-2xl font-semibold">裝備比較</h1>
+      <h1 className="text-2xl font-semibold md:text-3xl">裝備比較</h1>
       <CompareClient
         activeType={activeType}
         initialItems={items}

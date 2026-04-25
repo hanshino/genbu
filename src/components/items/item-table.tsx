@@ -20,8 +20,8 @@ export function ItemTable({ items }: { items: Item[] }) {
   }
 
   return (
-    <div className="rounded-lg border border-border/60 overflow-hidden">
-      <Table>
+    <div className="overflow-x-auto rounded-lg border border-border/60">
+      <Table className="min-w-[640px]">
         <TableHeader>
           <TableRow>
             <TableHead className="w-[90px]">編號</TableHead>
