@@ -71,7 +71,7 @@ export default function HomePage() {
         </p>
       </section>
 
-      <section className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <section className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {features.map((f) => (
           <Link key={f.href} href={f.href}>
             <Card className="h-full transition-colors hover:border-primary/50">

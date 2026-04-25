@@ -34,7 +34,7 @@ export function CompareBar() {
     <div
       role="region"
       aria-label="比較盤"
-      className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-full border border-border bg-background/95 px-4 py-2 shadow-lg backdrop-blur flex items-center gap-3 text-sm"
+      className="fixed bottom-4 left-1/2 z-40 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-full border border-border bg-background/95 px-4 py-2 text-sm shadow-lg backdrop-blur"
     >
       <span className="text-muted-foreground">比較盤：{tray.ids.length} 件</span>
       <Link
