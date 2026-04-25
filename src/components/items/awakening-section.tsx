@@ -130,7 +130,8 @@ export function AwakeningSection({ item }: { item: Item }) {
       </details>
 
       <p className="text-xs text-muted-foreground">
-        累積金錢「期」欄假設失敗不掉階；+18~+20 實際成本更高，可用退階防護令避免。
+        屬性欄為該階獨立加值，非累計總值。累積金錢「期」欄假設失敗不掉階；+18~+20
+        實際成本更高，可用退階防護令避免。
       </p>
     </section>
   );

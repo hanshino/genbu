@@ -22,8 +22,7 @@ export function computeCumulative(stages: AwakeningStage[]): CumulativeRow[] {
   for (const s of stages) {
     runningBest += s.money;
     runningExpected += s.successProb > 0 ? s.money / s.successProb : Infinity;
-    runningMaterials[s.materialName] =
-      (runningMaterials[s.materialName] ?? 0) + s.materialAmount;
+    runningMaterials[s.materialName] = (runningMaterials[s.materialName] ?? 0) + s.materialAmount;
 
     rows.push({
       stage: s.stage,

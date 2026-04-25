@@ -18,17 +18,7 @@ export function levelToGenPrefix(level: number): string | null {
 
 const ARMOR_TYPES = new Set(["鞋", "衣", "甲", "盾", "帽", "座騎"]);
 const ACCESSORY_TYPES = new Set(["中飾", "左飾", "右飾", "背飾"]);
-const ONE_HAND_WEAPONS = new Set([
-  "劍",
-  "刀",
-  "匕首",
-  "扇",
-  "拂塵",
-  "拳刃",
-  "雙劍",
-  "暗器",
-  "棍",
-]);
+const ONE_HAND_WEAPONS = new Set(["劍", "刀", "匕首", "扇", "拂塵", "拳刃", "雙劍", "暗器", "棍"]);
 
 export function itemTypeToSlotPrefix(type: string | null): string | null {
   if (!type) return null;
