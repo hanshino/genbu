@@ -59,8 +59,13 @@ export function SevenStarSolver() {
           min={1}
           max={127}
           value={raw}
+          aria-invalid={rawInvalid || undefined}
           onChange={(e) => handleNumberChange(e.target.value)}
-          className="max-w-xs"
+          className={cn(
+            "max-w-xs",
+            rawInvalid &&
+              "border-destructive focus-visible:ring-destructive/40",
+          )}
         />
         {rawInvalid && <InlineAlert>數字須介於 1~127 且為整數</InlineAlert>}
       </div>
