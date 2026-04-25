@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +15,14 @@ const navItems = [
   { href: "/tools", label: "工具" },
 ];
 
+function isActive(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function Navbar() {
+  const pathname = usePathname();
+
   return (
     <header className="border-b border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
@@ -21,15 +31,24 @@ export function Navbar() {
           <span className="text-muted-foreground text-xs">Genbu</span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const active = isActive(pathname, item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  buttonVariants({
+                    variant: active ? "secondary" : "ghost",
+                    size: "sm",
+                  }),
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
     </header>
