@@ -25,7 +25,7 @@ export function MagicTriangleSvg({ solution }: { solution: TriangleSolution }) {
       viewBox="0 0 420 420"
       className="h-auto w-full max-w-[420px]"
       role="img"
-      aria-label="魔三角形解答"
+      aria-label="神武禁地解答"
     >
       <polygon
         points="210,60 60,360 360,360"

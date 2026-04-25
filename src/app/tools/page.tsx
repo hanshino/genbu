@@ -32,7 +32,7 @@ export default function ToolsHubPage() {
           href="/tools/180"
           title="180 副本"
           subtitle="神武禁地"
-          description="輸入總和與左上中（封印）數字，列出所有魔三角形解。"
+          description="輸入總和與左上中（封印）數字，列出所有合法排列。"
         />
       </div>
     </div>
