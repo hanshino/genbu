@@ -11,10 +11,7 @@ import {
 } from "@/lib/solvers/seven-star";
 import { InlineAlert } from "./inline-alert";
 
-// Big Dipper (北斗七星) layout — positions copied directly from the LINE bot
-// template (questTemplate.js genSevenStarBubble), matching the in-game view:
-// star 1 (天樞) at bottom-right = 起點, star 7 (搖光) at top-left = 終點.
-// Player follows sequence 1 → 2 → 3 → 4 → 5 → 6 → 7.
+// Star 1 (天樞, LSB) sits at bottom-right per the in-game view; star 7 (搖光) at top-left.
 const STAR_POSITIONS: ReadonlyArray<{ x: number; y: number; name: string }> = [
   { x: 75, y: 90, name: "天樞" },
   { x: 30, y: 70, name: "天璇" },
@@ -62,8 +59,13 @@ export function SevenStarSolver() {
           min={1}
           max={127}
           value={raw}
+          aria-invalid={rawInvalid || undefined}
           onChange={(e) => handleNumberChange(e.target.value)}
-          className="max-w-xs"
+          className={cn(
+            "max-w-xs",
+            rawInvalid &&
+              "border-destructive focus-visible:ring-destructive/40",
+          )}
         />
         {rawInvalid && <InlineAlert>數字須介於 1~127 且為整數</InlineAlert>}
       </div>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getItemsByIds, getItemRandsByIds, getItemsByType } from "@/lib/queries/items";
 import { isPhase2Type, type Phase2Type } from "@/lib/constants/item-types";
 import { COMPARE_TRAY_MAX } from "@/lib/constants/compare";
-import { CompareBreadcrumb } from "@/components/compare/compare-breadcrumb";
+import { BackLink } from "@/components/common/back-link";
 import { CompareClient } from "./compare-client";
 
 export const metadata: Metadata = {
@@ -37,10 +37,12 @@ export default async function ComparePage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-      <header className="space-y-1">
-        <CompareBreadcrumb activeType={activeType} />
-        <h1 className="text-2xl font-semibold">裝備比較</h1>
-      </header>
+      <nav className="text-sm text-muted-foreground">
+        <BackLink href={`/ranking?type=${encodeURIComponent(activeType)}`}>
+          返回排行榜
+        </BackLink>
+      </nav>
+      <h1 className="text-2xl font-semibold">裝備比較</h1>
       <CompareClient
         activeType={activeType}
         initialItems={items}

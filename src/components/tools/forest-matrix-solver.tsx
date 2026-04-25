@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -36,13 +36,8 @@ export function ForestMatrixSolver() {
   const [sum, setSum] = useState<12 | 15>(15);
   const [inputs, setInputs] = useState<Inputs>(EMPTY);
 
-  const known = useMemo(
-    () =>
-      ROOM_NAMES.filter((r) => r !== "帝" && inputs[r] !== null).map((r) => ({
-        room: r,
-        value: inputs[r] as number,
-      })),
-    [inputs],
+  const known = ROOM_NAMES.filter((r) => r !== "帝" && inputs[r] !== null).map(
+    (r) => ({ room: r, value: inputs[r] as number }),
   );
 
   const centerValue = sum / 3;
