@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon } from "lucide-react";
+import { BackLink } from "@/components/common/back-link";
 import { getItemById, getItemRands, getItemRandsByIds, getItemsByType } from "@/lib/queries/items";
 import { getMonstersByDropItem } from "@/lib/queries/monsters";
 import {
@@ -69,13 +70,9 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
       <nav className="text-sm text-muted-foreground">
-        <Link
-          href={from === "ranking" ? "/ranking" : "/items"}
-          className="inline-flex items-center gap-1 hover:underline"
-        >
-          <ChevronLeftIcon className="size-3.5" aria-hidden />
+        <BackLink href={from === "ranking" ? "/ranking" : "/items"}>
           {from === "ranking" ? "返回排行榜" : "返回道具列表"}
-        </Link>
+        </BackLink>
       </nav>
 
       <ItemDetail item={item} maxValues={phase2 ? maxValues : undefined} cover={cover} />
