@@ -46,6 +46,8 @@ export interface MissionItemRef {
 /** 一筆地圖／NPC 引用。npcId=0 代表「不是具體 NPC，只是地標／怪物名」。 */
 export interface MissionMapRef {
   mapId: number;
+  /** 從 stages 表回查的中文地圖名（查不到時為 null）。 */
+  mapName: string | null;
   x: number | null;
   y: number | null;
   npcId: number;
