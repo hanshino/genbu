@@ -18,6 +18,9 @@ import { ItemDetail } from "@/components/items/item-detail";
 import { ItemRandTable } from "@/components/items/item-rand-table";
 import { ItemDropList } from "@/components/items/item-drop-list";
 import { AwakeningSection } from "@/components/items/awakening-section";
+import { CompoundSourcesSection } from "@/components/items/compound-sources-section";
+import { CompoundUsesSection } from "@/components/items/compound-uses-section";
+import { EquipmentEnhancementsSection } from "@/components/items/equipment-enhancements-section";
 import { CompareButton } from "@/components/items/compare-button";
 import { ItemTags } from "@/components/items/item-tags";
 import { PresetPercentile } from "@/components/items/preset-percentile";
@@ -108,6 +111,12 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
       <ItemDropList sources={sources} />
 
       <AwakeningSection item={item} />
+
+      <EquipmentEnhancementsSection itemType={item.type} />
+
+      <CompoundSourcesSection itemId={item.id} />
+
+      <CompoundUsesSection itemId={item.id} />
     </div>
   );
 }
