@@ -15,7 +15,7 @@ const navItems = [
   { href: "/compare", label: "比較" },
   { href: "/skills", label: "技能" },
   { href: "/monsters", label: "怪物" },
-  { href: "/compounds", label: "配方" },
+  { href: "/compounds", label: "煉化" },
   { href: "/tools", label: "工具" },
 ];
 
@@ -60,10 +60,7 @@ export function Navbar() {
         <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
           <DialogPrimitive.Trigger
             aria-label="開啟選單"
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "icon-sm" }),
-              "md:hidden",
-            )}
+            className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "md:hidden")}
           >
             <MenuIcon className="size-5" aria-hidden />
           </DialogPrimitive.Trigger>
