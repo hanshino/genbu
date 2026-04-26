@@ -59,12 +59,14 @@ export function getMissionDetail(id: number): MissionDetail | null {
     .prepare(`SELECT * FROM mission_refs WHERE mission_id = ?`)
     .all(id) as MissionRefRow[];
 
-  // 名稱回查：item / npc。npc_id=0 是「非具體 NPC」placeholder，不查。
+  // 名稱回查：item / npc / stage。npc_id=0 是「非具體 NPC」placeholder，不查。
   const itemIds = new Set<number>();
   const npcIds = new Set<number>();
+  const mapIds = new Set<number>();
   for (const r of refRows) {
     if (r.ref_type === "item" && r.item_id != null) itemIds.add(r.item_id);
     if (r.ref_type === "map" && r.npc_id != null && r.npc_id > 0) npcIds.add(r.npc_id);
+    if (r.ref_type === "map" && r.map_id != null && r.map_id !== 0) mapIds.add(r.map_id);
   }
 
   const itemNames = new Map<number, string>();
@@ -82,6 +84,14 @@ export function getMissionDetail(id: number): MissionDetail | null {
       .prepare(`SELECT id, name FROM npc WHERE id IN (${ph})`)
       .all(...npcIds) as Array<{ id: number; name: string }>;
     for (const n of npcs) npcNames.set(n.id, n.name);
+  }
+  const mapNames = new Map<number, string>();
+  if (mapIds.size > 0) {
+    const ph = Array.from({ length: mapIds.size }, () => "?").join(",");
+    const stages = db
+      .prepare(`SELECT id, name FROM stages WHERE id IN (${ph}) AND name IS NOT NULL`)
+      .all(...mapIds) as Array<{ id: number; name: string }>;
+    for (const s of stages) mapNames.set(s.id, s.name);
   }
 
   type Bucket = { items: MissionItemRef[]; maps: MissionMapRef[] };
@@ -106,6 +116,7 @@ export function getMissionDetail(id: number): MissionDetail | null {
       const npcId = r.npc_id ?? 0;
       ensureBucket(r.step_index).maps.push({
         mapId: r.map_id,
+        mapName: mapNames.get(r.map_id) ?? null,
         x: r.x,
         y: r.y,
         npcId,

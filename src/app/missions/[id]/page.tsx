@@ -28,29 +28,65 @@ function groupLabel(groupId: number | null): string {
   return groupId == null ? "未分類" : `分組 #${groupId}`;
 }
 
-/** 把 mission_refs.maps 依 (npcId, label) 聚合，把多張地圖編號併在同一張 chip。 */
+interface MapBucketEntry {
+  mapId: number;
+  mapName: string | null;
+}
+
+/** 把 mission_refs.maps 依 (npcId, label) 聚合，把多張地圖併在同一張 chip。 */
 function groupMaps(maps: MissionMapRef[]) {
   const buckets = new Map<
     string,
-    { npcId: number; label: string; npcName: string | null; mapIds: number[]; x: number | null; y: number | null }
+    {
+      npcId: number;
+      label: string;
+      npcName: string | null;
+      maps: MapBucketEntry[];
+      x: number | null;
+      y: number | null;
+    }
   >();
   for (const m of maps) {
     const key = `${m.npcId}:${m.label ?? ""}`;
     const b = buckets.get(key);
     if (b) {
-      if (!b.mapIds.includes(m.mapId)) b.mapIds.push(m.mapId);
+      if (!b.maps.some((x) => x.mapId === m.mapId)) {
+        b.maps.push({ mapId: m.mapId, mapName: m.mapName });
+      }
     } else {
       buckets.set(key, {
         npcId: m.npcId,
         label: m.label ?? "",
         npcName: m.npcName,
-        mapIds: [m.mapId],
+        maps: [{ mapId: m.mapId, mapName: m.mapName }],
         x: m.x,
         y: m.y,
       });
     }
   }
   return [...buckets.values()];
+}
+
+function MapLinks({ maps }: { maps: MapBucketEntry[] }) {
+  // 多張地圖時用「、」分隔；單張地圖直接顯示名稱（或 fallback 到 #id）。
+  const visible = maps.slice(0, 3);
+  const overflow = maps.length - visible.length;
+  return (
+    <span className="font-mono text-[0.7rem] text-muted-foreground">
+      {visible.map((m, idx) => (
+        <span key={m.mapId}>
+          {idx > 0 && <span className="text-muted-foreground/60">、</span>}
+          <Link
+            href={`/maps/${m.mapId}`}
+            className="underline decoration-dotted underline-offset-2 hover:decoration-solid hover:text-foreground"
+          >
+            {m.mapName ?? `#${m.mapId}`}
+          </Link>
+        </span>
+      ))}
+      {overflow > 0 && <span className="ml-0.5">+{overflow}</span>}
+    </span>
+  );
 }
 
 function MapChips({ maps }: { maps: MissionMapRef[] }) {
@@ -64,16 +100,16 @@ function MapChips({ maps }: { maps: MissionMapRef[] }) {
           g.x != null && g.y != null && (g.x !== 0 || g.y !== 0)
             ? `(${g.x},${g.y})`
             : null;
-        const mapPart =
-          g.mapIds.length === 1
-            ? `M${g.mapIds[0]}`
-            : `M${g.mapIds.slice(0, 3).join("/")}${g.mapIds.length > 3 ? `+${g.mapIds.length - 3}` : ""}`;
         return (
           <Badge key={i} variant="outline" className="font-normal">
             <span>{label}</span>
-            <span className="ml-1.5 font-mono text-[0.7rem] text-muted-foreground">
-              {mapPart}
-              {coord ? ` ${coord}` : ""}
+            <span className="ml-1.5 inline-flex items-baseline gap-1">
+              <MapLinks maps={g.maps} />
+              {coord && (
+                <span className="font-mono text-[0.7rem] text-muted-foreground">
+                  {coord}
+                </span>
+              )}
             </span>
           </Badge>
         );
