@@ -36,6 +36,16 @@ const features: Feature[] = [
     href: "/monsters",
   },
   {
+    title: "煉化配方",
+    description: "煉化群組總覽，配方來源、產出、機率一覽",
+    href: "/compounds",
+  },
+  {
+    title: "任務瀏覽",
+    description: "全部任務的步驟、所需物品、地點 / NPC 一覽",
+    href: "/missions",
+  },
+  {
     title: "副本解謎",
     description: "160 迷霧九宮格、175 北斗七星、180 神武禁地",
     href: "/tools",

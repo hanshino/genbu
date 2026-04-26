@@ -21,6 +21,7 @@ import { AwakeningSection } from "@/components/items/awakening-section";
 import { CompoundSourcesSection } from "@/components/items/compound-sources-section";
 import { CompoundUsesSection } from "@/components/items/compound-uses-section";
 import { EquipmentEnhancementsSection } from "@/components/items/equipment-enhancements-section";
+import { MissionUsesSection } from "@/components/items/mission-uses-section";
 import { CompareButton } from "@/components/items/compare-button";
 import { ItemTags } from "@/components/items/item-tags";
 import { PresetPercentile } from "@/components/items/preset-percentile";
@@ -117,6 +118,8 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
       <CompoundSourcesSection itemId={item.id} />
 
       <CompoundUsesSection itemId={item.id} />
+
+      <MissionUsesSection itemId={item.id} />
     </div>
   );
 }
