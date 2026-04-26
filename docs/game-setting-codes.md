@@ -1,6 +1,6 @@
 # TTHOL 原始設計資料：代碼對照表
 
-從 `E:\SETTING\`（遊戲原始設計檔，BIG-5 編碼）分析萃取，用來補齊資料庫裡只剩整數代碼、沒有中文標籤的欄位。
+從 `E:\new\SETTING\`（遊戲原始設計檔，BIG-5 編碼）分析萃取，用來補齊資料庫裡只剩整數代碼、沒有中文標籤的欄位。
 
 解析方式：`iconv -f BIG-5 -t UTF-8 <file>`。
 
@@ -253,10 +253,10 @@ ITEM.INI 的 DEFINE 段有完整中文註解，直接抄：
 
 ```bash
 # 解碼單檔
-iconv -f BIG-5 -t UTF-8 "E:/SETTING/setting/magicdef.ini"
+iconv -f BIG-5 -t UTF-8 "E:/new/SETTING/setting/magicdef.ini"
 
 # 怪物 Type 分布
-iconv -f BIG-5 -t UTF-8 "E:/SETTING/MONSTER.INI" | awk '
+iconv -f BIG-5 -t UTF-8 "E:/new/SETTING/MONSTER.INI" | awk '
   /^\[NPC\]/ { name=""; type=""; subtype="" }
   /^Name = / { sub(/^Name = /, ""); name=$0 }
   /^Type = / { sub(/^Type = /, ""); type=$0 }
@@ -265,7 +265,7 @@ iconv -f BIG-5 -t UTF-8 "E:/SETTING/MONSTER.INI" | awk '
 ' | sort -u
 
 # 技能 SkillType 分布
-iconv -f BIG-5 -t UTF-8 "E:/SETTING/MAGIC.INI" | awk '
+iconv -f BIG-5 -t UTF-8 "E:/new/SETTING/MAGIC.INI" | awk '
   /^\[MAGIC\]/ { sk=""; nm="" }
   /^Name = / && nm=="" { sub(/^Name = /, ""); nm=$0 }
   /^SkillType = / { sub(/^SkillType = /, ""); sk=$0 }
@@ -275,4 +275,4 @@ iconv -f BIG-5 -t UTF-8 "E:/SETTING/MAGIC.INI" | awk '
 
 ---
 
-**更新時機**：`E:\SETTING` 內容沒版本控，只要資料夾異動（例如遊戲更新後重新抓的原始檔）就該重新跑一次，對齊本文件。
+**更新時機**：`E:\new\SETTING` 內容沒版本控，只要資料夾異動（例如遊戲更新後重新抓的原始檔）就該重新跑一次，對齊本文件。

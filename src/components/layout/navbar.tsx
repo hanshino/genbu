@@ -15,6 +15,7 @@ const navItems = [
   { href: "/compare", label: "比較" },
   { href: "/skills", label: "技能" },
   { href: "/monsters", label: "怪物" },
+  { href: "/missions", label: "任務" },
   { href: "/compounds", label: "煉化" },
   { href: "/tools", label: "工具" },
 ];
