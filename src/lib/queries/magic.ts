@@ -8,6 +8,8 @@ export interface GetSkillsParams {
   skillType?: number;
   page?: number;
   pageSize?: number;
+  sortBy?: string;
+  sortDir?: string;
 }
 
 export interface GetSkillsResult {
@@ -19,6 +21,11 @@ export interface GetSkillsResult {
 }
 
 const DEFAULT_PAGE_SIZE = 20;
+
+const SKILL_SORT_ALLOWLIST: Record<string, string> = {
+  maxLevel: "maxLevel",
+  id: "id",
+};
 
 // 列表頁：依 (id, name) 分組。magic 表沒有 PK，同 id 可能共用於多個無關技能
 // （極端例：id=553 塞 32 個各自獨立的技能），所以不能純用 id 分組。
@@ -68,6 +75,15 @@ export function getSkills(params: GetSkillsParams = {}): GetSkillsResult {
       .get(...args) as { c: number }
   ).c;
 
+  const sortCol = params.sortBy ? (SKILL_SORT_ALLOWLIST[params.sortBy] ?? null) : null;
+  const sortDirSql = params.sortDir === "desc" ? "DESC" : "ASC";
+  // name tiebreak required: magic table's unique key is (id, name), not id alone.
+  const orderBy = sortCol
+    ? sortCol === "id"
+      ? `ORDER BY id ${sortDirSql}, name ASC`
+      : `ORDER BY ${sortCol} ${sortDirSql}, id ASC, name ASC`
+    : `ORDER BY maxLevel DESC, id ASC, firstLevel ASC`;
+
   const rows = db
     .prepare(
       `SELECT id,
@@ -82,7 +98,7 @@ export function getSkills(params: GetSkillsParams = {}): GetSkillsResult {
        FROM magic
        ${whereSql}
        GROUP BY id, name
-       ORDER BY maxLevel DESC, id ASC, firstLevel ASC
+       ${orderBy}
        LIMIT ? OFFSET ?`,
     )
     .all(...args, pageSize, offset) as MagicSummary[];
