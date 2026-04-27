@@ -39,6 +39,9 @@ describe("getItems — sort", () => {
     for (let i = 1; i < levels.length; i++) {
       expect(levels[i]).toBeGreaterThanOrEqual(levels[i - 1]);
     }
+    const ascFirstId = result.items[0].id;
+    const descResult = getItems({ sortBy: "level", sortDir: "desc", pageSize: 20 });
+    expect(ascFirstId).not.toBe(descResult.items[0].id);
   });
 
   it("sorts by level descending", () => {
@@ -55,6 +58,9 @@ describe("getItems — sort", () => {
     for (let i = 1; i < ids.length; i++) {
       expect(ids[i]).toBeGreaterThanOrEqual(ids[i - 1]);
     }
+    const defaultIds = getItems({ pageSize: 20 }).items.map((i) => i.id);
+    const ascIds = result.items.map((i) => i.id);
+    expect(ascIds).not.toEqual(defaultIds);
   });
 
   it("ignores invalid sortBy and falls back to default order", () => {
