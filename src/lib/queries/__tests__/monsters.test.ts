@@ -160,3 +160,46 @@ describe("distinct helpers", () => {
     expect(elementals.some((e) => core.includes(e))).toBe(true);
   });
 });
+
+describe("getMonsters — sort", () => {
+  it("sorts by level ascending", () => {
+    const result = getMonsters({ sortBy: "level", sortDir: "asc", pageSize: 20 });
+    const levels = result.monsters.map((m) => m.level);
+    for (let i = 1; i < levels.length; i++) {
+      expect(levels[i]).toBeGreaterThanOrEqual(levels[i - 1]);
+    }
+  });
+
+  it("sorts by level descending", () => {
+    const result = getMonsters({ sortBy: "level", sortDir: "desc", pageSize: 20 });
+    const levels = result.monsters.map((m) => m.level);
+    for (let i = 1; i < levels.length; i++) {
+      expect(levels[i]).toBeLessThanOrEqual(levels[i - 1]);
+    }
+    const ascResult = getMonsters({ sortBy: "level", sortDir: "asc", pageSize: 20 });
+    expect(result.monsters[0].id).not.toBe(ascResult.monsters[0].id);
+  });
+
+  it("sorts by hp descending — top results have non-null hp", () => {
+    // Use pageSize: 5 to stay well within high-hp monsters; avoids NULL-hp edge cases
+    // (SQLite puts NULL last in DESC, ?? 0 would corrupt the >= chain if NULLs appear)
+    const result = getMonsters({ sortBy: "hp", sortDir: "desc", pageSize: 5 });
+    expect(result.monsters.length).toBeGreaterThan(0);
+    const hps = result.monsters.map((m) => m.hp);
+    for (const hp of hps) expect(hp).not.toBeNull();
+    for (let i = 1; i < hps.length; i++) {
+      expect(hps[i]!).toBeLessThanOrEqual(hps[i - 1]!);
+    }
+    const defaultIds = getMonsters({ pageSize: 5 }).monsters.map((m) => m.id);
+    const hpIds = result.monsters.map((m) => m.id);
+    expect(hpIds).not.toEqual(defaultIds);
+  });
+
+  it("ignores invalid sortBy and falls back to default order", () => {
+    const defaultResult = getMonsters({ pageSize: 20 });
+    const invalidResult = getMonsters({ sortBy: "n.drop_item", pageSize: 20 });
+    expect(invalidResult.monsters.map((m) => m.id)).toEqual(
+      defaultResult.monsters.map((m) => m.id),
+    );
+  });
+});

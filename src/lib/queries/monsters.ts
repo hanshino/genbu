@@ -75,7 +75,15 @@ export interface GetMonstersParams {
   isNormal?: boolean;
   page?: number;
   pageSize?: number;
+  sortBy?: string;
+  sortDir?: string;
 }
+
+const MONSTER_SORT_ALLOWLIST: Record<string, string> = {
+  level: "n.level",
+  hp: "n.hp",
+  id: "n.id",
+};
 
 export interface GetMonstersResult {
   monsters: MonsterSummary[];
@@ -136,6 +144,14 @@ export function getMonsters(params: GetMonstersParams = {}): GetMonstersResult {
       .get(...args) as { c: number }
   ).c;
 
+  const sortCol = params.sortBy ? (MONSTER_SORT_ALLOWLIST[params.sortBy] ?? null) : null;
+  const sortDirSql = params.sortDir === "desc" ? "DESC" : "ASC";
+  const orderBy = sortCol
+    ? sortCol === "n.id"
+      ? `ORDER BY n.id ${sortDirSql}`
+      : `ORDER BY ${sortCol} ${sortDirSql}, n.id ASC`
+    : `ORDER BY n.level ASC, n.id ASC`;
+
   const rows = db
     .prepare(
       `SELECT n.id,
@@ -151,7 +167,7 @@ export function getMonsters(params: GetMonstersParams = {}): GetMonstersResult {
        FROM npc n
        LEFT JOIN monsters m ON n.id = m.id
        ${whereSql}
-       ORDER BY n.level ASC, n.id ASC
+       ${orderBy}
        LIMIT ? OFFSET ?`,
     )
     .all(...args, pageSize, offset) as Array<
