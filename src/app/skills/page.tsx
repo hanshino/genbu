@@ -5,6 +5,8 @@ import {
   getDistinctTargets,
   getDistinctSkillTypes,
 } from "@/lib/queries/magic";
+import { parseSortDir } from "@/lib/sort";
+import { serializeSearchParams } from "@/lib/utils";
 import { SkillFilters } from "@/components/skills/skill-filters";
 import { SkillTable } from "@/components/skills/skill-table";
 import { Pagination } from "@/components/common/pagination";
@@ -33,7 +35,7 @@ export default async function SkillsPage({ searchParams }: PageProps) {
   const skillType = Number.isInteger(skillTypeParsed) && skillTypeParsed > 0 ? skillTypeParsed : undefined;
   const page = Number(params.page) || 1;
   const sortBy = params.sortBy;
-  const sortDir = params.sortDir;
+  const sortDir = parseSortDir(params.sortDir);
 
   const result = getSkills({ search, clan, target, skillType, page, sortBy, sortDir });
   const availableClans = getDistinctClans();
@@ -42,13 +44,7 @@ export default async function SkillsPage({ searchParams }: PageProps) {
 
   const hasFilter = !!(search || clan || target || skillType);
 
-  // params is Record<string, string | undefined> at runtime; drop null/empty.
-  const searchParamsStr = new URLSearchParams(
-    Object.entries(params).filter((entry): entry is [string, string] => {
-      const v = entry[1];
-      return v != null && v !== "";
-    }),
-  ).toString();
+  const searchParamsStr = serializeSearchParams(params);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -75,9 +71,7 @@ export default async function SkillsPage({ searchParams }: PageProps) {
 
       <SkillTable
         skills={result.skills}
-        sortBy={sortBy}
-        sortDir={sortDir}
-        searchParamsStr={searchParamsStr}
+        sort={{ sortBy, sortDir, searchParamsStr, basePath: "/skills" }}
       />
 
       {result.totalPages > 1 && (

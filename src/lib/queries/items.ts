@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { buildOrderBy, type SortDir } from "@/lib/sort";
 import type { Item, ItemRand } from "@/lib/types/item";
 
 // Columns required by ranking/compare UI: identity + level + all numeric
@@ -52,7 +53,7 @@ export interface GetItemsParams {
   page?: number;
   pageSize?: number;
   sortBy?: string;
-  sortDir?: string;
+  sortDir?: SortDir;
 }
 
 export interface GetItemsResult {
@@ -98,13 +99,13 @@ export function getItems(params: GetItemsParams = {}): GetItemsResult {
     db.prepare(`SELECT COUNT(*) AS c FROM items ${whereSql}`).get(...args) as { c: number }
   ).c;
 
-  const sortCol = params.sortBy ? (ITEM_SORT_ALLOWLIST[params.sortBy] ?? null) : null;
-  const sortDirSql = params.sortDir === "desc" ? "DESC" : "ASC";
-  const orderBy = sortCol
-    ? sortCol === "id"
-      ? `ORDER BY id ${sortDirSql}`
-      : `ORDER BY ${sortCol} ${sortDirSql}, id ASC`
-    : `ORDER BY level DESC, id ASC`;
+  const orderBy = buildOrderBy({
+    allowlist: ITEM_SORT_ALLOWLIST,
+    sortBy: params.sortBy,
+    sortDir: params.sortDir,
+    defaultOrderBy: "level DESC, id ASC",
+    idColumn: "id",
+  });
 
   const items = db
     .prepare(`SELECT * FROM items ${whereSql} ${orderBy} LIMIT ? OFFSET ?`)

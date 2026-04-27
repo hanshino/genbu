@@ -2,14 +2,19 @@ import Link from "next/link";
 import { ChevronDownIcon, ChevronUpIcon, ChevronsUpDownIcon } from "lucide-react";
 import { TableHead } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import type { SortDir } from "@/lib/sort";
+
+export interface SortContext {
+  sortBy?: string;
+  sortDir?: SortDir;
+  searchParamsStr: string;
+  basePath: string;
+}
 
 interface SortableHeadProps {
   column: string;
   label: React.ReactNode;
-  currentSortBy?: string;
-  currentSortDir?: string;
-  searchParamsStr: string;
-  basePath: string;
+  sort: SortContext;
   right?: boolean;
   className?: string;
 }
@@ -19,7 +24,7 @@ export function nextSortHref(
   basePath: string,
   column: string,
   currentSortBy: string | undefined,
-  currentSortDir: string | undefined,
+  currentSortDir: SortDir | undefined,
 ): string {
   const params = new URLSearchParams(searchParamsStr);
   params.delete("page");
@@ -40,31 +45,20 @@ export function nextSortHref(
   return `${basePath}${params.size > 0 ? `?${params}` : ""}`;
 }
 
-export function SortableHead({
-  column,
-  label,
-  currentSortBy,
-  currentSortDir,
-  searchParamsStr,
-  basePath,
-  right = false,
-  className,
-}: SortableHeadProps) {
-  const isActive = currentSortBy === column;
-  const href = nextSortHref(searchParamsStr, basePath, column, currentSortBy, currentSortDir);
+export function SortableHead({ column, label, sort, right = false, className }: SortableHeadProps) {
+  const isActive = sort.sortBy === column;
+  const href = nextSortHref(sort.searchParamsStr, sort.basePath, column, sort.sortBy, sort.sortDir);
 
-  const Icon =
-    isActive && currentSortDir === "asc"
-      ? ChevronUpIcon
-      : isActive && currentSortDir === "desc"
-        ? ChevronDownIcon
-        : ChevronsUpDownIcon;
+  // Treat unset sortDir on an active column as asc (matches query default).
+  const Icon = !isActive
+    ? ChevronsUpDownIcon
+    : sort.sortDir === "desc"
+      ? ChevronDownIcon
+      : ChevronUpIcon;
+  const ariaSort = !isActive ? "none" : sort.sortDir === "desc" ? "descending" : "ascending";
 
   return (
-    <TableHead
-      aria-sort={isActive ? (currentSortDir === "asc" ? "ascending" : "descending") : "none"}
-      className={cn(className, right && "text-right")}
-    >
+    <TableHead aria-sort={ariaSort} className={cn(className, right && "text-right")}>
       <Link
         href={href}
         className={cn(

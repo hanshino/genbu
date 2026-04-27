@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { buildOrderBy, type SortDir } from "@/lib/sort";
 import type { Magic, MagicSummary } from "@/lib/types/magic";
 
 export interface GetSkillsParams {
@@ -9,7 +10,7 @@ export interface GetSkillsParams {
   page?: number;
   pageSize?: number;
   sortBy?: string;
-  sortDir?: string;
+  sortDir?: SortDir;
 }
 
 export interface GetSkillsResult {
@@ -75,14 +76,15 @@ export function getSkills(params: GetSkillsParams = {}): GetSkillsResult {
       .get(...args) as { c: number }
   ).c;
 
-  const sortCol = params.sortBy ? (SKILL_SORT_ALLOWLIST[params.sortBy] ?? null) : null;
-  const sortDirSql = params.sortDir === "desc" ? "DESC" : "ASC";
-  // name tiebreak required: magic table's unique key is (id, name), not id alone.
-  const orderBy = sortCol
-    ? sortCol === "id"
-      ? `ORDER BY id ${sortDirSql}, name ASC`
-      : `ORDER BY ${sortCol} ${sortDirSql}, id ASC, name ASC`
-    : `ORDER BY maxLevel DESC, id ASC, firstLevel ASC`;
+  // extraTiebreak: magic table's unique key is (id, name), not id alone — see module note.
+  const orderBy = buildOrderBy({
+    allowlist: SKILL_SORT_ALLOWLIST,
+    sortBy: params.sortBy,
+    sortDir: params.sortDir,
+    defaultOrderBy: "maxLevel DESC, id ASC, firstLevel ASC",
+    idColumn: "id",
+    extraTiebreak: "name ASC",
+  });
 
   const rows = db
     .prepare(

@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { buildOrderBy, type SortDir } from "@/lib/sort";
 import type {
   MonsterDetail,
   MonsterDropItem,
@@ -76,7 +77,7 @@ export interface GetMonstersParams {
   page?: number;
   pageSize?: number;
   sortBy?: string;
-  sortDir?: string;
+  sortDir?: SortDir;
 }
 
 const MONSTER_SORT_ALLOWLIST: Record<string, string> = {
@@ -144,13 +145,13 @@ export function getMonsters(params: GetMonstersParams = {}): GetMonstersResult {
       .get(...args) as { c: number }
   ).c;
 
-  const sortCol = params.sortBy ? (MONSTER_SORT_ALLOWLIST[params.sortBy] ?? null) : null;
-  const sortDirSql = params.sortDir === "desc" ? "DESC" : "ASC";
-  const orderBy = sortCol
-    ? sortCol === "n.id"
-      ? `ORDER BY n.id ${sortDirSql}`
-      : `ORDER BY ${sortCol} ${sortDirSql}, n.id ASC`
-    : `ORDER BY n.level ASC, n.id ASC`;
+  const orderBy = buildOrderBy({
+    allowlist: MONSTER_SORT_ALLOWLIST,
+    sortBy: params.sortBy,
+    sortDir: params.sortDir,
+    defaultOrderBy: "n.level ASC, n.id ASC",
+    idColumn: "n.id",
+  });
 
   const rows = db
     .prepare(

@@ -6,6 +6,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function serializeSearchParams(params: Record<string, string | undefined>): string {
+  return new URLSearchParams(
+    Object.entries(params).filter((entry): entry is [string, string] => {
+      const v = entry[1];
+      return v != null && v !== "";
+    }),
+  ).toString();
+}
+
 export function heatmapCell(value: number, min: number, max: number): CSSProperties | undefined {
   if (!Number.isFinite(value) || value === 0) return undefined;
   const span = max - min;

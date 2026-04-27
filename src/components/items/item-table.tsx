@@ -8,17 +8,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { SortableHead } from "@/components/common/sortable-head";
+import { SortableHead, type SortContext } from "@/components/common/sortable-head";
 import type { Item } from "@/lib/types/item";
 
 interface ItemTableProps {
   items: Item[];
-  sortBy?: string;
-  sortDir?: string;
-  searchParamsStr: string;
+  sort: SortContext;
 }
 
-export function ItemTable({ items, sortBy, sortDir, searchParamsStr }: ItemTableProps) {
+export function ItemTable({ items, sort }: ItemTableProps) {
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-border/60 bg-card px-6 py-12 text-center text-muted-foreground">
@@ -27,18 +25,16 @@ export function ItemTable({ items, sortBy, sortDir, searchParamsStr }: ItemTable
     );
   }
 
-  const sortProps = { currentSortBy: sortBy, currentSortDir: sortDir, searchParamsStr, basePath: "/items" };
-
   return (
     <div className="overflow-x-auto rounded-lg border border-border/60">
       <Table className="min-w-[640px]">
         <TableHeader>
           <TableRow>
-            <SortableHead column="id" label="編號" className="w-[90px]" {...sortProps} />
+            <SortableHead column="id" label="編號" className="w-[90px]" sort={sort} />
             <TableHead>名稱</TableHead>
             <TableHead className="w-[140px]">類型</TableHead>
-            <SortableHead column="level" label="等級" className="w-[70px]" right {...sortProps} />
-            <SortableHead column="weight" label="重量" className="w-[70px]" right {...sortProps} />
+            <SortableHead column="level" label="等級" className="w-[70px]" right sort={sort} />
+            <SortableHead column="weight" label="重量" className="w-[70px]" right sort={sort} />
           </TableRow>
         </TableHeader>
         <TableBody>
