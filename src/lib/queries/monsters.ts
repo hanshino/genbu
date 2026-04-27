@@ -238,7 +238,7 @@ export function getDistinctMonsterTypes(): number[] {
   const db = getDb();
   const rows = db
     .prepare(
-      `SELECT DISTINCT n.type AS t FROM npc n INNER JOIN monsters m ON n.id = m.id WHERE n.type IS NOT NULL ORDER BY n.type ASC`,
+      `SELECT DISTINCT n.type AS t FROM npc n LEFT JOIN monsters m ON n.id = m.id WHERE n.type > 0 ORDER BY n.type ASC`,
     )
     .all() as { t: number }[];
   return rows.map((r) => r.t);
@@ -249,7 +249,7 @@ export function getDistinctElementals(): string[] {
   const db = getDb();
   const rows = db
     .prepare(
-      `SELECT DISTINCT n.elemental AS e FROM npc n INNER JOIN monsters m ON n.id = m.id WHERE n.elemental IS NOT NULL AND n.elemental != '' ORDER BY n.elemental ASC`,
+      `SELECT DISTINCT n.elemental AS e FROM npc n LEFT JOIN monsters m ON n.id = m.id WHERE n.type > 0 AND n.elemental IS NOT NULL AND n.elemental != '' ORDER BY n.elemental ASC`,
     )
     .all() as { e: string }[];
   return rows.map((r) => r.e);
