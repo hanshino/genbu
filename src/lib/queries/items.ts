@@ -40,11 +40,19 @@ export const RANKING_ITEM_COLUMNS = [
 
 export type RankingItem = Pick<Item, (typeof RANKING_ITEM_COLUMNS)[number]>;
 
+const ITEM_SORT_ALLOWLIST: Record<string, string> = {
+  level: "level",
+  weight: "weight",
+  id: "id",
+};
+
 export interface GetItemsParams {
   search?: string;
   type?: string;
   page?: number;
   pageSize?: number;
+  sortBy?: string;
+  sortDir?: string;
 }
 
 export interface GetItemsResult {
@@ -90,8 +98,16 @@ export function getItems(params: GetItemsParams = {}): GetItemsResult {
     db.prepare(`SELECT COUNT(*) AS c FROM items ${whereSql}`).get(...args) as { c: number }
   ).c;
 
+  const sortCol = params.sortBy ? (ITEM_SORT_ALLOWLIST[params.sortBy] ?? null) : null;
+  const sortDirSql = params.sortDir === "desc" ? "DESC" : "ASC";
+  const orderBy = sortCol
+    ? sortCol === "id"
+      ? `ORDER BY id ${sortDirSql}`
+      : `ORDER BY ${sortCol} ${sortDirSql}, id ASC`
+    : `ORDER BY level DESC, id ASC`;
+
   const items = db
-    .prepare(`SELECT * FROM items ${whereSql} ORDER BY level DESC, id ASC LIMIT ? OFFSET ?`)
+    .prepare(`SELECT * FROM items ${whereSql} ${orderBy} LIMIT ? OFFSET ?`)
     .all(...args, pageSize, offset) as Item[];
 
   return {
