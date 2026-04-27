@@ -177,11 +177,15 @@ describe("getMonsters — sort", () => {
     }
   });
 
-  it("sorts by hp descending", () => {
-    const result = getMonsters({ sortBy: "hp", sortDir: "desc", pageSize: 20 });
-    const hps = result.monsters.map((m) => m.hp ?? 0);
+  it("sorts by hp descending — top results have non-null hp", () => {
+    // Use pageSize: 5 to stay well within high-hp monsters; avoids NULL-hp edge cases
+    // (SQLite puts NULL last in DESC, ?? 0 would corrupt the >= chain if NULLs appear)
+    const result = getMonsters({ sortBy: "hp", sortDir: "desc", pageSize: 5 });
+    expect(result.monsters.length).toBeGreaterThan(0);
+    const hps = result.monsters.map((m) => m.hp);
+    for (const hp of hps) expect(hp).not.toBeNull();
     for (let i = 1; i < hps.length; i++) {
-      expect(hps[i]).toBeLessThanOrEqual(hps[i - 1]);
+      expect(hps[i]!).toBeLessThanOrEqual(hps[i - 1]!);
     }
   });
 
@@ -490,12 +494,12 @@ export function SortableHead({
         : ChevronsUpDownIcon;
 
   return (
-    <TableHead className={className}>
+    <TableHead className={cn(className, right && "text-right")}>
       <Link
         href={href}
         className={cn(
-          "inline-flex items-center gap-1 hover:text-foreground",
-          right && "w-full justify-end",
+          "flex h-full w-full items-center gap-1 hover:text-foreground",
+          right && "justify-end",
           isActive ? "text-foreground" : "text-muted-foreground",
         )}
       >
@@ -763,7 +767,7 @@ export default async function MonstersPage({ searchParams }: PageProps) {
 
   const hasFilter = !!(search || typeRaw || elemental || hasDrop || isNormal);
 
-  // boolean false is excluded to avoid hasDrop=false polluting the URL
+  // undefined/empty filtered out; boolean coercion guarded for safety
   const searchParamsStr = new URLSearchParams(
     Object.entries(params)
       .filter(([, v]) => v != null && v !== "" && v !== false)
@@ -1156,3 +1160,4 @@ git commit -m "feat(skills): wire sortBy/sortDir into page and table headers"
 - [ ] On page 5 (`?page=5`), click any sort header → URL drops `page`, returns to page 1
 - [ ] With `?hasDrop=1` filter active, click a sort header → `hasDrop=1` preserved, no `hasDrop=false` in URL
 - [ ] Repeat equivalent checks on `/monsters` and `/skills`
+- [ ] On `/skills?sortBy=maxLevel&sortDir=asc`, navigate to page 2 and verify no skill from page 1 appears (cross-page stable — catches id-only tiebreak regression where same-id different-name skills could duplicate or vanish at page boundary)
