@@ -4,8 +4,10 @@ import type { Metadata } from "next";
 import { BackLink } from "@/components/common/back-link";
 import { Badge } from "@/components/ui/badge";
 import { StageFlagBadge } from "@/components/maps/stage-flag-badge";
+import { StageMonsterSpawns } from "@/components/maps/stage-monster-spawns";
 import { sortStageFlags } from "@/lib/constants/stage-flags";
 import { getStageDetail } from "@/lib/queries/stages";
+import { getMonstersAtStage } from "@/lib/queries/monster-spawns";
 import type { InboundLink, StageDetail, StageMissionRef } from "@/lib/types/stage";
 
 interface PageProps {
@@ -189,6 +191,8 @@ export default async function MapDetailPage({ params }: PageProps) {
   const stage = getStageDetail(stageId);
   if (!stage || !stage.name) notFound();
 
+  const monsters = getMonstersAtStage(stage.kind, stage.id);
+
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
       <nav className="text-sm text-muted-foreground">
@@ -243,11 +247,14 @@ export default async function MapDetailPage({ params }: PageProps) {
 
       <InboundList inbound={stage.inbound} />
 
+      <StageMonsterSpawns monsters={monsters} />
+
       <MissionsList missions={stage.missions} />
 
       <p className="text-xs text-muted-foreground">
-        資料來自 STAGE.INI / SESTAGE.INI；
-        appear_map / logout_map 記錄的是「預設出生／登出」的目的地，並非完整的地圖傳送網。
+        資料來自 STAGE.INI / SESTAGE.INI 與 MAP/*.MPC；
+        appear_map / logout_map 記錄的是「預設出生／登出」目的地，並非完整的地圖傳送網。
+        怪物清單由 GENERATOR.OBD 解析，不含劇情觸發或關卡腳本生成的怪物。
       </p>
     </div>
   );
