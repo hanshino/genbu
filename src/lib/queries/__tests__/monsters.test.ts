@@ -41,11 +41,11 @@ describe("parseDropItem", () => {
 });
 
 describe("getMonsters", () => {
-  it("returns paginated combatants (npc INNER JOIN monsters)", () => {
+  it("returns paginated combatants (npc LEFT JOIN monsters, type > 0)", () => {
     const result = getMonsters({ pageSize: 10 });
     expect(result.monsters.length).toBeLessThanOrEqual(10);
     expect(result.monsters.length).toBeGreaterThan(0);
-    expect(result.total).toBe(2829);
+    expect(result.total).toBe(3120);
     for (const m of result.monsters) {
       expect(m.id).toBeGreaterThan(0);
       expect(typeof m.hasDrop).toBe("boolean");
@@ -55,13 +55,13 @@ describe("getMonsters", () => {
   it("filters by hasDrop", () => {
     const withDrop = getMonsters({ hasDrop: true, pageSize: 5 });
     expect(withDrop.total).toBeGreaterThan(0);
-    expect(withDrop.total).toBeLessThan(2829);
+    expect(withDrop.total).toBeLessThan(3120);
     for (const m of withDrop.monsters) expect(m.hasDrop).toBe(true);
   });
 
   it("filters by type", () => {
     const type17 = getMonsters({ type: 17, pageSize: 5 });
-    expect(type17.total).toBe(1061);
+    expect(type17.total).toBe(1154);
     for (const m of type17.monsters) expect(m.type).toBe(17);
   });
 

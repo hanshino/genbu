@@ -87,13 +87,14 @@ export interface GetMonstersResult {
 
 const DEFAULT_PAGE_SIZE = 20;
 
-// 怪物列表：INNER JOIN monsters 確保只列出可戰鬥的 NPC（過濾掉 2242 筆販售/任務 NPC）
+// 怪物列表：以 npc 為主表，LEFT JOIN monsters 取掉落資料（monsters 為舊資料，部分怪物無對應記錄）。
+// type=0 為販售/任務 NPC，排除之。
 export function getMonsters(params: GetMonstersParams = {}): GetMonstersResult {
   const page = Math.max(1, params.page ?? 1);
   const pageSize = Math.max(1, Math.min(100, params.pageSize ?? DEFAULT_PAGE_SIZE));
   const offset = (page - 1) * pageSize;
 
-  const conditions: string[] = [];
+  const conditions: string[] = ["n.type > 0"];
   const args: (string | number)[] = [];
 
   if (params.search && params.search.trim().length > 0) {
@@ -119,7 +120,7 @@ export function getMonsters(params: GetMonstersParams = {}): GetMonstersResult {
   }
 
   if (params.hasDrop) {
-    conditions.push("m.drop_item IS NOT NULL AND m.drop_item != '[]'");
+    conditions.push("m.drop_item IS NOT NULL AND m.drop_item != '[]' AND m.drop_item != 'null'");
   }
 
   if (params.isNormal) {
@@ -131,7 +132,7 @@ export function getMonsters(params: GetMonstersParams = {}): GetMonstersResult {
 
   const total = (
     db
-      .prepare(`SELECT COUNT(*) AS c FROM npc n INNER JOIN monsters m ON n.id = m.id ${whereSql}`)
+      .prepare(`SELECT COUNT(*) AS c FROM npc n LEFT JOIN monsters m ON n.id = m.id ${whereSql}`)
       .get(...args) as { c: number }
   ).c;
 
@@ -148,7 +149,7 @@ export function getMonsters(params: GetMonstersParams = {}): GetMonstersResult {
                 ELSE 1
               END AS hasDrop
        FROM npc n
-       INNER JOIN monsters m ON n.id = m.id
+       LEFT JOIN monsters m ON n.id = m.id
        ${whereSql}
        ORDER BY n.level ASC, n.id ASC
        LIMIT ? OFFSET ?`,
@@ -174,15 +175,15 @@ export function getMonsters(params: GetMonstersParams = {}): GetMonstersResult {
   };
 }
 
-// 單一怪物詳情：回 npc 全欄位 + monsters.drop_item。不存在則 null。
+// 單一怪物詳情：npc 為主，LEFT JOIN monsters 取掉落資料。npc 不存在則 null。
 export function getMonsterById(id: number): MonsterDetail | null {
   const db = getDb();
   const row = db
     .prepare(
       `SELECT n.*, m.drop_item
        FROM npc n
-       INNER JOIN monsters m ON n.id = m.id
-       WHERE n.id = ?`,
+       LEFT JOIN monsters m ON n.id = m.id
+       WHERE n.id = ? AND n.type > 0`,
     )
     .get(id) as MonsterDetail | undefined;
   return row ?? null;
@@ -237,7 +238,7 @@ export function getDistinctMonsterTypes(): number[] {
   const db = getDb();
   const rows = db
     .prepare(
-      `SELECT DISTINCT n.type AS t FROM npc n INNER JOIN monsters m ON n.id = m.id WHERE n.type IS NOT NULL ORDER BY n.type ASC`,
+      `SELECT DISTINCT n.type AS t FROM npc n LEFT JOIN monsters m ON n.id = m.id WHERE n.type > 0 ORDER BY n.type ASC`,
     )
     .all() as { t: number }[];
   return rows.map((r) => r.t);
@@ -248,7 +249,7 @@ export function getDistinctElementals(): string[] {
   const db = getDb();
   const rows = db
     .prepare(
-      `SELECT DISTINCT n.elemental AS e FROM npc n INNER JOIN monsters m ON n.id = m.id WHERE n.elemental IS NOT NULL AND n.elemental != '' ORDER BY n.elemental ASC`,
+      `SELECT DISTINCT n.elemental AS e FROM npc n LEFT JOIN monsters m ON n.id = m.id WHERE n.type > 0 AND n.elemental IS NOT NULL AND n.elemental != '' ORDER BY n.elemental ASC`,
     )
     .all() as { e: string }[];
   return rows.map((r) => r.e);
