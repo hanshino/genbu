@@ -30,7 +30,7 @@ URL params (sortBy, sortDir)
   → SortableHead（計算下一個 href → <Link>）
 ```
 
-全程 server component，零新增 client bundle。`SortableHead` 不使用 `useSearchParams`，改由 server page 傳入 `searchParamsStr`（`URLSearchParams.toString()`）。
+`SortableHead` 為 server component，不使用 `useSearchParams`，由 server page 傳入 `searchParamsStr`。既有的 `Pagination` 維持原本的 `"use client"`，不修改。
 
 ---
 
@@ -39,7 +39,7 @@ URL params (sortBy, sortDir)
 | 表 | 可排序欄位 | 預設排序（無 sortBy 時） |
 |---|---|---|
 | Items | `level`（等級）、`weight`（重量）、`id`（編號） | `level DESC, id ASC` |
-| Monsters | `level`（等級）、`hp`（血量）、`id`（編號） | `level ASC, id ASC` |
+| Monsters | `level`（等級）、`hp`（血量）、`id`（編號） | `n.level ASC, n.id ASC` |
 | Skills | `maxLevel`（最高 Lv）、`id`（編號） | `maxLevel DESC, id ASC, firstLevel ASC` |
 
 ---
@@ -51,7 +51,7 @@ URL params (sortBy, sortDir)
 | `sortBy` | 欄位名稱字串 | 必須在各表 allowlist 內，否則視為無效 |
 | `sortDir` | `asc` \| `desc` | 缺省視為 `asc` |
 
-無 `sortBy` → 使用原預設 ORDER BY。排序變更時重設 `page` 為 1。
+無 `sortBy` → 使用原預設 ORDER BY。排序變更時重設 `page` 為 1（由 SortableHead 負責，見下）。
 
 ---
 
@@ -81,9 +81,40 @@ interface SortableHeadProps {
   label: React.ReactNode
   currentSortBy?: string
   currentSortDir?: string  // "asc" | "desc"
-  searchParamsStr: string  // URLSearchParams.toString() from server page
+  searchParamsStr: string  // URLSearchParams.toString() from server page（不含 page）
   basePath: string         // e.g. "/items"
   className?: string
+}
+```
+
+**href 計算邏輯（SortableHead 內部，每次都 delete page）：**
+
+```typescript
+function nextSortHref(
+  searchParamsStr: string,
+  basePath: string,
+  column: string,
+  currentSortBy: string | undefined,
+  currentSortDir: string | undefined,
+): string {
+  const params = new URLSearchParams(searchParamsStr);
+  params.delete("page"); // 排序切換永遠回第 1 頁
+
+  if (currentSortBy === column) {
+    if (currentSortDir === "asc") {
+      params.set("sortBy", column);
+      params.set("sortDir", "desc");
+    } else {
+      // desc → 重置
+      params.delete("sortBy");
+      params.delete("sortDir");
+    }
+  } else {
+    params.set("sortBy", column);
+    params.set("sortDir", "asc");
+  }
+
+  return `${basePath}${params.size > 0 ? `?${params}` : ""}`;
 }
 ```
 
@@ -127,10 +158,12 @@ interface PageProps {
 // 傳入 query
 const result = getItems({ search, type, page, sortBy, sortDir })
 
-// 傳入 table
+// 傳入 table：過濾 boolean false / 空字串，true → "1"，避免污染 URL
 const searchParamsStr = new URLSearchParams(
-  Object.entries(params).filter(([, v]) => v != null) as [string, string][]
-).toString()
+  Object.entries(params)
+    .filter(([, v]) => v != null && v !== "" && v !== false)
+    .map(([k, v]) => [k, String(v === true ? "1" : v)] as [string, string])
+).toString();
 
 <ItemTable
   items={result.items}
@@ -139,6 +172,8 @@ const searchParamsStr = new URLSearchParams(
   searchParamsStr={searchParamsStr}
 />
 ```
+
+**注意：** `page` 本身也可以進 `searchParamsStr`——SortableHead 內部會 `delete("page")`，無需在 page component 排除。
 
 ---
 
@@ -163,23 +198,49 @@ const MONSTER_SORT_ALLOWLIST: Record<string, string> = {
   id: "n.id",
 };
 
-// magic.ts（maxLevel 為 SQL alias）
+// magic.ts（maxLevel 為 GROUP BY 查詢的 SELECT alias，SQLite 支援在 ORDER BY 使用）
 const SKILL_SORT_ALLOWLIST: Record<string, string> = {
   maxLevel: "maxLevel",
   id: "id",
 };
 ```
 
-### ORDER BY 組裝
+### ORDER BY 組裝（各表獨立實作）
+
+**Items：**
 
 ```typescript
 const sortCol = params.sortBy ? ITEM_SORT_ALLOWLIST[params.sortBy] ?? null : null;
 const sortDirSql = params.sortDir === "desc" ? "DESC" : "ASC";
-// 主排欄已是 id 時不重複加次要 id ASC
-const secondary = sortCol && !sortCol.endsWith("id") ? ", id ASC" : "";
 const orderBy = sortCol
-  ? `ORDER BY ${sortCol} ${sortDirSql}${secondary}`
-  : `ORDER BY level DESC, id ASC`; // 原預設（各表不同，實作時替換）
+  ? sortCol === "id"
+    ? `ORDER BY id ${sortDirSql}`
+    : `ORDER BY ${sortCol} ${sortDirSql}, id ASC`
+  : `ORDER BY level DESC, id ASC`;
+```
+
+**Monsters：**
+
+```typescript
+const sortCol = params.sortBy ? MONSTER_SORT_ALLOWLIST[params.sortBy] ?? null : null;
+const sortDirSql = params.sortDir === "desc" ? "DESC" : "ASC";
+const orderBy = sortCol
+  ? sortCol === "n.id"
+    ? `ORDER BY n.id ${sortDirSql}`
+    : `ORDER BY ${sortCol} ${sortDirSql}, n.id ASC`
+  : `ORDER BY n.level ASC, n.id ASC`;
+```
+
+**Skills（magic 表 (id, name) 才唯一，必須帶 name 做 tiebreak 確保分頁穩定）：**
+
+```typescript
+const sortCol = params.sortBy ? SKILL_SORT_ALLOWLIST[params.sortBy] ?? null : null;
+const sortDirSql = params.sortDir === "desc" ? "DESC" : "ASC";
+const orderBy = sortCol
+  ? sortCol === "id"
+    ? `ORDER BY id ${sortDirSql}, name ASC`
+    : `ORDER BY ${sortCol} ${sortDirSql}, id ASC, name ASC`
+  : `ORDER BY maxLevel DESC, id ASC, firstLevel ASC`;
 ```
 
 ---
@@ -206,7 +267,9 @@ const orderBy = sortCol
 - 各欄三態切換正確（asc → desc → 重置）
 - 切換欄位時另一欄從 asc 開始
 - 排序 + 篩選同時作用（URL params 互不覆蓋）
-- 排序切換後 page 重置為 1
+- 排序切換後 page 重置為 1（包含從第 5 頁切換排序的情境）
 - 無效 `sortBy` 值 fallback 到預設排序（不報錯）
-- Monsters JOIN 查詢的 `n.level`/`n.hp` alias 在 ORDER BY 正確
-- Skills `maxLevel` SQL alias 在 GROUP BY 查詢的 ORDER BY 正確
+- Monsters `hasDrop=false` 不出現在 URL（boolean false 被過濾）
+- Skills `id` 排序時次要 tiebreak 為 `name ASC`，跨頁無重複漏行
+- Skills `maxLevel` SQLite alias 在 GROUP BY 查詢的 ORDER BY 正確（若有疑慮可改寫為 `MAX(level)`）
+- Monsters JOIN 查詢的 `n.level`/`n.hp` 在 ORDER BY 正確
