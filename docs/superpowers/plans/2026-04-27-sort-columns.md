@@ -494,11 +494,15 @@ export function SortableHead({
         : ChevronsUpDownIcon;
 
   return (
-    <TableHead className={cn(className, right && "text-right")}>
+    <TableHead
+      aria-sort={isActive ? (currentSortDir === "asc" ? "ascending" : "descending") : "none"}
+      className={cn(className, right && "text-right")}
+    >
       <Link
         href={href}
         className={cn(
-          "flex h-full w-full items-center gap-1 hover:text-foreground",
+          "flex h-full w-full items-center gap-1 transition-colors duration-150 hover:text-foreground",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
           right && "justify-end",
           isActive ? "text-foreground" : "text-muted-foreground",
         )}
