@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { buildOrderBy, type SortDir } from "@/lib/sort";
 import type {
   MonsterDetail,
   MonsterDropItem,
@@ -75,7 +76,15 @@ export interface GetMonstersParams {
   isNormal?: boolean;
   page?: number;
   pageSize?: number;
+  sortBy?: string;
+  sortDir?: SortDir;
 }
+
+const MONSTER_SORT_ALLOWLIST: Record<string, string> = {
+  level: "n.level",
+  hp: "n.hp",
+  id: "n.id",
+};
 
 export interface GetMonstersResult {
   monsters: MonsterSummary[];
@@ -136,6 +145,14 @@ export function getMonsters(params: GetMonstersParams = {}): GetMonstersResult {
       .get(...args) as { c: number }
   ).c;
 
+  const orderBy = buildOrderBy({
+    allowlist: MONSTER_SORT_ALLOWLIST,
+    sortBy: params.sortBy,
+    sortDir: params.sortDir,
+    defaultOrderBy: "n.level ASC, n.id ASC",
+    idColumn: "n.id",
+  });
+
   const rows = db
     .prepare(
       `SELECT n.id,
@@ -151,7 +168,7 @@ export function getMonsters(params: GetMonstersParams = {}): GetMonstersResult {
        FROM npc n
        LEFT JOIN monsters m ON n.id = m.id
        ${whereSql}
-       ORDER BY n.level ASC, n.id ASC
+       ${orderBy}
        LIMIT ? OFFSET ?`,
     )
     .all(...args, pageSize, offset) as Array<

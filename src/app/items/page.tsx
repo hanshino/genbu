@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 import { getItems } from "@/lib/queries/items";
+import { parseSortDir } from "@/lib/sort";
+import { serializeSearchParams } from "@/lib/utils";
 import { ItemFilters } from "@/components/items/item-filters";
 import { ItemTable } from "@/components/items/item-table";
 import { ItemPagination } from "@/components/items/item-pagination";
@@ -11,6 +13,8 @@ interface PageProps {
     search?: string;
     type?: string;
     page?: string;
+    sortBy?: string;
+    sortDir?: string;
   }>;
 }
 
@@ -19,8 +23,12 @@ export default async function ItemsPage({ searchParams }: PageProps) {
   const search = params.search ?? "";
   const type = params.type ?? "";
   const page = Number(params.page) || 1;
+  const sortBy = params.sortBy;
+  const sortDir = parseSortDir(params.sortDir);
 
-  const result = getItems({ search, type, page });
+  const result = getItems({ search, type, page, sortBy, sortDir });
+
+  const searchParamsStr = serializeSearchParams(params);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -37,7 +45,10 @@ export default async function ItemsPage({ searchParams }: PageProps) {
         </Suspense>
       </div>
 
-      <ItemTable items={result.items} />
+      <ItemTable
+        items={result.items}
+        sort={{ sortBy, sortDir, searchParamsStr, basePath: "/items" }}
+      />
 
       {result.totalPages > 1 && (
         <div className="mt-6">

@@ -8,9 +8,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { SortableHead, type SortContext } from "@/components/common/sortable-head";
 import type { Item } from "@/lib/types/item";
 
-export function ItemTable({ items }: { items: Item[] }) {
+interface ItemTableProps {
+  items: Item[];
+  sort: SortContext;
+}
+
+export function ItemTable({ items, sort }: ItemTableProps) {
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-border/60 bg-card px-6 py-12 text-center text-muted-foreground">
@@ -24,11 +30,11 @@ export function ItemTable({ items }: { items: Item[] }) {
       <Table className="min-w-[640px]">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[90px]">編號</TableHead>
+            <SortableHead column="id" label="編號" className="w-[90px]" sort={sort} />
             <TableHead>名稱</TableHead>
             <TableHead className="w-[140px]">類型</TableHead>
-            <TableHead className="w-[70px] text-right">等級</TableHead>
-            <TableHead className="w-[70px] text-right">重量</TableHead>
+            <SortableHead column="level" label="等級" className="w-[70px]" right sort={sort} />
+            <SortableHead column="weight" label="重量" className="w-[70px]" right sort={sort} />
           </TableRow>
         </TableHeader>
         <TableBody>

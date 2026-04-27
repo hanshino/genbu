@@ -8,10 +8,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { SortableHead, type SortContext } from "@/components/common/sortable-head";
 import { monsterTypeLabel } from "@/lib/constants/monster-type";
 import type { MonsterSummary } from "@/lib/types/monster";
 
-export function MonsterTable({ monsters }: { monsters: MonsterSummary[] }) {
+interface MonsterTableProps {
+  monsters: MonsterSummary[];
+  sort: SortContext;
+}
+
+export function MonsterTable({ monsters, sort }: MonsterTableProps) {
   if (monsters.length === 0) {
     return (
       <div className="rounded-lg border border-border/60 bg-card px-6 py-12 text-center text-muted-foreground">
@@ -25,12 +31,12 @@ export function MonsterTable({ monsters }: { monsters: MonsterSummary[] }) {
       <Table className="min-w-[720px]">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[90px]">編號</TableHead>
+            <SortableHead column="id" label="編號" className="w-[90px]" sort={sort} />
             <TableHead>名稱</TableHead>
             <TableHead className="w-[120px]">類型</TableHead>
             <TableHead className="w-[70px]">屬性</TableHead>
-            <TableHead className="w-[80px] text-right">等級</TableHead>
-            <TableHead className="w-[100px] text-right">血量</TableHead>
+            <SortableHead column="level" label="等級" className="w-[80px]" right sort={sort} />
+            <SortableHead column="hp" label="血量" className="w-[100px]" right sort={sort} />
             <TableHead className="w-[80px]">掉落</TableHead>
           </TableRow>
         </TableHeader>

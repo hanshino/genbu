@@ -4,6 +4,8 @@ import {
   getDistinctMonsterTypes,
   getDistinctElementals,
 } from "@/lib/queries/monsters";
+import { parseSortDir } from "@/lib/sort";
+import { serializeSearchParams } from "@/lib/utils";
 import { MonsterFilters } from "@/components/monsters/monster-filters";
 import { MonsterTable } from "@/components/monsters/monster-table";
 import { Pagination } from "@/components/common/pagination";
@@ -18,6 +20,8 @@ interface PageProps {
     hasDrop?: string;
     isNormal?: string;
     page?: string;
+    sortBy?: string;
+    sortDir?: string;
   }>;
 }
 
@@ -29,6 +33,8 @@ export default async function MonstersPage({ searchParams }: PageProps) {
   const hasDrop = params.hasDrop === "1";
   const isNormal = params.isNormal === "1";
   const page = Number(params.page) || 1;
+  const sortBy = params.sortBy;
+  const sortDir = parseSortDir(params.sortDir);
 
   const typeNum = typeRaw ? Number(typeRaw) : undefined;
   const result = getMonsters({
@@ -38,11 +44,15 @@ export default async function MonstersPage({ searchParams }: PageProps) {
     hasDrop,
     isNormal,
     page,
+    sortBy,
+    sortDir,
   });
   const availableTypes = getDistinctMonsterTypes();
   const availableElementals = getDistinctElementals();
 
   const hasFilter = !!(search || typeRaw || elemental || hasDrop || isNormal);
+
+  const searchParamsStr = serializeSearchParams(params);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -67,7 +77,10 @@ export default async function MonstersPage({ searchParams }: PageProps) {
         </Suspense>
       </div>
 
-      <MonsterTable monsters={result.monsters} />
+      <MonsterTable
+        monsters={result.monsters}
+        sort={{ sortBy, sortDir, searchParamsStr, basePath: "/monsters" }}
+      />
 
       {result.totalPages > 1 && (
         <div className="mt-6">

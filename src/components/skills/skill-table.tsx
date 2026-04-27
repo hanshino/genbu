@@ -8,13 +8,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { SortableHead, type SortContext } from "@/components/common/sortable-head";
 import { magicClanListLabel } from "@/lib/constants/magic-clan";
 import { magicTargetLabel } from "@/lib/constants/magic-target";
 import { magicAttribLabel, MAGIC_ATTRIB_COLOR } from "@/lib/constants/magic-attrib";
 import { magicSkillTypeLabel } from "@/lib/constants/magic-skill-type";
 import type { MagicSummary } from "@/lib/types/magic";
 
-export function SkillTable({ skills }: { skills: MagicSummary[] }) {
+interface SkillTableProps {
+  skills: MagicSummary[];
+  sort: SortContext;
+}
+
+export function SkillTable({ skills, sort }: SkillTableProps) {
   if (skills.length === 0) {
     return (
       <div className="rounded-lg border border-border/60 bg-card px-6 py-12 text-center text-muted-foreground">
@@ -28,13 +34,13 @@ export function SkillTable({ skills }: { skills: MagicSummary[] }) {
       <Table className="min-w-[720px]">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[90px]">編號</TableHead>
+            <SortableHead column="id" label="編號" className="w-[90px]" sort={sort} />
             <TableHead>名稱</TableHead>
             <TableHead className="w-[120px]">門派</TableHead>
             <TableHead className="w-[110px]">分類</TableHead>
             <TableHead className="w-[120px]">作用目標</TableHead>
             <TableHead className="w-[70px]">屬性</TableHead>
-            <TableHead className="w-[80px] text-right">最高 Lv</TableHead>
+            <SortableHead column="maxLevel" label="最高 Lv" className="w-[80px]" right sort={sort} />
           </TableRow>
         </TableHeader>
         <TableBody>

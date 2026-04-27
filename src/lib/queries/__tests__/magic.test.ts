@@ -147,3 +147,41 @@ describe("distinct helpers", () => {
     expect(targets).toContain("TARGET_ENEMYTARGET");
   });
 });
+
+describe("getSkills — sort", () => {
+  it("sorts by maxLevel ascending", () => {
+    const result = getSkills({ sortBy: "maxLevel", sortDir: "asc", pageSize: 20 });
+    const levels = result.skills.map((s) => s.maxLevel);
+    for (let i = 1; i < levels.length; i++) {
+      expect(levels[i]).toBeGreaterThanOrEqual(levels[i - 1]);
+    }
+    const descResult = getSkills({ sortBy: "maxLevel", sortDir: "desc", pageSize: 20 });
+    expect(result.skills[0].maxLevel).not.toBe(descResult.skills[0].maxLevel);
+  });
+
+  it("sorts by maxLevel descending", () => {
+    const result = getSkills({ sortBy: "maxLevel", sortDir: "desc", pageSize: 20 });
+    const levels = result.skills.map((s) => s.maxLevel);
+    for (let i = 1; i < levels.length; i++) {
+      expect(levels[i]).toBeLessThanOrEqual(levels[i - 1]);
+    }
+  });
+
+  it("stable across pages when sorted by maxLevel asc — no overlap or gap", () => {
+    const p1 = getSkills({ sortBy: "maxLevel", sortDir: "asc", pageSize: 5, page: 1 });
+    const p2 = getSkills({ sortBy: "maxLevel", sortDir: "asc", pageSize: 5, page: 2 });
+    const p1Keys = new Set(p1.skills.map((s) => `${s.id}::${s.name}`));
+    for (const s of p2.skills) expect(p1Keys.has(`${s.id}::${s.name}`)).toBe(false);
+    const p1MaxLevel = Math.max(...p1.skills.map((s) => s.maxLevel));
+    const p2MinLevel = Math.min(...p2.skills.map((s) => s.maxLevel));
+    expect(p1MaxLevel).toBeLessThanOrEqual(p2MinLevel);
+  });
+
+  it("ignores invalid sortBy and falls back to default order", () => {
+    const defaultResult = getSkills({ pageSize: 20 });
+    const invalidResult = getSkills({ sortBy: "clan", pageSize: 20 });
+    expect(invalidResult.skills.map((s) => `${s.id}::${s.name}`)).toEqual(
+      defaultResult.skills.map((s) => `${s.id}::${s.name}`),
+    );
+  });
+});
