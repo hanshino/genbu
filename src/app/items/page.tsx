@@ -11,6 +11,8 @@ interface PageProps {
     search?: string;
     type?: string;
     page?: string;
+    sortBy?: string;
+    sortDir?: string;
   }>;
 }
 
@@ -19,8 +21,17 @@ export default async function ItemsPage({ searchParams }: PageProps) {
   const search = params.search ?? "";
   const type = params.type ?? "";
   const page = Number(params.page) || 1;
+  const sortBy = params.sortBy;
+  const sortDir = params.sortDir;
 
-  const result = getItems({ search, type, page });
+  const result = getItems({ search, type, page, sortBy, sortDir });
+
+  const searchParamsStr = new URLSearchParams(
+    Object.entries(params).filter((entry): entry is [string, string] => {
+      const v = entry[1];
+      return v != null && v !== "";
+    }),
+  ).toString();
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -37,7 +48,12 @@ export default async function ItemsPage({ searchParams }: PageProps) {
         </Suspense>
       </div>
 
-      <ItemTable items={result.items} />
+      <ItemTable
+        items={result.items}
+        sortBy={sortBy}
+        sortDir={sortDir}
+        searchParamsStr={searchParamsStr}
+      />
 
       {result.totalPages > 1 && (
         <div className="mt-6">
