@@ -18,6 +18,8 @@ interface PageProps {
     target?: string;
     skillType?: string;
     page?: string;
+    sortBy?: string;
+    sortDir?: string;
   }>;
 }
 
@@ -30,13 +32,23 @@ export default async function SkillsPage({ searchParams }: PageProps) {
   const skillTypeParsed = Number(skillTypeRaw);
   const skillType = Number.isInteger(skillTypeParsed) && skillTypeParsed > 0 ? skillTypeParsed : undefined;
   const page = Number(params.page) || 1;
+  const sortBy = params.sortBy;
+  const sortDir = params.sortDir;
 
-  const result = getSkills({ search, clan, target, skillType, page });
+  const result = getSkills({ search, clan, target, skillType, page, sortBy, sortDir });
   const availableClans = getDistinctClans();
   const availableTargets = getDistinctTargets();
   const availableSkillTypes = getDistinctSkillTypes();
 
   const hasFilter = !!(search || clan || target || skillType);
+
+  // params is Record<string, string | undefined> at runtime; drop null/empty.
+  const searchParamsStr = new URLSearchParams(
+    Object.entries(params).filter((entry): entry is [string, string] => {
+      const v = entry[1];
+      return v != null && v !== "";
+    }),
+  ).toString();
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -61,7 +73,12 @@ export default async function SkillsPage({ searchParams }: PageProps) {
         </Suspense>
       </div>
 
-      <SkillTable skills={result.skills} />
+      <SkillTable
+        skills={result.skills}
+        sortBy={sortBy}
+        sortDir={sortDir}
+        searchParamsStr={searchParamsStr}
+      />
 
       {result.totalPages > 1 && (
         <div className="mt-6">
