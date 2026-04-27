@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getMonsterById, getDropsForMonster } from "@/lib/queries/monsters";
+import { getStagesForMonster } from "@/lib/queries/monster-spawns";
 import { MonsterDetailView } from "@/components/monsters/monster-detail";
 import { MonsterDropTable } from "@/components/monsters/monster-drop-table";
+import { MonsterStageSpawns } from "@/components/monsters/monster-stage-spawns";
 import { HitRequirementPanel } from "@/components/monsters/hit-requirement-panel";
 import { BackLink } from "@/components/common/back-link";
 import { SKILL_PICKS, type SkillSchool } from "@/lib/constants/skill-picks";
@@ -41,6 +43,7 @@ export default async function MonsterDetailPage({ params, searchParams }: PagePr
   if (!monster) notFound();
 
   const { drops, totalWeight } = getDropsForMonster(monsterId);
+  const stageSpawns = getStagesForMonster(monsterId);
   const school = resolveSchool(rawSchool);
 
   return (
@@ -54,6 +57,8 @@ export default async function MonsterDetailPage({ params, searchParams }: PagePr
       <HitRequirementPanel dodge={monster.base_dodge} school={school} />
 
       <MonsterDropTable drops={drops} totalWeight={totalWeight} />
+
+      <MonsterStageSpawns spawns={stageSpawns} />
     </div>
   );
 }

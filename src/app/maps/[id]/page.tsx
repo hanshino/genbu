@@ -4,8 +4,11 @@ import type { Metadata } from "next";
 import { BackLink } from "@/components/common/back-link";
 import { Badge } from "@/components/ui/badge";
 import { StageFlagBadge } from "@/components/maps/stage-flag-badge";
+import { StageMonsterSpawns } from "@/components/maps/stage-monster-spawns";
+import { LinkListRow, LinkListSection } from "@/components/common/link-list";
 import { sortStageFlags } from "@/lib/constants/stage-flags";
 import { getStageDetail } from "@/lib/queries/stages";
+import { getMonstersAtStage } from "@/lib/queries/monster-spawns";
 import type { InboundLink, StageDetail, StageMissionRef } from "@/lib/types/stage";
 
 interface PageProps {
@@ -150,34 +153,20 @@ function InboundList({ inbound }: { inbound: InboundLink[] }) {
 function MissionsList({ missions }: { missions: StageMissionRef[] }) {
   if (missions.length === 0) return null;
   return (
-    <section className="space-y-2">
-      <h2 className="text-lg font-medium">相關任務</h2>
-      <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
-        {missions.map((m) => (
-          <li key={m.missionId}>
-            <Link
-              href={`/missions/${m.missionId}`}
-              className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2.5 transition-colors hover:bg-muted/50"
-            >
-              <span className="font-mono text-xs text-muted-foreground">
-                #{m.missionId}
-              </span>
-              <span className="font-medium">
-                {m.missionName ?? `任務 ${m.missionId}`}
-              </span>
-              {m.groupId != null && (
-                <Badge variant="outline" className="font-normal">
-                  分組 #{m.groupId}
-                </Badge>
-              )}
-              <span className="ml-auto font-mono text-xs text-muted-foreground">
-                ×{m.refCount}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <LinkListSection title="相關任務">
+      {missions.map((m) => (
+        <LinkListRow key={m.missionId} href={`/missions/${m.missionId}`}>
+          <span className="font-mono text-xs text-muted-foreground">#{m.missionId}</span>
+          <span className="font-medium">{m.missionName ?? `任務 ${m.missionId}`}</span>
+          {m.groupId != null && (
+            <Badge variant="outline" className="font-normal">
+              分組 #{m.groupId}
+            </Badge>
+          )}
+          <span className="ml-auto font-mono text-xs text-muted-foreground">×{m.refCount}</span>
+        </LinkListRow>
+      ))}
+    </LinkListSection>
   );
 }
 
@@ -188,6 +177,8 @@ export default async function MapDetailPage({ params }: PageProps) {
 
   const stage = getStageDetail(stageId);
   if (!stage || !stage.name) notFound();
+
+  const monsters = getMonstersAtStage(stage.kind, stage.id);
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
@@ -243,11 +234,14 @@ export default async function MapDetailPage({ params }: PageProps) {
 
       <InboundList inbound={stage.inbound} />
 
+      <StageMonsterSpawns monsters={monsters} />
+
       <MissionsList missions={stage.missions} />
 
       <p className="text-xs text-muted-foreground">
-        資料來自 STAGE.INI / SESTAGE.INI；
-        appear_map / logout_map 記錄的是「預設出生／登出」的目的地，並非完整的地圖傳送網。
+        資料來自 STAGE.INI / SESTAGE.INI 與 MAP/*.MPC；
+        appear_map / logout_map 記錄的是「預設出生／登出」目的地，並非完整的地圖傳送網。
+        怪物清單由 GENERATOR.OBD 解析，不含劇情觸發或關卡腳本生成的怪物。
       </p>
     </div>
   );
