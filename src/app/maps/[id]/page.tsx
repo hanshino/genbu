@@ -5,6 +5,7 @@ import { BackLink } from "@/components/common/back-link";
 import { Badge } from "@/components/ui/badge";
 import { StageFlagBadge } from "@/components/maps/stage-flag-badge";
 import { StageMonsterSpawns } from "@/components/maps/stage-monster-spawns";
+import { LinkListRow, LinkListSection } from "@/components/common/link-list";
 import { sortStageFlags } from "@/lib/constants/stage-flags";
 import { getStageDetail } from "@/lib/queries/stages";
 import { getMonstersAtStage } from "@/lib/queries/monster-spawns";
@@ -152,34 +153,20 @@ function InboundList({ inbound }: { inbound: InboundLink[] }) {
 function MissionsList({ missions }: { missions: StageMissionRef[] }) {
   if (missions.length === 0) return null;
   return (
-    <section className="space-y-2">
-      <h2 className="text-lg font-medium">相關任務</h2>
-      <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
-        {missions.map((m) => (
-          <li key={m.missionId}>
-            <Link
-              href={`/missions/${m.missionId}`}
-              className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2.5 transition-colors hover:bg-muted/50"
-            >
-              <span className="font-mono text-xs text-muted-foreground">
-                #{m.missionId}
-              </span>
-              <span className="font-medium">
-                {m.missionName ?? `任務 ${m.missionId}`}
-              </span>
-              {m.groupId != null && (
-                <Badge variant="outline" className="font-normal">
-                  分組 #{m.groupId}
-                </Badge>
-              )}
-              <span className="ml-auto font-mono text-xs text-muted-foreground">
-                ×{m.refCount}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <LinkListSection title="相關任務">
+      {missions.map((m) => (
+        <LinkListRow key={m.missionId} href={`/missions/${m.missionId}`}>
+          <span className="font-mono text-xs text-muted-foreground">#{m.missionId}</span>
+          <span className="font-medium">{m.missionName ?? `任務 ${m.missionId}`}</span>
+          {m.groupId != null && (
+            <Badge variant="outline" className="font-normal">
+              分組 #{m.groupId}
+            </Badge>
+          )}
+          <span className="ml-auto font-mono text-xs text-muted-foreground">×{m.refCount}</span>
+        </LinkListRow>
+      ))}
+    </LinkListSection>
   );
 }
 
