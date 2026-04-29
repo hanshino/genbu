@@ -11,6 +11,7 @@ import {
 } from "@/lib/solvers/forest-matrix";
 import { NumberPadPopover } from "./number-pad-popover";
 import { InlineAlert } from "./inline-alert";
+import { track } from "@/lib/analytics/track";
 
 type Inputs = Record<RoomName, number | null>;
 
@@ -50,12 +51,12 @@ export function ForestMatrixSolver() {
 
   function onSolve() {
     if (known.length !== 2) return;
-    setResult(
-      solveForestMatrix({
-        sum,
-        known: [known[0], known[1]],
-      }),
-    );
+    const next = solveForestMatrix({
+      sum,
+      known: [known[0], known[1]],
+    });
+    setResult(next);
+    track("puzzle_solve", { puzzle: "160", solutions: next.ok ? 1 : 0 });
   }
 
   function onClear() {
