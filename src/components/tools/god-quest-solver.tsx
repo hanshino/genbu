@@ -17,6 +17,7 @@ import {
 } from "@/lib/solvers/god-quest";
 import { InlineAlert } from "./inline-alert";
 import { MagicTriangleSvg } from "./magic-triangle-svg";
+import { track } from "@/lib/analytics/track";
 
 const VALID_SUMS = [17, 18, 19, 20, 21, 22, 23] as const;
 
@@ -39,8 +40,13 @@ export function GodQuestSolver() {
 
   function onSolve() {
     const leak = Number(leakInput);
-    setResult(solveMagicTriangle(sum, leak));
+    const next = solveMagicTriangle(sum, leak);
+    setResult(next);
     setIndex(0);
+    track("puzzle_solve", {
+      puzzle: "180",
+      solutions: next.ok ? next.solutions.length : 0,
+    });
   }
 
   const solutions = result?.ok ? result.solutions : [];

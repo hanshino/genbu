@@ -7,6 +7,7 @@ import { ChevronRightIcon } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useCompareTray } from "@/lib/hooks/use-compare-tray";
+import { track } from "@/lib/analytics/track";
 
 // The bar only earns its screen real estate on routes where the tray is
 // actionable: ranking (add), item list + detail (add). On the home page it's
@@ -40,11 +41,19 @@ export function CompareBar() {
       <Link
         href={`/compare?ids=${tray.ids.join(",")}`}
         className={cn(buttonVariants({ size: "sm" }))}
+        onClick={() => track("compare_open", { count: tray.ids.length })}
       >
         去比較
         <ChevronRightIcon aria-hidden />
       </Link>
-      <Button variant="ghost" size="sm" onClick={tray.clear}>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => {
+          track("compare_clear", { count: tray.ids.length });
+          tray.clear();
+        }}
+      >
         清空
       </Button>
     </div>

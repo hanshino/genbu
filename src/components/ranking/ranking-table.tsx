@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { PresetChips } from "@/components/ranking/preset-chips";
 import { useCompareTray } from "@/lib/hooks/use-compare-tray";
+import { track } from "@/lib/analytics/track";
 import { cn } from "@/lib/utils";
 
 function ItemThumbnail({ itemId }: { itemId: number }) {
@@ -222,7 +223,13 @@ export function RankingTable({
                       <Button
                         size="icon"
                         variant="outline"
-                        onClick={() => tray.add(item.id)}
+                        onClick={() => {
+                          tray.add(item.id);
+                          track("compare_add", {
+                            item_id: item.id,
+                            source: "ranking",
+                          });
+                        }}
                         disabled={tray.isFull}
                         aria-label={tray.isFull ? "比較盤已滿" : "加入比較"}
                         title={tray.isFull ? "比較盤已滿（最多 5 件）" : "加入比較"}
