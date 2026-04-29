@@ -24,6 +24,7 @@ import { THRESHOLD_KEYS as thresholdKeys, type Thresholds } from "@/lib/constant
 import { RankingTable, type RankingRow } from "@/components/ranking/ranking-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { track } from "@/lib/analytics/track";
 import {
   Dialog,
   DialogCloseButton,
@@ -126,6 +127,10 @@ export function RankingClient({ type, items, rands }: Props) {
 
   const handlePresetChange = (next: PresetSelection) => {
     setSelection(next);
+    track("ranking_change", {
+      control: "preset",
+      value: next.kind === "builtin" ? next.id : next.kind,
+    });
     if (next.kind === "builtin") {
       const p = getPresetById(next.id);
       if (p) {
@@ -332,7 +337,10 @@ export function RankingClient({ type, items, rands }: Props) {
               variant={t === type ? "default" : "outline"}
               size="sm"
               className="flex-1"
-              onClick={() => pushUrl({ type: t })}
+              onClick={() => {
+                if (t !== type) track("ranking_change", { control: "type", value: t });
+                pushUrl({ type: t });
+              }}
             >
               {t}
             </Button>

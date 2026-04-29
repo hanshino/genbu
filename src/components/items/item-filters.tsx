@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { itemTypeGroups } from "@/lib/constants/item-types";
+import { track } from "@/lib/analytics/track";
 
 const ALL_TYPES = "__all__";
 
@@ -48,6 +49,15 @@ export function ItemFilters({
     startTransition(() => {
       router.push(`/items${params.size > 0 ? `?${params.toString()}` : ""}`);
     });
+    const query = next.search.trim();
+    const hasFilter = !!next.type && next.type !== ALL_TYPES;
+    if (query.length > 0 || hasFilter) {
+      track("search_submit", {
+        scope: "items",
+        query_len: query.length,
+        has_filter: hasFilter,
+      });
+    }
   }
 
   return (

@@ -14,6 +14,7 @@ import { magicClanLabel, MAGIC_CLAN_ORDER } from "@/lib/constants/magic-clan";
 import { magicTargetLabel, MAGIC_TARGET_ORDER } from "@/lib/constants/magic-target";
 import { magicSkillTypeLabel } from "@/lib/constants/magic-skill-type";
 import { FILTER_ALL } from "@/lib/constants/filters";
+import { track } from "@/lib/analytics/track";
 
 interface FilterState {
   search: string;
@@ -73,6 +74,18 @@ export function SkillFilters({
     startTransition(() => {
       router.push(`/skills${nextQs ? `?${nextQs}` : ""}`);
     });
+    const query = next.search.trim();
+    const hasFilter =
+      (!!next.clan && next.clan !== FILTER_ALL) ||
+      (!!next.target && next.target !== FILTER_ALL) ||
+      (!!next.skillType && next.skillType !== FILTER_ALL);
+    if (query.length > 0 || hasFilter) {
+      track("search_submit", {
+        scope: "skills",
+        query_len: query.length,
+        has_filter: hasFilter,
+      });
+    }
   }
 
   // Preserve canonical ordering, but only show clans/targets that exist in DB.
