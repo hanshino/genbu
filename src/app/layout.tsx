@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { CompareBar } from "@/components/compare/compare-bar";
+import { UmamiAnalytics } from "@/components/analytics/umami";
 
 const notoSansTC = Noto_Sans_TC({
   subsets: ["latin"],
@@ -44,6 +45,7 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <Footer />
         <CompareBar />
+        <UmamiAnalytics />
       </body>
     </html>
   );
