@@ -6,7 +6,7 @@ Genbu is an unofficial, open-source database and utility site for the game "TTHO
 
 - **Purpose:** A comprehensive game database providing item search, attribute comparison, and ranking tools.
 - **Main Technologies:**
-    - **Frontend:** Next.js 15 (App Router), React 19, Tailwind CSS 4, Shadcn/UI, Recharts.
+    - **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS 4, Shadcn/UI, Recharts.
     - **Backend:** Node.js (Next.js Server Components), SQLite (`better-sqlite3`).
     - **Database:** `tthol.sqlite` (read-only game data).
     - **Testing:** Vitest, React Testing Library, JSDOM.
