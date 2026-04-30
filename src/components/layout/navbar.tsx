@@ -63,7 +63,7 @@ export function Navbar() {
         </nav>
 
         <div className="ml-auto hidden md:block">
-          <DesktopLink href="/about" label="關於" pathname={pathname} variant="muted" />
+          <DesktopLink href="/about" label="關於" pathname={pathname} muted />
         </div>
 
         <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
@@ -150,12 +150,12 @@ function DesktopLink({
   href,
   label,
   pathname,
-  variant = "default",
+  muted = false,
 }: {
   href: string;
   label: string;
   pathname: string;
-  variant?: "default" | "muted";
+  muted?: boolean;
 }) {
   const active = isActive(pathname, href);
   return (
@@ -167,7 +167,7 @@ function DesktopLink({
           variant: active ? "secondary" : "ghost",
           size: "sm",
         }),
-        variant === "muted" && !active && "text-muted-foreground",
+        muted && !active && "text-muted-foreground",
       )}
     >
       {label}
