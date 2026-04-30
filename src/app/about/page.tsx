@@ -8,6 +8,8 @@ import {
   WrenchIcon,
   HeartIcon,
   Code2Icon,
+  CpuIcon,
+  ShieldAlertIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -113,7 +115,7 @@ export default function AboutPage() {
 
       <Separator className="my-10" />
 
-      <Section title="技術棧">
+      <Section icon={<CpuIcon className="text-primary size-5" aria-hidden />} title="技術棧">
         <div className="flex flex-wrap gap-2">
           {techStack.map((t) => (
             <Badge key={t} variant="secondary" className="font-mono text-xs">
@@ -159,7 +161,10 @@ export default function AboutPage() {
 
       <Separator className="my-10" />
 
-      <Section title="免責聲明">
+      <Section
+        icon={<ShieldAlertIcon className="text-primary size-5" aria-hidden />}
+        title="免責聲明"
+      >
         <p className="text-muted-foreground text-xs leading-relaxed">
           本站為個人興趣製作之非官方查詢站，與《武林同萌傳》原廠及代理商無任何隸屬關係。
           遊戲名稱、美術素材、設定資料之著作權皆歸原權利人所有，本站僅整理公開可得之數值資訊提供查詢，不提供遊戲檔案或修改工具。
