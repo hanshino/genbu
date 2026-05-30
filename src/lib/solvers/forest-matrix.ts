@@ -1,6 +1,29 @@
 export const ROOM_NAMES = ["魁", "晶", "阜", "寶", "帝", "彤", "牡", "蒼", "岡"] as const;
 export type RoomName = (typeof ROOM_NAMES)[number];
 
+/**
+ * 九宮格的「視覺排列」，對應遊戲中九鼎機關陣的實際方位（上＝北、右＝東）：
+ *
+ *   魁(西北) │ 寶(北) │ 牡(東北)
+ *   ────────┼────────┼────────
+ *   晶(西)   │ 帝(中) │ 蒼(東)
+ *   ────────┼────────┼────────
+ *   阜(西南) │ 彤(南) │ 岡(東南)
+ *
+ * 渲染九宮格時請 **務必** 走訪 GRID_LAYOUT，而非 ROOM_NAMES。
+ * ROOM_NAMES 只是解題迭代用的名稱清單，其陣列順序為求解器內部順序（魁晶阜／寶帝彤／
+ * 牡蒼岡），並非房間在遊戲中的方位；直接拿它 row-major 渲染會得到「轉置」後的錯誤盤面。
+ *
+ * 注意：此排列只影響「顯示位置」。解題數學（COEFFICIENTS / solveForestMatrix）以房間
+ * 名稱為鍵，與排列方式無關——魔方陣的轉置仍是擁有相同線集合的魔方陣，因此每個房間的
+ * 數值不會因為改變排列而改變。
+ */
+export const GRID_LAYOUT = [
+  "魁", "寶", "牡",
+  "晶", "帝", "蒼",
+  "阜", "彤", "岡",
+] as const satisfies readonly RoomName[];
+
 const COEFFICIENTS: Record<RoomName, readonly [number, number, number]> = {
   魁: [1, 0, 0],
   晶: [-1, -1, 3],
