@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { solveForestMatrix, ROOM_NAMES } from "../forest-matrix";
+import { solveForestMatrix, ROOM_NAMES, GRID_LAYOUT } from "../forest-matrix";
 
 const ok = (r: ReturnType<typeof solveForestMatrix>) => {
   if (!r.ok) throw new Error("expected ok result, got " + r.reason);
@@ -177,5 +177,55 @@ describe("solveForestMatrix — error reasons", () => {
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("no_valid_solution");
+  });
+});
+
+describe("GRID_LAYOUT — visual 九宮格 placement (九鼎 directions)", () => {
+  it("matches the in-game layout: rows 魁寶牡 / 晶帝蒼 / 阜彤岡", () => {
+    // Reported by a player and corroborated by the historical 九鼎 directions
+    // (中=帝, 北=寶, 東=蒼, 南=彤, 西=晶, 東北=牡, 東南=岡, 西南=阜, 西北=魁).
+    expect([...GRID_LAYOUT]).toEqual([
+      "魁", "寶", "牡",
+      "晶", "帝", "蒼",
+      "阜", "彤", "岡",
+    ]);
+  });
+
+  it("keeps 帝 in the centre cell", () => {
+    expect(GRID_LAYOUT[4]).toBe("帝");
+  });
+
+  it("contains exactly the nine rooms (a permutation of ROOM_NAMES)", () => {
+    expect([...GRID_LAYOUT].sort()).toEqual([...ROOM_NAMES].sort());
+  });
+
+  it("is the transpose of the solver's internal ROOM_NAMES order", () => {
+    // ROOM_NAMES row-major = 魁晶阜 / 寶帝彤 / 牡蒼岡; its transpose is GRID_LAYOUT.
+    const transpose = [0, 3, 6, 1, 4, 7, 2, 5, 8].map((i) => ROOM_NAMES[i]);
+    expect([...GRID_LAYOUT]).toEqual(transpose);
+  });
+
+  it("renders a valid magic square in display order (every row/col/diagonal = sum)", () => {
+    const cells = ok(
+      solveForestMatrix({
+        sum: 15,
+        known: [
+          { room: "魁", value: 4 },
+          { room: "阜", value: 2 },
+        ],
+      }),
+    );
+    const g = GRID_LAYOUT.map((r) => cells[r]);
+    const grid = [
+      [g[0], g[1], g[2]],
+      [g[3], g[4], g[5]],
+      [g[6], g[7], g[8]],
+    ];
+    for (const row of grid) expect(row.reduce((a, b) => a + b, 0)).toBe(15);
+    for (let col = 0; col < 3; col++) {
+      expect(grid[0][col] + grid[1][col] + grid[2][col]).toBe(15);
+    }
+    expect(grid[0][0] + grid[1][1] + grid[2][2]).toBe(15);
+    expect(grid[0][2] + grid[1][1] + grid[2][0]).toBe(15);
   });
 });

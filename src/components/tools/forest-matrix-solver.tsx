@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   ROOM_NAMES,
+  GRID_LAYOUT,
   solveForestMatrix,
   type RoomName,
   type ForestMatrixResult,
@@ -89,7 +90,7 @@ export function ForestMatrixSolver() {
       </div>
 
       <div className="mx-auto grid w-fit grid-cols-3 gap-2">
-        {ROOM_NAMES.map((room) => {
+        {GRID_LAYOUT.map((room) => {
           const isCenter = room === "帝";
           const input = inputs[room];
           const solvedValue = solved ? solved[room] : null;
