@@ -75,4 +75,5 @@ export interface DiffOptions {
   systematicCoverage?: number; // 系統性摺疊覆蓋率門檻，預設 0.9
   systematicMaxDistinct?: number; // 系統性摺疊 distinct 配對上限，預設 3
   rebuildRatio?: number; // 整表重建門檻（added+removed 佔比），預設 0.5
+  rebuildMinRows?: number; // 觸發整表重建的最小列數門檻，預設 50
 }
