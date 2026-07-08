@@ -147,6 +147,7 @@ export interface DiffOptions {
   systematicCoverage?: number; // 系統性摺疊覆蓋率門檻，預設 0.9
   systematicMaxDistinct?: number; // 系統性摺疊 distinct 配對上限，預設 3
   rebuildRatio?: number; // 整表重建門檻（added+removed 佔比），預設 0.5
+  rebuildMinRows?: number; // 觸發整表重建的最小列數門檻，預設 50（避免小表誤觸）
 }
 ```
 
@@ -551,7 +552,7 @@ import { EXCLUDE } from "./config";
 type DB = BetterSqlite3.Database;
 type Row = Record<string, unknown>;
 
-const SEP = ""; // identityKey 內部分隔符；不外洩到 JSON
+const SEP = "\x01"; // identityKey 內部分隔符；不外洩到 JSON
 
 const DEFAULTS: Required<DiffOptions> = {
   maxRowsPerTable: 200,
@@ -560,6 +561,7 @@ const DEFAULTS: Required<DiffOptions> = {
   systematicCoverage: 0.9,
   systematicMaxDistinct: 3,
   rebuildRatio: 0.5,
+  rebuildMinRows: 50,
 };
 
 const CORE_TABLES = new Set(["items", "magic", "monsters"]);
@@ -676,7 +678,7 @@ function diffTable(
 
   // 整表重建防呆（兩層皆適用）
   const totalRows = Math.max(oldRows.length, newRows.length);
-  if (totalRows > 0 && (addedRows.length + removedRows.length) / totalRows > o.rebuildRatio) {
+  if (totalRows >= o.rebuildMinRows && (addedRows.length + removedRows.length) / totalRows > o.rebuildRatio) {
     td.rebuilt = true;
     td.counts = { added: addedRows.length, changed: 0, removed: removedRows.length };
     return td;
