@@ -60,6 +60,7 @@ export function Navbar() {
             <DesktopGroup key={group.label} group={group} pathname={pathname} />
           ))}
           <DesktopLink href="/tools" label="工具" pathname={pathname} />
+          <DesktopLink href="/changelog" label="更新紀錄" pathname={pathname} />
         </nav>
 
         <div className="ml-auto hidden md:block">
@@ -125,6 +126,13 @@ export function Navbar() {
                 <MobileLink
                   href="/tools"
                   label="工具"
+                  pathname={pathname}
+                  onNavigate={() => setOpen(false)}
+                />
+
+                <MobileLink
+                  href="/changelog"
+                  label="更新紀錄"
                   pathname={pathname}
                   onNavigate={() => setOpen(false)}
                 />
