@@ -1060,14 +1060,14 @@ npm run changelog -- --version 0.0-test --to ../tthol_data/tthol.sqlite --note "
 ```
 Expected:
 - 終端印出各表 `+N ~N −N` 摘要（items 應有少量新增/改名/數值變更；跨 schema 版可能看到 `結構變動` 與 `系統性x…` 旗標——這是 spec §2 記載的首跑預期行為）。
-- 產生 `src/data/changelog/0.0-test-v0.0-test.json`（檔名為 `<date>-v<version>`）。
+- 產生 `src/data/changelog/<今日日期>-v0.0-test.json`（檔名格式 `<date>-v<version>`，例如 `2026-07-08-v0.0-test.json`）。
 - 打開 JSON 確認：`tables[].changed[].fields` 有 zh-tw label、`idParts` 不含控制字元、rich 表 `added/removed` 帶 `name`。
 
 - [ ] **Step 5: 刪掉驗收產物**
 
 Run: `git status` 確認只有 `package.json`/`package-lock.json`/`scripts/db-changelog.ts` 該進版控；把試算 JSON 刪掉：
 ```bash
-rm src/data/changelog/0.0-test-v0.0-test.json
+rm src/data/changelog/*-v0.0-test.json
 ```
 （若 `src/data/changelog/` 目前不存在會由腳本自動建立；Task 4 才正式提交 `.gitkeep`。此處確保不誤commit 測試檔。）
 
