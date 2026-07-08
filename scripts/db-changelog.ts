@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
 import { diffDatabases, buildChangelogEntry } from "../src/lib/changelog/diff";
 import { PROFILES } from "../src/lib/changelog/config";
+import type { ChangelogEntry } from "../src/lib/changelog/types";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
@@ -64,20 +65,28 @@ function gitBlobToTemp(ref: string): Promise<string> {
     let closed = false;
     let finished = false;
     let code: number | null = null;
+    const fail = (err: Error) => {
+      try {
+        fs.rmSync(tmp, { force: true });
+      } catch {
+        /* best effort */
+      }
+      reject(err);
+    };
     const settle = () => {
       if (!(closed && finished)) return;
       if (code === 0) resolve(tmp);
-      else reject(new Error(`git show ${ref}:${DB_FILE} 失敗：${err.trim()}`));
+      else fail(new Error(`git show ${ref}:${DB_FILE} 失敗：${err.trim()}`));
     };
     child.stderr.on("data", (d) => (err += d.toString()));
-    child.on("error", reject);
+    child.on("error", fail);
     child.stdout.pipe(out);
     child.on("close", (c) => {
       code = c;
       closed = true;
       settle();
     });
-    out.on("error", reject);
+    out.on("error", fail);
     out.on("finish", () => {
       finished = true;
       settle();
@@ -109,14 +118,19 @@ async function main() {
     }
   }
 
-  const oldDb = new Database(oldPath, { readonly: true });
-  const newDb = new Database(args.to, { readonly: true, fileMustExist: true });
-  const diff = diffDatabases(oldDb, newDb, PROFILES);
-  oldDb.close();
-  newDb.close();
-  if (cleanup) fs.rmSync(cleanup, { force: true });
-
-  const entry = buildChangelogEntry(diff, { version: args.version, date: args.date, note: args.note });
+  let oldDb: Database.Database | undefined;
+  let newDb: Database.Database | undefined;
+  let entry: ChangelogEntry | null;
+  try {
+    oldDb = new Database(oldPath, { readonly: true });
+    newDb = new Database(args.to, { readonly: true, fileMustExist: true });
+    const diff = diffDatabases(oldDb, newDb, PROFILES);
+    entry = buildChangelogEntry(diff, { version: args.version, date: args.date, note: args.note });
+  } finally {
+    oldDb?.close();
+    newDb?.close();
+    if (cleanup) fs.rmSync(cleanup, { force: true });
+  }
   if (!entry) {
     console.error("新舊 DB 無語意差異（或 HEAD 已是新檔）。未寫檔。");
     process.exit(1);
