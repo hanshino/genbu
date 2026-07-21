@@ -88,3 +88,28 @@ export interface DiffOptions {
   rebuildRatio?: number; // 整表重建門檻（added+removed 佔比），預設 0.5
   rebuildMinRows?: number; // 觸發整表重建的最小列數門檻，預設 50
 }
+
+export interface AiDigestTable {
+  table: string;
+  label: string;
+  tier: "rich" | "count";
+  counts: { added: number; changed: number; removed: number };
+  structural?: { addedColumns: number; removedColumns: number }; // 只給數量
+  systematic?: { label: string; from: string; to: string; count: number }[];
+  rebuilt?: boolean;
+  noIdentity?: boolean;
+  addedSample?: { name?: string; fields?: Record<string, string> }[]; // label→value（含說明）
+  addedSampleTruncated?: number;
+  removedSample?: { name?: string }[];
+  removedSampleTruncated?: number;
+  changedFieldCounts?: Record<string, number>; // 各欄（label）變更筆數
+  changedSample?: { name?: string; fields: { label: string; from: string; to: string }[] }[];
+  changedSampleTruncated?: number;
+}
+
+export interface AiDigest {
+  summary: { added: number; changed: number; removed: number };
+  addedTables: string[];
+  removedTables: string[];
+  tables: AiDigestTable[];
+}
