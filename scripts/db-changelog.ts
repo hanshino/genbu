@@ -3,7 +3,8 @@
 // 用法（務必「先跑腳本、再 commit 新 DB」）：
 //   1. 用新的 tthol.sqlite 覆蓋工作區檔（尚未 git add）
 //   2. npm run changelog -- 1.23 [--note "說明"]   （版本號＝第一個位置參數）
-//   3. review src/data/changelog/<date>-v1.23.json（可手改 note）
+//      有 .env 的 ANTHROPIC_API_KEY 時會自動跑 AI 策展；--no-ai 可略過，--model 換模型
+//   3. review src/data/changelog/<date>-v1.23.json（highlights 可手改，改過把 ai.edited 設 true）
 //   4. git add tthol.sqlite src/data/changelog/*.json && git commit
 //
 // 舊 DB 預設取自 git（HEAD:tthol.sqlite 的 blob）；用 spawn 直接把二進位
@@ -16,9 +17,17 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
+import Anthropic from "@anthropic-ai/sdk";
 import { diffDatabases, buildChangelogEntry } from "../src/lib/changelog/diff";
 import { PROFILES } from "../src/lib/changelog/config";
 import type { ChangelogEntry } from "../src/lib/changelog/types";
+import { digestForAI } from "../src/lib/changelog/digest";
+import {
+  curateWithClaude,
+  curationToAiLayer,
+  resolveAiPlan,
+  type CurationClient,
+} from "../src/lib/changelog/curate";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
@@ -32,6 +41,8 @@ interface Args {
   from: string; // git ref 或檔案路徑
   to: string; // 檔案路徑
   force: boolean;
+  noAi: boolean;
+  model: string;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -40,10 +51,14 @@ function parseArgs(argv: string[]): Args {
     from: "HEAD",
     to: path.join(PROJECT_ROOT, DB_FILE),
     force: false,
+    noAi: false,
+    model: "claude-opus-4-8",
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--force") args.force = true;
+    else if (a === "--no-ai") args.noAi = true;
+    else if (a === "--model") args.model = argv[++i];
     else if (a === "--version") args.version = argv[++i];
     else if (a === "--date") args.date = argv[++i];
     else if (a === "--note") args.note = argv[++i];
@@ -98,11 +113,34 @@ function gitBlobToTemp(ref: string): Promise<string> {
   });
 }
 
+// 真 client：唯一碰 SDK 的地方。金鑰由 SDK 自 process.env.ANTHROPIC_API_KEY 讀取，
+// 絕不寫進 prompt/log。structured output 用 json_schema 約束，取文字後 JSON.parse。
+function anthropicClient(): CurationClient {
+  const anthropic = new Anthropic();
+  return {
+    async curate({ model, system, user, schema }) {
+      const res = await anthropic.messages.create({
+        model,
+        max_tokens: 4096,
+        thinking: { type: "adaptive" },
+        system,
+        messages: [{ role: "user", content: user }],
+        output_config: { format: { type: "json_schema", schema: schema as Record<string, unknown> } },
+      });
+      const text = res.content
+        .filter((b): b is Anthropic.TextBlock => b.type === "text")
+        .map((b) => b.text)
+        .join("");
+      return JSON.parse(text);
+    },
+  };
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (!args.version) {
     console.error(
-      "用法：npm run changelog -- <版本號> [--date YYYY-MM-DD] [--note 說明] [--from HEAD|路徑] [--to 路徑] [--force]",
+      "用法：npm run changelog -- <版本號> [--date YYYY-MM-DD] [--note 說明] [--from HEAD|路徑] [--to 路徑] [--no-ai] [--model <id>] [--force]",
     );
     process.exit(1);
   }
@@ -139,6 +177,26 @@ async function main() {
     console.error("新舊 DB 無語意差異（或 HEAD 已是新檔）。未寫檔。");
     process.exit(1);
   }
+
+  // ── AI 策展（可降級）──────────────────────────────
+  const plan = resolveAiPlan({ noAi: args.noAi, apiKey: process.env.ANTHROPIC_API_KEY });
+  if (plan.runAi) {
+    try {
+      // entry 結構滿足 digestForAI 的 DbDiff 形參（summary/addedTables/removedTables/tables）
+      const curation = await curateWithClaude(digestForAI(entry), {
+        client: anthropicClient(),
+        model: args.model,
+      });
+      entry.ai = curationToAiLayer(curation, { model: args.model, edited: false });
+      console.log(`\n本版重點（AI 策展，${args.model}，請 review）：`);
+      for (const h of entry.ai.highlights) console.log("  • " + h);
+    } catch (e) {
+      console.warn("\n[警告] AI 策展失敗，僅輸出事實層：" + String(e));
+    }
+  } else {
+    console.log(`\n[提示] 略過 AI 策展（${plan.reason}）。`);
+  }
+  // ─────────────────────────────────────────────────
 
   await fsp.mkdir(OUT_DIR, { recursive: true });
   const outFile = path.join(OUT_DIR, `${args.date}-v${args.version}.json`);
