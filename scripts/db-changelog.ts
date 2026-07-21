@@ -178,6 +178,12 @@ async function main() {
     process.exit(1);
   }
 
+  const outFile = path.join(OUT_DIR, `${args.date}-v${args.version}.json`);
+  if (fs.existsSync(outFile) && !args.force) {
+    console.error(`檔案已存在：${path.relative(PROJECT_ROOT, outFile)}（加 --force 覆寫）`);
+    process.exit(1);
+  }
+
   // ── AI 策展（可降級）──────────────────────────────
   const plan = resolveAiPlan({ noAi: args.noAi, apiKey: process.env.ANTHROPIC_API_KEY });
   if (plan.runAi) {
@@ -191,7 +197,9 @@ async function main() {
       console.log(`\n本版重點（AI 策展，${args.model}，請 review）：`);
       for (const h of entry.ai.highlights) console.log("  • " + h);
     } catch (e) {
-      console.warn("\n[警告] AI 策展失敗，僅輸出事實層：" + String(e));
+      console.warn(
+        "\n[警告] AI 策展失敗，僅輸出事實層：" + (e instanceof Error ? (e.stack ?? e.message) : String(e)),
+      );
     }
   } else {
     console.log(`\n[提示] 略過 AI 策展（${plan.reason}）。`);
@@ -199,11 +207,6 @@ async function main() {
   // ─────────────────────────────────────────────────
 
   await fsp.mkdir(OUT_DIR, { recursive: true });
-  const outFile = path.join(OUT_DIR, `${args.date}-v${args.version}.json`);
-  if (fs.existsSync(outFile) && !args.force) {
-    console.error(`檔案已存在：${path.relative(PROJECT_ROOT, outFile)}（加 --force 覆寫）`);
-    process.exit(1);
-  }
   await fsp.writeFile(outFile, JSON.stringify(entry, null, 2) + "\n", "utf8");
 
   console.log(`\n更新日誌 v${args.version}（${args.date}）`);
