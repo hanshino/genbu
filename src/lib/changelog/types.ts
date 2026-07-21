@@ -77,6 +77,13 @@ export interface ChangelogEntry {
   addedTables: string[];
   removedTables: string[];
   tables: TableDiff[];
+  ai?: {
+    // 策展層（可缺席＝降級）。頁面顯示的事實一律取自 tables[]，非此。
+    model: string; // 產出模型 id；人工樣本填 "hand-authored"
+    edited?: boolean; // 人工手改過標 true
+    highlights: string[];
+    tables: Record<string, { mode: "detail" | "summary"; note?: string }>;
+  };
 }
 
 export interface DiffOptions {
@@ -112,4 +119,9 @@ export interface AiDigest {
   addedTables: string[];
   removedTables: string[];
   tables: AiDigestTable[];
+}
+
+export interface AiCuration {
+  highlights: string[]; // 3–12 條本版重點（人話、grounded）
+  tables: { table: string; mode: "detail" | "summary"; note?: string }[];
 }
