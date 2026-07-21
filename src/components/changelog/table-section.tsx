@@ -10,6 +10,7 @@ export interface RowView {
   idParts: string[];
   name?: string;
   href?: string;
+  desc?: string;
 }
 export interface ChangedRowView extends RowView {
   fields: FieldChange[];
@@ -91,8 +92,11 @@ export function TableSection({ data }: { data: TableSectionData }) {
               <p className="mb-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">新增</p>
               <ul className="flex flex-wrap gap-x-3 gap-y-1">
                 {data.added.map((r, i) => (
-                  <li key={`a-${i}`}>
+                  <li key={`a-${i}`} className="w-full">
                     <RowLink r={r} />
+                    {r.desc ? (
+                      <span className="text-muted-foreground ml-2 text-xs">{r.desc}</span>
+                    ) : null}
                   </li>
                 ))}
               </ul>
