@@ -9,7 +9,7 @@ export function TableSummaryRow({
   note?: string;
 }) {
   return (
-    <div className="border-border/60 rounded-md border px-3 py-2">
+    <div className="border-border/60 rounded-md border px-3 py-2" data-testid="table-summary-row">
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-medium">{label}</span>
         <span className="text-muted-foreground text-xs">

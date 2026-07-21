@@ -25,6 +25,7 @@ describe("VersionCard", () => {
     expect(screen.getByText("端午活動上線")).toBeInTheDocument();
     expect(screen.getByText("售價批量調整")).toBeInTheDocument();
     expect(screen.queryByText("欄位")).not.toBeInTheDocument(); // summary 無逐列表格
+    expect(screen.getByTestId("table-summary-row")).toBeInTheDocument(); // summary 分支確認
   });
 
   it("無 ai：不顯示本版重點，退回 detail（表標籤仍在）", () => {
@@ -39,5 +40,6 @@ describe("VersionCard", () => {
     render(<VersionCard entry={entry} />);
     expect(screen.queryByText("本版重點")).not.toBeInTheDocument();
     expect(screen.getByText("道具")).toBeInTheDocument();
+    expect(screen.queryByTestId("table-summary-row")).not.toBeInTheDocument(); // detail 分支確認
   });
 });
