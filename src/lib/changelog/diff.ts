@@ -9,6 +9,7 @@ import type {
   FieldChange,
   SystematicChange,
   ChangelogEntry,
+  SurfacedField,
 } from "./types";
 import { EXCLUDE } from "./config";
 
@@ -63,6 +64,24 @@ function rowRef(row: Row, identity: string[], profile: TableProfile | undefined,
   const dn = profile?.displayName;
   if (dn && row[dn] != null && row[dn] !== "") ref.name = truncate(norm(row[dn]), maxStringLen);
   return ref;
+}
+
+// rich added/removed：把白名單欄的「現值」攤成 surfaced fields（供 AI digest / 詳情頁）。
+function surfacedFields(
+  row: Row,
+  profile: TableProfile | undefined,
+  identity: string[],
+  maxStringLen: number,
+): SurfacedField[] {
+  if (!profile?.fields) return [];
+  const out: SurfacedField[] = [];
+  for (const [col, label] of Object.entries(profile.fields)) {
+    if (identity.includes(col)) continue;
+    const v = norm(row[col]);
+    if (v === "") continue;
+    out.push({ col, label, value: truncate(v, maxStringLen) });
+  }
+  return out;
 }
 
 function multisetDiff(oldRows: Row[], newRows: Row[], cols: string[]): { added: number; removed: number } {
@@ -212,8 +231,14 @@ function diffTable(
     if (kept.length) changed.push({ ...rowRef(rc.row, identity, profile, o.maxStringLen), fields: kept });
   }
 
-  const added: RowRef[] = addedRows.map((r) => rowRef(r, identity, profile, o.maxStringLen));
-  const removed: RowRef[] = removedRows.map((r) => rowRef(r, identity, profile, o.maxStringLen));
+  const attach = (r: Row): RowRef => {
+    const ref = rowRef(r, identity, profile, o.maxStringLen);
+    const f = surfacedFields(r, profile, identity, o.maxStringLen);
+    if (f.length) ref.fields = f;
+    return ref;
+  };
+  const added: RowRef[] = addedRows.map(attach);
+  const removed: RowRef[] = removedRows.map(attach);
 
   td.counts = { added: added.length, changed: changed.length, removed: removed.length };
   if (systematic.size) td.systematic = [...systematic.values()];

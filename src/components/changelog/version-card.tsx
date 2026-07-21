@@ -7,7 +7,7 @@ import { TableSection, type TableSectionData } from "./table-section";
 
 function toSectionData(td: TableDiff): TableSectionData {
   const route = PROFILES[td.table]?.detailRoute;
-  const link = (r: RowRef) => ({
+  const link = (r: { idParts: string[]; name?: string }) => ({
     idParts: r.idParts,
     name: r.name,
     href: route ? route(r.idParts) : undefined,

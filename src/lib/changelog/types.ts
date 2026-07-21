@@ -17,12 +17,23 @@ export interface FieldChange {
   to: string;
 }
 
+export interface SurfacedField {
+  col: string;
+  label: string;
+  value: string;
+}
+
 export interface RowRef {
   idParts: string[]; // 原始識別欄值（不含控制字元）
   name?: string;
+  // rich added/removed 專用：白名單欄「現值」（含 summary，如禮盒說明）。
+  // 型別與 RowChange.fields（from→to）不同，故 RowChange 不再 extends RowRef。
+  fields?: SurfacedField[];
 }
 
-export interface RowChange extends RowRef {
+export interface RowChange {
+  idParts: string[];
+  name?: string;
   fields: FieldChange[];
 }
 

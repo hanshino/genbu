@@ -189,3 +189,47 @@ describe("buildChangelogEntry", () => {
     expect(entry!.summary.changed).toBe(1);
   });
 });
+
+describe("diffDatabases — rich added/removed 帶 surfaced fields", () => {
+  const boxProfiles: Record<string, TableProfile> = {
+    items: {
+      tier: "rich",
+      label: "道具",
+      identity: ["id"],
+      displayName: "name",
+      fields: { name: "名稱", summary: "說明", value: "售價" },
+    },
+  };
+
+  it("rich 新增列帶白名單欄現值（含說明），值套長字串截斷，識別欄不列入", () => {
+    const old = makeDb("CREATE TABLE items (id INTEGER, name TEXT, summary TEXT, value INTEGER);");
+    const long = "開箱可得".repeat(40); // 160 字 > 120
+    const nw = makeDb(
+      "CREATE TABLE items (id INTEGER, name TEXT, summary TEXT, value INTEGER);" +
+        `INSERT INTO items VALUES (10,'端午禮盒','${long}',500);`,
+    );
+    // rebuildRatio 調高避免「全新增」觸發整表重建
+    const diff = diffDatabases(old, nw, boxProfiles, { rebuildRatio: 2 });
+    const t = diff.tables.find((x) => x.table === "items")!;
+    const box = t.added![0];
+    expect(box.name).toBe("端午禮盒");
+    const summary = box.fields!.find((f) => f.col === "summary")!;
+    expect(summary.label).toBe("說明");
+    expect(summary.value.endsWith("…")).toBe(true);
+    expect(summary.value.length).toBe(121); // 120 + "…"
+    expect(box.fields!.find((f) => f.col === "value")!.value).toBe("500");
+    expect(box.fields!.some((f) => f.col === "id")).toBe(false); // 識別欄排除
+  });
+
+  it("空值欄不列入 fields", () => {
+    const old = makeDb("CREATE TABLE items (id INTEGER, name TEXT, summary TEXT, value INTEGER);");
+    const nw = makeDb(
+      "CREATE TABLE items (id INTEGER, name TEXT, summary TEXT, value INTEGER);" +
+        "INSERT INTO items VALUES (11,'素坯',NULL,0);",
+    );
+    const diff = diffDatabases(old, nw, boxProfiles, { rebuildRatio: 2 });
+    const box = diff.tables.find((x) => x.table === "items")!.added![0];
+    expect(box.fields!.some((f) => f.col === "summary")).toBe(false); // NULL 略過
+    expect(box.fields!.find((f) => f.col === "value")!.value).toBe("0"); // 0 非空，保留
+  });
+});
