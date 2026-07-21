@@ -31,7 +31,7 @@ describe("digestForAI", () => {
     );
     const dg = digestForAI(diffDatabases(old, nw, profiles, { rebuildRatio: 2 }));
     const t = dg.tables.find((x) => x.table === "items")!;
-    expect(t.addedSample![0]).toEqual({ name: "端午禮盒", fields: { 名稱: "端午禮盒", 說明: "開箱可得晝夢冥鰩", 售價: "500" } });
+    expect(t.addedSample![0]).toEqual({ name: "端午禮盒", fields: { 名稱: "端午禮盒", 說明: "開箱可得晝夢冥鰩", 售價: "500", 攻擊: "0" } });
   });
 
   it("新增列樣本有界（>40 截斷並記 truncated）", () => {
@@ -74,5 +74,22 @@ describe("digestForAI", () => {
     const dg = digestForAI(diffDatabases(old, nw, profiles));
     const t = dg.tables.find((x) => x.table === "items")!;
     expect(t.structural).toEqual({ addedColumns: 1, removedColumns: 1 });
+  });
+
+  it("0 值欄位被完整保留（不過濾零值）", () => {
+    const old = makeDb("CREATE TABLE items (id INTEGER, name TEXT, summary TEXT, value INTEGER, atk INTEGER);");
+    const nw = makeDb(
+      "CREATE TABLE items (id INTEGER, name TEXT, summary TEXT, value INTEGER, atk INTEGER);" +
+        "INSERT INTO items VALUES (1,'便宜貨','無用',0,0);",
+    );
+    const dg = digestForAI(diffDatabases(old, nw, profiles, { rebuildRatio: 2 }));
+    const t = dg.tables.find((x) => x.table === "items")!;
+    // 售價 = 0 和 攻擊 = 0 都應被保留
+    expect(t.addedSample![0].fields).toEqual({
+      名稱: "便宜貨",
+      說明: "無用",
+      售價: "0",
+      攻擊: "0",
+    });
   });
 });

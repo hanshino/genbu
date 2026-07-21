@@ -35,9 +35,7 @@ function digestTable(t: TableDiff): AiDigestTable {
       if (r.name) o.name = r.name;
       if (r.fields?.length) {
         o.fields = {};
-        for (const f of r.fields) {
-          if (f.value !== "0") o.fields[f.label] = f.value;
-        }
+        for (const f of r.fields) o.fields[f.label] = f.value;
       }
       return o;
     });
