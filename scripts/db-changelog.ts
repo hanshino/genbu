@@ -2,7 +2,7 @@
 //
 // 用法（務必「先跑腳本、再 commit 新 DB」）：
 //   1. 用新的 tthol.sqlite 覆蓋工作區檔（尚未 git add）
-//   2. npm run changelog -- --version 1.23 [--note "說明"]
+//   2. npm run changelog -- 1.23 [--note "說明"]   （版本號＝第一個位置參數）
 //   3. review src/data/changelog/<date>-v1.23.json（可手改 note）
 //   4. git add tthol.sqlite src/data/changelog/*.json && git commit
 //
@@ -49,6 +49,10 @@ function parseArgs(argv: string[]): Args {
     else if (a === "--note") args.note = argv[++i];
     else if (a === "--from") args.from = argv[++i];
     else if (a === "--to") args.to = argv[++i];
+    // 版本號為第一個位置參數：`npm run ... -- --version` 會被 npm 當成自己的
+    // 全域旗標攔截（印 npm 版本就結束），故改用位置參數。--version 仍保留為
+    // 直呼 tsx 時的相容別名。
+    else if (!a.startsWith("--") && args.version === undefined) args.version = a;
   }
   return args;
 }
@@ -98,7 +102,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (!args.version) {
     console.error(
-      "用法：npm run changelog -- --version <版本號> [--date YYYY-MM-DD] [--note 說明] [--from HEAD|路徑] [--to 路徑] [--force]",
+      "用法：npm run changelog -- <版本號> [--date YYYY-MM-DD] [--note 說明] [--from HEAD|路徑] [--to 路徑] [--force]",
     );
     process.exit(1);
   }

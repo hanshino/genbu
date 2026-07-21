@@ -19,7 +19,7 @@
 | 決策點 | 結論 |
 |---|---|
 | 受眾／位置 | 網站上的**公開更新頁** `/changelog` |
-| 版本號來源 | 每次更新**手動輸入**（`--version`） |
+| 版本號來源 | 每次更新**手動輸入**（第一個位置參數） |
 | 追蹤範圍 | **全部玩法表**（排除 `knex_migrations`、`knex_migrations_lock`、`sqlite_*`） |
 | 計算方式 | **本地腳本** + 產出 JSON 快照 commit 進 repo（方案 A）；否決 runtime 雙 DB diff（方案 B） |
 | 歷史 backfill | 不做，從這次開始記錄 |
@@ -52,7 +52,7 @@
 新 tthol.sqlite (覆蓋工作區)
         │
         ▼
-  npm run changelog -- --version 1.23
+  npm run changelog -- 1.23
         │  (git show HEAD:tthol.sqlite = 舊 ; 工作區 = 新)
         ▼
   ┌──────────────────────────────┐
@@ -198,7 +198,7 @@ interface TableDiff {
 
 **流程**
 
-1. 解析參數：`--version <字串>`（必填）、`--date <YYYY-MM-DD>`（預設今天）、`--note <字串>`（選填）、`--from <git-ref|路徑>`（預設 `HEAD` 的 `tthol.sqlite` blob）、`--to <路徑>`（預設工作區 `tthol.sqlite`）、`--force`。
+1. 解析參數：`<版本號>`（第一個位置參數，必填；不用 `--version`，否則 `npm run … -- --version` 會被 npm 當全域旗標攔截）、`--date <YYYY-MM-DD>`（預設今天）、`--note <字串>`（選填）、`--from <git-ref|路徑>`（預設 `HEAD` 的 `tthol.sqlite` blob）、`--to <路徑>`（預設工作區 `tthol.sqlite`）、`--force`。
 2. 取舊 DB：以 `child_process.spawn("git", ["show", "HEAD:tthol.sqlite"])`（**不經 shell**）把 stdout 以 buffer pipe 進 OS temp 的 `WriteStream`；**切勿用 PowerShell/shell 重導向**（Windows 下 `>` 會做編碼轉換破壞二進位 blob）。新 DB 用工作區檔。兩者以 better-sqlite3 唯讀開啟。
 3. 呼叫 `diffDatabases(...)`，組成 changelog entry（含 version / date / note / summary / tables）。
 4. 寫檔 `src/data/changelog/<date>-v<version>.json`；終端印摘要（各表 +N ~N -N、結構變動、系統性摺疊）供人工瞄一眼。
@@ -206,7 +206,7 @@ interface TableDiff {
 
 **錯誤處理**
 
-- 缺 `--version` → 印用法並 exit 1。
+- 缺版本號（無位置參數）→ 印用法並 exit 1。
 - diff 為空（新舊無差異，或使用者已先 commit 新 DB 使 `HEAD` == 新檔）→ 警告「無變更，未寫檔」並 exit 1，避免產生空 entry。
 - 目標 JSON 已存在 → 除非 `--force` 否則拒絕覆寫。
 - `git show HEAD:tthol.sqlite` 失敗（HEAD 無此檔）→ 提示改用 `--from <路徑>`。

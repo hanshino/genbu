@@ -869,7 +869,7 @@ Commit 訊息：`feat(changelog): add pure diff engine with systematic-collapse 
 
 **Interfaces:**
 - Consumes: `../src/lib/changelog/diff`（`diffDatabases`、`buildChangelogEntry`）、`../src/lib/changelog/config`（`PROFILES`）。
-- Produces: 執行 `npm run changelog -- --version <v>` → 寫出 `src/data/changelog/<date>-v<version>.json`。無測試自動化（I/O 腳本）；以真實新舊檔手動驗收。
+- Produces: 執行 `npm run changelog -- <v>` → 寫出 `src/data/changelog/<date>-v<version>.json`。無測試自動化（I/O 腳本）；以真實新舊檔手動驗收。
 
 - [ ] **Step 1: 安裝 tsx**
 
@@ -895,7 +895,7 @@ Create `scripts/db-changelog.ts`:
 //
 // 用法（務必「先跑腳本、再 commit 新 DB」）：
 //   1. 用新的 tthol.sqlite 覆蓋工作區檔（尚未 git add）
-//   2. npm run changelog -- --version 1.23 [--note "說明"]
+//   2. npm run changelog -- 1.23 [--note "說明"]   （版本號＝第一個位置參數）
 //   3. review src/data/changelog/<date>-v1.23.json（可手改 note）
 //   4. git add tthol.sqlite src/data/changelog/*.json && git commit
 //
@@ -941,6 +941,8 @@ function parseArgs(argv: string[]): Args {
     else if (a === "--note") args.note = argv[++i];
     else if (a === "--from") args.from = argv[++i];
     else if (a === "--to") args.to = argv[++i];
+    // 版本號為第一個位置參數（避免 npm 攔截 --version）；--version 保留為相容別名。
+    else if (!a.startsWith("--") && args.version === undefined) args.version = a;
   }
   return args;
 }
@@ -982,7 +984,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (!args.version) {
     console.error(
-      "用法：npm run changelog -- --version <版本號> [--date YYYY-MM-DD] [--note 說明] [--from HEAD|路徑] [--to 路徑] [--force]",
+      "用法：npm run changelog -- <版本號> [--date YYYY-MM-DD] [--note 說明] [--from HEAD|路徑] [--to 路徑] [--force]",
     );
     process.exit(1);
   }
@@ -1058,7 +1060,7 @@ main().catch((err) => {
 
 Run:
 ```bash
-npm run changelog -- --version 0.0-test --to ../tthol_data/tthol.sqlite --note "試算驗收"
+npm run changelog -- 0.0-test --to ../tthol_data/tthol.sqlite --note "試算驗收"
 ```
 Expected:
 - 終端印出各表 `+N ~N −N` 摘要（items 應有少量新增/改名/數值變更；跨 schema 版可能看到 `結構變動` 與 `系統性x…` 旗標——這是 spec §2 記載的首跑預期行為）。
@@ -1577,7 +1579,7 @@ Modify `src/components/layout/navbar.tsx`：
 
 Run:
 ```bash
-npm run changelog -- --version 0.0-preview --to ../tthol_data/tthol.sqlite --note "頁面預覽用，稍後刪除"
+npm run changelog -- 0.0-preview --to ../tthol_data/tthol.sqlite --note "頁面預覽用，稍後刪除"
 ```
 Expected: 產生 `src/data/changelog/<today>-v0.0-preview.json`。
 
