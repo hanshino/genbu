@@ -34,6 +34,12 @@ describe("buildCurationPrompt", () => {
     expect(user).toContain("端午禮盒"); // digest 事實有進 prompt
     expect(user).toContain("售價");
   });
+
+  it("system 指示使用機器鍵於 table 欄", () => {
+    const { system } = buildCurationPrompt(digest);
+    expect(system).toContain("機器鍵");
+    expect(system).toMatch(/items|npc/); // 舉例的機器鍵
+  });
 });
 
 describe("normalizeCuration", () => {
