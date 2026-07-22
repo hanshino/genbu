@@ -101,9 +101,28 @@ export const PROFILES: Record<string, TableProfile> = {
     displayName: "text",
     fields: { text: "選項文字" },
   },
+  achievements: {
+    tier: "rich",
+    label: "成就",
+    identity: ["id"],
+    displayName: "name",
+    fields: { name: "名稱", description: "描述", points: "點數", reward_amount: "獎勵數量" },
+    detailRoute: () => "/achievements",
+  },
+  shop_sells: {
+    tier: "rich",
+    label: "商店販售",
+    identity: ["shop_id", "item_id"],
+    fields: { price: "價格" },
+    detailRoute: (idParts) => `/shops/${idParts[0]}`,
+  },
 
   // 計數層（只顯示 +N ~N −N）
   messages: { tier: "count", label: "對話訊息", identity: ["file_no", "msg_id"] },
   mission_refs: { tier: "count", label: "任務關聯", identity: ["id"] },
   map_warps: { tier: "count", label: "地圖傳送點", identity: ["id"] },
+  shops: { tier: "count", label: "商店", identity: ["id"] },
+  shop_buys: { tier: "count", label: "商店收購", identity: ["shop_id", "item_id"] },
+  achievement_categories: { tier: "count", label: "成就分類", identity: ["id"] },
+  achievement_sub_cats: { tier: "count", label: "成就子分類", identity: ["id"] },
 };
