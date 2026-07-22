@@ -21,6 +21,7 @@ import { AwakeningSection } from "@/components/items/awakening-section";
 import { CompoundSourcesSection } from "@/components/items/compound-sources-section";
 import { CompoundUsesSection } from "@/components/items/compound-uses-section";
 import { EquipmentEnhancementsSection } from "@/components/items/equipment-enhancements-section";
+import { ShopAvailabilitySection } from "@/components/items/shop-availability-section";
 import { MissionUsesSection } from "@/components/items/mission-uses-section";
 import { CompareButton } from "@/components/items/compare-button";
 import { ItemTags } from "@/components/items/item-tags";
@@ -110,6 +111,8 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
       <ItemRandTable rands={rands} />
 
       <ItemDropList sources={sources} />
+
+      <ShopAvailabilitySection itemId={item.id} />
 
       <AwakeningSection item={item} />
 
