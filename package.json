@@ -12,10 +12,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "changelog": "node --env-file-if-exists=.env --import tsx scripts/db-changelog.ts",
     "sync:images": "node scripts/sync-equipment-images.mjs",
     "deploy": "node --env-file=.env scripts/deploy.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.112.4",
     "@base-ui/react": "^1.4.1",
     "better-sqlite3": "^12.9.0",
     "class-variance-authority": "^0.7.1",
@@ -45,6 +47,7 @@
     "jsdom": "^29.1.0",
     "prettier": "3.8.3",
     "tailwindcss": "^4",
+    "tsx": "^4.23.0",
     "typescript": "^6",
     "vitest": "^4.1.5"
   }
