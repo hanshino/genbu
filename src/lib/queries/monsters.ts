@@ -225,7 +225,9 @@ export function getDropsForMonster(monsterId: number): MonsterDropTable {
   const ids = pairs.map((p) => p.itemId);
   const placeholders = ids.map(() => "?").join(",");
   const items = db
-    .prepare(`SELECT id, name, type, level FROM items WHERE id IN (${placeholders})`)
+    .prepare(
+      `SELECT id, name, type_name AS type, base_lv AS level FROM items WHERE id IN (${placeholders})`,
+    )
     .all(...ids) as Array<{
     id: number;
     name: string | null;
