@@ -103,7 +103,7 @@ tthol.sqlite ──(better-sqlite3, readonly, Server Components only)
 
 - URL state:`?cat=<大分類id>&search=<關鍵字>`,預設 `cat=1`(功名錄)。
 - 版面:
-  - 頂部大分類 **Tabs**(9 個,沿用現有 `Tabs` 元件;手機可橫捲)。
+  - 頂部大分類導覽(9 個):以**連結式分類頁籤**呈現(`Link` + `aria-current`,視覺對齊現有地圖頁的 chip 樣式)。不用 `Tabs` 元件——它是 client 端狀態切換,而分類是 URL param 驅動的 server 渲染,連結語意才正確。
   - Tab 內容按**子分類分節**:節標題 = 子分類名 + 筆數 + 該節成就點數加總。
   - 成就列(hand-roll 列表列,對齊現有 `LinkListSection` 視覺):成就名(粗體)、點數 Badge、描述(muted)、獎勵行(解碼結果:道具/技能為連結,銀兩/貨幣為文字)、`reset_type>0` 顯示「週期重置」Badge、前置成就 inline 文字。
 - 搜尋:輸入關鍵字時**忽略 cat**,跨全分類搜名稱+描述,結果列額外顯示「大分類 · 子分類」;上限 100 筆,滿了顯示「結果過多,請縮小關鍵字」。搜尋框沿用現有 filter 元件模式(client component 推 URL param,debounce)。
