@@ -1,0 +1,5624 @@
+{
+  "version": "7.2.5.9",
+  "date": "2026-07-21",
+  "summary": {
+    "added": 182,
+    "changed": 5844,
+    "removed": 45
+  },
+  "addedTables": [
+    "map_dims",
+    "map_placements"
+  ],
+  "removedTables": [],
+  "tables": [
+    {
+      "table": "items",
+      "label": "道具",
+      "tier": "rich",
+      "counts": {
+        "added": 13,
+        "changed": 2931,
+        "removed": 0
+      },
+      "structural": {
+        "addedColumns": [
+          "effect_number",
+          "type_code",
+          "type_name",
+          "sex",
+          "range",
+          "base_lv",
+          "flag_prob_names",
+          "combined",
+          "no_drop",
+          "no_trade",
+          "no_store",
+          "no_shop",
+          "dead_no_drop",
+          "no_refine",
+          "drop_warning",
+          "no_use",
+          "drop_broadcast",
+          "equip_slot",
+          "pet_id",
+          "use_case",
+          "use_case2",
+          "use_case3",
+          "hp_flag",
+          "mp_flag",
+          "str_flag",
+          "pow_flag",
+          "vit_flag",
+          "dex_flag",
+          "agi_flag",
+          "wis_flag",
+          "extra_def",
+          "magic_def",
+          "attack_speed",
+          "critical_hit",
+          "damage_min",
+          "damage_max",
+          "pdamage_min",
+          "pdamage_max",
+          "walk_speed",
+          "run_speed",
+          "fire_def",
+          "water_def",
+          "lightning_def",
+          "wood_def",
+          "extra_status",
+          "status_prob",
+          "item_time",
+          "compound_number",
+          "meta_group",
+          "strong_equipment",
+          "msg_id"
+        ],
+        "removedColumns": [
+          "type",
+          "level",
+          "def",
+          "mdef",
+          "critical",
+          "speed",
+          "fire",
+          "water",
+          "thunder",
+          "tree",
+          "freeze",
+          "min_damage",
+          "max_damage",
+          "min_pdamage",
+          "max_pdamage",
+          "picture",
+          "type_byte",
+          "type_calc1",
+          "type_calc2",
+          "type_calc3",
+          "usecase1",
+          "usecase2",
+          "usecase3"
+        ]
+      },
+      "added": [
+        {
+          "idParts": [
+            "33646"
+          ],
+          "name": "保留"
+        },
+        {
+          "idParts": [
+            "33647"
+          ],
+          "name": "保留"
+        },
+        {
+          "idParts": [
+            "33648"
+          ],
+          "name": "保留"
+        },
+        {
+          "idParts": [
+            "33649"
+          ],
+          "name": "保留"
+        },
+        {
+          "idParts": [
+            "33650"
+          ],
+          "name": "保留"
+        },
+        {
+          "idParts": [
+            "33651"
+          ],
+          "name": "保留"
+        },
+        {
+          "idParts": [
+            "33652"
+          ],
+          "name": "保留"
+        },
+        {
+          "idParts": [
+            "33653"
+          ],
+          "name": "保留"
+        },
+        {
+          "idParts": [
+            "33654"
+          ],
+          "name": "保留"
+        },
+        {
+          "idParts": [
+            "33655"
+          ],
+          "name": "保留"
+        },
+        {
+          "idParts": [
+            "34389"
+          ],
+          "name": "晝夢端午禮盒"
+        },
+        {
+          "idParts": [
+            "34390"
+          ],
+          "name": "金樽逐冠禮盒"
+        },
+        {
+          "idParts": [
+            "34391"
+          ],
+          "name": "星穹神猊禮盒"
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "20007"
+          ],
+          "name": "地膛刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "10064",
+              "to": "75600"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20009"
+          ],
+          "name": "羅煞刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "52464",
+              "to": "118000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20010"
+          ],
+          "name": "化血刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "39928",
+              "to": "171000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20016"
+          ],
+          "name": "精工地膛刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "29464",
+              "to": "95000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20017"
+          ],
+          "name": "精工羅煞刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "10928",
+              "to": "142000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20018"
+          ],
+          "name": "水月刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "46392",
+              "to": "243000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20019"
+          ],
+          "name": "精工化血刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "7392",
+              "to": "204000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20020"
+          ],
+          "name": "精工水月刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "32856",
+              "to": "295000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20021"
+          ],
+          "name": "五環刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "31320",
+              "to": "359000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20022"
+          ],
+          "name": "精工五環刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "28784",
+              "to": "422000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20023"
+          ],
+          "name": "討魔刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "41248",
+              "to": "500000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20024"
+          ],
+          "name": "破甲刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "16104",
+              "to": "737000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20025"
+          ],
+          "name": "斬元刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "29104",
+              "to": "750000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20026"
+          ],
+          "name": "龍骨寶刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "35104",
+              "to": "756000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20027"
+          ],
+          "name": "蝕日",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "41104",
+              "to": "762000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20028"
+          ],
+          "name": "攝魂刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "54104",
+              "to": "775000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20029"
+          ],
+          "name": "迴風刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "568",
+              "to": "787000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20030"
+          ],
+          "name": "凌月刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "25568",
+              "to": "812000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20031"
+          ],
+          "name": "邪神刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "50568",
+              "to": "837000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20032"
+          ],
+          "name": "精工討魔刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "47712",
+              "to": "572000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20033"
+          ],
+          "name": "精工破甲刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "22104",
+              "to": "743000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20034"
+          ],
+          "name": "精工斬元刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "29104",
+              "to": "750000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20035"
+          ],
+          "name": "精工龍骨寶刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "35104",
+              "to": "756000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20036"
+          ],
+          "name": "精工蝕日",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "47104",
+              "to": "768000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20037"
+          ],
+          "name": "精工攝魂刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "60104",
+              "to": "781000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20038"
+          ],
+          "name": "精工迴風刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "6568",
+              "to": "793000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20039"
+          ],
+          "name": "精工凌月刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "31568",
+              "to": "818000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20040"
+          ],
+          "name": "精工邪神刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "56568",
+              "to": "843000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20041"
+          ],
+          "name": "食鬼刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "16032",
+              "to": "868000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20042"
+          ],
+          "name": "夔紋刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "48032",
+              "to": "900000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20043"
+          ],
+          "name": "旱魃刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "19496",
+              "to": "937000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20044"
+          ],
+          "name": "星羅刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "50496",
+              "to": "968000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20051"
+          ],
+          "name": "荒塚刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "32856",
+              "to": "295000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20052"
+          ],
+          "name": "蠻族刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "47712",
+              "to": "572000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20053"
+          ],
+          "name": "靈竅刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "29104",
+              "to": "750000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20054"
+          ],
+          "name": "妖觸刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "47104",
+              "to": "768000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20055"
+          ],
+          "name": "剎陀刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "6568",
+              "to": "793000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20062"
+          ],
+          "name": "地膛刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "10064",
+              "to": "75600"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20063"
+          ],
+          "name": "羅煞刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "52464",
+              "to": "118000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20064"
+          ],
+          "name": "化血刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "39928",
+              "to": "171000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20065"
+          ],
+          "name": "水月刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "46392",
+              "to": "243000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20066"
+          ],
+          "name": "五環刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "31320",
+              "to": "359000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20067"
+          ],
+          "name": "烙殤刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "56568",
+              "to": "843000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20070"
+          ],
+          "name": "討魔刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "41248",
+              "to": "500000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20071"
+          ],
+          "name": "破甲刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "16104",
+              "to": "737000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20072"
+          ],
+          "name": "斬元刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "29104",
+              "to": "750000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20073"
+          ],
+          "name": "龍骨寶刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "35104",
+              "to": "756000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20074"
+          ],
+          "name": "蝕日",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "41104",
+              "to": "762000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20075"
+          ],
+          "name": "攝魂刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "54104",
+              "to": "775000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20076"
+          ],
+          "name": "迴風刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "568",
+              "to": "787000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20077"
+          ],
+          "name": "凌月刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "25568",
+              "to": "812000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20078"
+          ],
+          "name": "邪神刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "50568",
+              "to": "837000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20081"
+          ],
+          "name": "精工食鬼刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "23032",
+              "to": "875000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20082"
+          ],
+          "name": "精工夔紋刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "60032",
+              "to": "912000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20083"
+          ],
+          "name": "精工旱魃刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "25496",
+              "to": "943000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20084"
+          ],
+          "name": "精工星羅刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "57496",
+              "to": "975000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20092"
+          ],
+          "name": "真龍刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "10928",
+              "to": "142000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20093"
+          ],
+          "name": "天罡刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "47712",
+              "to": "572000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20094"
+          ],
+          "name": "闇噬刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "47104",
+              "to": "768000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20095"
+          ],
+          "name": "幻羽刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "56568",
+              "to": "843000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20096"
+          ],
+          "name": "聖曦刀",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "57496",
+              "to": "975000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20107"
+          ],
+          "name": "菱劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "7564",
+              "to": "73100"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20108"
+          ],
+          "name": "寒光劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "47464",
+              "to": "113000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20109"
+          ],
+          "name": "修羅劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "31928",
+              "to": "163000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20110"
+          ],
+          "name": "煙雨劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "39392",
+              "to": "236000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20111"
+          ],
+          "name": "玄鐵劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "17320",
+              "to": "345000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20112"
+          ],
+          "name": "殤魂劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "20248",
+              "to": "479000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20113"
+          ],
+          "name": "宋王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "56640",
+              "to": "712000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20114"
+          ],
+          "name": "破光劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "62640",
+              "to": "718000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20115"
+          ],
+          "name": "秦王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "4104",
+              "to": "725000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20116"
+          ],
+          "name": "銀巡劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "10104",
+              "to": "731000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20117"
+          ],
+          "name": "越王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "22104",
+              "to": "743000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20118"
+          ],
+          "name": "怒王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "35104",
+              "to": "756000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20119"
+          ],
+          "name": "明王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "60104",
+              "to": "781000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20120"
+          ],
+          "name": "吳王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "19568",
+              "to": "806000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20126"
+          ],
+          "name": "精工菱劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "26264",
+              "to": "91800"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20127"
+          ],
+          "name": "精工寒光劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "5928",
+              "to": "137000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20128"
+          ],
+          "name": "精工修羅劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "64928",
+              "to": "196000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20129"
+          ],
+          "name": "精工煙雨劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "25856",
+              "to": "288000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20130"
+          ],
+          "name": "精工玄鐵劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "14784",
+              "to": "408000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20131"
+          ],
+          "name": "太虛古劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "50568",
+              "to": "837000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20132"
+          ],
+          "name": "乾坤劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "16032",
+              "to": "868000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20133"
+          ],
+          "name": "七星劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "48032",
+              "to": "900000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20134"
+          ],
+          "name": "霸王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "13496",
+              "to": "931000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20136"
+          ],
+          "name": "七彩真龍頭盔",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "42383",
+              "to": "435599"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20137"
+          ],
+          "name": "六和白虎頭盔",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "42383",
+              "to": "435599"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20138"
+          ],
+          "name": "五行聖曦頭盔",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "42383",
+              "to": "435599"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20139"
+          ],
+          "name": "精工殤魂劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "26712",
+              "to": "551000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20140"
+          ],
+          "name": "精工宋王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "56640",
+              "to": "712000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20141"
+          ],
+          "name": "精工破光劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "62640",
+              "to": "718000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20142"
+          ],
+          "name": "精工秦王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "10104",
+              "to": "731000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20143"
+          ],
+          "name": "精工銀巡劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "16104",
+              "to": "737000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20144"
+          ],
+          "name": "精工越王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "29104",
+              "to": "750000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20145"
+          ],
+          "name": "精工怒王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "41104",
+              "to": "762000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20146"
+          ],
+          "name": "精工明王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "568",
+              "to": "787000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20147"
+          ],
+          "name": "精工吳王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "25568",
+              "to": "812000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20148"
+          ],
+          "name": "精工太虛古劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "56568",
+              "to": "843000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20149"
+          ],
+          "name": "精工乾坤劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "23032",
+              "to": "875000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20150"
+          ],
+          "name": "精工七星劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "54032",
+              "to": "906000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20151"
+          ],
+          "name": "精工霸王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "19496",
+              "to": "937000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20152"
+          ],
+          "name": "聖白虎頭盔",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "42383",
+              "to": "435599"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20153"
+          ],
+          "name": "聖白虎戰甲",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "32664",
+              "to": "98200"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20154"
+          ],
+          "name": "聖白虎戰靴",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "5884",
+              "to": "399100"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20155"
+          ],
+          "name": "聖白虎背甲",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "64612",
+              "to": "588900"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20162"
+          ],
+          "name": "菱劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "7564",
+              "to": "73100"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20163"
+          ],
+          "name": "寒光劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "47464",
+              "to": "113000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20164"
+          ],
+          "name": "修羅劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "31928",
+              "to": "163000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20165"
+          ],
+          "name": "煙雨劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "39392",
+              "to": "236000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20166"
+          ],
+          "name": "玄鐵劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "17320",
+              "to": "345000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20167"
+          ],
+          "name": "殤魂劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "20248",
+              "to": "479000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20168"
+          ],
+          "name": "宋王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "56640",
+              "to": "712000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20169"
+          ],
+          "name": "破光劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "62640",
+              "to": "718000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20170"
+          ],
+          "name": "秦王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "4104",
+              "to": "725000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20171"
+          ],
+          "name": "銀巡劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "10104",
+              "to": "731000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20172"
+          ],
+          "name": "越王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "22104",
+              "to": "743000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20173"
+          ],
+          "name": "怒王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "35104",
+              "to": "756000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20174"
+          ],
+          "name": "明王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "60104",
+              "to": "781000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20175"
+          ],
+          "name": "吳王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "19568",
+              "to": "806000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20176"
+          ],
+          "name": "太虛古劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "50568",
+              "to": "837000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20179"
+          ],
+          "name": "極品驃騎戰盔",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "34464",
+              "to": "100000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20184"
+          ],
+          "name": "荒塚劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "25856",
+              "to": "288000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20185"
+          ],
+          "name": "蠻族劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "26712",
+              "to": "551000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20186"
+          ],
+          "name": "靈竅劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "62640",
+              "to": "718000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20187"
+          ],
+          "name": "妖觸劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "16104",
+              "to": "737000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20188"
+          ],
+          "name": "剎陀劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "41104",
+              "to": "762000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20189"
+          ],
+          "name": "烙殤劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "25568",
+              "to": "812000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20191"
+          ],
+          "name": "真龍劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "5928",
+              "to": "137000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20192"
+          ],
+          "name": "天罡劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "26712",
+              "to": "551000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20193"
+          ],
+          "name": "闇噬劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "16104",
+              "to": "737000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20194"
+          ],
+          "name": "幻羽劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "25568",
+              "to": "812000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20195"
+          ],
+          "name": "聖曦王劍",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "19496",
+              "to": "937000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20209"
+          ],
+          "name": "蛇皮手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "17564",
+              "to": "83100"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20210"
+          ],
+          "name": "青絲手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "64464",
+              "to": "130000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20211"
+          ],
+          "name": "金縷手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "56928",
+              "to": "188000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20212"
+          ],
+          "name": "金光手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "5856",
+              "to": "268000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20213"
+          ],
+          "name": "骷顱手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "1784",
+              "to": "395000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20214"
+          ],
+          "name": "骨煞手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "24712",
+              "to": "549000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20215"
+          ],
+          "name": "炙紅手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "50640",
+              "to": "706000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20216"
+          ],
+          "name": "赤印手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "56640",
+              "to": "712000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20217"
+          ],
+          "name": "怨靈手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "62640",
+              "to": "718000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20218"
+          ],
+          "name": "黑偃手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "10104",
+              "to": "731000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20219"
+          ],
+          "name": "太極手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "16104",
+              "to": "737000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20225"
+          ],
+          "name": "精工蛇皮手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "23764",
+              "to": "89300"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20226"
+          ],
+          "name": "精工青絲手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "6928",
+              "to": "138000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20227"
+          ],
+          "name": "精工金縷手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "2392",
+              "to": "199000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20228"
+          ],
+          "name": "精工金光手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "22856",
+              "to": "285000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20229"
+          ],
+          "name": "精工骷顱手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "21784",
+              "to": "415000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20230"
+          ],
+          "name": "飛雪手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "29104",
+              "to": "750000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20231"
+          ],
+          "name": "凌月手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "54104",
+              "to": "775000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20232"
+          ],
+          "name": "棘燁手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "13568",
+              "to": "800000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20233"
+          ],
+          "name": "精工骨煞手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "38712",
+              "to": "563000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20234"
+          ],
+          "name": "精工炙紅手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "50640",
+              "to": "706000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20235"
+          ],
+          "name": "精工赤印手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "56640",
+              "to": "712000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20236"
+          ],
+          "name": "精工怨靈手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "62640",
+              "to": "718000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20237"
+          ],
+          "name": "精工黑偃手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "10104",
+              "to": "731000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20238"
+          ],
+          "name": "精工太極手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "16104",
+              "to": "737000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20239"
+          ],
+          "name": "精工飛雪手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "29104",
+              "to": "750000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20240"
+          ],
+          "name": "精工凌月手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "54104",
+              "to": "775000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20241"
+          ],
+          "name": "精工棘燁手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "13568",
+              "to": "800000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20247"
+          ],
+          "name": "蛇皮手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "17564",
+              "to": "83100"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20248"
+          ],
+          "name": "青絲手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "64464",
+              "to": "130000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20250"
+          ],
+          "name": "金縷手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "56928",
+              "to": "188000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20251"
+          ],
+          "name": "夔紋手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "38568",
+              "to": "825000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20252"
+          ],
+          "name": "旱魃手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "4032",
+              "to": "856000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20253"
+          ],
+          "name": "星羅手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "41032",
+              "to": "893000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20254"
+          ],
+          "name": "虹垠手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "496",
+              "to": "918000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20255"
+          ],
+          "name": "精工夔紋手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "44568",
+              "to": "831000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20256"
+          ],
+          "name": "精工旱魃手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "10032",
+              "to": "862000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20257"
+          ],
+          "name": "精工星羅手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "41032",
+              "to": "893000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20258"
+          ],
+          "name": "精工虹垠手套",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "496",
+              "to": "918000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20263"
+          ],
+          "name": "圓刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "28764",
+              "to": "94300"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20264"
+          ],
+          "name": "鋼刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "5928",
+              "to": "137000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20265"
+          ],
+          "name": "新月刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "63928",
+              "to": "195000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20266"
+          ],
+          "name": "秘銀刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "24856",
+              "to": "287000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20267"
+          ],
+          "name": "勾牙刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "39784",
+              "to": "433000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20268"
+          ],
+          "name": "狼牙刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "25640",
+              "to": "681000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20269"
+          ],
+          "name": "鴛鴦鉞",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "31640",
+              "to": "687000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20270"
+          ],
+          "name": "血風刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "37640",
+              "to": "693000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20272"
+          ],
+          "name": "精工鐵環",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "14464",
+              "to": "80000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20273"
+          ],
+          "name": "精工圓刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "52464",
+              "to": "118000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20274"
+          ],
+          "name": "精工鋼刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "38928",
+              "to": "170000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20275"
+          ],
+          "name": "精工新月刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "49392",
+              "to": "246000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20276"
+          ],
+          "name": "精工秘銀刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "41320",
+              "to": "369000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20277"
+          ],
+          "name": "精工勾牙刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "3712",
+              "to": "528000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20278"
+          ],
+          "name": "精工狼牙刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "31640",
+              "to": "687000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20279"
+          ],
+          "name": "精工鴛鴦鉞",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "37640",
+              "to": "693000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20280"
+          ],
+          "name": "精工血風刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "44640",
+              "to": "700000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20281"
+          ],
+          "name": "虎之牙",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "44640",
+              "to": "700000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20282"
+          ],
+          "name": "日月雙環",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "56640",
+              "to": "712000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20283"
+          ],
+          "name": "三尖刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "62640",
+              "to": "718000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20284"
+          ],
+          "name": "環刺",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "22104",
+              "to": "743000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20285"
+          ],
+          "name": "太陽拳刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "41104",
+              "to": "762000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20286"
+          ],
+          "name": "離日拳刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "568",
+              "to": "787000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20287"
+          ],
+          "name": "月犽拳刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "25568",
+              "to": "812000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20288"
+          ],
+          "name": "乾坤拳刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "56568",
+              "to": "843000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20289"
+          ],
+          "name": "霓電拳刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "10032",
+              "to": "862000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20291"
+          ],
+          "name": "精工虎之牙",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "50640",
+              "to": "706000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20292"
+          ],
+          "name": "精工日月雙環",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "56640",
+              "to": "712000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20293"
+          ],
+          "name": "精工三尖刃",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "4104",
+              "to": "725000"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20294"
+          ],
+          "name": "精工環刺",
+          "fields": [
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "29104",
+              "to": "750000"
+            }
+          ]
+        }
+      ],
+      "changedTruncated": 2731
+    },
+    {
+      "table": "message_options",
+      "label": "對話選項",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 0,
+        "removed": 15
+      },
+      "removed": [
+        {
+          "idParts": [
+            "70",
+            "70129",
+            "1"
+          ],
+          "name": "立刻告訴攤主，讓小偷受到應有的懲罰。"
+        },
+        {
+          "idParts": [
+            "70",
+            "70129",
+            "2"
+          ],
+          "name": "悄悄幫小孩付錢，既解決問題又保護他的自尊。"
+        },
+        {
+          "idParts": [
+            "70",
+            "70129",
+            "3"
+          ],
+          "name": "假裝沒看見，這不關我的事。"
+        },
+        {
+          "idParts": [
+            "70",
+            "70150",
+            "1"
+          ],
+          "name": "加入紅隊，反正大家都這樣做。"
+        },
+        {
+          "idParts": [
+            "70",
+            "70150",
+            "2"
+          ],
+          "name": "加入藍隊，憑真本事比賽。"
+        },
+        {
+          "idParts": [
+            "70",
+            "70150",
+            "3"
+          ],
+          "name": "向大會舉報紅隊作弊行為。"
+        },
+        {
+          "idParts": [
+            "70",
+            "70174",
+            "1"
+          ],
+          "name": "接受，但想辦法把事情辦得對百姓傷害最小。"
+        },
+        {
+          "idParts": [
+            "70",
+            "70174",
+            "2"
+          ],
+          "name": "拒絕，因為為官就要為民服務，不能為了個人利益傷害百姓。"
+        },
+        {
+          "idParts": [
+            "70",
+            "70174",
+            "3"
+          ],
+          "name": "說實話，可能會很掙扎，但最終還是會拒絕。"
+        },
+        {
+          "idParts": [
+            "70",
+            "70182",
+            "1"
+          ],
+          "name": "選擇沉默，朋友比原則重要。"
+        },
+        {
+          "idParts": [
+            "70",
+            "70182",
+            "2"
+          ],
+          "name": "先勸他自首，如果他不聽，我還是會舉報。"
+        },
+        {
+          "idParts": [
+            "70",
+            "70182",
+            "3"
+          ],
+          "name": "這太難了，我可能會找別的方式，比如匿名舉報。"
+        },
+        {
+          "idParts": [
+            "70",
+            "70191",
+            "1"
+          ],
+          "name": "說實話，我可能沒有那麼大的勇氣，但我會盡量不同流合污。"
+        },
+        {
+          "idParts": [
+            "70",
+            "70191",
+            "2"
+          ],
+          "name": "願意。就像屈原一樣，寧溘死以流亡兮，余不忍為此態也。"
+        },
+        {
+          "idParts": [
+            "70",
+            "70191",
+            "3"
+          ],
+          "name": "我會盡量影響身邊的人，從小事做起，慢慢改變世界。"
+        }
+      ]
+    },
+    {
+      "table": "mission_steps",
+      "label": "任務步驟",
+      "tier": "rich",
+      "counts": {
+        "added": 90,
+        "changed": 15,
+        "removed": 30
+      },
+      "added": [
+        {
+          "idParts": [
+            "10729",
+            "1"
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "2"
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "3"
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "4"
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "5"
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "6"
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "7"
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "8"
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "9"
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "10"
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "11"
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "12"
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "13"
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "14"
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "15"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "1"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "2"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "3"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "4"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "5"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "6"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "7"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "8"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "9"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "10"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "11"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "12"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "13"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "14"
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "15"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "1"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "2"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "3"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "4"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "5"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "6"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "7"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "8"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "9"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "10"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "11"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "12"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "13"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "14"
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "15"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "1"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "2"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "3"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "4"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "5"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "6"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "7"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "8"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "9"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "10"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "11"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "12"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "13"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "14"
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "15"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "1"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "2"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "3"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "4"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "5"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "6"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "7"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "8"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "9"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "10"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "11"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "12"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "13"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "14"
+          ]
+        },
+        {
+          "idParts": [
+            "20558",
+            "15"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "1"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "2"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "3"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "4"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "5"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "6"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "7"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "8"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "9"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "10"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "11"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "12"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "13"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "14"
+          ]
+        },
+        {
+          "idParts": [
+            "20559",
+            "15"
+          ]
+        }
+      ],
+      "removed": [
+        {
+          "idParts": [
+            "10714",
+            "5"
+          ]
+        },
+        {
+          "idParts": [
+            "10714",
+            "6"
+          ]
+        },
+        {
+          "idParts": [
+            "10714",
+            "7"
+          ]
+        },
+        {
+          "idParts": [
+            "10714",
+            "8"
+          ]
+        },
+        {
+          "idParts": [
+            "10714",
+            "9"
+          ]
+        },
+        {
+          "idParts": [
+            "10714",
+            "10"
+          ]
+        },
+        {
+          "idParts": [
+            "10714",
+            "11"
+          ]
+        },
+        {
+          "idParts": [
+            "10714",
+            "12"
+          ]
+        },
+        {
+          "idParts": [
+            "10714",
+            "13"
+          ]
+        },
+        {
+          "idParts": [
+            "10714",
+            "14"
+          ]
+        },
+        {
+          "idParts": [
+            "10714",
+            "15"
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "7"
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "8"
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "9"
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "10"
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "11"
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "12"
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "13"
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "14"
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "15"
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "6"
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "7"
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "8"
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "9"
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "10"
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "11"
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "12"
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "13"
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "14"
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "15"
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "10714",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待0",
+              "to": "前往成都藥鋪進行準備。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10714",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待1",
+              "to": "前往成都碼頭尋找蛇妖。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10714",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待2",
+              "to": "擊敗妖物。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10714",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待3",
+              "to": "與蛇妖交談。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待0",
+              "to": "前往繡玉谷東尋找蘇繡娘"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待1",
+              "to": "協助收集素帛絲線[item33286×5]給蘇繡娘"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待2",
+              "to": "收集以下任一給蘇繡娘：紫草根[item33287×5]、藍草[item33288×5]、赭石[item33289×5]、墨水樹皮[item33290×5]"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待3",
+              "to": "在星月山道挖取明礬"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待4",
+              "to": "將明礬交給蘇繡娘"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10715",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待5",
+              "to": "回忘憂村找陸錦榮"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待0",
+              "to": "前往雲夢湖心進行調查。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待1",
+              "to": "與小水靈進行交談。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待2",
+              "to": "調查附近「異常水泡」。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待3",
+              "to": "擊退「搗蛋水泡怪」。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10716",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待4",
+              "to": "收集夏日水花[item33238×10]後與小水靈交談。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "missions",
+      "label": "任務",
+      "tier": "rich",
+      "counts": {
+        "added": 6,
+        "changed": 5,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "10729"
+          ],
+          "name": "保留"
+        },
+        {
+          "idParts": [
+            "10730"
+          ],
+          "name": "保留"
+        },
+        {
+          "idParts": [
+            "10731"
+          ],
+          "name": "保留"
+        },
+        {
+          "idParts": [
+            "10732"
+          ],
+          "name": "保留"
+        },
+        {
+          "idParts": [
+            "20558"
+          ],
+          "name": "隱藏"
+        },
+        {
+          "idParts": [
+            "20559"
+          ],
+          "name": "隱藏"
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "10714"
+          ],
+          "name": "端午辨真偽",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留1",
+              "to": "端午辨真偽"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "from": "敬請期待",
+              "to": "端午佳節到，成都碼頭竟竄出駭人妖蛇？\\n村民們驚慌求救，但門前艾草卻離奇枯萎！\\n這場危機四伏的除妖之行，真相究竟是如何？\\n"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10715"
+          ],
+          "name": "蹴鞠風雲榜",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留1",
+              "to": "蹴鞠風雲榜"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "from": "敬請期待",
+              "to": "天下蹴鞠大會將近，人人都在談論今年誰能奪魁。忘憂村打算起一面蹴鞠風雲榜，將各派應援布條懸於村口。只是材料全都不足，需要請人來幫忙。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10716"
+          ],
+          "name": "童心戲水記",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留1",
+              "to": "童心戲水記"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "from": "敬請期待",
+              "to": "童玩節前夕，湖畔忽然失去笑聲，歡笑水鈴也不再響起，這一切究竟是怎麼回事呢？"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "18910"
+          ],
+          "name": "探索日月迷宮[日]",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "探索日月迷宮",
+              "to": "探索日月迷宮[日]"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "18911"
+          ],
+          "name": "探索日月迷宮[月]",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "探索日月迷宮",
+              "to": "探索日月迷宮[月]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc",
+      "label": "NPC",
+      "tier": "rich",
+      "counts": {
+        "added": 30,
+        "changed": 35,
+        "removed": 0
+      },
+      "structural": {
+        "addedColumns": [
+          "flag",
+          "is_npc",
+          "is_monster",
+          "can_talk",
+          "no_attack",
+          "mp",
+          "run_speed",
+          "attack_type",
+          "volume",
+          "move_range",
+          "break",
+          "ai",
+          "skill1",
+          "skill2",
+          "skill3",
+          "skill4",
+          "dsummon",
+          "dsummon_num"
+        ],
+        "removedColumns": []
+      },
+      "added": [
+        {
+          "idParts": [
+            "7970"
+          ],
+          "name": "花精"
+        },
+        {
+          "idParts": [
+            "7971"
+          ],
+          "name": "食人大紅花"
+        },
+        {
+          "idParts": [
+            "7972"
+          ],
+          "name": "食人大紅花2"
+        },
+        {
+          "idParts": [
+            "7973"
+          ],
+          "name": "食人大紅花3"
+        },
+        {
+          "idParts": [
+            "7974"
+          ],
+          "name": "吃人花"
+        },
+        {
+          "idParts": [
+            "7975"
+          ],
+          "name": "吃人花2"
+        },
+        {
+          "idParts": [
+            "7976"
+          ],
+          "name": "保留26"
+        },
+        {
+          "idParts": [
+            "7977"
+          ],
+          "name": "保留27"
+        },
+        {
+          "idParts": [
+            "7978"
+          ],
+          "name": "保留28"
+        },
+        {
+          "idParts": [
+            "7979"
+          ],
+          "name": "保留29"
+        },
+        {
+          "idParts": [
+            "7980"
+          ],
+          "name": "保留30"
+        },
+        {
+          "idParts": [
+            "7981"
+          ],
+          "name": "保留31"
+        },
+        {
+          "idParts": [
+            "7982"
+          ],
+          "name": "保留32"
+        },
+        {
+          "idParts": [
+            "7983"
+          ],
+          "name": "保留33"
+        },
+        {
+          "idParts": [
+            "7984"
+          ],
+          "name": "保留34"
+        },
+        {
+          "idParts": [
+            "7985"
+          ],
+          "name": "保留35"
+        },
+        {
+          "idParts": [
+            "7986"
+          ],
+          "name": "保留36"
+        },
+        {
+          "idParts": [
+            "7987"
+          ],
+          "name": "保留37"
+        },
+        {
+          "idParts": [
+            "7988"
+          ],
+          "name": "保留38"
+        },
+        {
+          "idParts": [
+            "7989"
+          ],
+          "name": "保留39"
+        },
+        {
+          "idParts": [
+            "7990"
+          ],
+          "name": "保留40"
+        },
+        {
+          "idParts": [
+            "7991"
+          ],
+          "name": "保留41"
+        },
+        {
+          "idParts": [
+            "7992"
+          ],
+          "name": "保留42"
+        },
+        {
+          "idParts": [
+            "7993"
+          ],
+          "name": "保留43"
+        },
+        {
+          "idParts": [
+            "7994"
+          ],
+          "name": "保留44"
+        },
+        {
+          "idParts": [
+            "7995"
+          ],
+          "name": "保留45"
+        },
+        {
+          "idParts": [
+            "7996"
+          ],
+          "name": "保留46"
+        },
+        {
+          "idParts": [
+            "7997"
+          ],
+          "name": "保留47"
+        },
+        {
+          "idParts": [
+            "7998"
+          ],
+          "name": "保留48"
+        },
+        {
+          "idParts": [
+            "7999"
+          ],
+          "name": "保留49"
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "7063"
+          ],
+          "name": "慌張的村民",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "孫小五",
+              "to": "慌張的村民"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7064"
+          ],
+          "name": "蛇妖",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "普通婦人",
+              "to": "蛇妖"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7214"
+          ],
+          "name": "小水靈",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "上古蜘蛛精",
+              "to": "小水靈"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7215"
+          ],
+          "name": "搗蛋水泡怪",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "怪盜玩笑客",
+              "to": "搗蛋水泡怪"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7945"
+          ],
+          "name": "保留１",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留1",
+              "to": "保留１"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7946"
+          ],
+          "name": "保留２",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留2",
+              "to": "保留２"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7947"
+          ],
+          "name": "保留３",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留3",
+              "to": "保留３"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7948"
+          ],
+          "name": "保留４",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留4",
+              "to": "保留４"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7949"
+          ],
+          "name": "保留５",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留5",
+              "to": "保留５"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7950"
+          ],
+          "name": "保留６",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留6",
+              "to": "保留６"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7951"
+          ],
+          "name": "保留７",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留7",
+              "to": "保留７"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7952"
+          ],
+          "name": "保留８",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留8",
+              "to": "保留８"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7953"
+          ],
+          "name": "保留９",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留9",
+              "to": "保留９"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7954"
+          ],
+          "name": "保留１０",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留10",
+              "to": "保留１０"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7955"
+          ],
+          "name": "保留１１",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留11",
+              "to": "保留１１"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7956"
+          ],
+          "name": "保留１２",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留12",
+              "to": "保留１２"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7957"
+          ],
+          "name": "保留１３",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留13",
+              "to": "保留１３"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7958"
+          ],
+          "name": "保留１４",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留14",
+              "to": "保留１４"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7959"
+          ],
+          "name": "保留１５",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留15",
+              "to": "保留１５"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7960"
+          ],
+          "name": "保留１６",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留16",
+              "to": "保留１６"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7961"
+          ],
+          "name": "小黑鳥",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留17",
+              "to": "小黑鳥"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7962"
+          ],
+          "name": "保留１８",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留18",
+              "to": "保留１８"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7963"
+          ],
+          "name": "保留１９",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留19",
+              "to": "保留１９"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7964"
+          ],
+          "name": "保留２０",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留20",
+              "to": "保留２０"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7965"
+          ],
+          "name": "保留２１",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留21",
+              "to": "保留２１"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7966"
+          ],
+          "name": "保留２２",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留22",
+              "to": "保留２２"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7967"
+          ],
+          "name": "保留２３",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留23",
+              "to": "保留２３"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7968"
+          ],
+          "name": "保留２４",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留24",
+              "to": "保留２４"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7969"
+          ],
+          "name": "保留２５",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留25",
+              "to": "保留２５"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "8315"
+          ],
+          "name": "噬血妖藤",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "▲懶散魔",
+              "to": "噬血妖藤"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "from": "60",
+              "to": "80"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "8316"
+          ],
+          "name": "搗蛋水泡怪",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "惡癢化僋",
+              "to": "搗蛋水泡怪"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "from": "60",
+              "to": "80"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13243"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "劇情保留_永",
+              "to": "劇情保留"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13244"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "劇情保留_石",
+              "to": "劇情保留"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13245"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "劇情保留_馬",
+              "to": "劇情保留"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13246"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "劇情保留_水",
+              "to": "劇情保留"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc_strings",
+      "label": "NPC 對話",
+      "tier": "rich",
+      "counts": {
+        "added": 24,
+        "changed": 33,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "31405"
+          ],
+          "name": "保留26"
+        },
+        {
+          "idParts": [
+            "31406"
+          ],
+          "name": "保留27"
+        },
+        {
+          "idParts": [
+            "31407"
+          ],
+          "name": "保留28"
+        },
+        {
+          "idParts": [
+            "31408"
+          ],
+          "name": "保留29"
+        },
+        {
+          "idParts": [
+            "31409"
+          ],
+          "name": "保留30"
+        },
+        {
+          "idParts": [
+            "31410"
+          ],
+          "name": "保留31"
+        },
+        {
+          "idParts": [
+            "31411"
+          ],
+          "name": "保留32"
+        },
+        {
+          "idParts": [
+            "31412"
+          ],
+          "name": "保留33"
+        },
+        {
+          "idParts": [
+            "31413"
+          ],
+          "name": "保留34"
+        },
+        {
+          "idParts": [
+            "31414"
+          ],
+          "name": "保留35"
+        },
+        {
+          "idParts": [
+            "31415"
+          ],
+          "name": "保留36"
+        },
+        {
+          "idParts": [
+            "31416"
+          ],
+          "name": "保留37"
+        },
+        {
+          "idParts": [
+            "31417"
+          ],
+          "name": "保留38"
+        },
+        {
+          "idParts": [
+            "31418"
+          ],
+          "name": "保留39"
+        },
+        {
+          "idParts": [
+            "31419"
+          ],
+          "name": "保留40"
+        },
+        {
+          "idParts": [
+            "31420"
+          ],
+          "name": "保留41"
+        },
+        {
+          "idParts": [
+            "31421"
+          ],
+          "name": "保留42"
+        },
+        {
+          "idParts": [
+            "31422"
+          ],
+          "name": "保留43"
+        },
+        {
+          "idParts": [
+            "31423"
+          ],
+          "name": "保留44"
+        },
+        {
+          "idParts": [
+            "31424"
+          ],
+          "name": "保留45"
+        },
+        {
+          "idParts": [
+            "31425"
+          ],
+          "name": "保留46"
+        },
+        {
+          "idParts": [
+            "31426"
+          ],
+          "name": "保留47"
+        },
+        {
+          "idParts": [
+            "31427"
+          ],
+          "name": "保留48"
+        },
+        {
+          "idParts": [
+            "31428"
+          ],
+          "name": "保留49"
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "30494"
+          ],
+          "name": "眾人",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "遊子A",
+              "to": "眾人"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30793"
+          ],
+          "name": "慌張的村民",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "孫小五",
+              "to": "慌張的村民"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30794"
+          ],
+          "name": "蛇妖",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "普通婦人",
+              "to": "蛇妖"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30849"
+          ],
+          "name": "陸錦榮",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "雲半仙",
+              "to": "陸錦榮"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30850"
+          ],
+          "name": "蘇繡娘",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "醉劍書生",
+              "to": "蘇繡娘"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30851"
+          ],
+          "name": "柳弦音",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "嚴無霜",
+              "to": "柳弦音"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30918"
+          ],
+          "name": "老村長",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "老老村長",
+              "to": "老村長"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30919"
+          ],
+          "name": "小水靈",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "上古蜘蛛精",
+              "to": "小水靈"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30920"
+          ],
+          "name": "搗蛋水泡怪",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "怪盜．玩笑客",
+              "to": "搗蛋水泡怪"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31348"
+          ],
+          "name": "孩子們",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "居民們",
+              "to": "孩子們"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31382"
+          ],
+          "name": "保留３",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留3",
+              "to": "保留３"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31383"
+          ],
+          "name": "保留４",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留4",
+              "to": "保留４"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31384"
+          ],
+          "name": "保留５",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留5",
+              "to": "保留５"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31385"
+          ],
+          "name": "保留６",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留6",
+              "to": "保留６"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31386"
+          ],
+          "name": "保留７",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留7",
+              "to": "保留７"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31387"
+          ],
+          "name": "保留８",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留8",
+              "to": "保留８"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31388"
+          ],
+          "name": "保留９",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留9",
+              "to": "保留９"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31389"
+          ],
+          "name": "保留１０",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留10",
+              "to": "保留１０"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31390"
+          ],
+          "name": "保留１１",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留11",
+              "to": "保留１１"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31391"
+          ],
+          "name": "保留１２",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留12",
+              "to": "保留１２"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31392"
+          ],
+          "name": "保留１３",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留13",
+              "to": "保留１３"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31393"
+          ],
+          "name": "保留１４",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留14",
+              "to": "保留１４"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31394"
+          ],
+          "name": "保留１５",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留15",
+              "to": "保留１５"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31395"
+          ],
+          "name": "保留１６",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留16",
+              "to": "保留１６"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31396"
+          ],
+          "name": "保留１７",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留17",
+              "to": "保留１７"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31397"
+          ],
+          "name": "保留１８",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留18",
+              "to": "保留１８"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31398"
+          ],
+          "name": "保留１９",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留19",
+              "to": "保留１９"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31399"
+          ],
+          "name": "保留２０",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留20",
+              "to": "保留２０"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31400"
+          ],
+          "name": "保留２１",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留21",
+              "to": "保留２１"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31401"
+          ],
+          "name": "保留２２",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留22",
+              "to": "保留２２"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31402"
+          ],
+          "name": "保留２３",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留23",
+              "to": "保留２３"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31403"
+          ],
+          "name": "保留２４",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留24",
+              "to": "保留２４"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31404"
+          ],
+          "name": "保留２５",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "保留25",
+              "to": "保留２５"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "map_warps",
+      "label": "地圖傳送點",
+      "tier": "count",
+      "counts": {
+        "added": 6,
+        "changed": 643,
+        "removed": 0
+      }
+    },
+    {
+      "table": "messages",
+      "label": "對話訊息",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 1324,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_refs",
+      "label": "任務關聯",
+      "tier": "count",
+      "counts": {
+        "added": 13,
+        "changed": 858,
+        "removed": 0
+      }
+    }
+  ],
+  "ai": {
+    "model": "hand-authored",
+    "edited": true,
+    "highlights": [
+      "端午節活動上線：新增任務「端午辨真偽」——成都碼頭竄出妖蛇，玩家前往成都藥鋪準備、於碼頭尋蛇、擊敗妖物後與蛇妖對談（登場 NPC：蛇妖、慌張的村民）",
+      "新增任務「蹴鞠風雲榜」：忘憂村蹴鞠大會將近，爭奪今年蹴鞠魁首",
+      "新增任務「童心戲水記」：童玩節前夕湖畔笑聲消失之謎（登場 NPC：小水靈、搗蛋水泡怪）",
+      "「探索日月迷宮」拆分為「探索日月迷宮[日]」與「探索日月迷宮[月]」兩個版本",
+      "新增怪物：花精、食人大紅花、吃人花",
+      "新增端午活動禮盒 3 款，開箱內容（依商品說明）——晝夢端午禮盒：背飾「晝夢冥鰩」、星蟹靈夢、睿智靈貓、焰暑烈鷹、灼曦燼翼、警察系列外裝、副門派進階書；金樽逐冠禮盒：坐騎「金樽逐浪」、焰羽逐空、仙狐書羽、龍煌之影、無奈霸狐、網球系列外裝、副門派進階書；星穹神猊禮盒：背飾「星穹神猊」、璃光飛羽、鐵壁隱士、閻炎罅翼、熾焰劫龍、睡衣系列外裝、副門派進階書"
+    ],
+    "tables": {
+      "missions": {
+        "mode": "detail",
+        "note": "3 個新活動任務上線，另「探索日月迷宮」拆分為日／月版本"
+      },
+      "mission_steps": {
+        "mode": "summary",
+        "note": "端午系列任務步驟全面填入（原為「敬請期待」佔位）：新增 90 步、改寫 15 步、移除 30 步"
+      },
+      "npc": {
+        "mode": "summary",
+        "note": "新增花精、食人大紅花、吃人花等怪物；多名佔位 NPC 轉為活動角色（孫小五→慌張的村民、普通婦人→蛇妖、上古蜘蛛精→小水靈）"
+      },
+      "npc_strings": {
+        "mode": "summary",
+        "note": "對話顯示名同步更新為活動 NPC（陸錦榮、蘇繡娘、柳弦音、小水靈 等）"
+      },
+      "items": {
+        "mode": "summary",
+        "note": "3 款端午禮盒上架；約 2,900 件裝備售價批量調整；資料結構調整（欄位改名）"
+      },
+      "message_options": {
+        "mode": "summary",
+        "note": "移除 15 條端午／屈原主題的道德抉擇對話選項"
+      },
+      "map_warps": {
+        "mode": "summary",
+        "note": "傳送點資料批量調整（643 筆），多為建置管線位移，非玩法變更"
+      },
+      "messages": {
+        "mode": "summary",
+        "note": "對話訊息批量更新（1,324 筆）"
+      },
+      "mission_refs": {
+        "mode": "summary",
+        "note": "任務關聯批量調整（858 筆）"
+      }
+    }
+  }
+}
