@@ -46,6 +46,16 @@ const features: Feature[] = [
     href: "/missions",
   },
   {
+    title: "成就圖鑑",
+    description: "1,200+ 成就分類瀏覽,點數、描述、獎勵一覽",
+    href: "/achievements",
+  },
+  {
+    title: "商店查詢",
+    description: "NPC 商店販售與收購價,道具頁直查哪裡買",
+    href: "/shops",
+  },
+  {
     title: "副本解謎",
     description: "160 迷霧九宮格、175 北斗七星、180 神武禁地",
     href: "/tools",
