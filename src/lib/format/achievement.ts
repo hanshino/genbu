@@ -21,7 +21,13 @@ export function formatReward(
     case 3:
       return { label: `銀兩 ×${amount}` };
     case 5:
-      return { label: rewardName ?? `#${rewardId}`, href: `/skills/${rewardId}` };
+      return {
+        label:
+          rewardAmount > 1
+            ? `${rewardName ?? `#${rewardId}`} ×${amount}`
+            : (rewardName ?? `#${rewardId}`),
+        href: `/skills/${rewardId}`,
+      };
     default:
       return { label: `獎勵 #${rewardType}（#${rewardId} ×${rewardAmount}）` };
   }

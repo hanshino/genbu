@@ -39,6 +39,16 @@ describe("formatReward", () => {
     expect(r).toEqual({ label: "物攻增加", href: "/skills/1183" });
   });
 
+  it("type 5 amount > 1 時附 ×數量(7 筆 reward_amount=2 的實例)", () => {
+    const r = formatReward({
+      rewardType: 5,
+      rewardId: 1183,
+      rewardAmount: 2,
+      rewardName: "物攻增加",
+    });
+    expect(r).toEqual({ label: "物攻增加 ×2", href: "/skills/1183" });
+  });
+
   it("join 不到名稱時 fallback 顯示 #id,不擲錯", () => {
     const r = formatReward({ rewardType: 2, rewardId: 99999, rewardAmount: 1, rewardName: null });
     expect(r).toEqual({ label: "#99999 ×1", href: "/items/99999" });
