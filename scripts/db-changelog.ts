@@ -3,7 +3,8 @@
 // 用法（務必「先跑腳本、再 commit 新 DB」）：
 //   1. 用新的 tthol.sqlite 覆蓋工作區檔（尚未 git add）
 //   2. npm run changelog -- 1.23 [--note "說明"]   （版本號＝第一個位置參數）
-//      有 .env 的 ANTHROPIC_API_KEY 時會自動跑 AI 策展；--no-ai 可略過，--model 換模型
+//      預設用本機 `claude -p`（走 Claude Code 訂閱登入身分，免 API key）跑 AI 策展；
+//      --no-ai 略過；--sdk 改走 @anthropic-ai/sdk（需 .env 的 ANTHROPIC_API_KEY）；--model 換模型
 //   3. review src/data/changelog/<date>-v1.23.json（highlights 可手改，改過把 ai.edited 設 true）
 //   4. git add tthol.sqlite src/data/changelog/*.json && git commit
 //
@@ -42,6 +43,7 @@ interface Args {
   to: string; // 檔案路徑
   force: boolean;
   noAi: boolean;
+  sdk: boolean;
   model: string;
 }
 
@@ -52,12 +54,14 @@ function parseArgs(argv: string[]): Args {
     to: path.join(PROJECT_ROOT, DB_FILE),
     force: false,
     noAi: false,
+    sdk: false,
     model: "claude-opus-4-8",
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--force") args.force = true;
     else if (a === "--no-ai") args.noAi = true;
+    else if (a === "--sdk") args.sdk = true;
     else if (a === "--model") args.model = argv[++i];
     else if (a === "--version") args.version = argv[++i];
     else if (a === "--date") args.date = argv[++i];
@@ -136,11 +140,86 @@ function anthropicClient(): CurationClient {
   };
 }
 
+// 去掉模型常見的 ```json … ``` 圍籬，並容錯地取第一個 { 到最後一個 }，
+// 讓 CLI（無 json_schema 硬約束）的輸出仍能穩定 JSON.parse。
+function stripFence(text: string): string {
+  const t = text.trim();
+  const fenced = t.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+  const body = (fenced ? fenced[1] : t).trim();
+  const start = body.indexOf("{");
+  const end = body.lastIndexOf("}");
+  return start >= 0 && end > start ? body.slice(start, end + 1) : body;
+}
+
+// CLI client：走本機 `claude -p`（Claude Code 訂閱登入身分），不需 ANTHROPIC_API_KEY。
+// system 以 --system-prompt 傳（shell:false → 多行參數不經 shell，無引號問題）；
+// user（含 digest）走 stdin；--output-format json 取外層 envelope.result，去圍籬後 JSON.parse。
+// schema 在此路徑不硬約束，靠系統提示 + stripFence + normalizeCuration 三層防禦。
+function claudeCliClient(): CurationClient {
+  return {
+    curate({ model, system, user }) {
+      return new Promise((resolve, reject) => {
+        // 關鍵：把 ANTHROPIC_API_KEY / AUTH_TOKEN 從子行程環境剝掉。否則 .env 載入的
+        // 金鑰會被 claude 當成 API 金鑰、蓋過 claude.ai 訂閱登入 → 認證失敗。
+        const env = { ...process.env };
+        delete env.ANTHROPIC_API_KEY;
+        delete env.ANTHROPIC_AUTH_TOKEN;
+        const child = spawn(
+          "claude",
+          [
+            "-p",
+            "--model",
+            model,
+            "--output-format",
+            "json",
+            "--system-prompt",
+            system + "\n\n只輸出符合要求的 JSON 物件本身；不要 code fence、不要任何前後說明文字。",
+          ],
+          { cwd: PROJECT_ROOT, windowsHide: true, env },
+        );
+        let out = "";
+        let err = "";
+        child.stdout.on("data", (d) => (out += d.toString()));
+        child.stderr.on("data", (d) => (err += d.toString()));
+        child.on("error", (e) =>
+          reject(new Error(`無法啟動 claude CLI（是否已安裝並登入？）：${e.message}`)),
+        );
+        child.on("close", (code) => {
+          if (code !== 0) {
+            reject(new Error(`claude -p 失敗（exit ${code}）：${(err || out).trim()}`));
+            return;
+          }
+          let envelope: { is_error?: boolean; subtype?: string; result?: unknown };
+          try {
+            envelope = JSON.parse(out);
+          } catch {
+            reject(new Error(`claude -p 輸出非預期 JSON envelope：${out.slice(0, 200)}`));
+            return;
+          }
+          if (envelope.is_error || typeof envelope.result !== "string") {
+            reject(new Error(`claude -p 回報錯誤：${envelope.subtype ?? String(envelope.result)}`));
+            return;
+          }
+          try {
+            resolve(JSON.parse(stripFence(envelope.result)));
+          } catch (e) {
+            reject(
+              new Error(`claude -p 策展輸出無法解析為 JSON：${e instanceof Error ? e.message : String(e)}`),
+            );
+          }
+        });
+        child.stdin.write(user);
+        child.stdin.end();
+      });
+    },
+  };
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (!args.version) {
     console.error(
-      "用法：npm run changelog -- <版本號> [--date YYYY-MM-DD] [--note 說明] [--from HEAD|路徑] [--to 路徑] [--no-ai] [--model <id>] [--force]",
+      "用法：npm run changelog -- <版本號> [--date YYYY-MM-DD] [--note 說明] [--from HEAD|路徑] [--to 路徑] [--no-ai] [--sdk] [--model <id>] [--force]",
     );
     process.exit(1);
   }
@@ -185,20 +264,23 @@ async function main() {
   }
 
   // ── AI 策展（可降級）──────────────────────────────
-  const plan = resolveAiPlan({ noAi: args.noAi, apiKey: process.env.ANTHROPIC_API_KEY });
+  const plan = resolveAiPlan({ noAi: args.noAi, useSdk: args.sdk, apiKey: process.env.ANTHROPIC_API_KEY });
   if (plan.runAi) {
+    const via = args.sdk ? "SDK" : "claude -p";
     try {
+      const client = args.sdk ? anthropicClient() : claudeCliClient();
       // entry 結構滿足 digestForAI 的 DbDiff 形參（summary/addedTables/removedTables/tables）
       const curation = await curateWithClaude(digestForAI(entry), {
-        client: anthropicClient(),
+        client,
         model: args.model,
       });
       entry.ai = curationToAiLayer(curation, { model: args.model, edited: false });
-      console.log(`\n本版重點（AI 策展，${args.model}，請 review）：`);
+      console.log(`\n本版重點（AI 策展，${via}／${args.model}，請 review）：`);
       for (const h of entry.ai.highlights) console.log("  • " + h);
     } catch (e) {
       console.warn(
-        "\n[警告] AI 策展失敗，僅輸出事實層：" + (e instanceof Error ? (e.stack ?? e.message) : String(e)),
+        `\n[警告] AI 策展失敗（${via}），僅輸出事實層：` +
+          (e instanceof Error ? (e.stack ?? e.message) : String(e)),
       );
     }
   } else {

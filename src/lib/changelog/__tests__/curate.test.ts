@@ -115,11 +115,17 @@ describe("curationToAiLayer", () => {
 describe("resolveAiPlan", () => {
   it("--no-ai → 不跑", () => {
     expect(resolveAiPlan({ noAi: true, apiKey: "sk-x" }).runAi).toBe(false);
+    expect(resolveAiPlan({ noAi: true, useSdk: true, apiKey: "sk-x" }).runAi).toBe(false);
   });
-  it("無金鑰 → 不跑", () => {
-    expect(resolveAiPlan({ noAi: false, apiKey: undefined }).runAi).toBe(false);
+  it("預設（claude -p）：無金鑰也跑", () => {
+    expect(resolveAiPlan({ noAi: false, apiKey: undefined }).runAi).toBe(true);
   });
-  it("有金鑰且未停用 → 跑", () => {
-    expect(resolveAiPlan({ noAi: false, apiKey: "sk-x" }).runAi).toBe(true);
+  it("--sdk 無金鑰 → 不跑", () => {
+    const plan = resolveAiPlan({ noAi: false, useSdk: true, apiKey: undefined });
+    expect(plan.runAi).toBe(false);
+    expect(plan.reason).toContain("ANTHROPIC_API_KEY");
+  });
+  it("--sdk 有金鑰 → 跑", () => {
+    expect(resolveAiPlan({ noAi: false, useSdk: true, apiKey: "sk-x" }).runAi).toBe(true);
   });
 });

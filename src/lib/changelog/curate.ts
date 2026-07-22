@@ -95,11 +95,14 @@ export function curationToAiLayer(
   return { model: meta.model, edited: meta.edited ?? false, highlights: curation.highlights, tables };
 }
 
+// 預設走本機 `claude -p`（Claude Code 訂閱登入身分，免 API key）；
+// 只有 --sdk 走 @anthropic-ai/sdk 時才需要 ANTHROPIC_API_KEY。
 export function resolveAiPlan(env: {
   noAi: boolean;
+  useSdk?: boolean;
   apiKey: string | undefined;
 }): { runAi: boolean; reason: string } {
   if (env.noAi) return { runAi: false, reason: "--no-ai" };
-  if (!env.apiKey) return { runAi: false, reason: "未設定 ANTHROPIC_API_KEY" };
+  if (env.useSdk && !env.apiKey) return { runAi: false, reason: "--sdk 需要 ANTHROPIC_API_KEY" };
   return { runAi: true, reason: "" };
 }
