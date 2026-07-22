@@ -42,4 +42,27 @@ describe("loadChangelog", () => {
   it("目錄不存在回空陣列", () => {
     expect(loadChangelog(path.join(dir, "nope"))).toEqual([]);
   });
+
+  it("舊版檔的字串陣列 addedTables/removedTables 正規化成 TableAddition", () => {
+    const d2 = fs.mkdtempSync(path.join(os.tmpdir(), "changelog-legacy-"));
+    try {
+      const legacy = {
+        version: "0.9",
+        date: "2026-06-30",
+        summary: { added: 0, changed: 0, removed: 0 },
+        addedTables: ["map_dims", "shops"],
+        removedTables: ["old_table"],
+        tables: [],
+      };
+      fs.writeFileSync(path.join(d2, "2026-06-30-v0.9.json"), JSON.stringify(legacy));
+      const [e] = loadChangelog(d2);
+      expect(e.addedTables).toEqual([
+        { table: "map_dims", label: "map_dims" },
+        { table: "shops", label: "shops" },
+      ]);
+      expect(e.removedTables).toEqual([{ table: "old_table", label: "old_table" }]);
+    } finally {
+      fs.rmSync(d2, { recursive: true, force: true });
+    }
+  });
 });

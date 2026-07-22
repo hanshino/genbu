@@ -42,4 +42,22 @@ describe("VersionCard", () => {
     expect(screen.getByText("道具")).toBeInTheDocument();
     expect(screen.queryByTestId("table-summary-row")).not.toBeInTheDocument(); // detail 分支確認
   });
+
+  it("新增資料表：顯示 zh-tw 標籤與列數", () => {
+    const entry: ChangelogEntry = {
+      version: "7.2.6.3",
+      date: "2026-07-22",
+      summary: { added: 0, changed: 0, removed: 0 },
+      addedTables: [
+        { table: "achievements", label: "成就", rows: 1266 },
+        { table: "shops", label: "商店", rows: 89 },
+      ],
+      removedTables: [],
+      tables: [],
+    };
+    render(<VersionCard entry={entry} />);
+    const line = screen.getByText(/新增資料表/);
+    expect(line).toHaveTextContent("成就（+1266）");
+    expect(line).toHaveTextContent("商店（+89）");
+  });
 });

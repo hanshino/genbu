@@ -233,3 +233,38 @@ describe("diffDatabases — rich added/removed 帶 surfaced fields", () => {
     expect(box.fields!.find((f) => f.col === "value")!.value).toBe("0"); // 0 非空，保留
   });
 });
+
+describe("diffDatabases — 整表新增／移除帶標籤與列數", () => {
+  const profiles: Record<string, TableProfile> = {
+    achievements: { tier: "count", label: "成就", identity: ["id"] },
+  };
+
+  it("新表 → addedTables 帶 label（PROFILES）與列數；無設定表回退機器鍵", () => {
+    const old = makeDb("CREATE TABLE items (id INTEGER, name TEXT);INSERT INTO items VALUES (1,'劍');");
+    const nw = makeDb(
+      "CREATE TABLE items (id INTEGER, name TEXT);INSERT INTO items VALUES (1,'劍');" +
+        "CREATE TABLE achievements (id INTEGER, name TEXT);INSERT INTO achievements VALUES (1,'a'),(2,'b'),(3,'c');" +
+        "CREATE TABLE mystery (id INTEGER);INSERT INTO mystery VALUES (1);",
+    );
+    const diff = diffDatabases(old, nw, profiles);
+    expect(diff.addedTables).toEqual(
+      expect.arrayContaining([
+        { table: "achievements", label: "成就", rows: 3 },
+        { table: "mystery", label: "mystery", rows: 1 }, // 無 PROFILES → 回退機器鍵
+      ]),
+    );
+    expect(diff.addedTables).toHaveLength(2);
+    expect(diff.removedTables).toEqual([]);
+  });
+
+  it("移除表 → removedTables 帶舊 DB 列數", () => {
+    const old = makeDb(
+      "CREATE TABLE items (id INTEGER);INSERT INTO items VALUES (1);" +
+        "CREATE TABLE achievements (id INTEGER);INSERT INTO achievements VALUES (1),(2);",
+    );
+    const nw = makeDb("CREATE TABLE items (id INTEGER);INSERT INTO items VALUES (1);");
+    const diff = diffDatabases(old, nw, profiles);
+    expect(diff.removedTables).toEqual([{ table: "achievements", label: "成就", rows: 2 }]);
+    expect(diff.addedTables).toEqual([]);
+  });
+});

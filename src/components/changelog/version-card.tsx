@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PROFILES } from "@/lib/changelog/config";
-import type { ChangelogEntry, TableDiff, RowRef } from "@/lib/changelog/types";
+import type { ChangelogEntry, TableDiff, RowRef, TableAddition } from "@/lib/changelog/types";
 import { SummaryBadges } from "./summary-badges";
 import { TableSection, type TableSectionData } from "./table-section";
 import { Highlights } from "./highlights";
@@ -38,9 +38,15 @@ function toSectionData(td: TableDiff): TableSectionData {
 }
 
 export function VersionCard({ entry }: { entry: ChangelogEntry }) {
+  const fmt = (t: TableAddition, sign: "+" | "−") =>
+    t.rows != null ? `${t.label}（${sign}${t.rows}）` : t.label;
   const tableLine = [
-    entry.addedTables.length ? `新增資料表：${entry.addedTables.join("、")}` : "",
-    entry.removedTables.length ? `移除資料表：${entry.removedTables.join("、")}` : "",
+    entry.addedTables.length
+      ? `新增資料表：${entry.addedTables.map((t) => fmt(t, "+")).join("、")}`
+      : "",
+    entry.removedTables.length
+      ? `移除資料表：${entry.removedTables.map((t) => fmt(t, "−")).join("、")}`
+      : "",
   ]
     .filter(Boolean)
     .join("　");

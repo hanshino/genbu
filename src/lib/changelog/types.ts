@@ -62,9 +62,16 @@ export interface TableDiff {
   rebuilt?: boolean; // 整表重建防呆觸發
 }
 
+// 整表新增／移除的摘要：機器鍵 + zh-tw 標籤 + 列數（不逐列攤開，只計數）。
+export interface TableAddition {
+  table: string; // 機器鍵
+  label: string; // zh-tw 標籤（PROFILES 有就用，否則回退機器鍵）
+  rows?: number; // 列數：added=新 DB、removed=舊 DB；舊版檔（純字串陣列）正規化後無此值
+}
+
 export interface DbDiff {
-  addedTables: string[];
-  removedTables: string[];
+  addedTables: TableAddition[];
+  removedTables: TableAddition[];
   tables: TableDiff[]; // 有變動的表才收錄，rich（core 最前）排前
   summary: { added: number; changed: number; removed: number };
 }
@@ -74,8 +81,8 @@ export interface ChangelogEntry {
   date: string; // YYYY-MM-DD
   note?: string;
   summary: { added: number; changed: number; removed: number };
-  addedTables: string[];
-  removedTables: string[];
+  addedTables: TableAddition[];
+  removedTables: TableAddition[];
   tables: TableDiff[];
   ai?: {
     // 策展層（可缺席＝降級）。頁面顯示的事實一律取自 tables[]，非此。
@@ -116,8 +123,8 @@ export interface AiDigestTable {
 
 export interface AiDigest {
   summary: { added: number; changed: number; removed: number };
-  addedTables: string[];
-  removedTables: string[];
+  addedTables: TableAddition[];
+  removedTables: TableAddition[];
   tables: AiDigestTable[];
 }
 

@@ -10,6 +10,7 @@ import type {
   SystematicChange,
   ChangelogEntry,
   SurfacedField,
+  TableAddition,
 } from "./types";
 import { EXCLUDE } from "./config";
 
@@ -57,6 +58,10 @@ function truncate(s: string, max: number): string {
 
 function loadRows(db: DB, table: string): Row[] {
   return db.prepare(`SELECT * FROM "${table}"`).all() as Row[];
+}
+
+function countRows(db: DB, table: string): number {
+  return (db.prepare(`SELECT COUNT(*) AS n FROM "${table}"`).get() as { n: number }).n;
 }
 
 function rowRef(row: Row, identity: string[], profile: TableProfile | undefined, maxStringLen: number): RowRef {
@@ -287,8 +292,13 @@ export function diffDatabases(
   const newTables = new Set(listTables(newDb));
   const all = [...new Set([...oldTables, ...newTables])].sort();
 
-  const addedTables = all.filter((t) => !oldTables.has(t) && newTables.has(t));
-  const removedTables = all.filter((t) => oldTables.has(t) && !newTables.has(t));
+  // 整表新增／移除：不逐列攤開，但帶 zh-tw 標籤與列數（added=新 DB、removed=舊 DB）。
+  const addedTables: TableAddition[] = all
+    .filter((t) => !oldTables.has(t) && newTables.has(t))
+    .map((t) => ({ table: t, label: profiles[t]?.label ?? t, rows: countRows(newDb, t) }));
+  const removedTables: TableAddition[] = all
+    .filter((t) => oldTables.has(t) && !newTables.has(t))
+    .map((t) => ({ table: t, label: profiles[t]?.label ?? t, rows: countRows(oldDb, t) }));
   const both = all.filter((t) => oldTables.has(t) && newTables.has(t));
 
   const tables: TableDiff[] = [];

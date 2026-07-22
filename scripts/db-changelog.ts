@@ -293,8 +293,10 @@ async function main() {
 
   console.log(`\n更新日誌 v${args.version}（${args.date}）`);
   console.log(`  總計：+${entry.summary.added} ~${entry.summary.changed} −${entry.summary.removed}`);
-  if (entry.addedTables.length) console.log(`  新增表：${entry.addedTables.join(", ")}`);
-  if (entry.removedTables.length) console.log(`  移除表：${entry.removedTables.join(", ")}`);
+  if (entry.addedTables.length)
+    console.log(`  新增表：${entry.addedTables.map((t) => `${t.label}(+${t.rows})`).join(", ")}`);
+  if (entry.removedTables.length)
+    console.log(`  移除表：${entry.removedTables.map((t) => `${t.label}(−${t.rows})`).join(", ")}`);
   for (const t of entry.tables) {
     const flags = [
       t.rebuilt ? "重建" : "",
