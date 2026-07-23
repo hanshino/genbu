@@ -22,3 +22,21 @@ export function groupCompoundsByGroupName(
   if (orphan.length > 0) blocks.push(["未分類", orphan]);
   return blocks;
 }
+
+/**
+ * 蒐集一組配方中所有可能對應到圖示的 item id（主材料、副材料、產出、失敗回收）。
+ * 不特別排除 placeholder（slot-kind/self）—多查詢的 id 反正查無圖，交給 UI 層依 kind 決定要不要顯示。
+ * 用於一次批次呼叫 `getItemIconMap` 取得 iconMap。
+ */
+export function collectCompoundItemIds(uses: CompoundUse[]): number[] {
+  const ids = new Set<number>();
+  for (const u of uses) {
+    if (u.coreMaterial) ids.add(u.coreMaterial.id);
+    for (const s of u.sideMaterials) ids.add(s.id);
+    for (const o of u.outputs) {
+      if (o.itemId != null) ids.add(o.itemId);
+    }
+    if (u.failItem) ids.add(u.failItem.id);
+  }
+  return [...ids];
+}

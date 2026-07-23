@@ -14,12 +14,19 @@ import {
 } from "@/components/compounds/material-link";
 import { OutputCell } from "@/components/compounds/output-cell";
 import type { CompoundUse } from "@/lib/queries/compound";
+import type { EntityImage } from "@/lib/queries/images";
 
 /**
  * 共用配方表：用於 group detail 頁與其他需要完整呈現 compound row 的場景。
  * 比 EquipmentEnhancementsSection 表格多顯示「副材料 / 失敗回收 / 金錢」欄。
  */
-export function CompoundRecipeTable({ recipes }: { recipes: CompoundUse[] }) {
+export function CompoundRecipeTable({
+  recipes,
+  iconMap,
+}: {
+  recipes: CompoundUse[];
+  iconMap: Map<number, EntityImage>;
+}) {
   if (recipes.length === 0) return null;
   return (
     <div className="rounded-lg border border-border/60 overflow-x-auto">
@@ -56,7 +63,7 @@ export function CompoundRecipeTable({ recipes }: { recipes: CompoundUse[] }) {
                 </TableCell>
                 <TableCell className="text-xs align-top whitespace-normal break-words">
                   {u.coreMaterial ? (
-                    <MaterialLink m={u.coreMaterial} />
+                    <MaterialLink m={u.coreMaterial} image={iconMap.get(u.coreMaterial.id) ?? null} />
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
@@ -65,14 +72,15 @@ export function CompoundRecipeTable({ recipes }: { recipes: CompoundUse[] }) {
                   <MaterialList
                     materials={u.sideMaterials}
                     resolveKind={isEquipment ? equipmentSideMaterialKind : "real"}
+                    iconMap={iconMap}
                   />
                 </TableCell>
                 <TableCell className="text-xs align-top whitespace-normal break-words">
-                  <OutputCell outputs={u.outputs} />
+                  <OutputCell outputs={u.outputs} iconMap={iconMap} />
                 </TableCell>
                 <TableCell className="text-xs align-top whitespace-normal break-words">
                   {u.failItem ? (
-                    <MaterialLink m={u.failItem} />
+                    <MaterialLink m={u.failItem} image={iconMap.get(u.failItem.id) ?? null} />
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}

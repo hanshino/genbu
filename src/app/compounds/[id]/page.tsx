@@ -7,6 +7,8 @@ import {
   getCompoundGroupById,
   getCompoundsByGroupEnriched,
 } from "@/lib/queries/compound";
+import { collectCompoundItemIds } from "@/lib/compound-grouping";
+import { getItemIconMap } from "@/lib/queries/images";
 import { CompoundRecipeTable } from "@/components/compounds/compound-recipe-table";
 
 interface PageProps {
@@ -34,6 +36,7 @@ export default async function CompoundGroupDetailPage({ params }: PageProps) {
   if (!group) notFound();
 
   const recipes = getCompoundsByGroupEnriched(groupId);
+  const iconMap = getItemIconMap(collectCompoundItemIds(recipes));
 
   // 同 type 的配方放在一起，再依固定順序排序（強化 → 還原 → 合成 → 群組）
   const byType = new Map<string, typeof recipes>();
@@ -82,7 +85,7 @@ export default async function CompoundGroupDetailPage({ params }: PageProps) {
               <Badge variant="outline">{COMPOUND_TYPE_LABELS[type] ?? type}</Badge>
               <span className="text-xs text-muted-foreground">{items.length} 條</span>
             </div>
-            <CompoundRecipeTable recipes={items} />
+            <CompoundRecipeTable recipes={items} iconMap={iconMap} />
           </section>
         ))}
       </div>

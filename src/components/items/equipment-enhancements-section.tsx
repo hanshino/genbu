@@ -1,5 +1,7 @@
 import { getEquipmentEnhancementsForItemType } from "@/lib/queries/compound";
 import type { CompoundUse } from "@/lib/queries/compound";
+import { collectCompoundItemIds } from "@/lib/compound-grouping";
+import { getItemIconMap } from "@/lib/queries/images";
 import {
   EnhancementsList,
   type BonusBucket,
@@ -53,6 +55,7 @@ export function EquipmentEnhancementsSection({ itemType }: { itemType: string | 
   if (uses.length === 0) return null;
 
   const buckets = bucketByBonus(uses);
+  const iconMap = getItemIconMap(collectCompoundItemIds(uses));
 
   return (
     <section className="space-y-3">
@@ -63,7 +66,7 @@ export function EquipmentEnhancementsSection({ itemType }: { itemType: string | 
         </span>
       </div>
 
-      <EnhancementsList buckets={buckets} />
+      <EnhancementsList buckets={buckets} iconMap={iconMap} />
 
       <p className="text-xs text-muted-foreground">
         強化配方依裝備槽位歸類；同槽位裝備皆通用。同一條配方可能含多個加成（顯示主加成）；機率為單次嘗試該加成出現的機率。

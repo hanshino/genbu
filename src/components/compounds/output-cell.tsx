@@ -1,13 +1,21 @@
 import Link from "next/link";
 import { formatProb, formatRange } from "@/lib/format/compound";
+import { ItemIcon } from "@/components/common/item-icon";
 import type { CompoundOutput } from "@/lib/queries/compound";
+import type { EntityImage } from "@/lib/queries/images";
 
 /**
  * 配方產出欄共用渲染。
  * 物品產出 → ×qty；裝備加成 → +N（差異化以免誤讀）。
  * 在窄欄位下：label 可換行，機率與數量保持右側不縮小，必要時整列 wrap 到下一行。
  */
-export function OutputCell({ outputs }: { outputs: CompoundOutput[] }) {
+export function OutputCell({
+  outputs,
+  iconMap,
+}: {
+  outputs: CompoundOutput[];
+  iconMap?: Map<number, EntityImage>;
+}) {
   if (outputs.length === 0) return <span className="text-muted-foreground">—</span>;
   return (
     <div className="space-y-0.5">
@@ -17,12 +25,15 @@ export function OutputCell({ outputs }: { outputs: CompoundOutput[] }) {
         const showValue = o.kind === "item" ? range !== "" && range !== "0" : range !== "";
 
         const labelEl = o.itemId ? (
-          <Link
-            href={`/items/${o.itemId}`}
-            className="min-w-0 break-words underline-offset-2 hover:underline"
-          >
-            {o.label}
-          </Link>
+          <>
+            <ItemIcon image={iconMap?.get(o.itemId) ?? null} alt={o.label} className="size-5" />
+            <Link
+              href={`/items/${o.itemId}`}
+              className="min-w-0 break-words underline-offset-2 hover:underline"
+            >
+              {o.label}
+            </Link>
+          </>
         ) : (
           <span className="min-w-0 break-words">{o.label}</span>
         );
