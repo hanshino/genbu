@@ -1,7 +1,9 @@
 "use client";
 
 import type { Item } from "@/lib/types/item";
+import type { EntityImage } from "@/lib/queries/images";
 import { itemAttributeNames, displayableAttributeKeys } from "@/lib/constants/i18n";
+import { ItemIcon } from "@/components/common/item-icon";
 import {
   Table,
   TableBody,
@@ -14,9 +16,10 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   items: Item[];
+  iconMap: Map<number, EntityImage>;
 }
 
-export function CompareMatrix({ items }: Props) {
+export function CompareMatrix({ items, iconMap }: Props) {
   const rows = displayableAttributeKeys
     .map((key) => {
       const values = items.map((it) => {
@@ -37,7 +40,10 @@ export function CompareMatrix({ items }: Props) {
             <TableHead className="w-[6rem]">屬性</TableHead>
             {items.map((it) => (
               <TableHead key={it.id} className="text-right">
-                {it.name}
+                <div className="flex items-center justify-end gap-1.5">
+                  <ItemIcon image={iconMap.get(it.id) ?? null} alt={it.name} className="size-5" />
+                  <span className="truncate">{it.name}</span>
+                </div>
               </TableHead>
             ))}
           </TableRow>

@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import type { RankingItem } from "@/lib/queries/items";
+import type { EntityImage } from "@/lib/queries/images";
+import { ItemIcon } from "@/components/common/item-icon";
 import {
   Combobox,
   ComboboxCollection,
@@ -15,6 +17,7 @@ import {
 interface Props {
   pool: RankingItem[];
   excludeIds: readonly number[];
+  iconMap: Map<number, EntityImage>;
   onPick: (item: RankingItem) => void;
   placeholder?: string;
 }
@@ -22,6 +25,7 @@ interface Props {
 export function ItemPicker({
   pool,
   excludeIds,
+  iconMap,
   onPick,
   placeholder = "搜尋裝備名稱或 ID…",
 }: Props) {
@@ -59,7 +63,8 @@ export function ItemPicker({
           <ComboboxCollection>
             {(it: RankingItem) => (
               <ComboboxItem key={it.id} value={it}>
-                <span className="flex-1">{it.name}</span>
+                <ItemIcon image={iconMap.get(it.id) ?? null} alt={it.name} className="size-5" />
+                <span className="flex-1 truncate">{it.name}</span>
                 <span className="text-xs text-muted-foreground font-mono">
                   Lv{it.level} · #{it.id}
                 </span>

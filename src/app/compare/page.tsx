@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getItemsByIds, getItemRandsByIds, getItemsByType } from "@/lib/queries/items";
+import { getItemIconMap } from "@/lib/queries/images";
 import { isPhase2Type, type Phase2Type } from "@/lib/constants/item-types";
 import { COMPARE_TRAY_MAX } from "@/lib/constants/compare";
 import { BackLink } from "@/components/common/back-link";
@@ -34,6 +35,7 @@ export default async function ComparePage({ searchParams }: Props) {
   const fromUrl = isPhase2Type(params.type) ? params.type : null;
   const activeType: Phase2Type = isPhase2Type(firstType) ? firstType : (fromUrl ?? "HORSE");
   const pool = getItemsByType(activeType);
+  const iconMap = getItemIconMap([...pool.map((p) => p.id), ...ids]);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
@@ -49,6 +51,7 @@ export default async function ComparePage({ searchParams }: Props) {
         initialRands={rands}
         initialIds={ids}
         pool={pool}
+        iconMap={iconMap}
       />
     </div>
   );
