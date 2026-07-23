@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getMonsterById, getDropsForMonster } from "@/lib/queries/monsters";
 import { getStagesForMonster } from "@/lib/queries/monster-spawns";
+import { getNpcImage } from "@/lib/queries/images";
 import { MonsterDetailView } from "@/components/monsters/monster-detail";
 import { MonsterDropTable } from "@/components/monsters/monster-drop-table";
 import { MonsterStageSpawns } from "@/components/monsters/monster-stage-spawns";
@@ -45,6 +46,7 @@ export default async function MonsterDetailPage({ params, searchParams }: PagePr
   const { drops, totalWeight } = getDropsForMonster(monsterId);
   const stageSpawns = getStagesForMonster(monsterId);
   const school = resolveSchool(rawSchool);
+  const portrait = getNpcImage(monster.id);
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
@@ -52,7 +54,7 @@ export default async function MonsterDetailPage({ params, searchParams }: PagePr
         <BackLink href="/monsters">返回怪物列表</BackLink>
       </nav>
 
-      <MonsterDetailView monster={monster} />
+      <MonsterDetailView monster={monster} portrait={portrait} />
 
       <HitRequirementPanel dodge={monster.base_dodge} school={school} />
 

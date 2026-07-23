@@ -1,9 +1,12 @@
 import { Badge } from "@/components/ui/badge";
+import { EntityPortrait } from "@/components/common/entity-portrait";
 import { monsterTypeLabel } from "@/lib/constants/monster-type";
 import type { MonsterDetail } from "@/lib/types/monster";
+import type { EntityImage } from "@/lib/queries/images";
 
 interface MonsterDetailProps {
   monster: MonsterDetail;
+  portrait?: EntityImage | null;
 }
 
 interface AttrSection {
@@ -11,7 +14,7 @@ interface AttrSection {
   rows: { label: string; value: number | null | undefined; unit?: string }[];
 }
 
-export function MonsterDetailView({ monster }: MonsterDetailProps) {
+export function MonsterDetailView({ monster, portrait }: MonsterDetailProps) {
   const sections: AttrSection[] = [
     {
       title: "基本屬性",
@@ -72,28 +75,35 @@ export function MonsterDetailView({ monster }: MonsterDetailProps) {
 
   return (
     <section className="space-y-6">
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">{monster.name}</h1>
-          {monster.type != null && (
-            <Badge variant="secondary" className="font-normal">
-              {monsterTypeLabel(monster.type)}
-            </Badge>
-          )}
-          {monster.elemental && (
-            <Badge variant="outline" className="font-normal">
-              {monster.elemental}
-            </Badge>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          <span className="font-mono">#{monster.id}</span>
-          <span>等級 {monster.level}</span>
-          {monster.elemental_attack != null && monster.elemental_attack !== 0 && (
-            <span>屬性攻擊 {monster.elemental_attack}</span>
-          )}
-        </div>
-      </header>
+      <div className="flex flex-col gap-4 sm:flex-row-reverse sm:items-start">
+        {portrait && (
+          <div className="shrink-0 self-center sm:self-start">
+            <EntityPortrait image={portrait} alt={monster.name} size="lg" />
+          </div>
+        )}
+        <header className="min-w-0 flex-1 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight">{monster.name}</h1>
+            {monster.type != null && (
+              <Badge variant="secondary" className="font-normal">
+                {monsterTypeLabel(monster.type)}
+              </Badge>
+            )}
+            {monster.elemental && (
+              <Badge variant="outline" className="font-normal">
+                {monster.elemental}
+              </Badge>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <span className="font-mono">#{monster.id}</span>
+            <span>等級 {monster.level}</span>
+            {monster.elemental_attack != null && monster.elemental_attack !== 0 && (
+              <span>屬性攻擊 {monster.elemental_attack}</span>
+            )}
+          </div>
+        </header>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         {sections.map((section) => (
