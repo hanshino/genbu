@@ -8,15 +8,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SpawnMapsCell } from "@/components/monsters/spawn-maps-cell";
+import { EntityPortrait } from "@/components/common/entity-portrait";
 import type { MonsterDropSource } from "@/lib/types/monster";
 import type { MonsterStageSpawn } from "@/lib/types/monster-spawn";
+import type { EntityImage } from "@/lib/queries/images";
 
 export function ItemDropList({
   sources,
   spawnsByMonster,
+  portraitMap,
 }: {
   sources: MonsterDropSource[];
   spawnsByMonster: Map<number, MonsterStageSpawn[]>;
+  portraitMap: Map<number, EntityImage>;
 }) {
   if (sources.length === 0) return null;
 
@@ -39,9 +43,16 @@ export function ItemDropList({
               <TableRow key={m.id}>
                 <TableCell className="font-mono text-xs text-muted-foreground">{m.id}</TableCell>
                 <TableCell>
-                  <Link href={`/monsters/${m.id}`} className="font-medium hover:underline">
-                    {m.name}
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <EntityPortrait
+                      image={portraitMap.get(m.id) ?? null}
+                      alt={m.name}
+                      size="sm"
+                    />
+                    <Link href={`/monsters/${m.id}`} className="font-medium hover:underline">
+                      {m.name}
+                    </Link>
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">{m.level}</TableCell>
                 <TableCell className="text-right font-mono">{m.rate.toLocaleString()}</TableCell>
