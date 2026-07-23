@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { ItemCover } from "@/components/items/item-cover";
 import type { Item } from "@/lib/types/item";
 import { displayableAttributeKeys, itemAttributeNames } from "@/lib/constants/i18n";
+import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import type { EquipmentImage } from "@/lib/equipment-images";
 
 interface ItemDetailProps {
@@ -28,7 +29,9 @@ export function ItemDetail({ item, maxValues, cover }: ItemDetailProps) {
         <header className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-semibold tracking-tight">{item.name}</h1>
-            {item.type && <Badge variant="secondary">{item.type}</Badge>}
+            {item.type && (
+              <Badge variant="secondary">{ITEM_TYPE_LABELS[item.type] ?? item.type}</Badge>
+            )}
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <span className="font-mono">#{item.id}</span>

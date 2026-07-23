@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { itemTypeGroups } from "@/lib/constants/item-types";
+import { itemTypeGroups, ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import { track } from "@/lib/analytics/track";
 
 const ALL_TYPES = "__all__";
@@ -79,7 +79,9 @@ export function ItemFilters({
       >
         <SelectTrigger className="sm:w-[220px]">
           <SelectValue>
-            {(v: unknown) => (v == null || v === ALL_TYPES ? "全部類別" : String(v))}
+            {(v: unknown) =>
+              v == null || v === ALL_TYPES ? "全部類別" : (ITEM_TYPE_LABELS[String(v)] ?? String(v))
+            }
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -89,7 +91,7 @@ export function ItemFilters({
               <SelectLabel>{group.label}</SelectLabel>
               {group.types.map((t) => (
                 <SelectItem key={t} value={t}>
-                  {t}
+                  {ITEM_TYPE_LABELS[t] ?? t}
                 </SelectItem>
               ))}
             </SelectGroup>

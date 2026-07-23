@@ -62,52 +62,64 @@ describe("levelToGenPrefix", () => {
 });
 
 describe("itemTypeToSlotPrefix", () => {
-  it("passes through 防具 types unchanged", () => {
-    expect(itemTypeToSlotPrefix("鞋")).toBe("鞋");
-    expect(itemTypeToSlotPrefix("衣")).toBe("衣");
-    expect(itemTypeToSlotPrefix("甲")).toBe("甲");
-    expect(itemTypeToSlotPrefix("盾")).toBe("盾");
-    expect(itemTypeToSlotPrefix("帽")).toBe("帽");
-    expect(itemTypeToSlotPrefix("座騎")).toBe("座騎");
+  it("maps 防具 type_name to their 中文 slot label", () => {
+    expect(itemTypeToSlotPrefix("BOOT")).toBe("鞋");
+    expect(itemTypeToSlotPrefix("ARMOR")).toBe("衣");
+    expect(itemTypeToSlotPrefix("SHIELD")).toBe("盾");
+    expect(itemTypeToSlotPrefix("HELMET")).toBe("帽");
+    expect(itemTypeToSlotPrefix("HORSE")).toBe("座騎");
   });
 
-  it("passes through 飾 types unchanged", () => {
-    expect(itemTypeToSlotPrefix("中飾")).toBe("中飾");
-    expect(itemTypeToSlotPrefix("左飾")).toBe("左飾");
-    expect(itemTypeToSlotPrefix("右飾")).toBe("右飾");
-    expect(itemTypeToSlotPrefix("背飾")).toBe("背飾");
+  it("maps WING (背飾) to its 中文 slot label", () => {
+    expect(itemTypeToSlotPrefix("WING")).toBe("背飾");
+  });
+
+  it("returns null for ORNAMENT (左飾/中飾/右飾 sub-position no longer derivable from type_name)", () => {
+    // items 表已將左飾/中飾/右飾併為單一 ORNAMENT type_code，原始子分類資訊遺失，
+    // 故目前無法解析對應的覺醒前綴（已知限制，非本次 mapping 修復範圍）。
+    expect(itemTypeToSlotPrefix("ORNAMENT")).toBeNull();
   });
 
   it("collapses single-hand weapons into 單手武器", () => {
-    for (const t of ["劍", "刀", "匕首", "扇", "拂塵", "拳刃", "雙劍", "暗器", "棍"]) {
+    for (const t of [
+      "SWORD",
+      "BLADE",
+      "STING",
+      "CLAW",
+      "WHISK",
+      "BOXING",
+      "HAMMER",
+      "HIDDEN_WEAPON",
+      "ROD",
+    ]) {
       expect(itemTypeToSlotPrefix(t)).toBe("單手武器");
     }
   });
 
-  it("maps 雙手刀 to 雙手武器", () => {
-    expect(itemTypeToSlotPrefix("雙手刀")).toBe("雙手武器");
+  it("maps GREAT_SWORD (雙手刀) to 雙手武器", () => {
+    expect(itemTypeToSlotPrefix("GREAT_SWORD")).toBe("雙手武器");
   });
 
-  it("maps 法杖 to 法術武器", () => {
-    expect(itemTypeToSlotPrefix("法杖")).toBe("法術武器");
+  it("maps STAFF (法杖) to 法術武器", () => {
+    expect(itemTypeToSlotPrefix("STAFF")).toBe("法術武器");
   });
 
   it("returns null for non-equip types", () => {
-    expect(itemTypeToSlotPrefix("藥品")).toBeNull();
-    expect(itemTypeToSlotPrefix("寶箱")).toBeNull();
-    expect(itemTypeToSlotPrefix("真元/魂石")).toBeNull();
-    expect(itemTypeToSlotPrefix("未知1")).toBeNull();
+    expect(itemTypeToSlotPrefix("POTION")).toBeNull();
+    expect(itemTypeToSlotPrefix("SCARCE_ITEM")).toBeNull();
+    expect(itemTypeToSlotPrefix("RETURN_SCROLL")).toBeNull();
+    expect(itemTypeToSlotPrefix("BONUS")).toBeNull();
   });
 
-  it("returns null for 手套/手甲 (no formula prefix exists)", () => {
-    expect(itemTypeToSlotPrefix("手套")).toBeNull();
-    expect(itemTypeToSlotPrefix("手甲")).toBeNull();
+  it("returns null for PUNCHER/BOW (手套/手甲，no formula prefix exists)", () => {
+    expect(itemTypeToSlotPrefix("PUNCHER")).toBeNull();
+    expect(itemTypeToSlotPrefix("BOW")).toBeNull();
   });
 
-  it("returns null for 外裝 cosmetic types", () => {
-    expect(itemTypeToSlotPrefix("鞋[外裝]")).toBeNull();
-    expect(itemTypeToSlotPrefix("帽[外裝]")).toBeNull();
-    expect(itemTypeToSlotPrefix("座騎[外裝]")).toBeNull();
+  it("returns null for unrecognized type_name values", () => {
+    expect(itemTypeToSlotPrefix("NORMAL_ITEM")).toBeNull();
+    expect(itemTypeToSlotPrefix("ITEM_PET")).toBeNull();
+    expect(itemTypeToSlotPrefix("NOT_A_REAL_TYPE")).toBeNull();
   });
 
   it("returns null for null/empty type", () => {
@@ -155,22 +167,15 @@ describe("getAwakeningPath", () => {
     ]);
   });
 
-  it("picks highest material_core_id when multi-path collision exists (100右飾)", () => {
-    // 超品龍紋玉珮 level=100 type=右飾 → 100右飾，每階有 五星 vs 九星 雙路徑
+  it("returns null for ORNAMENT items (100右飾 sub-position no longer resolvable)", () => {
+    // 超品龍紋玉珮 level=100，原本 type=右飾 → 100右飾（每階有 五星 vs 九星 雙路徑）。
+    // 遷移後 items.type_name 統一為 ORNAMENT，左飾/中飾/右飾 子分類資訊已遺失，
+    // itemTypeToSlotPrefix 無法反查 "右飾"，故此類道具目前無覺醒路徑（已知限制）。
     const item = getItemById(53450);
     expect(item).not.toBeNull();
-    expect(item!.type).toBe("右飾");
+    expect(item!.type).toBe("ORNAMENT");
     const path = getAwakeningPath(item!);
-    expect(path).not.toBeNull();
-    expect(path!.prefix).toBe("100右飾");
-    const stage1 = path!.stages.find((s) => s.stage === 1)!;
-    expect(stage1.bonuses).toHaveLength(1);
-    expect(stage1.bonuses[0].bonusType).toBe("ITEM_BONUS_MDEF");
-    // 取 material_core_id=26967 (九星) 的路徑：money=60000, value=2
-    expect(stage1.materialId).toBe(26967);
-    expect(stage1.materialName).toBe("九星覺醒符");
-    expect(stage1.money).toBe(60_000);
-    expect(stage1.bonuses[0].value).toBe(2);
+    expect(path).toBeNull();
   });
 
   it("populates material name from awakening token items (五星 for 100 系)", () => {

@@ -45,7 +45,7 @@ describe("getMonsters", () => {
     const result = getMonsters({ pageSize: 10 });
     expect(result.monsters.length).toBeLessThanOrEqual(10);
     expect(result.monsters.length).toBeGreaterThan(0);
-    expect(result.total).toBe(3120);
+    expect(result.total).toBe(3135);
     for (const m of result.monsters) {
       expect(m.id).toBeGreaterThan(0);
       expect(typeof m.hasDrop).toBe("boolean");
@@ -61,7 +61,7 @@ describe("getMonsters", () => {
 
   it("filters by type", () => {
     const type17 = getMonsters({ type: 17, pageSize: 5 });
-    expect(type17.total).toBe(1154);
+    expect(type17.total).toBe(1158);
     for (const m of type17.monsters) expect(m.type).toBe(17);
   });
 

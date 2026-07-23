@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import type { Item } from "@/lib/types/item";
 import type { AwakeningBonus, AwakeningPath, AwakeningStage } from "@/lib/types/awakening";
 
@@ -16,17 +17,30 @@ export function levelToGenPrefix(level: number): string | null {
   return "20"; // 1~39
 }
 
-const ARMOR_TYPES = new Set(["鞋", "衣", "甲", "盾", "帽", "座騎"]);
-const ACCESSORY_TYPES = new Set(["中飾", "左飾", "右飾", "背飾"]);
-const ONE_HAND_WEAPONS = new Set(["劍", "刀", "匕首", "扇", "拂塵", "拳刃", "雙劍", "暗器", "棍"]);
+// items.type_name（英文列舉）→ strong_formula 覺醒前綴用的中文 slot 標籤。
+// ORNAMENT 未列入：舊的左飾/中飾/右飾已於 items 表併為單一 type_code，
+// 無法再反查原本的子分類，故該 type 目前無覺醒路徑（見 getAwakeningPath 回傳 null）。
+const ARMOR_TYPES = new Set(["BOOT", "ARMOR", "SHIELD", "HELMET", "HORSE"]);
+const ACCESSORY_TYPES = new Set(["WING"]);
+const ONE_HAND_WEAPONS = new Set([
+  "SWORD",
+  "BLADE",
+  "STING",
+  "CLAW",
+  "WHISK",
+  "BOXING",
+  "HAMMER",
+  "HIDDEN_WEAPON",
+  "ROD",
+]);
 
 export function itemTypeToSlotPrefix(type: string | null): string | null {
   if (!type) return null;
-  if (ARMOR_TYPES.has(type)) return type;
-  if (ACCESSORY_TYPES.has(type)) return type;
+  if (ARMOR_TYPES.has(type)) return ITEM_TYPE_LABELS[type] ?? null;
+  if (ACCESSORY_TYPES.has(type)) return ITEM_TYPE_LABELS[type] ?? null;
   if (ONE_HAND_WEAPONS.has(type)) return "單手武器";
-  if (type === "雙手刀") return "雙手武器";
-  if (type === "法杖") return "法術武器";
+  if (type === "GREAT_SWORD") return "雙手武器";
+  if (type === "STAFF") return "法術武器";
   return null;
 }
 

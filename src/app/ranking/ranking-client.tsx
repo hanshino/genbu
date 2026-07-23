@@ -14,7 +14,7 @@ import {
   PRESET_PRIMARY_STATS,
   type Weights,
 } from "@/lib/scoring";
-import type { Phase2Type } from "@/lib/constants/item-types";
+import { ITEM_TYPE_LABELS, PHASE2_TYPES, type Phase2Type } from "@/lib/constants/item-types";
 import { useCustomPresets } from "@/lib/hooks/use-custom-presets";
 import { PresetSelector, type PresetSelection } from "@/components/ranking/preset-selector";
 import { WeightEditor } from "@/components/ranking/weight-editor";
@@ -331,7 +331,7 @@ export function RankingClient({ type, items, rands }: Props) {
       <aside className="space-y-5 md:sticky md:top-16 md:self-start">
         {/* Type tabs */}
         <div className="flex gap-1">
-          {(["座騎", "背飾"] as const).map((t) => (
+          {PHASE2_TYPES.map((t) => (
             <Button
               key={t}
               variant={t === type ? "default" : "outline"}
@@ -342,7 +342,7 @@ export function RankingClient({ type, items, rands }: Props) {
                 pushUrl({ type: t });
               }}
             >
-              {t}
+              {ITEM_TYPE_LABELS[t] ?? t}
             </Button>
           ))}
         </div>

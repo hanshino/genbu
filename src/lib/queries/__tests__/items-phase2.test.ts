@@ -3,7 +3,7 @@ import { getItemsByType, getItemsByIds, getItemRandsByIds, getItems } from "../i
 
 describe("getItemsByType", () => {
   it("returns 座騎 rows with only ranking columns", () => {
-    const rows = getItemsByType("座騎");
+    const rows = getItemsByType("HORSE");
     expect(rows.length).toBeGreaterThan(0);
     const sample = rows[0] as Record<string, unknown>;
     expect(sample.picture).toBeUndefined(); // trimmed
@@ -19,7 +19,7 @@ describe("getItemsByIds / getItemRandsByIds", () => {
   });
 
   it("round-trips at least one 座騎 with its rand rows", () => {
-    const [first] = getItemsByType("座騎");
+    const [first] = getItemsByType("HORSE");
     expect(first).toBeDefined();
     const full = getItemsByIds([first.id]);
     expect(full).toHaveLength(1);

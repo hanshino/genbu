@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { SortableHead, type SortContext } from "@/components/common/sortable-head";
 import type { Item } from "@/lib/types/item";
+import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 
 interface ItemTableProps {
   items: Item[];
@@ -52,7 +53,7 @@ export function ItemTable({ items, sort }: ItemTableProps) {
               <TableCell>
                 {item.type ? (
                   <Badge variant="secondary" className="font-normal">
-                    {item.type}
+                    {ITEM_TYPE_LABELS[item.type] ?? item.type}
                   </Badge>
                 ) : (
                   <span className="text-muted-foreground">—</span>

@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, formatPercent } from "@/lib/utils";
+import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import type { MonsterDropItem } from "@/lib/types/monster";
 
 interface MonsterDropTableProps {
@@ -81,7 +82,7 @@ export function MonsterDropTable({ drops, totalWeight }: MonsterDropTableProps) 
                 <TableCell>
                   {d.type ? (
                     <Badge variant="secondary" className="font-normal">
-                      {d.type}
+                      {ITEM_TYPE_LABELS[d.type] ?? d.type}
                     </Badge>
                   ) : (
                     <span className="text-muted-foreground">—</span>

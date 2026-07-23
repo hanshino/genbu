@@ -207,26 +207,26 @@ describe("getCompoundSourcesForItem", () => {
 });
 
 describe("getEquipmentSlotForType", () => {
-  it("maps known equipment types to slot kinds", () => {
-    expect(getEquipmentSlotForType("劍")).toBe(1);
-    expect(getEquipmentSlotForType("帽")).toBe(2);
-    expect(getEquipmentSlotForType("衣")).toBe(3);
-    expect(getEquipmentSlotForType("盾")).toBe(3); // 盾屬 ARMOR slot
-    expect(getEquipmentSlotForType("鞋")).toBe(4);
-    expect(getEquipmentSlotForType("左飾")).toBe(5);
+  it("maps known equipment type_name to slot kinds", () => {
+    expect(getEquipmentSlotForType("SWORD")).toBe(1);
+    expect(getEquipmentSlotForType("HELMET")).toBe(2);
+    expect(getEquipmentSlotForType("ARMOR")).toBe(3);
+    expect(getEquipmentSlotForType("SHIELD")).toBe(3); // 盾屬 ARMOR slot
+    expect(getEquipmentSlotForType("BOOT")).toBe(4);
+    expect(getEquipmentSlotForType("ORNAMENT")).toBe(5);
   });
 
   it("returns null for non-equipment / unknown types", () => {
-    expect(getEquipmentSlotForType("座騎")).toBeNull();
-    expect(getEquipmentSlotForType("背飾")).toBeNull();
-    expect(getEquipmentSlotForType("藥品")).toBeNull();
+    expect(getEquipmentSlotForType("HORSE")).toBeNull();
+    expect(getEquipmentSlotForType("WING")).toBeNull();
+    expect(getEquipmentSlotForType("POTION")).toBeNull();
     expect(getEquipmentSlotForType(null)).toBeNull();
   });
 });
 
 describe("getEquipmentEnhancementsForItemType", () => {
-  it("returns weapon enhancements for type='劍' (group 70 + group 2)", () => {
-    const uses = getEquipmentEnhancementsForItemType("劍");
+  it("returns weapon enhancements for type='SWORD' (劍，group 70 + group 2)", () => {
+    const uses = getEquipmentEnhancementsForItemType("SWORD");
     expect(uses.length).toBeGreaterThanOrEqual(238); // 182 (group 70) + 56 (group 2)
     // 應包含 10001 波波鼠小真元強化
     const sample = uses.find((u) => u.id === 10001);
@@ -237,23 +237,23 @@ describe("getEquipmentEnhancementsForItemType", () => {
     for (const u of uses) expect(u.type).toBe("ITEM_COMPOUND_EQUIPMENT");
   });
 
-  it("returns armor enhancements for type='盾' (same as 衣)", () => {
-    const shieldUses = getEquipmentEnhancementsForItemType("盾");
-    const armorUses = getEquipmentEnhancementsForItemType("衣");
+  it("returns armor enhancements for type='SHIELD' (盾，same as ARMOR/衣)", () => {
+    const shieldUses = getEquipmentEnhancementsForItemType("SHIELD");
+    const armorUses = getEquipmentEnhancementsForItemType("ARMOR");
     expect(shieldUses.length).toBe(armorUses.length);
     expect(shieldUses.length).toBeGreaterThan(0);
     for (const u of shieldUses) expect(u.sideMaterials[0].name).toBe("衣服類");
   });
 
   it("returns [] for non-equipment types", () => {
-    expect(getEquipmentEnhancementsForItemType("座騎")).toEqual([]);
-    expect(getEquipmentEnhancementsForItemType("藥品")).toEqual([]);
+    expect(getEquipmentEnhancementsForItemType("HORSE")).toEqual([]);
+    expect(getEquipmentEnhancementsForItemType("POTION")).toEqual([]);
     expect(getEquipmentEnhancementsForItemType(null)).toEqual([]);
   });
 
   it("uses i18n-aligned bonus labels (外功/內力/根骨/身法/玄學/真氣/重擊/拆招/護勁/木抗)", () => {
     // 抽樣若干 group 70 配方，確認 label 對齊 i18n.ts 而非通用 RPG 譯名
-    const uses = getEquipmentEnhancementsForItemType("劍");
+    const uses = getEquipmentEnhancementsForItemType("SWORD");
     const labels = new Set<string>();
     for (const u of uses) {
       const main = u.outputs[0];

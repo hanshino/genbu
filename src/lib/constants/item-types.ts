@@ -1,5 +1,5 @@
 // 45 種道具分類，以群組組織，供 UI 分層篩選使用。
-// 所有名稱必須與 SQLite items.type 欄位完全一致。
+// 所有名稱必須與 SQLite items.type_name 欄位（英文列舉）完全一致。
 
 export interface TypeGroup {
   id: string;
@@ -7,76 +7,100 @@ export interface TypeGroup {
   types: readonly string[];
 }
 
+// 英文 type_name → 中文顯示名稱。權威對照表，勿依字面英文自行重譯
+// （例如 HAMMER 實際是雙劍、BOW 是手甲、CLAW 是扇，皆與字面義不同）。
+export const ITEM_TYPE_LABELS: Record<string, string> = {
+  SWORD: "劍",
+  BLADE: "刀",
+  HAMMER: "雙劍",
+  ROD: "棍",
+  STAFF: "法杖",
+  WHISK: "拂塵",
+  HIDDEN_WEAPON: "暗器",
+  BOW: "手甲",
+  GREAT_SWORD: "雙手刀",
+  STING: "匕首",
+  CLAW: "扇",
+  PUNCHER: "手套",
+  BOXING: "拳刃",
+  SHIELD: "盾",
+  HELMET: "帽",
+  ARMOR: "衣",
+  BOOT: "鞋",
+  HORSE: "座騎",
+  WING: "背飾",
+  ORNAMENT: "飾品",
+  POTION: "藥品",
+  RETURN_SCROLL: "返回卷軸",
+  ITEM_PET: "寵物",
+  PET_ORNAMENT: "寵物飾品",
+  BONUS: "禮包",
+  MONEY: "金錢",
+  NORMAL_ITEM: "一般道具",
+  SCARCE_ITEM: "真元/魂石",
+  EVENT_ITEM: "活動道具",
+  ITEM_BOT: "機關人",
+  CASTLE_ITEM: "家族道具",
+};
+
 export const itemTypeGroups: readonly TypeGroup[] = [
-  {
-    id: "armor",
-    label: "裝備 — 防具",
-    types: ["帽", "衣", "鞋"],
-  },
-  {
-    id: "accessory",
-    label: "裝備 — 飾品",
-    types: ["左飾", "中飾", "右飾"],
-  },
-  {
-    id: "special",
-    label: "裝備 — 特殊",
-    types: ["座騎", "背飾"],
-  },
   {
     id: "weapon",
     label: "裝備 — 武器",
     types: [
-      "刀",
-      "劍",
-      "匕首",
-      "拳刃",
-      "盾",
-      "手套",
-      "法杖",
-      "扇",
-      "雙手刀",
-      "拂塵",
-      "手甲",
-      "棍",
-      "雙劍",
-      "暗器",
+      "SWORD",
+      "BLADE",
+      "STING",
+      "BOXING",
+      "PUNCHER",
+      "STAFF",
+      "CLAW",
+      "GREAT_SWORD",
+      "WHISK",
+      "BOW",
+      "ROD",
+      "HAMMER",
+      "HIDDEN_WEAPON",
+      "SHIELD",
     ],
+  },
+  {
+    id: "armor",
+    label: "裝備 — 防具",
+    types: ["HELMET", "ARMOR", "BOOT"],
+  },
+  {
+    id: "special",
+    label: "裝備 — 特殊",
+    types: ["HORSE", "WING"],
+  },
+  {
+    id: "accessory",
+    label: "裝備 — 飾品",
+    types: ["ORNAMENT"],
   },
   {
     id: "consumable",
     label: "消耗品",
-    types: ["藥品", "卷軸"],
-  },
-  {
-    id: "chest",
-    label: "寶箱",
-    types: ["寶箱"],
+    types: ["POTION", "RETURN_SCROLL"],
   },
   {
     id: "pet",
-    label: "寵物飾品",
-    types: ["火寵飾", "水寵飾", "木寵飾", "雷寵飾"],
-  },
-  {
-    id: "skin",
-    label: "外裝",
-    types: [
-      "座騎[外裝]",
-      "背飾[外裝]",
-      "帽[外裝]",
-      "衣[外裝]",
-      "鞋[外裝]",
-      "右武器[外裝]",
-      "左武器[外裝]",
-      "飾品[外裝]",
-      "盾[外裝]",
-    ],
+    label: "寵物",
+    types: ["ITEM_PET", "PET_ORNAMENT"],
   },
   {
     id: "misc",
     label: "其他",
-    types: ["真元/魂石", "娃娃", "機關人", "未知1", "未知2", "未知3"],
+    types: [
+      "BONUS",
+      "MONEY",
+      "NORMAL_ITEM",
+      "SCARCE_ITEM",
+      "EVENT_ITEM",
+      "ITEM_BOT",
+      "CASTLE_ITEM",
+    ],
   },
 ] as const;
 
@@ -89,7 +113,7 @@ export function getGroupForType(type: string | null): TypeGroup | null {
 }
 
 // Item types eligible for Phase 2 scoring / ranking / comparison.
-export const PHASE2_TYPES = ["座騎", "背飾"] as const;
+export const PHASE2_TYPES = ["HORSE", "WING"] as const;
 
 export type Phase2Type = (typeof PHASE2_TYPES)[number];
 

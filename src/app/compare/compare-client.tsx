@@ -7,7 +7,7 @@ import type { Item, ItemRand } from "@/lib/types/item";
 import type { RankingItem } from "@/lib/queries/items";
 import { groupRandsByItemId, computePoolMaxValues } from "@/lib/scoring";
 import { COMPARE_TRAY_MAX } from "@/lib/constants/compare";
-import { PHASE2_TYPES, type Phase2Type } from "@/lib/constants/item-types";
+import { ITEM_TYPE_LABELS, PHASE2_TYPES, type Phase2Type } from "@/lib/constants/item-types";
 import { ItemPicker } from "@/components/compare/item-picker";
 import { CompareMatrix } from "@/components/compare/compare-matrix";
 import { ComparePresets } from "@/components/compare/compare-presets";
@@ -66,7 +66,7 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
               disabled={locked}
               title={locked ? "清空比較盤後才能切換類型" : undefined}
             >
-              {t}
+              {ITEM_TYPE_LABELS[t] ?? t}
             </Button>
           );
         })}

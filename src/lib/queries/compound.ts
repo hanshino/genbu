@@ -452,36 +452,35 @@ export function getCompoundUsesForItem(itemId: number): CompoundUse[] {
 }
 
 /**
- * 將 items.type（中文）對應到 ITEM_COMPOUND_EQUIPMENT 的裝備槽代碼。
+ * 將 items.type_name（英文列舉）對應到 ITEM_COMPOUND_EQUIPMENT 的裝備槽代碼。
  * 注意：盾在資料層歸屬於 ARMOR slot（group 80「衣、盾強化」），雖然視覺分類常被歸為武器。
  * 不在此 map 內的 type（座騎/背飾/寵物飾/外裝等）皆無對應強化配方。
+ * ORNAMENT：舊的左飾/中飾/右飾已於 items 表併為單一 type_code，故合併對應單一飾品 slot。
  */
 const EQUIPMENT_SLOT_BY_TYPE: Record<string, EquipmentSlotKind> = {
   // 武器類
-  刀: 1,
-  劍: 1,
-  匕首: 1,
-  拳刃: 1,
-  手套: 1,
-  法杖: 1,
-  扇: 1,
-  雙手刀: 1,
-  拂塵: 1,
-  手甲: 1,
-  棍: 1,
-  雙劍: 1,
-  暗器: 1,
+  BLADE: 1,
+  SWORD: 1,
+  STING: 1,
+  BOXING: 1,
+  PUNCHER: 1,
+  STAFF: 1,
+  CLAW: 1,
+  GREAT_SWORD: 1,
+  WHISK: 1,
+  BOW: 1,
+  ROD: 1,
+  HAMMER: 1,
+  HIDDEN_WEAPON: 1,
   // 帽
-  帽: 2,
+  HELMET: 2,
   // 衣（含盾）
-  衣: 3,
-  盾: 3,
+  ARMOR: 3,
+  SHIELD: 3,
   // 鞋
-  鞋: 4,
+  BOOT: 4,
   // 飾品
-  左飾: 5,
-  中飾: 5,
-  右飾: 5,
+  ORNAMENT: 5,
 };
 
 export function getEquipmentSlotForType(itemType: string | null): EquipmentSlotKind | null {

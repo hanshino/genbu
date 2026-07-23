@@ -29,10 +29,10 @@ export default async function ComparePage({ searchParams }: Props) {
   const items = [...getItemsByIds(ids)].sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
   const rands = getItemRandsByIds(ids);
 
-  // Pool for the picker: driven by items[0].type, or by ?type query, or default 座騎
+  // Pool for the picker: driven by items[0].type, or by ?type query, or default HORSE（座騎）
   const firstType = items[0]?.type;
   const fromUrl = isPhase2Type(params.type) ? params.type : null;
-  const activeType: Phase2Type = isPhase2Type(firstType) ? firstType : (fromUrl ?? "座騎");
+  const activeType: Phase2Type = isPhase2Type(firstType) ? firstType : (fromUrl ?? "HORSE");
   const pool = getItemsByType(activeType);
 
   return (
