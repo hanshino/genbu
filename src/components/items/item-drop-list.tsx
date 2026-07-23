@@ -7,28 +7,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SpawnMapsCell } from "@/components/monsters/spawn-maps-cell";
 import type { MonsterDropSource } from "@/lib/types/monster";
 import type { MonsterStageSpawn } from "@/lib/types/monster-spawn";
-
-const MAX_SPAWN_MAPS_SHOWN = 3;
-
-function SpawnMapsCell({ spawns }: { spawns: MonsterStageSpawn[] | undefined }) {
-  if (!spawns || spawns.length === 0) return <>—</>;
-  const shown = spawns.slice(0, MAX_SPAWN_MAPS_SHOWN);
-  return (
-    <>
-      {shown.map((s, i) => (
-        <span key={`${s.stageKind}-${s.stageId}`}>
-          {i > 0 && "、"}
-          <Link href={`/maps/${s.stageId}`} className="hover:underline">
-            {s.stageName ?? "未知地圖"}
-          </Link>
-        </span>
-      ))}
-      {spawns.length > MAX_SPAWN_MAPS_SHOWN && `…等 ${spawns.length} 張`}
-    </>
-  );
-}
 
 export function ItemDropList({
   sources,
