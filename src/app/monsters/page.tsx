@@ -5,6 +5,7 @@ import {
   getDistinctElementals,
 } from "@/lib/queries/monsters";
 import { getStagesForMonsters } from "@/lib/queries/monster-spawns";
+import { getNpcImageMap } from "@/lib/queries/images";
 import { parseSortDir } from "@/lib/sort";
 import { serializeSearchParams } from "@/lib/utils";
 import { MonsterFilters } from "@/components/monsters/monster-filters";
@@ -51,6 +52,7 @@ export default async function MonstersPage({ searchParams }: PageProps) {
   const availableTypes = getDistinctMonsterTypes();
   const availableElementals = getDistinctElementals();
   const spawnsByMonster = getStagesForMonsters(result.monsters.map((m) => m.id));
+  const portraitMap = getNpcImageMap(result.monsters.map((m) => m.id));
 
   const hasFilter = !!(search || typeRaw || elemental || hasDrop || isNormal);
 
@@ -83,6 +85,7 @@ export default async function MonstersPage({ searchParams }: PageProps) {
         monsters={result.monsters}
         sort={{ sortBy, sortDir, searchParamsStr, basePath: "/monsters" }}
         spawnsByMonster={spawnsByMonster}
+        portraitMap={portraitMap}
       />
 
       {result.totalPages > 1 && (
