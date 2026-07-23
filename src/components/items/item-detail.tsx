@@ -4,16 +4,18 @@ import type { Item } from "@/lib/types/item";
 import { displayableAttributeKeys, itemAttributeNames } from "@/lib/constants/i18n";
 import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import type { EquipmentImage } from "@/lib/equipment-images";
+import type { EntityImage } from "@/lib/queries/images";
 
 interface ItemDetailProps {
   item: Item;
   maxValues?: Record<string, number>;
   cover?: EquipmentImage | null;
+  fallbackIcon?: EntityImage | null;
 }
 
 const formatSigned = (value: number) => (value > 0 ? `+${value}` : String(value));
 
-export function ItemDetail({ item, maxValues, cover }: ItemDetailProps) {
+export function ItemDetail({ item, maxValues, cover, fallbackIcon }: ItemDetailProps) {
   const attributes = displayableAttributeKeys
     .map((key) => ({ key, label: itemAttributeNames[key] ?? key, value: item[key] }))
     .filter((row) => row.value !== 0);
@@ -21,11 +23,19 @@ export function ItemDetail({ item, maxValues, cover }: ItemDetailProps) {
   return (
     <section className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row-reverse sm:items-start">
-        {cover && (
+        {cover ? (
           <div className="shrink-0 self-center sm:self-start">
             <ItemCover cover={cover} alt={item.name} />
           </div>
-        )}
+        ) : fallbackIcon ? (
+          <div className="shrink-0 self-center sm:self-start">
+            <ItemCover
+              cover={{ src: fallbackIcon.url, sourceUrl: fallbackIcon.url }}
+              alt={item.name}
+              pixelated
+            />
+          </div>
+        ) : null}
         <header className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-semibold tracking-tight">{item.name}</h1>
