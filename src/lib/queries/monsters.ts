@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { buildOrderBy, type SortDir } from "@/lib/sort";
+import { MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL } from "@/lib/constants/monster-level";
 import type {
   MonsterDetail,
   MonsterDropItem,
@@ -74,10 +75,28 @@ export interface GetMonstersParams {
   elemental?: string;
   hasDrop?: boolean;
   isNormal?: boolean;
+  /** 等級下限（含）。非數字/空 → 不限。會 clamp 到 [MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL]。 */
+  levelMin?: number;
+  /** 等級上限（含）。非數字/空 → 不限。會 clamp 到 [MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL]。 */
+  levelMax?: number;
   page?: number;
   pageSize?: number;
   sortBy?: string;
   sortDir?: SortDir;
+}
+
+// 把等級上下限正規化：非有限值 → undefined（不限）；各自 clamp 到 [MIN, MAX]；
+// 兩者皆存在且 min > max 時自動對調（寬容處理，避免變成永遠 0 筆）。
+function normalizeLevelBounds(
+  min: number | undefined,
+  max: number | undefined,
+): { min?: number; max?: number } {
+  const clamp = (v: number) =>
+    Math.min(MAX_MONSTER_LEVEL, Math.max(MIN_MONSTER_LEVEL, Math.round(v)));
+  let lo = typeof min === "number" && Number.isFinite(min) ? clamp(min) : undefined;
+  let hi = typeof max === "number" && Number.isFinite(max) ? clamp(max) : undefined;
+  if (lo !== undefined && hi !== undefined && lo > hi) [lo, hi] = [hi, lo];
+  return { min: lo, max: hi };
 }
 
 const MONSTER_SORT_ALLOWLIST: Record<string, string> = {
@@ -134,6 +153,16 @@ export function getMonsters(params: GetMonstersParams = {}): GetMonstersResult {
 
   if (params.isNormal) {
     conditions.push("(n.name LIKE '▲%' OR n.name LIKE '●%')");
+  }
+
+  const { min: levelMin, max: levelMax } = normalizeLevelBounds(params.levelMin, params.levelMax);
+  if (levelMin !== undefined) {
+    conditions.push("n.level >= ?");
+    args.push(levelMin);
+  }
+  if (levelMax !== undefined) {
+    conditions.push("n.level <= ?");
+    args.push(levelMax);
   }
 
   const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
