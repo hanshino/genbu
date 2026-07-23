@@ -7,7 +7,8 @@ import { EntityPortrait } from "@/components/common/entity-portrait";
 import { MissionStepText } from "@/components/missions/mission-step-text";
 import { MissionDialogueSection } from "@/components/missions/mission-dialogue";
 import { getMissionDetail } from "@/lib/queries/missions";
-import { getNpcImageMap, type EntityImage } from "@/lib/queries/images";
+import { getItemIconMap, getNpcImageMap, type EntityImage } from "@/lib/queries/images";
+import { ItemIcon } from "@/components/common/item-icon";
 import type { MissionItemRef, MissionMapRef } from "@/lib/types/mission";
 
 interface PageProps {
@@ -135,12 +136,23 @@ function MapChips({
   );
 }
 
-function ItemSummary({ items }: { items: MissionItemRef[] }) {
+function ItemSummary({
+  items,
+  itemIconMap,
+}: {
+  items: MissionItemRef[];
+  itemIconMap: Map<number, EntityImage>;
+}) {
   if (items.length === 0) return null;
   return (
     <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
       {items.map((it) => (
         <li key={it.itemId} className="flex items-baseline gap-2 px-3 py-2">
+          <ItemIcon
+            image={itemIconMap.get(it.itemId) ?? null}
+            alt={it.name}
+            className="size-6"
+          />
           <Link
             href={`/items/${it.itemId}`}
             className="font-medium underline-offset-2 hover:underline"
@@ -173,6 +185,7 @@ export default async function MissionDetailPage({ params }: PageProps) {
     .filter((m) => m.npcId > 0)
     .map((m) => m.npcId);
   const npcImageMap = getNpcImageMap(npcIds);
+  const itemIconMap = getItemIconMap(mission.allItems.map((it) => it.itemId));
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
@@ -224,7 +237,7 @@ export default async function MissionDetailPage({ params }: PageProps) {
       {mission.allItems.length > 0 && (
         <section className="space-y-2">
           <h2 className="text-lg font-medium">所需物品</h2>
-          <ItemSummary items={mission.allItems} />
+          <ItemSummary items={mission.allItems} itemIconMap={itemIconMap} />
           <p className="text-xs text-muted-foreground">
             數量為步驟中出現的最大需求量；同物品多步出現時取最大值。
           </p>
