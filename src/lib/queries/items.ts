@@ -2,6 +2,38 @@ import { getDb } from "@/lib/db";
 import { buildOrderBy, type SortDir } from "@/lib/sort";
 import type { Item, ItemRand } from "@/lib/types/item";
 
+// items 表欄位改名（新 schema），SQL 用 alias 把新欄位對回 app 舊 key，
+// 沿用 monsters.ts（98c144b）同一手法：`Item` 型別與 i18n 不動。
+const RENAMED_ITEM_COLUMNS: Record<string, string> = {
+  type: "type_name",
+  level: "base_lv",
+  def: "extra_def",
+  mdef: "magic_def",
+  critical: "critical_hit",
+  speed: "walk_speed",
+  fire: "fire_def",
+  water: "water_def",
+  thunder: "lightning_def",
+  tree: "wood_def",
+  min_damage: "damage_min",
+  max_damage: "damage_max",
+  min_pdamage: "pdamage_min",
+  max_pdamage: "pdamage_max",
+};
+
+// ponytail: 抗定（freeze）在新 schema 已不存在，恆回 0 只為讓 Item 型別的 key 有值；
+// 顯示層對 0 值做 filter 會自動濾掉，日後確定要拿掉再連 i18n 一起清。
+function itemColumnExpr(key: string): string {
+  if (key === "freeze") return "0 AS freeze";
+  const renamed = RENAMED_ITEM_COLUMNS[key];
+  return renamed ? `${renamed} AS ${key}` : key;
+}
+
+// SELECT * 已含所有欄位，這裡只需額外 alias 改名過的欄位（含 freeze）覆蓋掉 SELECT * 撈不到的舊名。
+const RENAMED_ITEM_ALIASES_SQL = [...Object.keys(RENAMED_ITEM_COLUMNS), "freeze"]
+  .map(itemColumnExpr)
+  .join(", ");
+
 // Columns required by ranking/compare UI: identity + level + all numeric
 // attributes used in scoring/display. Excludes picture/icon/summary/note/
 // durability/value to reduce payload size.
@@ -42,7 +74,7 @@ export const RANKING_ITEM_COLUMNS = [
 export type RankingItem = Pick<Item, (typeof RANKING_ITEM_COLUMNS)[number]>;
 
 const ITEM_SORT_ALLOWLIST: Record<string, string> = {
-  level: "level",
+  level: "base_lv",
   weight: "weight",
   id: "id",
 };
@@ -88,7 +120,7 @@ export function getItems(params: GetItemsParams = {}): GetItemsResult {
   }
 
   if (params.type) {
-    conditions.push("type = ?");
+    conditions.push("type_name = ?");
     args.push(params.type);
   }
 
@@ -103,12 +135,14 @@ export function getItems(params: GetItemsParams = {}): GetItemsResult {
     allowlist: ITEM_SORT_ALLOWLIST,
     sortBy: params.sortBy,
     sortDir: params.sortDir,
-    defaultOrderBy: "level DESC, id ASC",
+    defaultOrderBy: "base_lv DESC, id ASC",
     idColumn: "id",
   });
 
   const items = db
-    .prepare(`SELECT * FROM items ${whereSql} ${orderBy} LIMIT ? OFFSET ?`)
+    .prepare(
+      `SELECT *, ${RENAMED_ITEM_ALIASES_SQL} FROM items ${whereSql} ${orderBy} LIMIT ? OFFSET ?`,
+    )
     .all(...args, pageSize, offset) as Item[];
 
   return {
@@ -122,7 +156,9 @@ export function getItems(params: GetItemsParams = {}): GetItemsResult {
 
 export function getItemById(id: number): Item | null {
   const db = getDb();
-  const row = db.prepare("SELECT * FROM items WHERE id = ?").get(id) as Item | undefined;
+  const row = db
+    .prepare(`SELECT *, ${RENAMED_ITEM_ALIASES_SQL} FROM items WHERE id = ?`)
+    .get(id) as Item | undefined;
   return row ?? null;
 }
 
@@ -135,9 +171,9 @@ export function getItemRands(itemId: string): ItemRand[] {
 
 export function getItemsByType(type: string): RankingItem[] {
   const db = getDb();
-  const cols = RANKING_ITEM_COLUMNS.join(", ");
+  const cols = RANKING_ITEM_COLUMNS.map(itemColumnExpr).join(", ");
   return db
-    .prepare(`SELECT ${cols} FROM items WHERE type = ? ORDER BY level DESC, id ASC`)
+    .prepare(`SELECT ${cols} FROM items WHERE type_name = ? ORDER BY base_lv DESC, id ASC`)
     .all(type) as RankingItem[];
 }
 
@@ -145,7 +181,9 @@ export function getItemsByIds(ids: readonly number[]): Item[] {
   if (ids.length === 0) return [];
   const db = getDb();
   const placeholders = ids.map(() => "?").join(",");
-  return db.prepare(`SELECT * FROM items WHERE id IN (${placeholders})`).all(...ids) as Item[];
+  return db
+    .prepare(`SELECT *, ${RENAMED_ITEM_ALIASES_SQL} FROM items WHERE id IN (${placeholders})`)
+    .all(...ids) as Item[];
 }
 
 export function getItemRandsByIds(ids: readonly number[]): ItemRand[] {
