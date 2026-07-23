@@ -11,6 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ItemIcon } from "@/components/common/item-icon";
+import { getItemIconMap } from "@/lib/queries/images";
 import { getShopDetail } from "@/lib/queries/shops";
 import { SHOP_KIND_LABELS, castleLabel, shopTitle } from "@/lib/constants/shop";
 
@@ -37,6 +39,11 @@ export default async function ShopDetailPage({ params }: PageProps) {
 
   const shop = getShopDetail(shopId);
   if (!shop) notFound();
+
+  const iconMap = getItemIconMap([
+    ...shop.sells.map((e) => e.itemId),
+    ...shop.buys.map((e) => e.itemId),
+  ]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
@@ -76,12 +83,19 @@ export default async function ShopDetailPage({ params }: PageProps) {
               {shop.sells.map((e) => (
                 <TableRow key={e.itemId}>
                   <TableCell>
-                    <Link
-                      href={`/items/${e.itemId}`}
-                      className="font-medium underline decoration-dotted underline-offset-2 hover:decoration-solid"
-                    >
-                      {e.itemName ?? `#${e.itemId}`}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <ItemIcon
+                        image={iconMap.get(e.itemId) ?? null}
+                        alt={e.itemName ?? String(e.itemId)}
+                        className="size-6"
+                      />
+                      <Link
+                        href={`/items/${e.itemId}`}
+                        className="font-medium underline decoration-dotted underline-offset-2 hover:decoration-solid"
+                      >
+                        {e.itemName ?? `#${e.itemId}`}
+                      </Link>
+                    </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {e.itemType ?? "—"}
@@ -114,12 +128,19 @@ export default async function ShopDetailPage({ params }: PageProps) {
                 {shop.buys.map((e) => (
                   <TableRow key={e.itemId}>
                     <TableCell>
-                      <Link
-                        href={`/items/${e.itemId}`}
-                        className="font-medium underline decoration-dotted underline-offset-2 hover:decoration-solid"
-                      >
-                        {e.itemName ?? `#${e.itemId}`}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <ItemIcon
+                          image={iconMap.get(e.itemId) ?? null}
+                          alt={e.itemName ?? String(e.itemId)}
+                          className="size-6"
+                        />
+                        <Link
+                          href={`/items/${e.itemId}`}
+                          className="font-medium underline decoration-dotted underline-offset-2 hover:decoration-solid"
+                        >
+                          {e.itemName ?? `#${e.itemId}`}
+                        </Link>
+                      </div>
                     </TableCell>
                     <TableCell className="text-right font-mono text-sm">{e.rate}%</TableCell>
                   </TableRow>
