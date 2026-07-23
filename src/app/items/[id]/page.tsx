@@ -5,6 +5,7 @@ import { ChevronRightIcon } from "lucide-react";
 import { BackLink } from "@/components/common/back-link";
 import { getItemById, getItemRands, getItemRandsByIds, getItemsByType } from "@/lib/queries/items";
 import { getMonstersByDropItem } from "@/lib/queries/monsters";
+import { getStagesForMonsters } from "@/lib/queries/monster-spawns";
 import {
   presets,
   scoreItemAcrossPresets,
@@ -54,6 +55,7 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
 
   const rands = getItemRands(String(item.id));
   const sources = getMonstersByDropItem(item.id);
+  const spawnsByMonster = getStagesForMonsters(sources.map((s) => s.id));
   const cover = imageOfItem(item);
 
   const phase2 = isPhase2Type(item.type);
@@ -110,7 +112,7 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
 
       <ItemRandTable rands={rands} />
 
-      <ItemDropList sources={sources} />
+      <ItemDropList sources={sources} spawnsByMonster={spawnsByMonster} />
 
       <ShopAvailabilitySection itemId={item.id} />
 
