@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import {
   getAchievementCategories,
   getAchievementsByCategory,
+  getAchievementsWithRewards,
   searchAchievements,
   ACHIEVEMENT_SEARCH_LIMIT,
 } from "@/lib/queries/achievements";
@@ -20,12 +21,13 @@ export const metadata: Metadata = {
 };
 
 interface PageProps {
-  searchParams: Promise<{ cat?: string; search?: string }>;
+  searchParams: Promise<{ cat?: string; search?: string; view?: string }>;
 }
 
 export default async function AchievementsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const search = (params.search ?? "").trim();
+  const view = params.view === "reward" ? "reward" : "category";
   const categories = getAchievementCategories();
   const catParam = Number(params.cat);
   const activeCat = categories.find((c) => c.id === catParam) ?? categories[0];
@@ -52,13 +54,18 @@ export default async function AchievementsPage({ searchParams }: PageProps) {
         <SearchResults keyword={search} />
       ) : (
         <>
-          <nav aria-label="成就分類" className="flex flex-wrap gap-1.5">
-            {categories.map((c) => {
-              const active = c.id === activeCat.id;
+          <nav aria-label="瀏覽方式" className="flex flex-wrap gap-1.5">
+            {(
+              [
+                { key: "category", label: "依分類", href: "/achievements" },
+                { key: "reward", label: "依獎勵", href: "/achievements?view=reward" },
+              ] as const
+            ).map((v) => {
+              const active = v.key === view;
               return (
                 <Link
-                  key={c.id}
-                  href={c.id === categories[0].id ? "/achievements" : `/achievements?cat=${c.id}`}
+                  key={v.key}
+                  href={v.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "rounded-md border px-2.5 py-1 text-sm transition-colors",
@@ -67,12 +74,40 @@ export default async function AchievementsPage({ searchParams }: PageProps) {
                       : "border-border/60 bg-card hover:bg-muted/50",
                   )}
                 >
-                  {c.name}
+                  {v.label}
                 </Link>
               );
             })}
           </nav>
-          <CategorySections categoryId={activeCat.id} />
+          {view === "reward" ? (
+            <RewardGroups />
+          ) : (
+            <>
+              <nav aria-label="成就分類" className="flex flex-wrap gap-1.5">
+                {categories.map((c) => {
+                  const active = c.id === activeCat.id;
+                  return (
+                    <Link
+                      key={c.id}
+                      href={
+                        c.id === categories[0].id ? "/achievements" : `/achievements?cat=${c.id}`
+                      }
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "rounded-md border px-2.5 py-1 text-sm transition-colors",
+                        active
+                          ? "border-transparent bg-secondary font-medium text-secondary-foreground"
+                          : "border-border/60 bg-card hover:bg-muted/50",
+                      )}
+                    >
+                      {c.name}
+                    </Link>
+                  );
+                })}
+              </nav>
+              <CategorySections categoryId={activeCat.id} />
+            </>
+          )}
         </>
       )}
 
@@ -106,6 +141,77 @@ function CategorySections({ categoryId }: { categoryId: number }) {
               <span className="text-xs text-muted-foreground">
                 {sc.count} 個成就 · 共 {sc.totalPoints} 點
               </span>
+            </div>
+            <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
+              {list.map((a) => (
+                <AchievementRow key={a.id} achievement={a} />
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+/** 平鋪類獎勵(非永久屬性加成)的中文標題,依此順序渲染。 */
+const FLAT_REWARD_TYPES = [
+  { type: 2, label: "道具" },
+  { type: 3, label: "銀兩" },
+  { type: 1, label: "貨幣" },
+] as const;
+
+function RewardGroups() {
+  const rows = getAchievementsWithRewards();
+
+  const byType = new Map<number, Row[]>();
+  for (const r of rows) {
+    const list = byType.get(r.rewardType) ?? [];
+    list.push(r);
+    byType.set(r.rewardType, list);
+  }
+
+  const statRows = byType.get(5) ?? [];
+  const byAttr = new Map<string, Row[]>();
+  for (const r of statRows) {
+    const key = r.rewardName ?? `#${r.rewardId}`;
+    const list = byAttr.get(key) ?? [];
+    list.push(r);
+    byAttr.set(key, list);
+  }
+  const attrGroups = Array.from(byAttr.entries()).sort((a, b) => {
+    if (b[1].length !== a[1].length) return b[1].length - a[1].length;
+    return a[0].localeCompare(b[0], "zh-TW");
+  });
+
+  return (
+    <div className="space-y-6">
+      {statRows.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-medium">永久屬性加成</h2>
+          {attrGroups.map(([attr, list]) => (
+            <div key={attr} className="space-y-2">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h3 className="text-base font-medium">{attr}</h3>
+                <span className="text-xs text-muted-foreground">{list.length} 個成就</span>
+              </div>
+              <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
+                {list.map((a) => (
+                  <AchievementRow key={a.id} achievement={a} />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+      )}
+      {FLAT_REWARD_TYPES.map(({ type, label }) => {
+        const list = byType.get(type) ?? [];
+        if (list.length === 0) return null;
+        return (
+          <section key={type} className="space-y-2">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="text-lg font-medium">{label}</h2>
+              <span className="text-xs text-muted-foreground">{list.length} 個成就</span>
             </div>
             <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
               {list.map((a) => (

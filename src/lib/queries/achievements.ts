@@ -89,6 +89,19 @@ export function getAchievementsByCategory(categoryId: number): AchievementRow[] 
     .all(categoryId) as AchievementRow[];
 }
 
+/** 全部有獎勵(reward_type != 0)的成就,供依獎勵分組瀏覽。 */
+export function getAchievementsWithRewards(): AchievementRow[] {
+  const db = getDb();
+  return db
+    .prepare(
+      `${ROW_SELECT}
+       FROM achievements a
+       WHERE a.reward_type != 0
+       ORDER BY a.reward_type, rewardName, a.reward_amount DESC, a.id`,
+    )
+    .all() as AchievementRow[];
+}
+
 /** 跨全分類搜尋名稱+描述,附分類名,上限 ACHIEVEMENT_SEARCH_LIMIT。 */
 export function searchAchievements(keyword: string): AchievementSearchRow[] {
   const kw = keyword.trim();

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   getAchievementCategories,
   getAchievementsByCategory,
+  getAchievementsWithRewards,
   searchAchievements,
 } from "../achievements";
 import { levelToGenPrefix, itemTypeToSlotPrefix, getAwakeningPath } from "../awakening";
@@ -128,6 +129,10 @@ describe("achievements.ts", () => {
 
   it("getAchievementsByCategory", () => {
     expect(() => getAchievementsByCategory(1)).not.toThrow();
+  });
+
+  it("getAchievementsWithRewards", () => {
+    expect(() => getAchievementsWithRewards()).not.toThrow();
   });
 
   it("searchAchievements（非空關鍵字才會真的 prepare）", () => {
