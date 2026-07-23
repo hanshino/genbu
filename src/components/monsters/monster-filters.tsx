@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { monsterTypeLabel } from "@/lib/constants/monster-type";
+import { MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL } from "@/lib/constants/monster-level";
 import { FILTER_ALL } from "@/lib/constants/filters";
 import { track } from "@/lib/analytics/track";
 
@@ -21,6 +22,8 @@ export function MonsterFilters({
   initialElemental,
   initialHasDrop,
   initialIsNormal,
+  initialLevelMin,
+  initialLevelMax,
   availableTypes,
   availableElementals,
 }: {
@@ -29,6 +32,8 @@ export function MonsterFilters({
   initialElemental: string;
   initialHasDrop: boolean;
   initialIsNormal: boolean;
+  initialLevelMin: string;
+  initialLevelMax: string;
   availableTypes: number[];
   availableElementals: string[];
 }) {
@@ -39,15 +44,18 @@ export function MonsterFilters({
   const [elemental, setElemental] = useState(initialElemental || FILTER_ALL);
   const [hasDrop, setHasDrop] = useState(initialHasDrop);
   const [isNormal, setIsNormal] = useState(initialIsNormal);
+  const [levelMin, setLevelMin] = useState(initialLevelMin);
+  const [levelMax, setLevelMax] = useState(initialLevelMax);
   const [, startTransition] = useTransition();
 
+  // search 與等級上下限都是可自由輸入的欄位 → 一起 debounce，避免每敲一鍵就打 URL。
   useEffect(() => {
     const handle = setTimeout(() => {
-      pushState({ search, type, elemental, hasDrop, isNormal });
+      pushState({ search, type, elemental, hasDrop, isNormal, levelMin, levelMax });
     }, 300);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+  }, [search, levelMin, levelMax]);
 
   function pushState(next: {
     search: string;
@@ -55,6 +63,8 @@ export function MonsterFilters({
     elemental: string;
     hasDrop: boolean;
     isNormal: boolean;
+    levelMin: string;
+    levelMax: string;
   }) {
     const params = new URLSearchParams(searchParams.toString());
     if (next.search.trim()) params.set("search", next.search.trim());
@@ -67,6 +77,10 @@ export function MonsterFilters({
     else params.delete("hasDrop");
     if (next.isNormal) params.set("isNormal", "1");
     else params.delete("isNormal");
+    if (next.levelMin.trim()) params.set("levelMin", next.levelMin.trim());
+    else params.delete("levelMin");
+    if (next.levelMax.trim()) params.set("levelMax", next.levelMax.trim());
+    else params.delete("levelMax");
     params.delete("page");
     const nextQs = params.toString();
     const currentQs = new URLSearchParams(searchParams.toString());
@@ -80,7 +94,9 @@ export function MonsterFilters({
       (!!next.type && next.type !== FILTER_ALL) ||
       (!!next.elemental && next.elemental !== FILTER_ALL) ||
       next.hasDrop ||
-      next.isNormal;
+      next.isNormal ||
+      !!next.levelMin.trim() ||
+      !!next.levelMax.trim();
     if (query.length > 0 || hasFilter) {
       track("search_submit", {
         scope: "monsters",
@@ -92,7 +108,7 @@ export function MonsterFilters({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <Input
           placeholder="搜尋怪物名稱或編號..."
           aria-label="搜尋怪物名稱或編號"
@@ -106,7 +122,7 @@ export function MonsterFilters({
           onValueChange={(v) => {
             const nextType = v ?? FILTER_ALL;
             setType(nextType);
-            pushState({ search, type: nextType, elemental, hasDrop, isNormal });
+            pushState({ search, type: nextType, elemental, hasDrop, isNormal, levelMin, levelMax });
           }}
         >
           <SelectTrigger className="sm:w-[160px]">
@@ -130,7 +146,15 @@ export function MonsterFilters({
           onValueChange={(v) => {
             const nextElemental = v ?? FILTER_ALL;
             setElemental(nextElemental);
-            pushState({ search, type, elemental: nextElemental, hasDrop, isNormal });
+            pushState({
+              search,
+              type,
+              elemental: nextElemental,
+              hasDrop,
+              isNormal,
+              levelMin,
+              levelMax,
+            });
           }}
         >
           <SelectTrigger className="sm:w-[140px]">
@@ -147,6 +171,34 @@ export function MonsterFilters({
             ))}
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-2">
+          <span className="whitespace-nowrap text-sm text-muted-foreground">等級</span>
+          <Input
+            type="number"
+            inputMode="numeric"
+            min={MIN_MONSTER_LEVEL}
+            max={MAX_MONSTER_LEVEL}
+            placeholder={String(MIN_MONSTER_LEVEL)}
+            aria-label="等級下限"
+            value={levelMin}
+            onChange={(e) => setLevelMin(e.target.value)}
+            className="w-20"
+          />
+          <span aria-hidden className="text-muted-foreground">
+            –
+          </span>
+          <Input
+            type="number"
+            inputMode="numeric"
+            min={MIN_MONSTER_LEVEL}
+            max={MAX_MONSTER_LEVEL}
+            placeholder={String(MAX_MONSTER_LEVEL)}
+            aria-label="等級上限"
+            value={levelMax}
+            onChange={(e) => setLevelMax(e.target.value)}
+            className="w-20"
+          />
+        </div>
       </div>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
         <label className="inline-flex min-h-11 cursor-pointer select-none items-center gap-2 py-1">
@@ -155,7 +207,15 @@ export function MonsterFilters({
             onCheckedChange={(checked) => {
               const nextHasDrop = checked === true;
               setHasDrop(nextHasDrop);
-              pushState({ search, type, elemental, hasDrop: nextHasDrop, isNormal });
+              pushState({
+                search,
+                type,
+                elemental,
+                hasDrop: nextHasDrop,
+                isNormal,
+                levelMin,
+                levelMax,
+              });
             }}
           />
           <span>僅顯示有掉落</span>
@@ -166,7 +226,15 @@ export function MonsterFilters({
             onCheckedChange={(checked) => {
               const nextIsNormal = checked === true;
               setIsNormal(nextIsNormal);
-              pushState({ search, type, elemental, hasDrop, isNormal: nextIsNormal });
+              pushState({
+                search,
+                type,
+                elemental,
+                hasDrop,
+                isNormal: nextIsNormal,
+                levelMin,
+                levelMax,
+              });
             }}
           />
           <span>僅顯示一般怪 (▲ / ●)</span>

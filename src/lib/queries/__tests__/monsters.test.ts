@@ -161,6 +161,45 @@ describe("distinct helpers", () => {
   });
 });
 
+describe("getMonsters — level range", () => {
+  it("filters by levelMin (level >= min)", () => {
+    const result = getMonsters({ levelMin: 100, pageSize: 20 });
+    expect(result.total).toBe(1394);
+    for (const m of result.monsters) expect(m.level).toBeGreaterThanOrEqual(100);
+  });
+
+  it("filters by levelMax (level <= max)", () => {
+    const result = getMonsters({ levelMax: 10, pageSize: 20 });
+    expect(result.total).toBe(157);
+    for (const m of result.monsters) expect(m.level).toBeLessThanOrEqual(10);
+  });
+
+  it("filters by both bounds (inclusive)", () => {
+    const result = getMonsters({ levelMin: 50, levelMax: 60, pageSize: 100 });
+    expect(result.total).toBe(216);
+    for (const m of result.monsters) {
+      expect(m.level).toBeGreaterThanOrEqual(50);
+      expect(m.level).toBeLessThanOrEqual(60);
+    }
+  });
+
+  it("swaps bounds when min > max (forgiving)", () => {
+    const swapped = getMonsters({ levelMin: 60, levelMax: 50, pageSize: 100 });
+    expect(swapped.total).toBe(216);
+  });
+
+  it("clamps out-of-range bounds to [1, 200]", () => {
+    // 0 clamps to 1 (min possible level) → no effective lower bound
+    expect(getMonsters({ levelMin: 0 }).total).toBe(3135);
+    // 999 clamps to 200 (max possible level) → no effective upper bound
+    expect(getMonsters({ levelMax: 999 }).total).toBe(3135);
+  });
+
+  it("ignores non-finite bounds (treated as unbounded)", () => {
+    expect(getMonsters({ levelMin: Number.NaN, levelMax: Number.NaN }).total).toBe(3135);
+  });
+});
+
 describe("getMonsters — sort", () => {
   it("sorts by level ascending", () => {
     const result = getMonsters({ sortBy: "level", sortDir: "asc", pageSize: 20 });

@@ -21,6 +21,8 @@ interface PageProps {
     elemental?: string;
     hasDrop?: string;
     isNormal?: string;
+    levelMin?: string;
+    levelMax?: string;
     page?: string;
     sortBy?: string;
     sortDir?: string;
@@ -34,17 +36,23 @@ export default async function MonstersPage({ searchParams }: PageProps) {
   const elemental = params.elemental ?? "";
   const hasDrop = params.hasDrop === "1";
   const isNormal = params.isNormal === "1";
+  const levelMinRaw = params.levelMin ?? "";
+  const levelMaxRaw = params.levelMax ?? "";
   const page = Number(params.page) || 1;
   const sortBy = params.sortBy;
   const sortDir = parseSortDir(params.sortDir);
 
   const typeNum = typeRaw ? Number(typeRaw) : undefined;
+  const levelMinNum = levelMinRaw ? Number(levelMinRaw) : undefined;
+  const levelMaxNum = levelMaxRaw ? Number(levelMaxRaw) : undefined;
   const result = getMonsters({
     search,
     type: Number.isInteger(typeNum) ? typeNum : undefined,
     elemental: elemental || undefined,
     hasDrop,
     isNormal,
+    levelMin: levelMinNum,
+    levelMax: levelMaxNum,
     page,
     sortBy,
     sortDir,
@@ -54,7 +62,15 @@ export default async function MonstersPage({ searchParams }: PageProps) {
   const spawnsByMonster = getStagesForMonsters(result.monsters.map((m) => m.id));
   const portraitMap = getNpcImageMap(result.monsters.map((m) => m.id));
 
-  const hasFilter = !!(search || typeRaw || elemental || hasDrop || isNormal);
+  const hasFilter = !!(
+    search ||
+    typeRaw ||
+    elemental ||
+    hasDrop ||
+    isNormal ||
+    levelMinRaw ||
+    levelMaxRaw
+  );
 
   const searchParamsStr = serializeSearchParams(params);
 
@@ -75,6 +91,8 @@ export default async function MonstersPage({ searchParams }: PageProps) {
             initialElemental={elemental}
             initialHasDrop={hasDrop}
             initialIsNormal={isNormal}
+            initialLevelMin={levelMinRaw}
+            initialLevelMax={levelMaxRaw}
             availableTypes={availableTypes}
             availableElementals={availableElementals}
           />
