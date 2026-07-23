@@ -5,7 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { CheckIcon, PlusIcon } from "lucide-react";
 import { presets } from "@/lib/scoring";
 import type { ScoredItem } from "@/lib/scoring";
-import { imageOfItem } from "@/lib/equipment-images";
+import { ItemIcon } from "@/components/common/item-icon";
+import type { EntityImage } from "@/lib/queries/images";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -27,28 +28,6 @@ import { useCompareTray } from "@/lib/hooks/use-compare-tray";
 import { track } from "@/lib/analytics/track";
 import { cn } from "@/lib/utils";
 
-function ItemThumbnail({ itemId }: { itemId: number }) {
-  const cover = imageOfItem({ id: itemId });
-  if (!cover) {
-    return (
-      <div className="h-9 w-9 shrink-0 rounded border border-border/30 bg-muted/20" aria-hidden />
-    );
-  }
-  return (
-    <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded border border-border/50 bg-muted/30">
-      {/* eslint-disable-next-line @next/next/no-img-element -- hotlink 直連；走 next/image 會集中到 Vercel optimizer IP，對 tthol.uj.com.tw 反而更易被限流 */}
-      <img
-        src={cover.src}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        className="absolute inset-0 h-full w-full object-contain"
-        aria-hidden
-      />
-    </div>
-  );
-}
-
 export interface RankingRow {
   scored: ScoredItem;
   presetScores: Record<string, number>;
@@ -66,6 +45,7 @@ interface Props {
   limit?: number;
   onShowAll?: () => void;
   showingAll?: boolean;
+  iconMap: Map<number, EntityImage>;
 }
 
 function useInitialCompactMode() {
@@ -86,6 +66,7 @@ export function RankingTable({
   limit = 30,
   onShowAll,
   showingAll,
+  iconMap,
 }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("current");
   const [compact, setCompact] = useInitialCompactMode();
@@ -189,7 +170,7 @@ export function RankingTable({
                       href={`/items/${item.id}?from=ranking`}
                       className="inline-flex min-h-[44px] items-center gap-2 text-foreground transition-colors hover:text-primary hover:underline focus-visible:underline focus-visible:text-primary focus-visible:outline-none"
                     >
-                      <ItemThumbnail itemId={item.id} />
+                      <ItemIcon image={iconMap.get(item.id) ?? null} alt={item.name} className="size-9" />
                       <span>{item.name}</span>
                     </Link>
                   </TableCell>
