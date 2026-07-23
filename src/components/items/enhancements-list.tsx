@@ -23,7 +23,9 @@ import {
   formatProbRange,
 } from "@/lib/format/compound";
 import { cn } from "@/lib/utils";
+import { ItemIcon } from "@/components/common/item-icon";
 import type { CompoundUse } from "@/lib/queries/compound";
+import type { EntityImage } from "@/lib/queries/images";
 
 export type EnhancementSortMode = "prob" | "bonus";
 
@@ -54,9 +56,11 @@ function compareByBonus(a: CompoundUse, b: CompoundUse): number {
 function BucketRow({
   bucket,
   sort,
+  iconMap,
 }: {
   bucket: BonusBucket;
   sort: EnhancementSortMode;
+  iconMap: Map<number, EntityImage>;
 }) {
   const sortedUses = useMemo(() => {
     const cmp = sort === "bonus" ? compareByBonus : compareByProb;
@@ -120,12 +124,19 @@ function BucketRow({
                     </TableCell>
                     <TableCell className="text-xs">
                       {u.coreMaterial ? (
-                        <Link
-                          href={`/items/${u.coreMaterial.id}`}
-                          className="underline-offset-2 hover:underline"
-                        >
-                          {u.coreMaterial.name}
-                        </Link>
+                        <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0">
+                          <ItemIcon
+                            image={iconMap.get(u.coreMaterial.id) ?? null}
+                            alt={u.coreMaterial.name}
+                            className="size-5"
+                          />
+                          <Link
+                            href={`/items/${u.coreMaterial.id}`}
+                            className="underline-offset-2 hover:underline"
+                          >
+                            {u.coreMaterial.name}
+                          </Link>
+                        </div>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
@@ -195,7 +206,13 @@ function SortToggle({ value, onChange }: SortToggleProps) {
   );
 }
 
-export function EnhancementsList({ buckets }: { buckets: BonusBucket[] }) {
+export function EnhancementsList({
+  buckets,
+  iconMap,
+}: {
+  buckets: BonusBucket[];
+  iconMap: Map<number, EntityImage>;
+}) {
   const [sort, setSort] = useState<EnhancementSortMode>("bonus");
 
   return (
@@ -205,7 +222,7 @@ export function EnhancementsList({ buckets }: { buckets: BonusBucket[] }) {
       </div>
       <div className="space-y-2">
         {buckets.map((b) => (
-          <BucketRow key={b.label} bucket={b} sort={sort} />
+          <BucketRow key={b.label} bucket={b} sort={sort} iconMap={iconMap} />
         ))}
       </div>
     </div>

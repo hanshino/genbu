@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { ItemIcon } from "@/components/common/item-icon";
+import type { EntityImage } from "@/lib/queries/images";
 
 export interface MaterialEntry {
   id: number;
@@ -17,21 +19,25 @@ export type MaterialKind = "slot-kind" | "self" | "real";
 interface MaterialLinkProps {
   m: MaterialEntry;
   kind?: MaterialKind;
+  image?: EntityImage | null;
 }
 
-export function MaterialLink({ m, kind = "real" }: MaterialLinkProps) {
+export function MaterialLink({ m, kind = "real", image }: MaterialLinkProps) {
   const isPlaceholder = kind !== "real";
   return (
     <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0">
       {isPlaceholder ? (
         <span className="text-muted-foreground italic">{m.name}</span>
       ) : (
-        <Link
-          href={`/items/${m.id}`}
-          className="min-w-0 break-words underline-offset-2 hover:underline"
-        >
-          {m.name}
-        </Link>
+        <>
+          <ItemIcon image={image} alt={m.name} className="size-5" />
+          <Link
+            href={`/items/${m.id}`}
+            className="min-w-0 break-words underline-offset-2 hover:underline"
+          >
+            {m.name}
+          </Link>
+        </>
       )}
       {m.amount != null && (
         <span className="shrink-0 font-mono text-muted-foreground">×{m.amount}</span>
@@ -47,15 +53,18 @@ interface MaterialListProps {
    * 預設 "real"。
    */
   resolveKind?: MaterialKind | ((m: MaterialEntry) => MaterialKind);
+  iconMap?: Map<number, EntityImage>;
 }
 
-export function MaterialList({ materials, resolveKind = "real" }: MaterialListProps) {
+export function MaterialList({ materials, resolveKind = "real", iconMap }: MaterialListProps) {
   if (materials.length === 0) return <span className="text-muted-foreground">—</span>;
   return (
     <div className="space-y-0.5">
       {materials.map((m) => {
         const kind = typeof resolveKind === "function" ? resolveKind(m) : resolveKind;
-        return <MaterialLink key={m.id} m={m} kind={kind} />;
+        return (
+          <MaterialLink key={m.id} m={m} kind={kind} image={iconMap?.get(m.id) ?? null} />
+        );
       })}
     </div>
   );

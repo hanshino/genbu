@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getItemsByType, getItemRandsByIds, type RankingItem } from "@/lib/queries/items";
+import { getItemIconMap } from "@/lib/queries/images";
 import { isPhase2Type, ITEM_TYPE_LABELS, type Phase2Type } from "@/lib/constants/item-types";
 import { RankingClient } from "./ranking-client";
 
@@ -21,6 +22,7 @@ export default async function RankingPage({ searchParams }: Props) {
   const type = resolveType(params.type);
   const items: RankingItem[] = getItemsByType(type);
   const rands = getItemRandsByIds(items.map((i) => i.id));
+  const iconMap = getItemIconMap(items.map((i) => i.id));
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 px-4 py-8">
@@ -32,7 +34,7 @@ export default async function RankingPage({ searchParams }: Props) {
           。切換類型、調整權重、設定門檻後立即重排。
         </p>
       </header>
-      <RankingClient type={type} items={items} rands={rands} />
+      <RankingClient type={type} items={items} rands={rands} iconMap={iconMap} />
     </div>
   );
 }

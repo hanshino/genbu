@@ -42,6 +42,12 @@ import {
   getDistinctSkillTypes,
   getSkillHitInfoBatch,
 } from "../magic";
+import {
+  getItemIconMap,
+  getItemIcon,
+  getNpcImageMap,
+  getNpcImage,
+} from "../images";
 import { getMissionDialogue, getMessageNode } from "../messages";
 import {
   getAllMissionGroupStats,
@@ -322,6 +328,17 @@ describe("items.ts", () => {
 
   it("getItemRandsByIds（非空陣列才會真的 prepare）", () => {
     expect(() => getItemRandsByIds([REAL_ITEM_ID])).not.toThrow();
+  });
+});
+
+describe("images.ts", () => {
+  it("getItemIcon / getItemIconMap（非空才 prepare）", () => {
+    expect(() => getItemIcon(REAL_ITEM_ID)).not.toThrow();
+    expect(() => getItemIconMap([REAL_ITEM_ID])).not.toThrow();
+  });
+  it("getNpcImage / getNpcImageMap（非空才 prepare）", () => {
+    expect(() => getNpcImage(REAL_MONSTER_ID)).not.toThrow();
+    expect(() => getNpcImageMap([REAL_MONSTER_ID])).not.toThrow();
   });
 });
 

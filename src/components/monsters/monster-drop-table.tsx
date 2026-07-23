@@ -12,18 +12,21 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ItemIcon } from "@/components/common/item-icon";
 import { cn, formatPercent } from "@/lib/utils";
 import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import type { MonsterDropItem } from "@/lib/types/monster";
+import type { EntityImage } from "@/lib/queries/images";
 
 interface MonsterDropTableProps {
   drops: MonsterDropItem[];
   totalWeight: number;
+  iconMap: Map<number, EntityImage>;
 }
 
 type Mode = "percent" | "raw";
 
-export function MonsterDropTable({ drops, totalWeight }: MonsterDropTableProps) {
+export function MonsterDropTable({ drops, totalWeight, iconMap }: MonsterDropTableProps) {
   const [mode, setMode] = useState<Mode>("percent");
 
   if (drops.length === 0) {
@@ -71,13 +74,20 @@ export function MonsterDropTable({ drops, totalWeight }: MonsterDropTableProps) 
                   {d.itemId}
                 </TableCell>
                 <TableCell>
-                  {d.name ? (
-                    <Link href={`/items/${d.itemId}`} className="font-medium hover:underline">
-                      {d.name}
-                    </Link>
-                  ) : (
-                    <span className="text-muted-foreground">（道具資料缺失）</span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <ItemIcon
+                      image={iconMap.get(d.itemId) ?? null}
+                      alt={d.name ?? String(d.itemId)}
+                      className="size-6"
+                    />
+                    {d.name ? (
+                      <Link href={`/items/${d.itemId}`} className="font-medium hover:underline">
+                        {d.name}
+                      </Link>
+                    ) : (
+                      <span className="text-muted-foreground">（道具資料缺失）</span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   {d.type ? (

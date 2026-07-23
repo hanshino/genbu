@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getItems } from "@/lib/queries/items";
+import { getItemIconMap } from "@/lib/queries/images";
 import { parseSortDir } from "@/lib/sort";
 import { serializeSearchParams } from "@/lib/utils";
 import { ItemFilters } from "@/components/items/item-filters";
@@ -27,6 +28,7 @@ export default async function ItemsPage({ searchParams }: PageProps) {
   const sortDir = parseSortDir(params.sortDir);
 
   const result = getItems({ search, type, page, sortBy, sortDir });
+  const iconMap = getItemIconMap(result.items.map((i) => i.id));
 
   const searchParamsStr = serializeSearchParams(params);
 
@@ -48,6 +50,7 @@ export default async function ItemsPage({ searchParams }: PageProps) {
       <ItemTable
         items={result.items}
         sort={{ sortBy, sortDir, searchParamsStr, basePath: "/items" }}
+        iconMap={iconMap}
       />
 
       {result.totalPages > 1 && (

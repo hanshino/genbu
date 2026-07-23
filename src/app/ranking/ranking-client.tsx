@@ -3,6 +3,7 @@
 import { startTransition, useCallback, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { RankingItem } from "@/lib/queries/items";
+import type { EntityImage } from "@/lib/queries/images";
 import type { ItemRand } from "@/lib/types/item";
 import {
   scoreItem,
@@ -40,6 +41,7 @@ interface Props {
   type: Phase2Type;
   items: RankingItem[];
   rands: ItemRand[];
+  iconMap: Map<number, EntityImage>;
 }
 
 // Parse `weights` query param formatted as `key:val,key:val`
@@ -70,7 +72,7 @@ function resolveInitialSelection(
   return { kind: "ad-hoc" };
 }
 
-export function RankingClient({ type, items, rands }: Props) {
+export function RankingClient({ type, items, rands, iconMap }: Props) {
   const router = useRouter();
   const search = useSearchParams();
 
@@ -438,6 +440,7 @@ export function RankingClient({ type, items, rands }: Props) {
             activePresetId={activePresetId}
             highlightId={highlightId}
             showingAll={showAll}
+            iconMap={iconMap}
             onShowAll={() => {
               setShowAll(true);
               pushUrl({ showAll: "1" });

@@ -12,14 +12,16 @@ import {
   MaterialLink,
   MaterialList,
 } from "@/components/compounds/material-link";
-import { groupCompoundsByGroupName } from "@/lib/compound-grouping";
+import { collectCompoundItemIds, groupCompoundsByGroupName } from "@/lib/compound-grouping";
 import { getCompoundSourcesForItem } from "@/lib/queries/compound";
+import { getItemIconMap } from "@/lib/queries/images";
 
 export function CompoundSourcesSection({ itemId }: { itemId: number }) {
   const sources = getCompoundSourcesForItem(itemId);
   if (sources.length === 0) return null;
 
   const groupBlocks = groupCompoundsByGroupName(sources);
+  const iconMap = getItemIconMap(collectCompoundItemIds(sources));
 
   return (
     <section className="space-y-3">
@@ -76,13 +78,17 @@ export function CompoundSourcesSection({ itemId }: { itemId: number }) {
                         </TableCell>
                         <TableCell className="text-xs align-top whitespace-normal break-words">
                           {u.coreMaterial ? (
-                            <MaterialLink m={u.coreMaterial} kind={coreKind} />
+                            <MaterialLink
+                              m={u.coreMaterial}
+                              kind={coreKind}
+                              image={iconMap.get(u.coreMaterial.id) ?? null}
+                            />
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
                         <TableCell className="text-xs align-top whitespace-normal break-words">
-                          <MaterialList materials={u.sideMaterials} />
+                          <MaterialList materials={u.sideMaterials} iconMap={iconMap} />
                         </TableCell>
                         <TableCell className="text-right align-top font-mono text-xs">
                           {formatMoney(u.money)}

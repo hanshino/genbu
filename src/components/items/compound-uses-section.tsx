@@ -13,14 +13,16 @@ import {
   equipmentSideMaterialKind,
 } from "@/components/compounds/material-link";
 import { OutputCell } from "@/components/compounds/output-cell";
-import { groupCompoundsByGroupName } from "@/lib/compound-grouping";
+import { collectCompoundItemIds, groupCompoundsByGroupName } from "@/lib/compound-grouping";
 import { getCompoundUsesForItem } from "@/lib/queries/compound";
+import { getItemIconMap } from "@/lib/queries/images";
 
 export function CompoundUsesSection({ itemId }: { itemId: number }) {
   const uses = getCompoundUsesForItem(itemId);
   if (uses.length === 0) return null;
 
   const groupBlocks = groupCompoundsByGroupName(uses);
+  const iconMap = getItemIconMap(collectCompoundItemIds(uses));
 
   return (
     <section className="space-y-3">
@@ -83,14 +85,15 @@ export function CompoundUsesSection({ itemId }: { itemId: number }) {
                             resolveKind={
                               isEquipment ? equipmentSideMaterialKind : "real"
                             }
+                            iconMap={iconMap}
                           />
                         </TableCell>
                         <TableCell className="text-xs align-top whitespace-normal break-words">
-                          <OutputCell outputs={u.outputs} />
+                          <OutputCell outputs={u.outputs} iconMap={iconMap} />
                         </TableCell>
                         <TableCell className="text-xs align-top whitespace-normal break-words">
                           {u.failItem ? (
-                            <MaterialList materials={[u.failItem]} />
+                            <MaterialList materials={[u.failItem]} iconMap={iconMap} />
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}

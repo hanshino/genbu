@@ -9,15 +9,18 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { SortableHead, type SortContext } from "@/components/common/sortable-head";
+import { ItemIcon } from "@/components/common/item-icon";
 import type { Item } from "@/lib/types/item";
+import type { EntityImage } from "@/lib/queries/images";
 import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 
 interface ItemTableProps {
   items: Item[];
   sort: SortContext;
+  iconMap: Map<number, EntityImage>;
 }
 
-export function ItemTable({ items, sort }: ItemTableProps) {
+export function ItemTable({ items, sort, iconMap }: ItemTableProps) {
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-border/60 bg-card px-6 py-12 text-center text-muted-foreground">
@@ -43,12 +46,17 @@ export function ItemTable({ items, sort }: ItemTableProps) {
             <TableRow key={item.id}>
               <TableCell className="font-mono text-xs text-muted-foreground">{item.id}</TableCell>
               <TableCell>
-                <Link href={`/items/${item.id}`} className="font-medium hover:underline">
-                  {item.name}
-                </Link>
-                {item.note && (
-                  <span className="ml-2 text-xs text-muted-foreground">{item.note}</span>
-                )}
+                <div className="flex items-center gap-2">
+                  <ItemIcon image={iconMap.get(item.id) ?? null} alt={item.name} className="size-7" />
+                  <div className="min-w-0">
+                    <Link href={`/items/${item.id}`} className="font-medium hover:underline">
+                      {item.name}
+                    </Link>
+                    {item.note && (
+                      <span className="ml-2 text-xs text-muted-foreground">{item.note}</span>
+                    )}
+                  </div>
+                </div>
               </TableCell>
               <TableCell>
                 {item.type ? (

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDownIcon, XIcon } from "lucide-react";
 import type { Item, ItemRand } from "@/lib/types/item";
 import type { RankingItem } from "@/lib/queries/items";
+import type { EntityImage } from "@/lib/queries/images";
 import { groupRandsByItemId, computePoolMaxValues } from "@/lib/scoring";
 import { COMPARE_TRAY_MAX } from "@/lib/constants/compare";
 import { ITEM_TYPE_LABELS, PHASE2_TYPES, type Phase2Type } from "@/lib/constants/item-types";
@@ -21,9 +22,17 @@ interface Props {
   initialRands: ItemRand[];
   initialIds: number[];
   pool: RankingItem[];
+  iconMap: Map<number, EntityImage>;
 }
 
-export function CompareClient({ activeType, initialItems, initialRands, initialIds, pool }: Props) {
+export function CompareClient({
+  activeType,
+  initialItems,
+  initialRands,
+  initialIds,
+  pool,
+  iconMap,
+}: Props) {
   const router = useRouter();
   const search = useSearchParams();
 
@@ -74,6 +83,7 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
           <ItemPicker
             pool={pool}
             excludeIds={initialIds}
+            iconMap={iconMap}
             onPick={handlePick}
             placeholder={
               initialIds.length >= COMPARE_TRAY_MAX
@@ -150,7 +160,7 @@ export function CompareClient({ activeType, initialItems, initialRands, initialI
               />
             </summary>
             <div className="border-t border-border/40 [&>div]:rounded-none [&>div]:border-0">
-              <CompareMatrix items={initialItems} />
+              <CompareMatrix items={initialItems} iconMap={iconMap} />
             </div>
           </details>
         </section>

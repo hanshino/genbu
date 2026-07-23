@@ -3,9 +3,12 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { BackLink } from "@/components/common/back-link";
 import { Badge } from "@/components/ui/badge";
+import { EntityPortrait } from "@/components/common/entity-portrait";
 import { MissionStepText } from "@/components/missions/mission-step-text";
 import { MissionDialogueSection } from "@/components/missions/mission-dialogue";
 import { getMissionDetail } from "@/lib/queries/missions";
+import { getItemIconMap, getNpcImageMap, type EntityImage } from "@/lib/queries/images";
+import { ItemIcon } from "@/components/common/item-icon";
 import type { MissionItemRef, MissionMapRef } from "@/lib/types/mission";
 
 interface PageProps {
@@ -89,11 +92,17 @@ function MapLinks({ maps }: { maps: MapBucketEntry[] }) {
   );
 }
 
-function MapChips({ maps }: { maps: MissionMapRef[] }) {
+function MapChips({
+  maps,
+  npcImageMap,
+}: {
+  maps: MissionMapRef[];
+  npcImageMap: Map<number, EntityImage>;
+}) {
   const groups = groupMaps(maps);
   if (groups.length === 0) return null;
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap items-center gap-2">
       {groups.map((g, i) => {
         const label = g.label || (g.npcName ?? `NPC #${g.npcId}`);
         const coord =
@@ -101,29 +110,49 @@ function MapChips({ maps }: { maps: MissionMapRef[] }) {
             ? `(${g.x},${g.y})`
             : null;
         return (
-          <Badge key={i} variant="outline" className="font-normal">
-            <span>{label}</span>
-            <span className="ml-1.5 inline-flex items-baseline gap-1">
-              <MapLinks maps={g.maps} />
-              {coord && (
-                <span className="font-mono text-[0.7rem] text-muted-foreground">
-                  {coord}
-                </span>
-              )}
-            </span>
-          </Badge>
+          <span key={i} className="inline-flex items-center gap-1">
+            {g.npcId > 0 && (
+              <EntityPortrait
+                image={npcImageMap.get(g.npcId) ?? null}
+                alt={label}
+                size="sm"
+              />
+            )}
+            <Badge variant="outline" className="font-normal">
+              <span>{label}</span>
+              <span className="ml-1.5 inline-flex items-baseline gap-1">
+                <MapLinks maps={g.maps} />
+                {coord && (
+                  <span className="font-mono text-[0.7rem] text-muted-foreground">
+                    {coord}
+                  </span>
+                )}
+              </span>
+            </Badge>
+          </span>
         );
       })}
     </div>
   );
 }
 
-function ItemSummary({ items }: { items: MissionItemRef[] }) {
+function ItemSummary({
+  items,
+  itemIconMap,
+}: {
+  items: MissionItemRef[];
+  itemIconMap: Map<number, EntityImage>;
+}) {
   if (items.length === 0) return null;
   return (
     <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
       {items.map((it) => (
         <li key={it.itemId} className="flex items-baseline gap-2 px-3 py-2">
+          <ItemIcon
+            image={itemIconMap.get(it.itemId) ?? null}
+            alt={it.name}
+            className="size-6"
+          />
           <Link
             href={`/items/${it.itemId}`}
             className="font-medium underline-offset-2 hover:underline"
@@ -150,6 +179,13 @@ export default async function MissionDetailPage({ params }: PageProps) {
   // 給 step-text 用的 itemId → ref lookup（每步 + help 合併，名稱以最先出現為準）
   const itemsLookup = new Map<number, MissionItemRef>();
   for (const it of mission.allItems) itemsLookup.set(it.itemId, it);
+
+  // 任務全程引用到的 NPC 立繪（npcId=0 為地標/怪物名，非具體 NPC，略過）
+  const npcIds = mission.allMaps
+    .filter((m) => m.npcId > 0)
+    .map((m) => m.npcId);
+  const npcImageMap = getNpcImageMap(npcIds);
+  const itemIconMap = getItemIconMap(mission.allItems.map((it) => it.itemId));
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
@@ -193,7 +229,7 @@ export default async function MissionDetailPage({ params }: PageProps) {
             <MissionStepText rawText={mission.help} itemsLookup={itemsLookup} />
           </div>
           {(mission.helpItems.length > 0 || mission.helpMaps.length > 0) && (
-            <MapChips maps={mission.helpMaps} />
+            <MapChips maps={mission.helpMaps} npcImageMap={npcImageMap} />
           )}
         </section>
       )}
@@ -201,7 +237,7 @@ export default async function MissionDetailPage({ params }: PageProps) {
       {mission.allItems.length > 0 && (
         <section className="space-y-2">
           <h2 className="text-lg font-medium">所需物品</h2>
-          <ItemSummary items={mission.allItems} />
+          <ItemSummary items={mission.allItems} itemIconMap={itemIconMap} />
           <p className="text-xs text-muted-foreground">
             數量為步驟中出現的最大需求量；同物品多步出現時取最大值。
           </p>
@@ -225,7 +261,9 @@ export default async function MissionDetailPage({ params }: PageProps) {
                 <p className="text-sm leading-relaxed">
                   <MissionStepText rawText={s.rawText} itemsLookup={itemsLookup} />
                 </p>
-                {s.maps.length > 0 && <MapChips maps={s.maps} />}
+                {s.maps.length > 0 && (
+                  <MapChips maps={s.maps} npcImageMap={npcImageMap} />
+                )}
               </li>
             ))}
           </ol>

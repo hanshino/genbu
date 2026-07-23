@@ -10,17 +10,20 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { SortableHead, type SortContext } from "@/components/common/sortable-head";
 import { SpawnMapsCell } from "@/components/monsters/spawn-maps-cell";
+import { EntityPortrait } from "@/components/common/entity-portrait";
 import { monsterTypeLabel } from "@/lib/constants/monster-type";
 import type { MonsterSummary } from "@/lib/types/monster";
 import type { MonsterStageSpawn } from "@/lib/types/monster-spawn";
+import type { EntityImage } from "@/lib/queries/images";
 
 interface MonsterTableProps {
   monsters: MonsterSummary[];
   sort: SortContext;
   spawnsByMonster: Map<number, MonsterStageSpawn[]>;
+  portraitMap: Map<number, EntityImage>;
 }
 
-export function MonsterTable({ monsters, sort, spawnsByMonster }: MonsterTableProps) {
+export function MonsterTable({ monsters, sort, spawnsByMonster, portraitMap }: MonsterTableProps) {
   if (monsters.length === 0) {
     return (
       <div className="rounded-lg border border-border/60 bg-card px-6 py-12 text-center text-muted-foreground">
@@ -49,9 +52,12 @@ export function MonsterTable({ monsters, sort, spawnsByMonster }: MonsterTablePr
             <TableRow key={m.id}>
               <TableCell className="font-mono text-xs text-muted-foreground">{m.id}</TableCell>
               <TableCell>
-                <Link href={`/monsters/${m.id}`} className="font-medium hover:underline">
-                  {m.name}
-                </Link>
+                <div className="flex items-center gap-2">
+                  <EntityPortrait image={portraitMap.get(m.id) ?? null} alt={m.name} size="sm" />
+                  <Link href={`/monsters/${m.id}`} className="font-medium hover:underline">
+                    {m.name}
+                  </Link>
+                </div>
               </TableCell>
               <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                 <SpawnMapsCell spawns={spawnsByMonster.get(m.id)} />

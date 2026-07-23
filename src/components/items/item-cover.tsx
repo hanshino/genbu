@@ -8,14 +8,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import type { EquipmentImage } from "@/lib/equipment-images";
 
 interface Props {
   cover: EquipmentImage;
   alt: string;
+  pixelated?: boolean;
 }
 
-export function ItemCover({ cover, alt }: Props) {
+export function ItemCover({ cover, alt, pixelated }: Props) {
   return (
     <Dialog>
       <DialogTrigger
@@ -28,7 +30,10 @@ export function ItemCover({ cover, alt }: Props) {
           alt={alt}
           loading="lazy"
           decoding="async"
-          className="h-auto w-40 object-contain sm:w-52"
+          className={cn(
+            "h-auto w-40 object-contain sm:w-52",
+            pixelated && "[image-rendering:pixelated]",
+          )}
         />
       </DialogTrigger>
       <DialogPopup className="w-auto max-w-[min(90vw,720px)] p-4">
@@ -40,7 +45,10 @@ export function ItemCover({ cover, alt }: Props) {
           alt={alt}
           loading="lazy"
           decoding="async"
-          className="max-h-[80vh] w-auto max-w-full object-contain"
+          className={cn(
+            "max-h-[80vh] w-auto max-w-full object-contain",
+            pixelated && "[image-rendering:pixelated]",
+          )}
         />
         <DialogCloseButton />
       </DialogPopup>
