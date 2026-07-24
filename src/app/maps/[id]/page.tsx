@@ -9,6 +9,8 @@ import { LinkListRow, LinkListSection } from "@/components/common/link-list";
 import { sortStageFlags } from "@/lib/constants/stage-flags";
 import { getStageDetail } from "@/lib/queries/stages";
 import { getMonstersAtStage } from "@/lib/queries/monster-spawns";
+import { getStageMapImage, getNpcPlacementsForStage } from "@/lib/queries/maps";
+import { StageMapViewer } from "@/components/maps/stage-map-viewer";
 import type { InboundLink, StageDetail, StageMissionRef } from "@/lib/types/stage";
 
 interface PageProps {
@@ -179,6 +181,8 @@ export default async function MapDetailPage({ params }: PageProps) {
   if (!stage || !stage.name) notFound();
 
   const monsters = getMonstersAtStage(stage.kind, stage.id);
+  const mapImage = getStageMapImage(stage.kind, stage.id);
+  const npcPlacements = getNpcPlacementsForStage(stage.kind, stage.id);
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
@@ -209,6 +213,8 @@ export default async function MapDetailPage({ params }: PageProps) {
           ))}
         </div>
       </header>
+
+      <StageMapViewer stageName={stage.name} image={mapImage} placements={npcPlacements} />
 
       <PropertiesGrid stage={stage} />
 
