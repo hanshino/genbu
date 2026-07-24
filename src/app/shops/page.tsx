@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { LinkListRow, LinkListSection } from "@/components/common/link-list";
 import { getShops } from "@/lib/queries/shops";
-import { SHOP_KIND_LABELS, castleLabel, shopTitle } from "@/lib/constants/shop";
+import { SHOP_KIND_LABELS, castleLabel, shopLabel } from "@/lib/constants/shop";
 import type { ShopKind, ShopSummary } from "@/lib/types/shop";
 
 export const metadata: Metadata = {
@@ -19,7 +19,7 @@ export default function ShopsPage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">NPC 商店</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          共 {shops.length} 家商店;商店暫無名稱與 NPC 對應資料,以編號呈現
+          共 {shops.length} 家商店;店名由計價貨幣與主要商品自動歸納(SHOP.INI 無店名欄),NPC 對應待考
         </p>
       </header>
 
@@ -40,7 +40,8 @@ function ShopSection({ kind, shops }: { kind: ShopKind; shops: ShopSummary[] }) 
     <LinkListSection title={SHOP_KIND_LABELS[kind]} summary={`${shops.length} 家`}>
       {shops.map((s) => (
         <LinkListRow key={s.id} href={`/shops/${s.id}`}>
-          <span className="font-medium">{shopTitle(s.id)}</span>
+          <span className="font-medium">{shopLabel(s)}</span>
+          <span className="font-mono text-xs text-muted-foreground">#{s.id}</span>
           {s.castleId != null && (
             <Badge variant="outline" className="font-normal">
               {castleLabel(s.castleId)}
