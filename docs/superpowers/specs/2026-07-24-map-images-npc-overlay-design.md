@@ -61,9 +61,11 @@ CREATE TABLE `map_placements` (
 ## 2. 產品決策（已與使用者確認）
 
 1. **呈現深度：中等** — 貼圖 + NPC 標記；**不做**平移/縮放。
-2. **標記樣式：圓點 + hover 彈卡** — 預設只顯示小圓點，桌機 hover（手機點擊）彈出「頭像 + 名字 + 連結」。
-3. **NPC 清單：常駐 + 有圖就疊圖** — 每張地圖都顯示 NPC 清單（含頭像、連結）；有圖的 62 張額外在圖上疊圓點，hover 時清單項 ↔ 圓點互相高亮。涵蓋全 718 張、手機/無障礙皆可用。
+2. **標記樣式：圓點 + hover 彈卡** — 預設只顯示小圓點，桌機 hover（手機點擊）彈出「頭像 + 名字」。
+3. **NPC 清單：常駐 + 有圖就疊圖** — 每張地圖都顯示 NPC 清單（含頭像）；有圖的 62 張額外在圖上疊圓點，hover 時清單項 ↔ 圓點互相高亮。涵蓋全 718 張、手機/無障礙皆可用。
 4. **版面：上下堆疊** — 地圖圖在上、NPC 清單在下（桌機、手機一致）。
+
+> **實作前發現的修正（2026-07-24）：** 地圖上的 NPC 皆為城鎮 NPC（店主、任務 NPC），**不在 `monsters` 表**，且本專案**沒有 NPC 詳情頁**（路由無 `/npc`）。故 NPC 標記與清單為**純展示（頭像＋名字），不設連結**，避免壞連結。`shops` 表無 `npc_id`、`npc→mission` 對應成本高，皆為 YAGNI，不做。NPC 皆有 `npc_images` 頭像（已驗證）。
 
 ## 3. 架構
 
@@ -110,18 +112,18 @@ export function getNpcPlacementsForStage(kind: StageKind, id: number): NpcPlacem
 - 若 `image` 存在：
   - 外層 `relative` 容器，寬度為版面容器寬（`w-full`）。`<img src={image.url} className="block w-full h-auto" loading="lazy" decoding="async" />`，帶 `width/height`（用 `imgWidth/imgHeight`）避免 CLS。
   - 每筆 placement 一個 `absolute` 圓點，定位 `left: tileX/tilesW*100%`、`top: tileY/tilesH*100%`，`-translate-x-1/2 -translate-y-1/2` 置中。
-  - 圓點為可聚焦按鈕（`aria-label={name}`）；桌機 hover / 手機點擊彈出額卡：`<EntityPortrait size="sm">` + 名字 + 「查看 NPC →」連結。
+  - 圓點為可聚焦按鈕（`aria-label={name}`）；桌機 hover / 手機點擊彈出額卡：`<EntityPortrait size="sm">` + 名字（純展示，無連結）。
   - 超高的地圖直接讓容器自然變高、頁面可捲動（不裁切、不 letterbox，確保百分比定位永遠對齊圖片）。
-- 常駐 **NPC 清單**（無論有無圖都渲染）：以 `npcId` 去重，用 `LinkListSection`/`LinkListRow` + `<EntityPortrait size="sm">`。
+- 常駐 **NPC 清單**（無論有無圖都渲染）：以 `npcId` 去重，用一個非連結的清單列（沿用 `LinkListSection` 的外框樣式，但列改為 `<li>` 純展示，不用 `LinkListRow`，因為無連結目的地）+ `<EntityPortrait size="sm">` + 名字。
 - **互相高亮**：以 `hoveredNpcId` state 串連；hover 清單列 → 該 NPC 的所有圓點高亮（放大/加環），反之亦然。同一 NPC 多個 placement 一起亮。
 
-**彈卡元件 — `src/components/ui/popover.tsx`（新增 shadcn 包裝）**
+**彈卡元件 — `src/components/ui/popover.tsx`（已存在，直接重用）**
 
-- 目前 `src/components/ui/` 尚無 Popover。依 CLAUDE.md「shadcn-first」規則，用 `@base-ui/react` 的 `Popover` 包成 shadcn 風格元件放在 `ui/` 供重用。
-- 圓點觸發：桌機 hover 開啟、手機點擊開啟；卡片內容為頭像 + 名字 + NPC 連結。
-- 若 base-ui `Popover` 的 hover 開啟不便，退而使用其 `PreviewCard`/hover 卡片模式；桌機 hover、手機點擊都要能開，且常駐清單已是手機主要入口，故此為漸進增強、非硬性依賴。
+- 已有 shadcn 風格包裝（`Popover` / `PopoverTrigger` / `PopoverContent`），底層為 `@base-ui/react/popover`。
+- 圓點作為 `PopoverTrigger`：`Popover` Root 設 `openOnHover`（桌機 hover 開）＋ trigger 點擊開（手機），`PopoverContent` 內為頭像 + 名字（純展示，無連結）。
+- 常駐清單已是手機主要入口，故彈卡屬漸進增強。
 
-**NPC 連結目的地**：連到 NPC/怪物詳情頁 `/monsters/[npcId]`（`npc` 與 `monsters` 共用 id）。若該 id 不在 `monsters`（純劇情 NPC 無詳情頁），則只顯示名字不連結（以 `getNpcImageMap` 有無頭像不影響此判斷；連結與否可由 page 端一次查 `monsters` id 集合決定，或簡化為一律連 `/monsters/[id]` 並於該頁 notFound 時降級 — 採前者以免壞連結）。
+**NPC 為純展示、不設連結**：地圖 NPC 為城鎮 NPC，不在 `monsters` 表、專案無 NPC 詳情頁，故標記與清單皆只顯示頭像＋名字，不連結（見第 2 節修正說明）。
 
 ### 3.3 版面整合（`src/app/maps/[id]/page.tsx`）
 
@@ -144,7 +146,7 @@ export function getNpcPlacementsForStage(kind: StageKind, id: number): NpcPlacem
 - **CLS**：`<img>` 帶 `width/height`（DB 像素值），CSS `w-full h-auto` 縮放。
 - **無障礙**：圓點 `aria-label` 帶 NPC 名，可鍵盤 focus 開卡；清單為語意化連結，手機主要入口。
 - **效能**：每頁一支 placement 查詢 + 一支 `getNpcImageMap` 批次查詢（`IN` 依既有批次切分），無 N+1。
-- **壞連結防護**：連結前確認 `npc_id` 存在於 `monsters`（見 3.2）。
+- **無壞連結**：NPC 為純展示、不設連結（見第 2 節修正）。
 
 ## 5. 非目標（YAGNI）
 
