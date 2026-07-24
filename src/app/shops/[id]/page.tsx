@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { CoinsIcon } from "lucide-react";
 import { BackLink } from "@/components/common/back-link";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,7 +15,12 @@ import {
 import { ItemIcon } from "@/components/common/item-icon";
 import { getItemIconMap } from "@/lib/queries/images";
 import { getShopDetail } from "@/lib/queries/shops";
-import { SHOP_KIND_LABELS, castleLabel, shopTitle } from "@/lib/constants/shop";
+import {
+  castleLabel,
+  shopCurrencyLabel,
+  shopLabel,
+  shopTitle,
+} from "@/lib/constants/shop";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -27,8 +33,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const shop = getShopDetail(shopId);
   if (!shop) return { title: "商店不存在 · 玄武" };
   return {
-    title: `${shopTitle(shop.id)} · 商店 · 玄武`,
-    description: `${shopTitle(shop.id)}(${SHOP_KIND_LABELS[shop.kind]})的販售與收購清單`,
+    title: `${shopLabel(shop)} · 商店 · 玄武`,
+    description: `${shopLabel(shop)}(${shopTitle(shop.id)})的販售與收購清單`,
   };
 }
 
@@ -43,7 +49,20 @@ export default async function ShopDetailPage({ params }: PageProps) {
   const iconMap = getItemIconMap([
     ...shop.sells.map((e) => e.itemId),
     ...shop.buys.map((e) => e.itemId),
+    ...(shop.currency.itemId != null ? [shop.currency.itemId] : []),
   ]);
+
+  // 計價幣別的視覺標記(隨售價顯示):金幣圖示、貨幣道具圖示,或(other)不標。
+  const currencyIcon =
+    shop.currency.kind === "gold" ? (
+      <CoinsIcon className="size-4 shrink-0 text-muted-foreground" aria-label="金幣" />
+    ) : shop.currency.kind === "item" && shop.currency.itemId != null ? (
+      <ItemIcon
+        image={iconMap.get(shop.currency.itemId) ?? null}
+        alt={shop.currency.itemName ?? ""}
+        className="size-4 shrink-0"
+      />
+    ) : null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
@@ -53,14 +72,19 @@ export default async function ShopDetailPage({ params }: PageProps) {
 
       <header className="flex flex-wrap items-baseline gap-2">
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-          {shopTitle(shop.id)}
+          {shopLabel(shop)}
         </h1>
-        <Badge variant="secondary" className="font-normal">
-          {SHOP_KIND_LABELS[shop.kind]}
-        </Badge>
+        <span className="font-mono text-sm text-muted-foreground">#{shop.id}</span>
         {shop.castleId != null && (
           <Badge variant="outline" className="font-normal">
             {castleLabel(shop.castleId)}
+          </Badge>
+        )}
+        {shop.currency.kind !== "other" && (
+          <Badge variant="outline" className="gap-1 font-normal">
+            {currencyIcon}
+            <span className="text-muted-foreground">貨幣</span>
+            {shopCurrencyLabel(shop.currency)}
           </Badge>
         )}
       </header>
@@ -101,7 +125,10 @@ export default async function ShopDetailPage({ params }: PageProps) {
                     {e.itemType ?? "—"}
                   </TableCell>
                   <TableCell className="text-right font-mono text-sm">
-                    {e.price.toLocaleString("zh-TW")}
+                    <span className="inline-flex items-center justify-end gap-1.5">
+                      {currencyIcon}
+                      {e.price.toLocaleString("zh-TW")}
+                    </span>
                   </TableCell>
                 </TableRow>
               ))}

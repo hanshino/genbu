@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { LinkListRow, LinkListSection } from "@/components/common/link-list";
 import { getShopsBuyingItem, getShopsSellingItem } from "@/lib/queries/shops";
-import { SHOP_KIND_LABELS, castleLabel, shopTitle } from "@/lib/constants/shop";
+import { castleLabel, shopCurrencyLabel, shopStoreLabel } from "@/lib/constants/shop";
 
 export function ShopAvailabilitySection({ itemId }: { itemId: number }) {
   const sales = getShopsSellingItem(itemId);
@@ -21,10 +21,8 @@ export function ShopAvailabilitySection({ itemId }: { itemId: number }) {
       <LinkListSection title="商店收購" footer="收購率推定為道具售價的百分比。">
         {buys.map((b) => (
           <LinkListRow key={b.shopId} href={`/shops/${b.shopId}`}>
-            <span className="font-medium">{shopTitle(b.shopId)}</span>
-            <Badge variant="outline" className="font-normal">
-              {SHOP_KIND_LABELS[b.kind]}
-            </Badge>
+            <span className="font-medium">{shopStoreLabel(b.kind, b.currency)}</span>
+            <span className="font-mono text-xs text-muted-foreground">#{b.shopId}</span>
             <span className="ml-auto font-mono text-xs text-muted-foreground">{b.rate}%</span>
           </LinkListRow>
         ))}
@@ -38,22 +36,26 @@ export function ShopAvailabilitySection({ itemId }: { itemId: number }) {
       summary={`${sales.length} 家商店販售`}
       footer={buySummary}
     >
-      {sales.map((s) => (
-        <LinkListRow key={s.shopId} href={`/shops/${s.shopId}`}>
-          <span className="font-medium">{shopTitle(s.shopId)}</span>
-          <Badge variant="outline" className="font-normal">
-            {SHOP_KIND_LABELS[s.kind]}
-          </Badge>
-          {s.castleId != null && (
-            <Badge variant="outline" className="font-normal">
-              {castleLabel(s.castleId)}
-            </Badge>
-          )}
-          <span className="ml-auto font-mono text-sm">
-            {s.price.toLocaleString("zh-TW")} 銀
-          </span>
-        </LinkListRow>
-      ))}
+      {sales.map((s) => {
+        const currencyLabel = shopCurrencyLabel(s.currency);
+        return (
+          <LinkListRow key={s.shopId} href={`/shops/${s.shopId}`}>
+            <span className="font-medium">{shopStoreLabel(s.kind, s.currency)}</span>
+            <span className="font-mono text-xs text-muted-foreground">#{s.shopId}</span>
+            {s.castleId != null && (
+              <Badge variant="outline" className="font-normal">
+                {castleLabel(s.castleId)}
+              </Badge>
+            )}
+            <span className="ml-auto font-mono text-sm">
+              {s.price.toLocaleString("zh-TW")}
+              {currencyLabel && (
+                <span className="ml-1 text-xs text-muted-foreground">{currencyLabel}</span>
+              )}
+            </span>
+          </LinkListRow>
+        );
+      })}
     </LinkListSection>
   );
 }
