@@ -25,7 +25,8 @@ CREATE TABLE `map_images` (
 ```
 - **62 筆**（涵蓋 62 / 718 個 stage，約 8.6%），其餘 656 張無圖，需優雅降級。
 - 圖片很大（最大約 5600×7800），不可原尺寸硬塞，需響應式縮放。
-- 已驗證像素與格子完美對齊：例如 stage 2 = 122 格 × 40 = 4880px（= `img_width`）。
+- 已驗證圖片**尺寸**與格數相符：例如 stage 2 = 122 格 × 40 = 4880px（= `img_width`）。
+  ⚠️ 注意：此僅驗證「尺寸」，**不代表標記座標對齊**。標記定位另見下方座標換算與第 4 節的 Y 翻轉修正。
 
 ### `map_placements`（座標來源）
 ```sql
@@ -46,7 +47,12 @@ CREATE TABLE `map_placements` (
 -- 索引：stage(kind,id)、category、npc_id
 ```
 - 43,187 筆，其中 `category='npc'` 有 **2,902 筆**；`npc_id` 可 join `npc` 取名字。
-- 座標換算：`left% = tile_x / map_w_tiles × 100`、`top% = tile_y / map_h_tiles × 100`（等價於 `raw_x/img_width`）。
+- 座標換算（**修正版**）：用 `raw_x/raw_y`（合成圖像素座標，左上原點、Y 向下）：
+  `left% = raw_x / img_width × 100`、`top% = raw_y / img_height × 100`。
+  ⚠️ **不要用 `tile_y`**：`tile_y` 抽取時已做過一次 Y 翻轉（`tile_y = map_h_tiles − round(raw_y/40)`），
+  直接 `tile_y / map_h_tiles` 會把畫面上下鏡像（室內 NPC 飛到錯位）。
+  X 方向無此問題（`tile_x = round(raw_x/40)`，未翻轉）。等價的 tile 版須再翻一次：
+  `top% = (map_h_tiles − 0.5 − tile_y) / map_h_tiles × 100`。本專案採 raw 版（次像素精度更佳）。
 - `in_bounds=0` 者不畫（避免跑出圖外）。
 
 ### 既有可重用資產（不重造）
@@ -89,8 +95,8 @@ export function getStageMapImage(kind: StageKind, id: number): StageMapImage | n
 export interface NpcPlacement {
   npcId: number;
   name: string | null;
-  tileX: number;
-  tileY: number;
+  rawX: number;   // 合成圖像素座標（左上原點、Y 向下）；勿改用 tile_y，見第 4 節
+  rawY: number;
   image: EntityImage | null;   // 來自 getNpcImageMap
 }
 
@@ -111,7 +117,7 @@ export function getNpcPlacementsForStage(kind: StageKind, id: number): NpcPlacem
 - Props：`image: StageMapImage | null`、`placements: NpcPlacement[]`。
 - 若 `image` 存在：
   - 外層 `relative` 容器，寬度為版面容器寬（`w-full`）。`<img src={image.url} className="block w-full h-auto" loading="lazy" decoding="async" />`，帶 `width/height`（用 `imgWidth/imgHeight`）避免 CLS。
-  - 每筆 placement 一個 `absolute` 圓點，定位 `left: tileX/tilesW*100%`、`top: tileY/tilesH*100%`，`-translate-x-1/2 -translate-y-1/2` 置中。
+  - 每筆 placement 一個 `absolute` 圓點，定位 `left: rawX/imgWidth*100%`、`top: rawY/imgHeight*100%`，`-translate-x-1/2 -translate-y-1/2` 置中。（**勿用 `tile_y`**，見第 4 節 Y 翻轉。）
   - 圓點為可聚焦按鈕（`aria-label={name}`）；桌機 hover / 手機點擊彈出額卡：`<EntityPortrait size="sm">` + 名字（純展示，無連結）。
   - 超高的地圖直接讓容器自然變高、頁面可捲動（不裁切、不 letterbox，確保百分比定位永遠對齊圖片）。
 - 常駐 **NPC 清單**（無論有無圖都渲染）：以 `npcId` 去重，用一個非連結的清單列（沿用 `LinkListSection` 的外框樣式，但列改為 `<li>` 純展示，不用 `LinkListRow`，因為無連結目的地）+ `<EntityPortrait size="sm">` + 名字。
@@ -147,6 +153,23 @@ export function getNpcPlacementsForStage(kind: StageKind, id: number): NpcPlacem
 - **無障礙**：圓點 `aria-label` 帶 NPC 名，可鍵盤 focus 開卡；清單為語意化連結，手機主要入口。
 - **效能**：每頁一支 placement 查詢 + 一支 `getNpcImageMap` 批次查詢（`IN` 依既有批次切分），無 N+1。
 - **無壞連結**：NPC 為純展示、不設連結（見第 2 節修正）。
+
+### 4.1 座標系根因（實作後修正，2026-07-24）
+
+初版用 `top% = tile_y / map_h_tiles` 定位，導致標記**上下鏡像**（室內 NPC 飛到黑洞）。經疊圖與跨 repo 研究確認：
+
+- **單一全域座標系，無分區位移**。合成圖是把 `.img`（MAPBLOCK）的 W×H 個 40×40 tile 依 row-major（row 0 在上）拼成一張；戶外在上半、各建築室內在下半，都在**同一格網**裡，室內**不需 offset**。
+- `.MPC`（4-section）是邏輯資料，Section 2 為 placement 記錄；`sec2_count` = Section 2 記錄總數（**不是**房間數）。
+- 抽取時 `tile_x = round(raw_x/40)`（未翻轉）、`tile_y = map_h_tiles − round(raw_y/40)`（**已翻一次 Y**，因原始 raw_y 由底部量起）。因此螢幕定位若再用 `tile_y/map_h_tiles` 等於少翻一次 → 垂直鏡像；X 不受影響。
+- **修正**：直接用 `raw_x/raw_y ÷ img_width/img_height`（等價於 tile 版再翻一次 `(map_h_tiles−0.5−tile_y)/map_h_tiles`）。raw 版保有次像素精度。
+- 驗證：將 raw 與 tile 兩組座標疊到 stage 2 原圖，raw 準確落室內/地形、tile 鏡射亂飄；全 897 筆有圖 NPC 的 raw 無 null、幾乎全在界內。
+
+**權威出處**（RE 專案，非本 repo）：
+- `E:\workspace\tthol_data\mapImageLibraryPlan.md`（`.img` 格式 + live-validated overlay 公式，L33–76、L152–162）
+- `E:\workspace\tthol_data\mapPlacement.js`（MPC Section-2 解析與座標公式，L5–24、L41–102）
+- `E:\workspace\tthol_data\migrations\20260608000000_create_map_nav.js`（schema 與 `sec2_count`／`tile_y` 翻轉註解）
+- `E:\workspace\tthol-memory\docs\superpowers\specs\2026-06-08-map-navigation-design.md`（RE 全程；Y-flip、live-validated 座標系）
+- 註：`tthol-info` 為過時 create-next-app 空殼，無地圖資料，勿參考。
 
 ## 5. 非目標（YAGNI）
 
