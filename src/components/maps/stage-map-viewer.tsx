@@ -50,10 +50,10 @@ export function StageMapViewer({ stageName, image, placements }: StageMapViewerP
           />
           {placements.map((p, i) => (
             <NpcDot
-              key={`${p.npcId}-${p.tileX}-${p.tileY}-${i}`}
+              key={`${p.npcId}-${p.rawX}-${p.rawY}-${i}`}
               placement={p}
-              tilesW={image.tilesW}
-              tilesH={image.tilesH}
+              imgWidth={image.imgWidth}
+              imgHeight={image.imgHeight}
               active={hovered === p.npcId}
               onActiveChange={(on) => setHovered(on ? p.npcId : null)}
             />
@@ -92,16 +92,17 @@ export function StageMapViewer({ stageName, image, placements }: StageMapViewerP
 
 interface NpcDotProps {
   placement: NpcPlacement;
-  tilesW: number;
-  tilesH: number;
+  imgWidth: number;
+  imgHeight: number;
   active: boolean;
   onActiveChange: (active: boolean) => void;
 }
 
-function NpcDot({ placement, tilesW, tilesH, active, onActiveChange }: NpcDotProps) {
+function NpcDot({ placement, imgWidth, imgHeight, active, onActiveChange }: NpcDotProps) {
   const label = placement.name ?? `NPC #${placement.npcId}`;
-  const left = (placement.tileX / tilesW) * 100;
-  const top = (placement.tileY / tilesH) * 100;
+  // raw_x/raw_y 是合成圖像素座標，直接換百分比即與圖片對齊（見 NpcPlacement 註解）。
+  const left = (placement.rawX / imgWidth) * 100;
+  const top = (placement.rawY / imgHeight) * 100;
 
   return (
     <Popover>

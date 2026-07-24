@@ -22,13 +22,16 @@ describe("maps.ts 查詢", () => {
     expect(getStageMapImage("stage", STAGE_NO_IMAGE)).toBeNull();
   });
 
-  it("getNpcPlacementsForStage 回傳 NPC 座標、名字與頭像", () => {
+  it("getNpcPlacementsForStage 回傳 NPC 合成圖像素座標、名字與頭像", () => {
     const list = getNpcPlacementsForStage("stage", STAGE_WITH_IMAGE);
     expect(list.length).toBe(79);
     for (const p of list) {
       expect(p.npcId).toBeGreaterThan(0);
-      expect(typeof p.tileX).toBe("number");
-      expect(typeof p.tileY).toBe("number");
+      // raw_x/raw_y 為合成圖像素座標（stage 2 圖為 4880×6480），在圖片範圍內。
+      expect(p.rawX).toBeGreaterThanOrEqual(0);
+      expect(p.rawX).toBeLessThanOrEqual(4880);
+      expect(p.rawY).toBeGreaterThanOrEqual(0);
+      expect(p.rawY).toBeLessThanOrEqual(6480);
     }
     expect(list.some((p) => p.name && p.name.length > 0)).toBe(true);
     expect(list.some((p) => p.image !== null)).toBe(true);

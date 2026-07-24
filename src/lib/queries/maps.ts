@@ -32,8 +32,16 @@ export function getStageMapImage(kind: StageKind, id: number): StageMapImage | n
 export interface NpcPlacement {
   npcId: number;
   name: string | null;
-  tileX: number;
-  tileY: number;
+  /**
+   * 合成圖上的像素座標（左上原點、Y 向下），可直接除以 map_images 的
+   * img_width/img_height 得到百分比位置。
+   *
+   * 注意：不要用 map_placements.tile_x/tile_y 來定位 —— tile_y 帶了一次
+   * Y 翻轉（tile_y = map_h_tiles − round(raw_y/40)），會把室內房間上下鏡像
+   * 到錯位。raw_x/raw_y 才與合成圖線性對齊（已用疊圖驗證）。
+   */
+  rawX: number;
+  rawY: number;
   image: EntityImage | null;
 }
 
@@ -47,8 +55,8 @@ export function getNpcPlacementsForStage(kind: StageKind, id: number): NpcPlacem
     .prepare(
       `SELECT p.npc_id AS npcId,
               n.name    AS name,
-              p.tile_x  AS tileX,
-              p.tile_y  AS tileY
+              p.raw_x   AS rawX,
+              p.raw_y   AS rawY
        FROM map_placements p
        LEFT JOIN npc n ON n.id = p.npc_id
        WHERE p.stage_kind = ?
@@ -60,8 +68,8 @@ export function getNpcPlacementsForStage(kind: StageKind, id: number): NpcPlacem
     .all(kind, id) as Array<{
     npcId: number;
     name: string | null;
-    tileX: number;
-    tileY: number;
+    rawX: number;
+    rawY: number;
   }>;
 
   if (rows.length === 0) return [];

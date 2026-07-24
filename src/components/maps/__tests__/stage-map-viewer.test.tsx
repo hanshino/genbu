@@ -12,8 +12,8 @@ const image: StageMapImage = {
   tilePx: 40,
 };
 const placements: NpcPlacement[] = [
-  { npcId: 6074, name: "打鐵舖伙計", tileX: 66, tileY: 37, image: null },
-  { npcId: 6566, name: "珍品商人", tileX: 99, tileY: 152, image: null },
+  { npcId: 6074, name: "打鐵舖伙計", rawX: 2640, rawY: 5000, image: null },
+  { npcId: 6566, name: "珍品商人", rawX: 3960, rawY: 400, image: null },
 ];
 
 describe("<StageMapViewer>", () => {
