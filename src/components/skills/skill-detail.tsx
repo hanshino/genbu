@@ -20,7 +20,7 @@ const KEY_NUMERIC_FIELDS: readonly { key: keyof Magic; label: string; unit?: str
   { key: "spend_mp", label: "真氣消耗" },
   { key: "spend_hp", label: "體力消耗" },
   { key: "func_dmg", label: "傷害參數" },
-  { key: "func_hit", label: "命中率" },
+  { key: "func_hit_p1", label: "命中率", unit: "%" },
   { key: "break_prob", label: "破招機率" },
   { key: "stun", label: "僵直時間", unit: "ms" },
   { key: "time", label: "持續時間", unit: "ms" },
@@ -130,4 +130,3 @@ function StatusEffect({ status }: { status: Status }) {
     </div>
   );
 }
-
