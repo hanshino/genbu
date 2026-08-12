@@ -145,24 +145,24 @@ describe("getCompoundUsesForItem", () => {
   });
 
   it("translates side material item ids to names via items join", () => {
-    // 33640 = 馬薺；id=20008 食譜的副料是 33641（鮮蝦）+ 33642
-    const uses = getCompoundUsesForItem(33640);
+    // 33648 = 絢麗彩紙；id=20008 食譜的副料是 33649（五色細繩）
+    const uses = getCompoundUsesForItem(33648);
     const recipe = uses.find((u) => u.id === 20008);
     expect(recipe).toBeDefined();
-    expect(recipe?.sideMaterials.length).toBe(2);
-    expect(recipe?.sideMaterials[0].name).toBe("鮮蝦");
-    expect(recipe?.sideMaterials[0].amount).toBe(100);
+    expect(recipe?.sideMaterials.length).toBe(1);
+    expect(recipe?.sideMaterials[0].name).toBe("五色細繩");
+    expect(recipe?.sideMaterials[0].amount).toBe(150);
   });
 
   it("translates numeric mod_prob.type into item names", () => {
-    // 33640 = 馬薺 (核心材料)，產出 33643（type 為數字 id）
-    const uses = getCompoundUsesForItem(33640);
+    // 33648 = 絢麗彩紙（核心材料），產出 33652（type 為數字 id）
+    const uses = getCompoundUsesForItem(33648);
     expect(uses.length).toBeGreaterThanOrEqual(1);
-    const recipe = uses.find((u) => u.id === 20006);
+    const recipe = uses.find((u) => u.id === 20008);
     expect(recipe).toBeDefined();
     expect(recipe?.outputs.length).toBe(1);
     // label 是 items.name 而不是 "33643"
-    expect(recipe?.outputs[0].itemId).toBe(33643);
+    expect(recipe?.outputs[0].itemId).toBe(33652);
     expect(recipe?.outputs[0].label).not.toMatch(/^#?\d+$/);
   });
 
