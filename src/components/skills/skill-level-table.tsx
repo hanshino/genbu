@@ -17,7 +17,7 @@ const CANDIDATE_FIELDS: readonly { key: keyof Magic; label: string }[] = [
   { key: "spend_mp", label: "真氣消耗" },
   { key: "spend_hp", label: "體力消耗" },
   { key: "func_dmg", label: "傷害參數" },
-  { key: "func_hit", label: "命中率" },
+  { key: "func_hit_p1", label: "命中率 (%)" },
   { key: "break_prob", label: "破招機率" },
   { key: "stun", label: "僵直(ms)" },
   { key: "time", label: "持續(ms)" },
