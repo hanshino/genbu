@@ -12,7 +12,7 @@ Reference project: `../tthol-line-bot` — the LINE bot version with similar fea
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS + shadcn/ui
 - **Database:** SQLite via better-sqlite3 (server-side, read-only)
-- **Deployment:** Docker image, deployed to VPS via Portainer
+- **Deployment:** GitHub Actions publishes an ARM64 Docker image to GHCR; the EC2 host uses a pull-based deploy. The SQLite runtime mount is independent from the image.
 
 ## Project Structure
 
@@ -24,7 +24,7 @@ genbu/
 │   ├── lib/          # Utilities, DB access, types
 │   └── configs/      # Weighted formulas, constants
 ├── public/           # Static assets
-├── tthol.sqlite      # Game database (read-only)
+├── tthol.sqlite      # Game database (read-only; runtime mount, not image content)
 ├── Dockerfile
 └── CLAUDE.md
 ```

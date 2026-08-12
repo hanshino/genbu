@@ -13,7 +13,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN npm run build && rm -f .next/standalone/tthol.sqlite
 
 # -- runner --
 FROM base AS runner
@@ -28,8 +28,8 @@ RUN addgroup --system --gid 1001 nodejs \
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-# tthol.sqlite 在 runtime 由 compose volume 由 host 掛入 /app/tthol.sqlite；
-# 不在 image 內預留副本，避免漂移（其他服務共用 host 上同一份）
+# Next standalone tracing may include the build input database; the builder
+# removes it so production must provide the read-only runtime mount.
 
 USER nextjs
 EXPOSE 3000

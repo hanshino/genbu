@@ -8,9 +8,9 @@ Genbu is an unofficial, open-source database and utility site for the game "TTHO
 - **Main Technologies:**
     - **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS 4, Shadcn/UI, Recharts.
     - **Backend:** Node.js (Next.js Server Components), SQLite (`better-sqlite3`).
-    - **Database:** `tthol.sqlite` (read-only game data).
+    - **Database:** `tthol.sqlite` (read-only game data; runtime mount, not image content).
     - **Testing:** Vitest, React Testing Library, JSDOM.
-    - **Deployment:** Docker (standalone), GitHub Actions.
+    - **Deployment:** GitHub Actions publishes a native ARM64 Docker image to GHCR; the EC2 host uses a pull-based deploy. The SQLite runtime mount is independent from the image.
 
 ## Architecture & Design Patterns
 
@@ -31,7 +31,6 @@ Genbu is an unofficial, open-source database and utility site for the game "TTHO
 - `npm run typecheck`: Performs TypeScript type checking.
 - `npm run test`: Runs the test suite using Vitest.
 - `npm run sync:images`: Fetches equipment images from external sources (required for local development).
-- `npm run deploy`: Deployment script (invoked with `.env` file).
 
 ## Development Conventions
 
@@ -48,4 +47,4 @@ Genbu is an unofficial, open-source database and utility site for the game "TTHO
 - `src/lib/queries`: Database query abstractions.
 - `src/lib/constants`: i18n, item types, and game-specific constants.
 - `docs/`: Technical specifications and development plans.
-- `scripts/`: Utility scripts for data syncing and deployment.
+- `scripts/`: Utility scripts for data syncing.
