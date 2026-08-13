@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ChevronRightIcon, UsersIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { LinkListRow, LinkListSection } from "@/components/common/link-list";
 import { getHeroes } from "@/lib/queries/heroes";
@@ -28,6 +30,21 @@ export default function HeroesPage() {
           資料表共 {heroes.length} 位英雄 · {groups.length} 個原始分組
         </p>
       </header>
+
+      <Link
+        href="/heroes/team-builder"
+        className="group flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-border/60 bg-card px-4 py-3 transition-colors hover:bg-muted/50"
+      >
+        <UsersIcon className="size-4 shrink-0 text-primary" aria-hidden />
+        <span className="font-medium">英雄相惜配隊器</span>
+        <span className="min-w-0 text-xs text-muted-foreground">
+          固定主英雄，選 1 至 4 位相惜英雄，比較 hero_connect 連結加成總和
+        </span>
+        <ChevronRightIcon
+          className="ml-auto size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+          aria-hidden
+        />
+      </Link>
 
       {groups.map((group) => (
         <LinkListSection
