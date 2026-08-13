@@ -149,27 +149,40 @@ function rowToCombination(row: HeroCombinationRow): HeroCombination {
   };
 }
 
+const COMBINATION_SELECT = `SELECT hc.id, hc.name, hc.help,
+          hc.hero_count AS heroCount,
+          hc.hero1, hc.hero2, hc.hero3, hc.hero4, hc.hero5,
+          h1.name AS name1, h2.name AS name2, h3.name AS name3,
+          h4.name AS name4, h5.name AS name5,
+          hc.hp, hc.mp, hc.atk, hc.matk, hc.def, hc.mdef, hc.dodge, hc.hit
+   FROM hero_connect hc
+   LEFT JOIN hero h1 ON h1.id = hc.hero1
+   LEFT JOIN hero h2 ON h2.id = hc.hero2
+   LEFT JOIN hero h3 ON h3.id = hc.hero3
+   LEFT JOIN hero h4 ON h4.id = hc.hero4
+   LEFT JOIN hero h5 ON h5.id = hc.hero5`;
+
 /** 包含此英雄的所有組合，依 hero_connect.id 排序。 */
 export function getHeroCombinationsForHero(heroId: number): HeroCombination[] {
   const db = getDb();
   const rows = db
     .prepare(
-      `SELECT hc.id, hc.name, hc.help,
-              hc.hero_count AS heroCount,
-              hc.hero1, hc.hero2, hc.hero3, hc.hero4, hc.hero5,
-              h1.name AS name1, h2.name AS name2, h3.name AS name3,
-              h4.name AS name4, h5.name AS name5,
-              hc.hp, hc.mp, hc.atk, hc.matk, hc.def, hc.mdef, hc.dodge, hc.hit
-       FROM hero_connect hc
-       LEFT JOIN hero h1 ON h1.id = hc.hero1
-       LEFT JOIN hero h2 ON h2.id = hc.hero2
-       LEFT JOIN hero h3 ON h3.id = hc.hero3
-       LEFT JOIN hero h4 ON h4.id = hc.hero4
-       LEFT JOIN hero h5 ON h5.id = hc.hero5
+      `${COMBINATION_SELECT}
        WHERE hc.hero1 = ? OR hc.hero2 = ? OR hc.hero3 = ?
           OR hc.hero4 = ? OR hc.hero5 = ?
        ORDER BY hc.id`,
     )
     .all(heroId, heroId, heroId, heroId, heroId) as HeroCombinationRow[];
+  return rows.map(rowToCombination);
+}
+
+/**
+ * 全量 hero_connect 組合（75 筆），依 hero_connect.id 排序。
+ * 供 team builder 一次載入後在 client 端做 pure optimizer 計算；
+ * 與 getHeroCombinationsForHero 共用 row mapping，nullable 加成同樣保留 null。
+ */
+export function getHeroCombinations(): HeroCombination[] {
+  const db = getDb();
+  const rows = db.prepare(`${COMBINATION_SELECT} ORDER BY hc.id`).all() as HeroCombinationRow[];
   return rows.map(rowToCombination);
 }

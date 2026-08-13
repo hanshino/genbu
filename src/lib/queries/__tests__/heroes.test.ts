@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getHeroById, getHeroCombinationsForHero, getHeroes } from "../heroes";
+import { getHeroById, getHeroCombinations, getHeroCombinationsForHero, getHeroes } from "../heroes";
 import type { HeroCombination } from "@/lib/types/hero";
 
 /** 掃過所有英雄收集組合，用來驗證 hero_connect 的整體資料契約。 */
@@ -148,5 +148,64 @@ describe("hero_connect 資料契約", () => {
       4: 9,
       5: 3,
     });
+  });
+});
+
+describe("getHeroCombinations", () => {
+  it("回傳全部 75 組唯一組合，依 id 排序", () => {
+    const combos = getHeroCombinations();
+    expect(combos).toHaveLength(75);
+    expect(new Set(combos.map((c) => c.id)).size).toBe(75);
+    expect(combos.map((c) => c.id)).toEqual([...combos.map((c) => c.id)].sort((a, b) => a - b));
+  });
+
+  it("與逐一英雄反查的結果等價（含只由部分成員完成的組合）", () => {
+    const all = getHeroCombinations();
+    const perHero = collectCombinations().unique;
+    expect(all.map((c) => c.id).sort((a, b) => a - b)).toEqual(
+      [...perHero.keys()].sort((a, b) => a - b),
+    );
+    for (const combo of all) {
+      expect(combo).toEqual(perHero.get(combo.id));
+    }
+  });
+
+  it("沿用相同 row mapping：members 對應 slot 順序、名稱可解析", () => {
+    const combo = getHeroCombinations().find((c) => c.id === 12)!;
+    expect(combo.name).toBe("酸酸甜甜");
+    expect(combo.members.map((m) => [m.slot, m.heroId])).toEqual([
+      [1, 13],
+      [2, 1],
+    ]);
+    expect(combo.members).toHaveLength(combo.heroCount);
+  });
+
+  it("nullable 加成保留 null，不補 0", () => {
+    const combo = getHeroCombinations().find((c) => c.id === 1)!;
+    expect(combo.bonus).toEqual({
+      hp: 4170,
+      mp: 810,
+      atk: 155,
+      matk: 82,
+      def: null,
+      mdef: null,
+      dodge: 65,
+      hit: null,
+    });
+    // 全量結果中確實存在 null 加成，optimizer 必須自行以 0 計算
+    const withNull = getHeroCombinations().filter((c) =>
+      Object.values(c.bonus).some((v) => v === null),
+    );
+    expect(withNull.length).toBeGreaterThan(0);
+  });
+
+  it("結果可直接供 optimizer 使用：members 非空且 heroId 都在 hero 表中", () => {
+    const heroIds = new Set(getHeroes().map((h) => h.id));
+    for (const combo of getHeroCombinations()) {
+      expect(combo.members.length).toBeGreaterThan(0);
+      for (const member of combo.members) {
+        expect(heroIds.has(member.heroId)).toBe(true);
+      }
+    }
   });
 });
