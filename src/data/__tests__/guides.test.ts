@@ -79,4 +79,19 @@ describe("guides data contract", () => {
       ]),
     );
   });
+
+  it("publishes the Phase 2 maps/NPC guide with safe database navigation", () => {
+    const guide = getGuideBySlug("maps-npc-navigation")!;
+    expect(guide.status).toBe("published");
+    expect(guide.category).toBe("missions");
+    expect(guide.sources.every((source) => source.tier === "database")).toBe(true);
+    expect(guide.sources.every((source) => source.url === undefined)).toBe(true);
+    expect(new Set(guide.sources.map((source) => source.id)).size).toBe(guide.sources.length);
+    const hrefs = guide.sections.flatMap((section) =>
+      (section.links ?? []).map((link) => link.href),
+    );
+    expect(hrefs).toEqual(
+      expect.arrayContaining(["/maps", "/maps/2", "/monsters", "/missions"]),
+    );
+  });
 });
