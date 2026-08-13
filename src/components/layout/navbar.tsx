@@ -61,6 +61,7 @@ export function Navbar() {
           {navGroups.map((group) => (
             <DesktopGroup key={group.label} group={group} pathname={pathname} />
           ))}
+          <DesktopLink href="/guides" label="攻略" pathname={pathname} />
           <DesktopLink href="/tools" label="工具" pathname={pathname} />
           <DesktopLink href="/changelog" label="更新紀錄" pathname={pathname} />
         </nav>
@@ -124,6 +125,13 @@ export function Navbar() {
                     </div>
                   </div>
                 ))}
+
+                <MobileLink
+                  href="/guides"
+                  label="攻略"
+                  pathname={pathname}
+                  onNavigate={() => setOpen(false)}
+                />
 
                 <MobileLink
                   href="/tools"
