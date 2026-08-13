@@ -182,6 +182,87 @@ export const guides: Guide[] = [
       },
     ],
   },
+  {
+    slug: "maps-npc-navigation",
+    title: "地圖與 NPC 資料導覽",
+    category: "missions",
+    status: "published",
+    summary: "從地圖名稱與 ID 搜尋、背景圖、NPC placement、預設出生登出欄位，到怪物與任務交叉連結，說明本站地圖資料的可用範圍。",
+    sources: [
+      {
+        id: "database-map-index-detail",
+        title: "repo 地圖索引與詳情查詢",
+        tier: "database",
+        lastVerified: "2026-08-13",
+        evidence:
+          "對應 repo 現有 src/lib/queries/stages.ts:30-98 的地圖清單、GROUP 與 inboundCount，以及 src/lib/queries/stages.ts:100-173 的地圖詳情、同 GROUP 清單與 appear/logout/inbound 欄位。",
+      },
+      {
+        id: "database-map-images-placements",
+        title: "repo 地圖背景圖與 NPC placement",
+        tier: "database",
+        lastVerified: "2026-08-13",
+        evidence:
+          "對應 repo 現有 src/lib/queries/maps.ts:14-29 的 map_images 查詢、src/lib/queries/maps.ts:32-46 的 raw_x/raw_y 對齊說明，以及 src/lib/queries/maps.ts:48-79 的 category='npc'、in_bounds=1 placement 查詢。",
+      },
+      {
+        id: "database-map-cross-links",
+        title: "repo 地圖與怪物任務交叉連結",
+        tier: "database",
+        lastVerified: "2026-08-13",
+        evidence:
+          "對應 repo 現有 src/lib/queries/stages.ts:175-191 的 mission_refs 反查，以及 src/lib/queries/monster-spawns.ts:73-90 的 monster_spawns 與 stages 交叉查詢；src/app/maps/[id]/page.tsx:247-250 明示 GENERATOR.OBD 不含劇情觸發或關卡腳本生成的怪物。",
+      },
+    ],
+    sections: [
+      {
+        title: "搜尋地圖索引",
+        paragraphs: [
+          "地圖索引可用地圖名稱 substring 搜尋，也可輸入完整數字 ID；GROUP 只是原始資料的分組欄位，不是正式區域名稱。列表中的 ←N 只是其他地圖把此處列為 appear_map 或 logout_map 目的地的 inbound count，不是入口數、玩家人數或可通行次數。",
+        ],
+        links: [{ label: "開啟地圖索引", href: "/maps" }],
+        sourceIds: ["database-map-index-detail"],
+      },
+      {
+        title: "地圖背景圖與 NPC placement",
+        paragraphs: [
+          "地圖詳情會查詢對應的背景圖；NPC placement 只取 category='npc' 且 in_bounds=1 的資料。raw_x/raw_y 是與合成背景圖對齊的像素座標；相同 NPC 的清單項目會去重顯示，但每一個 placement dot 仍保留，因為它們代表不同資料位置。這些點不是 NPC 移動軌跡，也沒有時段或出現條件。",
+        ],
+        links: [
+          { label: "查看地圖 2", href: "/maps/2" },
+          { label: "開啟地圖索引", href: "/maps" },
+        ],
+        sourceIds: ["database-map-images-placements"],
+      },
+      {
+        title: "預設出生、登出與反向指向",
+        paragraphs: [
+          "appear_map1、appear_map2 與 logout_map 是資料中的預設出生或登出目的地；反向清單則列出哪些地圖指向目前地圖。這些欄位與反向指向不是完整傳送 graph，不能據此還原所有傳送、可走路徑或實際遊戲移動方式。",
+        ],
+        links: [{ label: "查看地圖詳情", href: "/maps/2" }],
+        sourceIds: ["database-map-index-detail"],
+      },
+      {
+        title: "GROUP、怪物與任務交叉連結",
+        paragraphs: [
+          "同一 GROUP 的地圖只是資料分組，不代表彼此相鄰或可以直達。地圖詳情可交叉查看 monster_spawns 與 mission_refs；刷怪點數是資料中的 placement/彙總數，refs 是資料參照次數，都不是實際怪物數量或玩家造訪次數。GENERATOR.OBD 解析的怪物清單不含劇情觸發或關卡腳本生成的怪物。",
+        ],
+        links: [
+          { label: "怪物查詢", href: "/monsters" },
+          { label: "任務查詢", href: "/missions" },
+          { label: "地圖索引", href: "/maps" },
+        ],
+        sourceIds: ["database-map-cross-links", "database-map-index-detail"],
+      },
+      {
+        title: "資料限制與 deferred 項目",
+        paragraphs: [
+          "目前 deferred：完整移動路線、NPC movement、時段與最佳路線。本站地圖資料可協助定位資料中的地圖、NPC、怪物與任務關聯，但不宣稱已建模上述動態或路線資訊。",
+        ],
+        sourceIds: ["database-map-index-detail", "database-map-images-placements", "database-map-cross-links"],
+      },
+    ],
+  },
 ];
 
 export function getPublishedGuides(): Guide[] {
