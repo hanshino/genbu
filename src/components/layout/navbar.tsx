@@ -19,6 +19,7 @@ const navGroups: NavGroup[] = [
       { href: "/items", label: "道具" },
       { href: "/skills", label: "技能" },
       { href: "/monsters", label: "怪物" },
+      { href: "/heroes", label: "英雄" },
       { href: "/missions", label: "任務" },
       { href: "/maps", label: "地圖" },
       { href: "/compounds", label: "煉化" },

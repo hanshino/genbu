@@ -23,6 +23,7 @@ const CATEGORY_LABELS: Record<GuideCategory, string> = {
   skills: "技能",
   monsters: "怪物",
   missions: "任務",
+  heroes: "英雄",
   tools: "工具",
 };
 
