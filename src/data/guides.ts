@@ -263,6 +263,91 @@ export const guides: Guide[] = [
       },
     ],
   },
+  {
+    slug: "skills-data-guide",
+    title: "技能與門派資料導覽",
+    category: "skills",
+    status: "published",
+    summary: "依名稱、ID、門派、分類與作用目標查找技能，並理解技能等級資料與其限制。",
+    sources: [
+      {
+        id: "database-magic-query",
+        title: "repo 技能查詢與等級資料",
+        tier: "database",
+        lastVerified: "2026-08-13",
+        evidence:
+          "對應 repo 現有 src/lib/queries/magic.ts:5-14、31-115 的 search/clan/target/skillType 篩選與 (id, name) 分組，以及 src/lib/queries/magic.ts:117-138 的 id、level 詳情與技能等級群組查詢。",
+      },
+      {
+        id: "database-magic-fields",
+        title: "repo 技能欄位與技能頁呈現",
+        tier: "database",
+        lastVerified: "2026-08-13",
+        evidence:
+          "對應 repo 現有 src/lib/types/magic.ts:4-50 的 Magic raw fields、src/components/skills/skill-level-table.tsx:15-29 的等級欄位清單，以及 src/components/skills/skill-detail.tsx:18-32、34-106 的技能詳情與 level 切換呈現。",
+      },
+      {
+        id: "database-magic-labels",
+        title: "repo 門派、技能分類、目標與屬性對照",
+        tier: "database",
+        lastVerified: "2026-08-13",
+        evidence:
+          "對應 repo 現有 src/lib/constants/magic-clan.ts:1-64、src/lib/constants/magic-skill-type.ts:1-31、src/lib/constants/magic-target.ts:1-33、src/lib/constants/magic-attrib.ts:1-22 的本站代碼對照與限制。",
+      },
+      {
+        id: "database-magic-status",
+        title: "repo 技能狀態參照",
+        tier: "database",
+        lastVerified: "2026-08-13",
+        evidence:
+          "對應 repo 現有 src/lib/queries/status.ts:4-15 的 magic.extra_status 狀態查詢：約 4% 指向不存在的 STATUS.ID，回傳 nullable；status 的 param1 至 param5 是可讀取的 raw 參數欄位。",
+      },
+    ],
+    sections: [
+      {
+        title: "技能列表與篩選",
+        paragraphs: [
+          "技能列表可依名稱或 ID 搜尋，並用 clan、target、skillType 篩選；列表以 (id, name) 分組，同一 id 不一定只有一個技能。這是資料查詢與欄位導覽，不是 build 推薦。",
+        ],
+        links: [
+          { label: "技能查詢", href: "/skills" },
+          { label: "少林技能", href: "/skills?clan=CLASS_SHAULIN" },
+          { label: "被動技能", href: "/skills?target=TARGET_PASSIVE" },
+          { label: "刀法技能", href: "/skills?skillType=1" },
+        ],
+        sourceIds: ["database-magic-query", "database-magic-labels"],
+      },
+      {
+        title: "技能等級與 raw fields",
+        paragraphs: [
+          "技能詳情可透過 level 參數切換不同等級，例如技能 227 的 level 1；頁面會呈現目前等級的 raw fields，並可查看全等級欄位變化。func_dmg 在本站只稱為傷害參數，不直接解讀成最終傷害。",
+        ],
+        links: [{ label: "技能 227 第 1 級", href: "/skills/227?level=1" }],
+        sourceIds: ["database-magic-query", "database-magic-fields"],
+      },
+      {
+        title: "代碼對照與資料推斷",
+        paragraphs: [
+          "clan 與 clan2 的中文 label 是本站代碼對照；clan 為 null 時，列表會依 skill_type 區分生活/商業與未分類。skill type 18–20 是資料推斷，不是已核實的官方分類；target 的中文名稱也是本站對照。attrib code 4 在技能側命名為土，在怪物資料側可能使用木命名，不能直接視為同一套中文語意。",
+        ],
+        sourceIds: ["database-magic-labels"],
+      },
+      {
+        title: "狀態參照與公式限制",
+        paragraphs: [
+          "extra_status/status 的關聯可顯示 status 的 raw param1 至 param5；約 4% 的 extra_status 是 orphan ref，找不到對應 STATUS.ID。這些 raw params 與 func_dmg 等欄位不足以完整推導遊戲公式。",
+        ],
+        sourceIds: ["database-magic-fields", "database-magic-status"],
+      },
+      {
+        title: "明確 deferred 範圍",
+        paragraphs: [
+          "目前 deferred：經脈、星曜、真解、職業 build、配點、技能順序、DPS/PvE/PvP tier 與最佳裝備。本站 scoring presets 和 SKILL_PICKS 都不是官方職業 taxonomy，不能拿來宣稱官方流派或最佳配置。",
+        ],
+        sourceIds: ["database-magic-query", "database-magic-labels"],
+      },
+    ],
+  },
 ];
 
 export function getPublishedGuides(): Guide[] {

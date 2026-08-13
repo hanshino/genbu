@@ -94,4 +94,25 @@ describe("guides data contract", () => {
       expect.arrayContaining(["/maps", "/maps/2", "/monsters", "/missions"]),
     );
   });
+
+  it("publishes the Phase 3 skills guide with database-only sources", () => {
+    const guide = getGuideBySlug("skills-data-guide")!;
+    expect(guide.status).toBe("published");
+    expect(guide.category).toBe("skills");
+    expect(guide.sources.every((source) => source.tier === "database")).toBe(true);
+    expect(guide.sources.every((source) => source.url === undefined)).toBe(true);
+    expect(new Set(guide.sources.map((source) => source.id)).size).toBe(guide.sources.length);
+    const hrefs = guide.sections.flatMap((section) =>
+      (section.links ?? []).map((link) => link.href),
+    );
+    expect(hrefs).toEqual(
+      expect.arrayContaining([
+        "/skills",
+        "/skills?clan=CLASS_SHAULIN",
+        "/skills?target=TARGET_PASSIVE",
+        "/skills?skillType=1",
+        "/skills/227?level=1",
+      ]),
+    );
+  });
 });
