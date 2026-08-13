@@ -115,4 +115,19 @@ describe("guides data contract", () => {
       ]),
     );
   });
+
+  it("publishes the Phase 4 heroes guide with database-only sources", () => {
+    const guide = getGuideBySlug("heroes-data-guide")!;
+    expect(guide.status).toBe("published");
+    expect(guide.category).toBe("heroes");
+    expect(guide.title).toBe("英雄與組合加成資料導覽");
+    expect(guide.sources.every((source) => source.tier === "database")).toBe(true);
+    expect(guide.sources.every((source) => source.url === undefined)).toBe(true);
+    expect(new Set(guide.sources.map((source) => source.id)).size).toBe(guide.sources.length);
+    const hrefs = guide.sections.flatMap((section) =>
+      (section.links ?? []).map((link) => link.href),
+    );
+    expect(hrefs.length).toBeGreaterThan(0);
+    expect(hrefs.every((href) => href === "/heroes")).toBe(true);
+  });
 });

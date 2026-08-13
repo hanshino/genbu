@@ -6,6 +6,7 @@ export type GuideCategory =
   | "skills"
   | "monsters"
   | "missions"
+  | "heroes"
   | "tools";
 
 export interface GuideSource {
@@ -345,6 +346,68 @@ export const guides: Guide[] = [
           "目前 deferred：經脈、星曜、真解、職業 build、配點、技能順序、DPS/PvE/PvP tier 與最佳裝備。本站 scoring presets 和 SKILL_PICKS 都不是官方職業 taxonomy，不能拿來宣稱官方流派或最佳配置。",
         ],
         sourceIds: ["database-magic-query", "database-magic-labels"],
+      },
+    ],
+  },
+  {
+    slug: "heroes-data-guide",
+    title: "英雄與組合加成資料導覽",
+    category: "heroes",
+    status: "published",
+    summary: "說明 hero 與 hero_connect 兩張表的 raw fields、組合成員與加成欄位可查到什麼，以及哪些語意目前無法從資料判定。",
+    sources: [
+      {
+        id: "database-hero-fields",
+        title: "repo 英雄清單與 raw fields 查詢",
+        tier: "database",
+        lastVerified: "2026-08-13",
+        evidence:
+          "對應 repo 現有 src/lib/queries/heroes.ts:13-28 的英雄清單（id、group、name、star_up 與 combinationCount，依 group、id 排序）、src/lib/queries/heroes.ts:50-90 的單筆詳情，以及 src/lib/types/hero.ts:5-35 的欄位型別。tthol.sqlite 的 hero 表為 84 筆，欄位為 id、group、name、star_up、hp、mp、atk、matk、def、mdef、hit、dodge、critical、uncanny_dodge、help，schema 上皆為 not null。",
+      },
+      {
+        id: "database-hero-connect",
+        title: "repo 英雄組合與加成查詢",
+        tier: "database",
+        lastVerified: "2026-08-13",
+        evidence:
+          "對應 repo 現有 src/lib/queries/heroes.ts:153-175 的 hero_connect 查詢與 5 個 hero1~hero5 的 LEFT JOIN、src/lib/queries/heroes.ts:117-150 的成員 slot 順序與 nullable 加成映射，以及 src/lib/types/hero.ts:46-75 的組合型別。tthol.sqlite 的 hero_connect 為 75 筆，欄位為 id、name、help、hero1 至 hero5、hero_count、hp、mp、atk、matk、def、mdef、dodge、hit；共 192 筆成員參照，hero_count 與非 null 成員數逐筆一致，沒有孤兒參照，也沒有同組合重複成員；組合人數分布為 2 人 48 組、3 人 15 組、4 人 9 組、5 人 3 組。加成欄位允許 NULL，本站保留 null 表示該組合沒有這項加成，不以 COALESCE 補 0。",
+      },
+    ],
+    sections: [
+      {
+        title: "英雄清單與 raw fields",
+        paragraphs: [
+          "英雄資料共 84 筆，可查看的是資料表的原始欄位：id、group、name、star_up，以及 hp、mp、atk、matk、def、mdef、hit、dodge、critical、uncanny_dodge 與 help 說明文字。清單依 group、id 排序。這些是 raw fields，不是換算後的實戰數值。",
+        ],
+        links: [{ label: "英雄查詢", href: "/heroes" }],
+        sourceIds: ["database-hero-fields"],
+      },
+      {
+        title: "group 與 star_up 的原始語意",
+        paragraphs: [
+          "group 是 hero 表的原始分組欄位（資料中為 1 至 4 的字串），不是已核實的官方陣營或章節名稱；star_up 同樣是原始欄位數值，本站不對它做任何換算或星級解讀。兩者都只做為分組與排序依據呈現。",
+        ],
+        links: [{ label: "英雄查詢", href: "/heroes" }],
+        sourceIds: ["database-hero-fields"],
+      },
+      {
+        title: "組合成員與加成欄位",
+        paragraphs: [
+          "hero_connect 共 75 組組合，以 hero1 至 hero5 記錄成員，總計 192 筆成員參照；hero_count 與實際非 null 成員數逐筆一致，資料中沒有孤兒參照，也沒有同一組合內重複的英雄。組合人數分布為 2 人 48 組、3 人 15 組、4 人 9 組、5 人 3 組。",
+          "加成欄位為 hp、mp、atk、matk、def、mdef、dodge、hit，且允許 NULL。本站保留 null 表示該組合在資料中沒有這項加成欄位值，不會補 0，以免把缺值誤讀成加成為零。help 欄位是資料中的原始加成說明文字。",
+        ],
+        links: [{ label: "英雄查詢", href: "/heroes" }],
+        sourceIds: ["database-hero-connect"],
+      },
+      {
+        title: "資料限制與 deferred 項目",
+        paragraphs: [
+          "資料只記錄組合成員與加成欄位，沒有記錄啟用條件、加成如何套用到角色，也沒有多組組合是否可疊加的規則，這些一律未知，不能由現有欄位推論。",
+          "寵物相關資料目前 deferred：items 的 ITEM_PET 類別混合了英雄與寵物召喚物，magic.pet_id 與英雄、寵物之間的關係尚未解碼，因此本頁不宣稱任何英雄與寵物的對應關係。",
+          "本頁不含英雄取得方式、培養或升星路徑、tier 排行與最佳組合建議；資料庫沒有這些欄位，任何相關結論都不是資料可支持的。",
+        ],
+        links: [{ label: "英雄查詢", href: "/heroes" }],
+        sourceIds: ["database-hero-fields", "database-hero-connect"],
       },
     ],
   },

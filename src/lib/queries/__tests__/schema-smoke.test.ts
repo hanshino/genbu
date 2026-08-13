@@ -42,6 +42,7 @@ import {
   getDistinctSkillTypes,
   getSkillHitInfoBatch,
 } from "../magic";
+import { getHeroById, getHeroCombinationsForHero, getHeroes } from "../heroes";
 import {
   getItemIconMap,
   getItemIcon,
@@ -121,6 +122,9 @@ const REAL_MAGIC_LEVEL = 1;
 const REAL_CLAN = "CLASS_CHILD";
 const REAL_TARGET = "TARGET_ALLY";
 const REAL_SKILL_TYPE = 6;
+
+// heroes
+const REAL_HERO_ID = 1; // hero.id 存在，且出現在 hero_connect 的 hero1~hero5 槽位
 
 // shops / status / messages
 const REAL_SHOP_ID = 9; // 同時有 shop_sells 與 shop_buys
@@ -339,6 +343,20 @@ describe("images.ts", () => {
   it("getNpcImage / getNpcImageMap（非空才 prepare）", () => {
     expect(() => getNpcImage(REAL_MONSTER_ID)).not.toThrow();
     expect(() => getNpcImageMap([REAL_MONSTER_ID])).not.toThrow();
+  });
+});
+
+describe("heroes.ts", () => {
+  it("getHeroes", () => {
+    expect(() => getHeroes()).not.toThrow();
+  });
+
+  it("getHeroById", () => {
+    expect(() => getHeroById(REAL_HERO_ID)).not.toThrow();
+  });
+
+  it("getHeroCombinationsForHero（命中 hero_connect 的 5 個 LEFT JOIN 分支）", () => {
+    expect(() => getHeroCombinationsForHero(REAL_HERO_ID)).not.toThrow();
   });
 });
 
