@@ -22,7 +22,7 @@
 
 | 能力 | 證據 | 邊界／尚未證明 |
 |---|---|---|
-| SQLite read-only access | `src/lib/db.ts:7-17` 使用 `better-sqlite3`、`readonly: true`、`fileMustExist: true` | 未執行 runtime DB smoke test；不代表所有內容已有資料 |
+| SQLite read-only access | `src/lib/db.ts:7-17` 使用 `better-sqlite3`、`readonly: true`、`fileMustExist: true` | Phase 2–5 已執行 targeted read-only probes；不代表完成 whole-DB exhaustive audit |
 | 道具查詢與詳情 | `src/app/items/page.tsx`、`src/app/items/[id]/page.tsx`；既有 Phase 1 plan `docs/plans/phase1.md:258-300` | 未在本輪逐頁執行驗證 |
 | 怪物與掉落 query | `src/lib/queries/monsters.ts:238-281`、`src/components/monsters/monster-drop-table.tsx:41-117`；以含 `itemId=0` 空槽的 `totalWeight` 作資料權重分母 | 可顯示換算百分比，但必須標示為資料表權重換算，不是官方掉落承諾 |
 | 技能 query、分組、level | `src/lib/queries/magic.ts:31-137` | `clan`、技能效果語意與實際遊戲表現仍需來源核對 |
@@ -80,67 +80,78 @@
 
 共同 gate：每個 Phase 都必須有 source ledger、內容範例、negative/unknown case、可重跑的 validation note；designer gate 不是「看起來漂亮」，而是確認資訊階層、來源可見性、手機可用性與不確定性呈現。
 
-### Phase 0 — 資料契約＋首篇垂直切片
+### Phase 0 — 資料契約＋首篇垂直切片（Completed / merged PR #24）
 
 - **目標／項目：** 定義 entity、claim、source、版本、confidence、last verified 與 conflict 的最小資料契約；選一篇代表性 guide，以 database 單一來源級走完 research → editorial → page → validation，並保留後續接入其他來源級的欄位。
+- **交付狀態：** 已完成並 merged：guide contract、guide hub、guide detail、navigation、首篇 guide。PR：[ #24 ](https://github.com/hanshino/genbu/pull/24)。
 - **優先級：** P0。
 - **依賴：** 現有 read-only DB/query、既有 route/component；不依賴 CMS。
 - **退出條件：** 契約能描述「已知、未知、衝突、待驗證」；首篇內容完成 checklist；可由 URL 找回所有引用；reviewer 能重現一個步驟。
-- **驗證方式：** schema/type review、source ledger audit、首篇手動 walkthrough、mobile smoke test；本輪均尚未執行。
+- **驗證方式：** schema/type review、source ledger audit、首篇手動 walkthrough；mobile/browser manual smoke 不在已宣稱的驗證內。
 - **designer gate：** 本 Phase 不設內容 designer gate；待進入 UI lane 時，首篇的來源 badge、步驟層級、警告與 unknown state 須經 designer review，且不可把 raw DB table 直接當成 guide。
 
-### Phase 1 — 資料驅動怪物／裝備／任務迷宮
+### Phase 1 — 資料驅動怪物／裝備／任務迷宮（Completed / merged PR #25）
 
 - **目標／項目：** 以既有 entities 組成可交叉連結的內容：怪物 stats/drop、裝備屬性/比較、任務步驟/物品/地圖/NPC refs、迷宮與解謎提示；先做資料驅動頁，再補 editorial explanation。
+- **交付狀態：** 已完成並 merged：三篇 database guide（monster、equipment、mission）。PR：[ #25 ](https://github.com/hanshino/genbu/pull/25)。
 - **優先級：** P0（核心查詢）／P1（長文攻略）。
 - **依賴：** Phase 0 contract；`src/lib/queries/monsters.ts`、`missions.ts`、`magic.ts`、items/maps routes；既有 solver 可作工具但不得代替實測。
 - **退出條件：** 一個怪物→掉落道具→相關任務、一個任務→NPC/地圖→道具的完整 link path 可用；空值、未知 rate、缺圖均有明確呈現；首批 guide 通過 checklist。
-- **驗證方式：** DB query fixture/schema smoke、雙向 link spot check、source-to-claim audit、手機操作；未執行。
+- **驗證方式：** DB query fixture/schema smoke、雙向 link spot check、source-to-claim audit；browser/mobile manual smoke 不在已宣稱的驗證內。
 - **designer gate：** 玩家能區分「資料庫欄位」「攻略步驟」「玩家推測」；長表格與迷宮步驟在手機不阻塞主要任務。
 
-### Phase 2 — 地圖 NPC 移動
+### Phase 2 — 地圖與 NPC 資料導覽（Completed）；移動路線 Deferred
 
 - **目標／項目：** 在地圖上呈現 NPC placement，逐步補充移動路徑、定時／條件出現、任務相關位置與「常駐／移動／未知」狀態；每個移動 claim 必須有 field-test 或可核實來源。
+- **交付狀態：** 已完成並 merged：maps-npc-navigation。地圖與 NPC 資料導覽已交付；完整 NPC 移動路線 deferred。PR：[ #26 ](https://github.com/hanshino/genbu/pull/26)。
 - **優先級：** P1。
 - **依賴：** Phase 0 source contract、Phase 1 map/NPC links；`src/lib/queries/maps.ts:32-79` 的 placement 只足以支援位置展示，不足以推出移動。
 - **退出條件：** 至少一個可重現 NPC route 具版本、起點、終點、觸發條件與觀察時間；無 route evidence 的 NPC 不顯示假路徑。
-- **驗證方式：** map overlay alignment、field-test replay、不同 viewport smoke test、來源抽查；未執行。
+- **驗證方式：** map overlay/navigation implementation validation、來源抽查；完整路線與 browser/mobile manual smoke deferred。
 - **designer gate：** route、point、時間與條件有不同視覺語意；地圖不可遮住 NPC 名稱與主要任務線索。
 
-### Phase 3 — 職業技能／經脈／星曜
+### Phase 3 — 職業技能／經脈／星曜（Completed / merged PR #27）
 
 - **目標／項目：** 技能按職業／派系／level／target／效果查詢；整理經脈與星曜的解鎖、前置、消耗、加成與 build guide。只有 database 有欄位或其他來源已核實才發佈數值。
+- **交付狀態：** 已完成並 merged：skills-data-guide。經脈、星曜、真解與 build deferred。PR：[ #27 ](https://github.com/hanshino/genbu/pull/27)。
 - **優先級：** P1。
-- **依賴：** Phase 0 contract；`src/lib/queries/magic.ts:31-137` 的技能分組與 level；經脈／星曜 coverage 尚未盤點。
+- **依賴：** Phase 0 contract；`src/lib/queries/magic.ts:31-137` 的技能分組與 level；經脈／星曜、真解與 build 的證據仍不足。
 - **退出條件：** 技能 level、職業與來源可追溯；經脈／星曜若資料不足則以 evidence gap 發佈，不製造完整樹狀圖；至少一篇 build guide 有實測或明確 disclaimer。
-- **驗證方式：** `(id,name,level)` uniqueness/spot check、技能效果來源核對、field-test build replay；未執行。
+- **驗證方式：** `(id,name,level)` uniqueness/spot check、技能效果來源核對；field-test build replay deferred。
 - **designer gate：** 複雜效果以可掃讀欄位呈現；資料值、推導值、玩家建議分層，避免把 ranking 當唯一正解。
 
-### Phase 4 — 英雄／寵物
+### Phase 4 — 英雄／寵物（英雄 Completed / merged PR #28；pet Deferred）
 
-- **目標／項目：** 建立英雄與寵物的取得、成長、技能、裝備／飾品、適用情境與比較內容；以 entity page + guide 範例開始，不先承諾完整圖鑑。
+- **目標／項目：** 交付英雄 entity、組合資料、detail 與 guide；寵物完成 live audit 後 deferred，不在本 Phase 宣稱完成寵物取得／成長、技能、裝備／飾品或比較內容。
+- **交付狀態：** 已完成並 merged：live audit、`/heroes`、hero detail、heroes guide。PR：[ #28 ](https://github.com/hanshino/genbu/pull/28)。Pet deferred。
+- **live read-only audit：** hero 84、hero_connect 75、192 refs；無 orphan／duplicate。`ITEM_PET` 940、`PET_ORNAMENT` 68、`magic.pet_id` 34 rows／26 ids 尚未解碼。
 - **優先級：** P1。
-- **依賴：** Phase 0 contract；現有 item/skill query；英雄、寵物表與關聯 coverage 尚未驗證。
+- **依賴：** Phase 0 contract；現有 item/skill query；英雄 live audit 已完成，寵物資料語意仍待解碼。
 - **退出條件：** 至少一條英雄／寵物資料的來源鏈完整；缺少正式欄位的推論有 label；比較公式不宣稱官方 tier。
-- **驗證方式：** DB schema/coverage audit、取得與成長條件的 field-test、代表 entity cross-link；未執行。
+- **驗證方式：** live read-only DB audit、代表 entity cross-link；pet field-test 與完整寵物語意 deferred。
 - **designer gate：** 角色身份、寵物裝備、技能效果與建議玩法不混在同一張未分級表格；手機可比較。
 
-### Phase 5 — 家族／結婚
+### Phase 5 — Deferred — evidence blocked
 
 - **目標／項目：** 整理家族建立、成員／權限、家族內容、結婚前置、流程、獎勵、限制與解除／例外；將版本差異與玩家實測分開。
+- **狀態：** Deferred — evidence blocked。
+- **live read-only audit：** `sqlite_master` 無 family/guild/marriage/love table；只有 `magic.clan`／`magic.clan2` columns。`CLASS_GUILD` primary 15 rows／11 skills、`CLASS_LOVE` 60／8、`TARGET_LOVE` 30／6、`CASTLE_ITEM` 15。另有任務／NPC／地圖／成就關鍵字線索，但不足以證明建立、結婚或解除流程。
+- **restart gate：** 必須具備 official source、current-version family/marriage/divorce field-test，以及 costs、cooldowns、irreversible outcomes 的可核對證據，才可重新啟動。
 - **優先級：** P2。
-- **依賴：** Phase 0 contract；官方／community／field-test 證據；database 是否有足夠欄位尚未盤點。
+- **依賴：** Phase 0 contract；official source、current-version field-test 與可追溯 costs/cooldowns/outcomes 證據。
 - **退出條件：** 流程每一步有來源或明確 unknown；涉及帳號、付費、社交或不可逆操作的警告已 review；無證據的獎勵與限制不發佈。
-- **驗證方式：** 兩人以上重現流程（若可行）、版本記錄、官方／社群衝突表、link audit；未執行。
+- **驗證方式：** restart gate 通過後，才做兩人以上流程重現（若可行）、版本記錄、官方／社群衝突表與 link audit。
 - **designer gate：** 前置與不可逆結果突出；敏感社交資訊、玩家名稱與截圖不在未授權範圍內。
 
-### Phase 6 — 條件式平台強化
+### Phase 6 — 條件式平台強化（Conditional / not started）
 
 - **目標／項目：** 只在前述 evidence、流量、維護成本與使用者需求達門檻後，評估搜尋／filter 強化、related guides、版本 diff、個人化比較、離線／PWA 或其他平台能力。此 Phase 是條件式，不是預先承諾的 feature list。
+- **狀態：** Conditional / not started。現在 published guides = 6。
+- **門檻狀態：** search/filter、CMS、related guides、broken-link automation、freshness automation 均未達門檻。
 - **優先級：** P2／conditional。
 - **依賴：** Phase 0–5 的內容品質與 telemetry；不得以平台功能掩蓋資料缺口。
 - **退出條件：** 有明確需求證據、成功指標、維護 owner、退場方案與 performance/accessibility budget；若沒有，維持現狀。
-- **驗證方式：** baseline metrics、small-scope experiment、accessibility/performance smoke、rollback review；未執行。
+- **驗證方式：** baseline metrics、small-scope experiment、accessibility/performance smoke、rollback review；尚未開始。
 - **designer gate：** 互動增加後仍能看見來源、版本與 unknown；不為了 dashboard 或動畫犧牲查詢路徑。
 
 ## 6. 完整內容 inventory
@@ -155,8 +166,8 @@
 | 任務與迷宮 | 任務群、步驟、NPC/地圖/物品 refs、160/175/180 tools | `src/app/missions/`、`src/app/tools/`、`src/lib/solvers/`；solver 不等於 field-test |
 | 地圖與 NPC | 地圖 index/detail、背景圖、placement、任務位置、後續移動 | `src/app/maps/`、`src/lib/queries/maps.ts`；移動證據缺口 |
 | 成就與商店 | 成就分類／獎勵、NPC shop sells/buys、道具購買來源 | `src/app/achievements/`、`src/app/shops/`；商店 NPC/地圖關聯未必存在 |
-| 英雄／寵物 | entity、成長、技能、飾品、比較、取得 guide | roadmap Phase 4；本輪未盤點 schema coverage |
-| 家族／結婚 | 流程、前置、效果、限制、版本差異 | roadmap Phase 5；本輪未盤點來源 |
+| 英雄／寵物 | entity、成長、技能、飾品、比較、取得 guide | hero audit/entity/detail/guide 已完成：hero 84、hero_connect 75、192 refs，無 orphan／duplicate；pet relation deferred：`ITEM_PET` 940、`PET_ORNAMENT` 68、`magic.pet_id` 34 rows／26 ids 未解碼 |
+| 家族／結婚 | 流程、前置、效果、限制、版本差異 | live audit 已完成但 evidence blocked；只有 raw codes／keyword clues，workflow deferred |
 | 更新與版本 | DB changelog、內容更新摘要、受影響 guides | `src/app/changelog/`、`src/lib/changelog/`；AI 摘要仍需 editorial review |
 
 ### 6.2 巴哈主題群盤點（已完成）
@@ -202,12 +213,12 @@
 
 | 風險／缺口 | 影響 | 最小處置 | 狀態 |
 |---|---|---|---|
-| SQLite schema 與實際 coverage 未 audit | 可能把缺失或 placeholder 當完整資料 | 先做 table/field/row coverage report，逐項標 unknown | 未執行 |
-| 欄位語意未解碼 | 數值解讀錯誤，攻略誤導 | 對照 official、LINE bot、field-test；保留 raw value 與 interpretation | 未執行 |
+| SQLite schema 與 coverage 仍非全庫盤點 | 可能把 targeted audit 誤解為全 DB 完整覆蓋 | coverage 已依各 Phase 做 targeted audit；仍非 whole-DB exhaustive audit，保留 remaining unknowns | Phase2–5 targeted audits completed／remaining unknowns recorded |
+| 欄位語意未解碼 | 數值解讀錯誤，攻略誤導 | 對照 official、LINE bot、field-test；保留 raw value 與 interpretation | known unresolved：`pet_id`、family/marriage workflow、NPC movement、經脈／星曜／真解等 |
 | DB、官方、實測、社群版本衝突 | 內容過期或互相矛盾 | 每 claim 保存 version/date/conflict，顯示適用版本 | 未執行 |
 | 巴哈資料年代與可驗證性風險 | 舊文、失效 thread、轉載或版本差異可能造成錯誤內容 | 保存 URL/title/author/date/accessed date，將其視為需求索引／社群線索，逐 claim 交叉驗證 | 已完成盤點；內容驗證仍待執行 |
 | 資料權重百分比被誤解為官方掉率 | 可能把資料表的權重換算誤寫成遊戲承諾 | 以含 `itemId=0` 空槽的 `totalWeight` 作分母，並明確標示為資料表權重換算 | 已由現行 query/UI 核對 |
-| NPC movement 不在 placement data | 假造路線或時間表 | 只顯示已證實 placement；movement 需 field-test | 未執行 |
+| NPC movement 不在 placement data | 假造路線或時間表 | 只顯示已證實 placement；movement 需 field-test | known unresolved；完整路線 deferred |
 | 著作權／下架要求 | 法律、信任與維護風險 | 短摘、署名、連結、權利紀錄與移除流程 | 未執行 |
 | AI／editorial 摘要幻覺 | 錯誤大規模擴散 | source-grounded draft、checklist、抽樣 review、unknown label | 未執行 |
 | 手機可用性與地圖效能 | 玩家無法在遊戲中使用 | 小範圍 mobile/performance smoke；控制圖片與表格成本 | 未執行 |
@@ -219,15 +230,17 @@
 | 日期 | 驗證 | 結果 | Owner |
 |---|---|---|---|
 | 2026-08-13 | roadmap writer 讀取既有 plans、routes、queries、solvers 與 tests，整理 file:line evidence | 已執行；僅作文件 evidence，不代表功能驗證；orchestrator 待核對 | roadmap writer |
-| 2026-08-13 | targeted guide tests | **3 passed** | orchestrator |
-| 2026-08-13 | typecheck | **passed** | orchestrator |
-| 2026-08-13 | full test suite | **415 passed** | orchestrator |
-| 2026-08-13 | build | **passed** | orchestrator |
-| 2026-08-13 | lint | **failed：ESLint 10.2.1／`react-display-name` compatibility TypeError；非 code failure** | orchestrator |
-| 2026-08-13 | SQLite schema/row/field coverage audit | **尚未執行** | orchestrator |
+| 2026-08-13 | Phase 0 local tests | **415 passed；CI success** | orchestrator |
+| 2026-08-13 | Phase 1 tests | **417 passed；CI success** | orchestrator |
+| 2026-08-13 | Phase 2 tests | **418 passed；CI success** | orchestrator |
+| 2026-08-13 | Phase 3 tests | **419 passed；CI success** | orchestrator |
+| 2026-08-13 | Phase 4 tests | **441 passed；CI success** | orchestrator |
+| 2026-08-13 | typecheck／build（各批） | **各批通過** | orchestrator |
+| 2026-08-13 | lint（各批） | **各批 blocked：既有 ESLint 10.2.1／`react-display-name` compatibility crash；非 code failure** | orchestrator |
+| 2026-08-13 | SQLite | **unchanged** | orchestrator |
 | 2026-08-13 | 巴哈主題群與代表 URL 盤點 | **已完成；URL 為需求索引／社群線索，不代表現行遊戲真值；內容與版本交叉驗證尚未執行** | roadmap writer；orchestrator 待核對 |
 | 2026-08-13 | official／field-test／community 來源交叉驗證 | **尚未執行** | orchestrator |
-| 2026-08-13 | browser/mobile/accessibility/performance smoke | **browser/mobile 尚未執行** | orchestrator |
+| 2026-08-13 | browser/mobile/accessibility/performance smoke | **browser/mobile manual smoke 尚未執行** | orchestrator |
 | 2026-08-13 | roadmap diff | **已由 orchestrator 核對** | orchestrator |
 
 ## 10. Decision log
@@ -241,3 +254,5 @@
 | 巴哈盤點採需求索引／社群線索定位 | 已核對代表 URL，但來源年代與可驗證性有風險，不把索引當現行遊戲真值 | 2026-08-13；已記錄 |
 | 不在 roadmap 內設計 CMS | 使用者要求只記錄內容平台 roadmap，不擴張成後台架構 | 2026-08-13；已記錄 |
 | Phase 6 採條件式 platform enhancement | 先以內容品質、需求與維護證據決定平台投資，避免 speculative work | 2026-08-13；已記錄 |
+| Phase 5 deferred | live read-only audit 無 family/guild/marriage/love table，現有 keyword/class constants 不足以證明流程；需 official source + current-version field-test + costs/cooldowns/irreversible outcomes 才 restart | 2026-08-13；已記錄 |
+| Phase 6 no-op | published guides = 6；search/filter、CMS、related guides、broken-link/freshness automation 均未達門檻，因此維持 conditional / not started | 2026-08-13；已記錄 |
