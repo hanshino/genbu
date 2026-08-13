@@ -37,4 +37,46 @@ describe("guides data contract", () => {
     expect(getPublishedGuides().every((guide) => guide.status === "published")).toBe(true);
     expect(Object.hasOwn(getGuideBySlug("monster-drops-training")!, "image")).toBe(false);
   });
+
+  it("publishes the three Phase 1 database-only guides", () => {
+    const phase1Slugs = ["monster-drops-training", "equipment-progression", "mission-dungeon"];
+    const phase1 = phase1Slugs.map((slug) => getGuideBySlug(slug));
+    expect(phase1.every((guide) => guide?.status === "published")).toBe(true);
+    for (const guide of phase1) {
+      expect(guide!.sources.every((source) => source.tier === "database")).toBe(true);
+      expect(new Set(guide!.sources.map((source) => source.id)).size).toBe(guide!.sources.length);
+    }
+  });
+
+  it("keeps Phase 1 guide navigation targets", () => {
+    const equipment = getGuideBySlug("equipment-progression")!;
+    const mission = getGuideBySlug("mission-dungeon")!;
+    const hrefs = (guide: typeof equipment) => guide.sections.flatMap((section) =>
+      (section.links ?? []).map((link) => link.href),
+    );
+    expect(hrefs(equipment)).toEqual(
+      expect.arrayContaining([
+        "/items",
+        "/monsters?hasDrop=1",
+        "/shops",
+        "/missions",
+        "/compounds",
+        "/ranking?type=HORSE",
+        "/ranking?type=WING",
+        "/compare?type=HORSE",
+        "/compare?type=WING",
+      ]),
+    );
+    expect(hrefs(mission)).toEqual(
+      expect.arrayContaining([
+        "/missions",
+        "/maps",
+        "/items",
+        "/tools",
+        "/tools/160",
+        "/tools/175",
+        "/tools/180",
+      ]),
+    );
+  });
 });
