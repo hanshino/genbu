@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { itemAttributeNames } from "@/lib/constants/i18n";
+import { MAX_COMPOUND_PLAYER_LEVEL } from "@/lib/constants/compound";
 import type {
   Compound,
   CompoundGroup,
@@ -388,8 +389,8 @@ export function getAllCompoundGroupsWithStats(): CompoundGroupStats[] {
       `SELECT g.id, g.name,
               c.type AS ctype,
               COUNT(c.id) AS cnt,
-              MIN(c.level) AS lmin,
-              MAX(c.level) AS lmax
+              MIN(CASE WHEN c.level <= ${MAX_COMPOUND_PLAYER_LEVEL} THEN c.level END) AS lmin,
+              MAX(CASE WHEN c.level <= ${MAX_COMPOUND_PLAYER_LEVEL} THEN c.level END) AS lmax
        FROM compound_groups g
        LEFT JOIN compounds c ON c."group" = g.id
        GROUP BY g.id, g.name, c.type

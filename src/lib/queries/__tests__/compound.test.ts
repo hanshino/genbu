@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { isCompoundPlayerLevel } from "@/lib/constants/compound";
 import {
   parseMaterialItems,
   parseModProb,
@@ -296,5 +297,31 @@ describe("getAllCompoundGroupsWithStats", () => {
     expect(g70?.count).toBe(182);
     expect(g70?.minLevel).toBeGreaterThan(0);
     expect(g70?.maxLevel).toBeGreaterThan(g70!.minLevel!);
+    expect(g70?.maxLevel).toBeLessThanOrEqual(200);
+  });
+
+  it("excludes encoded levels without dropping recipe counts", () => {
+    const stats = getAllCompoundGroupsWithStats();
+    const soulStoneGroups = stats.filter((s) => s.id >= 2 && s.id <= 6);
+    expect(soulStoneGroups).toHaveLength(5);
+    for (const group of soulStoneGroups) {
+      expect(group.minLevel).toBeNull();
+      expect(group.maxLevel).toBeNull();
+    }
+    expect(stats.find((s) => s.id === 2)?.count).toBe(56);
+    expect(stats.every((group) => group.maxLevel == null || group.maxLevel <= 200)).toBe(true);
+  });
+});
+
+describe("isCompoundPlayerLevel", () => {
+  it.each([
+    [200, true],
+    [201, false],
+    [1001, false],
+    [0, false],
+    [null, false],
+    [undefined, false],
+  ])("returns %s for level %s", (level, expected) => {
+    expect(isCompoundPlayerLevel(level)).toBe(expected);
   });
 });
