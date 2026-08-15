@@ -148,11 +148,17 @@ const BONUS_TO_ATTR_KEY: Record<string, string> = {
   ITEM_BONUS_LIGHTNING_DEF: "thunder",
 };
 
-function bonusLabel(bonusType: string): string | undefined {
+export function bonusLabel(bonusType: string): string | undefined {
   if (bonusType === "ITEM_BONUS_CREATEITEM") return "產出";
   const attrKey = BONUS_TO_ATTR_KEY[bonusType];
   return attrKey ? itemAttributeNames[attrKey] : undefined;
 }
+
+/**
+ * 裝備強化可用的 20 種 ITEM_BONUS_* 清單（宣告順序即 UI 選單順序）。
+ * 不含 ITEM_BONUS_CREATEITEM——那是飾品還原的產出型條目，不是裝備加成。
+ */
+export const ENHANCEMENT_BONUS_TYPES: readonly string[] = Object.keys(BONUS_TO_ATTR_KEY);
 
 /**
  * 產出條目的種類：決定 UI 怎麼渲染數值欄。
@@ -536,4 +542,258 @@ export function getCompoundSourcesForItem(itemId: number): CompoundUse[] {
   return enrichCompoundRows(rows).filter((u) =>
     u.outputs.some((o) => o.itemId === itemId),
   );
+}
+
+// ─── 屬性導向強化查詢（/tools/enhance） ──────────────────────────────────────
+
+/** 強化配方家族。`all` 只用於查詢條件，不會出現在結果上。 */
+export type EnhancementFamily = "all" | "yuan" | "pearl" | "stone" | "other";
+
+export type EnhancementSort = "bonus" | "probability" | "materials";
+
+export interface EnhancementSearch {
+  bonusType: string;
+  family: EnhancementFamily;
+  /** null = 全部槽位 */
+  slot: EquipmentSlotKind | null;
+}
+
+/**
+ * 同一配方對同一屬性的多個級距合併後的結果。
+ * 例：吉魂珠強化(10742) 的 ATK 是 +10~15/15~20/20~25/25~30 四段，
+ * 合併後為 +10~30、機率 700,000（70%）、segments 4。
+ * 只讀 outputs[0] 會得到「+10~15、25%」這種錯誤答案。
+ */
+export interface MergedBonus {
+  rawType: string;
+  label: string;
+  /** 所有級距的最小加值 */
+  min: number;
+  /** 所有級距的最大加值 */
+  max: number;
+  /** 各級距機率總和，百萬分制（1,000,000 = 100%），clamp 於上限 */
+  prob: number;
+  /** 級距數，供 UI 標示「分 N 段」 */
+  segments: number;
+}
+
+export interface EnhancementResult {
+  use: CompoundUse;
+  target: MergedBonus;
+  family: Exclude<EnhancementFamily, "all">;
+  /** material_core_amount ÷ 合併機率；無法計算時為 null（不得當成 0） */
+  expectedMaterials: number | null;
+}
+
+/** 百萬分制機率上限。合併後理論上不會超過，超出視為資料異常並取上限（不 throw）。 */
+const PROB_SCALE = 1_000_000;
+
+/**
+ * 依配方名稱關鍵字判定家族。
+ *
+ * 不可用 `group` range：104 筆魂珠與 180 筆「其他」都混在真元的 group 70–110 內，
+ * 用 group 二分會誤標 284 筆。
+ *
+ * 判定順序不可調換：「魂石」與「魂珠」都含「魂」，必須先比完整詞。
+ */
+export function enhancementFamily(name: string | null): Exclude<EnhancementFamily, "all"> {
+  const n = name ?? "";
+  if (n.includes("魂石")) return "stone";
+  if (n.includes("魂珠")) return "pearl";
+  if (n.includes("真元")) return "yuan";
+  return "other";
+}
+
+/**
+ * 把同一配方中屬於 `rawType` 的所有級距合併成單一結果。
+ * 沒有任何有效級距時回傳 null。
+ */
+export function mergeBonus(outputs: CompoundOutput[], rawType: string): MergedBonus | null {
+  const segs = outputs.filter(
+    (o) =>
+      o.kind === "bonus" &&
+      o.rawType === rawType &&
+      o.prob > 0 &&
+      Number.isFinite(o.min) &&
+      Number.isFinite(o.max),
+  );
+  if (segs.length === 0) return null;
+
+  const totalProb = segs.reduce((sum, s) => sum + s.prob, 0);
+  return {
+    rawType,
+    label: segs[0].label,
+    min: Math.min(...segs.map((s) => s.min as number)),
+    max: Math.max(...segs.map((s) => s.max as number)),
+    // 現行資料 0 筆超出上限，clamp 只是防止日後資料異常導致期望顆數 < 1
+    prob: Math.min(totalProb, PROB_SCALE),
+    segments: segs.length,
+  };
+}
+
+/**
+ * 期望消耗材料顆數 = material_core_amount ÷ 合併後機率。
+ * `material_core_amount` 目前 1,026 筆全為 1，但仍讀欄位而非寫死，避免日後資料變動時默默算錯。
+ */
+function expectedMaterialCount(amount: number | null | undefined, prob: number): number | null {
+  if (amount == null || !Number.isFinite(amount)) return null;
+  if (!(prob > 0)) return null;
+  return amount / (prob / PROB_SCALE);
+}
+
+/**
+ * 依「想要的屬性」反查所有能提供該屬性的裝備強化配方。
+ *
+ * 與 `getEquipmentEnhancementsForItemType()` 方向相反（那是 itemType → slot → 配方），
+ * 故另開 sibling query 而非逐槽呼叫。
+ *
+ * family 來自配方 name，無法下推 SQL，於 TS 端過濾（資料量固定 1,026 筆）。
+ */
+export function getEnhancementsByBonus(search: EnhancementSearch): EnhancementResult[] {
+  const db = getDb();
+  // LIKE 只是預過濾，減少送進 JSON.parse 的 row 數；正確性由下方 mergeBonus 二次驗證。
+  const likePattern = `%"type":"${search.bonusType}",%`;
+  const conditions = [`c.type = 'ITEM_COMPOUND_EQUIPMENT'`, `c.mod_prob LIKE ?`];
+  const args: Array<string> = [likePattern];
+  if (search.slot != null) {
+    // EQUIPMENT 配方的 material_items 永遠是單一槽代碼，與 getEquipmentEnhancementsForItemType 同一比對方式
+    conditions.push(`c.material_items = ?`);
+    args.push(`[{"id":${search.slot},"amount":1}]`);
+  }
+
+  const rows = db
+    .prepare(
+      `SELECT ${ENRICHED_COMPOUND_SELECT}
+       FROM ${ENRICHED_COMPOUND_FROM}
+       WHERE ${conditions.join(" AND ")}
+       ORDER BY c.id`,
+    )
+    .all(...args) as EnrichedCompoundRow[];
+
+  const results: EnhancementResult[] = [];
+  for (const use of enrichCompoundRows(rows)) {
+    const target = mergeBonus(use.outputs, search.bonusType);
+    if (!target) continue;
+    const family = enhancementFamily(use.name);
+    if (search.family !== "all" && family !== search.family) continue;
+    results.push({
+      use,
+      target,
+      family,
+      expectedMaterials: expectedMaterialCount(use.coreMaterial?.amount, target.prob),
+    });
+  }
+  return results;
+}
+
+/** null 排最後；兩者皆 null 視為同分。 */
+function compareNullableAsc(a: number | null, b: number | null): number {
+  if (a === b) return 0;
+  if (a == null) return 1;
+  if (b == null) return -1;
+  return a - b;
+}
+
+/**
+ * 三種排序皆只讀「合併後的目標屬性」，不得讀 outputs[0]。
+ * 每條鏈都以 id 收尾確保可重現。
+ */
+export function sortEnhancements(
+  results: EnhancementResult[],
+  sort: EnhancementSort,
+): EnhancementResult[] {
+  const chains: Record<EnhancementSort, Array<(r: EnhancementResult) => number | null>> = {
+    // 玩家先問「哪顆加最多」；max 同分時比保底 min，避免大範圍配方被誤認為穩定高值
+    bonus: [(r) => -r.target.max, (r) => -r.target.min, (r) => -r.target.prob, (r) => r.expectedMaterials],
+    probability: [(r) => -r.target.prob, (r) => -r.target.max, (r) => -r.target.min, (r) => r.expectedMaterials],
+    materials: [(r) => r.expectedMaterials, (r) => -r.target.prob, (r) => -r.target.max, (r) => -r.target.min],
+  };
+  const keys = chains[sort];
+  return [...results].sort((a, b) => {
+    for (const key of keys) {
+      const d = compareNullableAsc(key(a), key(b));
+      if (d !== 0) return d;
+    }
+    return a.use.id - b.use.id;
+  });
+}
+
+export const DEFAULT_ENHANCEMENT_SEARCH: EnhancementSearch & { sort: EnhancementSort } = {
+  bonusType: "ITEM_BONUS_ATK",
+  family: "all",
+  slot: null,
+  sort: "bonus",
+};
+
+const ENHANCEMENT_FAMILIES: readonly EnhancementFamily[] = [
+  "all",
+  "yuan",
+  "pearl",
+  "stone",
+  "other",
+];
+const ENHANCEMENT_SORTS: readonly EnhancementSort[] = ["bonus", "probability", "materials"];
+
+export type EnhancementSearchParams = Record<string, string | string[] | undefined>;
+
+export type ParsedEnhancementSearch =
+  | { ok: true; search: EnhancementSearch; sort: EnhancementSort }
+  | { ok: false; errors: string[] };
+
+/**
+ * GET query string 的 trust boundary。
+ * 缺值或空字串取預設；任一值無效即整體失敗，呼叫端不得執行任何 DB query。
+ * 不做大小寫修正、模糊比對或未知值靜默 fallback。
+ */
+export function parseEnhancementSearchParams(
+  params: EnhancementSearchParams,
+): ParsedEnhancementSearch {
+  const errors: string[] = [];
+
+  // 重複參數形成的 array 一律拒絕，不取第一個值
+  const single = (key: string, label: string): string | undefined => {
+    const raw = params[key];
+    if (raw === undefined) return undefined;
+    if (Array.isArray(raw)) {
+      errors.push(`${label}參數重複，請只提供一個值。`);
+      return undefined;
+    }
+    return raw.trim() === "" ? undefined : raw;
+  };
+
+  const rawAttribute = single("attribute", "屬性");
+  const rawFamily = single("family", "家族");
+  const rawSlot = single("slot", "槽位");
+  const rawSort = single("sort", "排序");
+
+  let bonusType = DEFAULT_ENHANCEMENT_SEARCH.bonusType;
+  if (rawAttribute !== undefined) {
+    if (ENHANCEMENT_BONUS_TYPES.includes(rawAttribute)) bonusType = rawAttribute;
+    else errors.push(`屬性「${rawAttribute}」不是可查詢的強化屬性。`);
+  }
+
+  let family = DEFAULT_ENHANCEMENT_SEARCH.family;
+  if (rawFamily !== undefined) {
+    if ((ENHANCEMENT_FAMILIES as string[]).includes(rawFamily)) {
+      family = rawFamily as EnhancementFamily;
+    } else {
+      errors.push(`家族「${rawFamily}」不是合法選項。`);
+    }
+  }
+
+  let slot = DEFAULT_ENHANCEMENT_SEARCH.slot;
+  if (rawSlot !== undefined && rawSlot !== "all") {
+    // 只接受 1–5 的單一數字；擋掉 "01"、"1.0"、"0"、"6"、" 1"、非數字
+    if (/^[1-5]$/.test(rawSlot)) slot = Number(rawSlot) as EquipmentSlotKind;
+    else errors.push(`槽位「${rawSlot}」不是合法選項。`);
+  }
+
+  let sort = DEFAULT_ENHANCEMENT_SEARCH.sort;
+  if (rawSort !== undefined) {
+    if ((ENHANCEMENT_SORTS as string[]).includes(rawSort)) sort = rawSort as EnhancementSort;
+    else errors.push(`排序「${rawSort}」不是合法選項。`);
+  }
+
+  if (errors.length > 0) return { ok: false, errors };
+  return { ok: true, search: { bonusType, family, slot }, sort };
 }

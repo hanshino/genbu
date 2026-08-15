@@ -9,7 +9,7 @@ import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type NavLink = { href: string; label: string };
+type NavLink = { href: string; label: string; exact?: boolean };
 type NavGroup = { label: string; items: NavLink[] };
 
 const navGroups: NavGroup[] = [
@@ -35,15 +35,22 @@ const navGroups: NavGroup[] = [
       { href: "/compare", label: "比較" },
     ],
   },
+  {
+    label: "工具",
+    items: [
+      { href: "/tools", label: "工具總覽", exact: true },
+      { href: "/tools/enhance", label: "強化查詢" },
+    ],
+  },
 ];
 
-function isActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
+function isActive(pathname: string, href: string, exact = false) {
+  if (exact || href === "/") return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 function isGroupActive(pathname: string, group: NavGroup) {
-  return group.items.some((i) => isActive(pathname, i.href));
+  return group.items.some((i) => isActive(pathname, i.href, i.exact));
 }
 
 export function Navbar() {
@@ -64,7 +71,6 @@ export function Navbar() {
             <DesktopGroup key={group.label} group={group} pathname={pathname} />
           ))}
           <DesktopLink href="/guides" label="攻略" pathname={pathname} />
-          <DesktopLink href="/tools" label="工具" pathname={pathname} />
           <DesktopLink href="/changelog" label="更新紀錄" pathname={pathname} />
         </nav>
 
@@ -120,6 +126,7 @@ export function Navbar() {
                           key={item.href}
                           href={item.href}
                           label={item.label}
+                          exact={item.exact}
                           pathname={pathname}
                           onNavigate={() => setOpen(false)}
                         />
@@ -131,13 +138,6 @@ export function Navbar() {
                 <MobileLink
                   href="/guides"
                   label="攻略"
-                  pathname={pathname}
-                  onNavigate={() => setOpen(false)}
-                />
-
-                <MobileLink
-                  href="/tools"
-                  label="工具"
                   pathname={pathname}
                   onNavigate={() => setOpen(false)}
                 />
@@ -225,7 +225,7 @@ function DesktopGroup({ group, pathname }: { group: NavGroup; pathname: string }
             )}
           >
             {group.items.map((item) => {
-              const itemActive = isActive(pathname, item.href);
+              const itemActive = isActive(pathname, item.href, item.exact);
               return (
                 <MenuPrimitive.Item
                   key={item.href}
@@ -251,13 +251,15 @@ function MobileLink({
   label,
   pathname,
   onNavigate,
+  exact = false,
 }: {
   href: string;
   label: string;
   pathname: string;
   onNavigate: () => void;
+  exact?: boolean;
 }) {
-  const active = isActive(pathname, href);
+  const active = isActive(pathname, href, exact);
   return (
     <Link
       href={href}
