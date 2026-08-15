@@ -5,14 +5,21 @@ import type { EntityImage } from "@/lib/queries/images";
 interface EntityPortraitProps {
   image: EntityImage | null | undefined;
   alt: string;
-  /** sm 用於列表縮圖，lg 用於詳情立繪。 */
-  size?: "sm" | "lg";
+  /** sm 用於列表縮圖，md 用於卡片立繪帶，lg 用於詳情立繪。 */
+  size?: "sm" | "md" | "lg";
   className?: string;
 }
 
-const SIZE_CLASS: Record<"sm" | "lg", string> = {
+const SIZE_CLASS: Record<"sm" | "md" | "lg", string> = {
   sm: "size-9",
+  md: "h-16 w-14",
   lg: "h-40 w-40 sm:h-48 sm:w-48",
+};
+
+const FALLBACK_ICON_CLASS: Record<"sm" | "md" | "lg", string> = {
+  sm: "size-4",
+  md: "size-5",
+  lg: "size-10",
 };
 
 export function EntityPortrait({ image, alt, size = "lg", className }: EntityPortraitProps) {
@@ -25,7 +32,7 @@ export function EntityPortrait({ image, alt, size = "lg", className }: EntityPor
   if (!image) {
     return (
       <span className={cn(frame, "text-muted-foreground")} aria-hidden>
-        <GhostIcon className={size === "sm" ? "size-4" : "size-10"} />
+        <GhostIcon className={FALLBACK_ICON_CLASS[size]} />
       </span>
     );
   }
