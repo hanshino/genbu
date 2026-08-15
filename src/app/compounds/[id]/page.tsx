@@ -2,7 +2,11 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { BackLink } from "@/components/common/back-link";
 import { Badge } from "@/components/ui/badge";
-import { COMPOUND_TYPE_LABELS, compoundTypeRank } from "@/lib/constants/compound";
+import {
+  COMPOUND_TYPE_LABELS,
+  compoundTypeRank,
+  isCompoundPlayerLevel,
+} from "@/lib/constants/compound";
 import {
   getCompoundGroupById,
   getCompoundsByGroupEnriched,
@@ -52,9 +56,10 @@ export default async function CompoundGroupDetailPage({ params }: PageProps) {
   let lvMin = Infinity;
   let lvMax = -Infinity;
   for (const r of recipes) {
-    if (r.level == null) continue;
-    if (r.level < lvMin) lvMin = r.level;
-    if (r.level > lvMax) lvMax = r.level;
+    const level = r.level;
+    if (level == null || !isCompoundPlayerLevel(level)) continue;
+    if (level < lvMin) lvMin = level;
+    if (level > lvMax) lvMax = level;
   }
   const levelRange = !Number.isFinite(lvMin)
     ? null

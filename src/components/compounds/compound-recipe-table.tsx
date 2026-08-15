@@ -7,6 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatMoney } from "@/lib/format/compound";
+import { isCompoundPlayerLevel } from "@/lib/constants/compound";
 import {
   MaterialLink,
   MaterialList,
@@ -59,7 +60,7 @@ export function CompoundRecipeTable({
                   )}
                 </TableCell>
                 <TableCell className="text-right align-top font-mono text-xs">
-                  {u.level ?? "—"}
+                  {isCompoundPlayerLevel(u.level) ? u.level : "—"}
                 </TableCell>
                 <TableCell className="text-xs align-top whitespace-normal break-words">
                   {u.coreMaterial ? (
