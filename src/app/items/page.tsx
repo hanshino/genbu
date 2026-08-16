@@ -6,6 +6,7 @@ import { serializeSearchParams } from "@/lib/utils";
 import { ItemFilters } from "@/components/items/item-filters";
 import { ItemTable } from "@/components/items/item-table";
 import { ItemPagination } from "@/components/items/item-pagination";
+import { SearchBeacon } from "@/components/analytics/search-beacon";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,7 @@ export default async function ItemsPage({ searchParams }: PageProps) {
       <div className="mb-6">
         <Suspense fallback={null}>
           <ItemFilters initialSearch={search} initialType={type} />
+          <SearchBeacon scope="items" query={search} hasFilter={!!type} resultCount={result.total} />
         </Suspense>
       </div>
 

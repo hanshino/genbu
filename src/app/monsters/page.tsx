@@ -11,6 +11,7 @@ import { serializeSearchParams } from "@/lib/utils";
 import { MonsterFilters } from "@/components/monsters/monster-filters";
 import { MonsterTable } from "@/components/monsters/monster-table";
 import { Pagination } from "@/components/common/pagination";
+import { SearchBeacon } from "@/components/analytics/search-beacon";
 
 export const dynamic = "force-dynamic";
 
@@ -95,6 +96,12 @@ export default async function MonstersPage({ searchParams }: PageProps) {
             initialLevelMax={levelMaxRaw}
             availableTypes={availableTypes}
             availableElementals={availableElementals}
+          />
+          <SearchBeacon
+            scope="monsters"
+            query={search}
+            hasFilter={!!(typeRaw || elemental || hasDrop || isNormal || levelMinRaw || levelMaxRaw)}
+            resultCount={result.total}
           />
         </Suspense>
       </div>

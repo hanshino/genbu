@@ -10,6 +10,7 @@ import { serializeSearchParams } from "@/lib/utils";
 import { SkillFilters } from "@/components/skills/skill-filters";
 import { SkillTable } from "@/components/skills/skill-table";
 import { Pagination } from "@/components/common/pagination";
+import { SearchBeacon } from "@/components/analytics/search-beacon";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,12 @@ export default async function SkillsPage({ searchParams }: PageProps) {
             availableClans={availableClans}
             availableTargets={availableTargets}
             availableSkillTypes={availableSkillTypes}
+          />
+          <SearchBeacon
+            scope="skills"
+            query={search}
+            hasFilter={!!(clan || target || skillType)}
+            resultCount={result.total}
           />
         </Suspense>
       </div>

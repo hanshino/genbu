@@ -14,7 +14,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { monsterTypeLabel } from "@/lib/constants/monster-type";
 import { MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL } from "@/lib/constants/monster-level";
 import { FILTER_ALL } from "@/lib/constants/filters";
-import { track } from "@/lib/analytics/track";
 
 export function MonsterFilters({
   initialSearch,
@@ -89,21 +88,6 @@ export function MonsterFilters({
     startTransition(() => {
       router.push(`/monsters${nextQs ? `?${nextQs}` : ""}`);
     });
-    const query = next.search.trim();
-    const hasFilter =
-      (!!next.type && next.type !== FILTER_ALL) ||
-      (!!next.elemental && next.elemental !== FILTER_ALL) ||
-      next.hasDrop ||
-      next.isNormal ||
-      !!next.levelMin.trim() ||
-      !!next.levelMax.trim();
-    if (query.length > 0 || hasFilter) {
-      track("search_submit", {
-        scope: "monsters",
-        query_len: query.length,
-        has_filter: hasFilter,
-      });
-    }
   }
 
   return (
