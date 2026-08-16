@@ -3,7 +3,6 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
-import { track } from "@/lib/analytics/track";
 
 export function AchievementSearch({ initialSearch }: { initialSearch: string }) {
   const router = useRouter();
@@ -22,9 +21,6 @@ export function AchievementSearch({ initialSearch }: { initialSearch: string }) 
       startTransition(() => {
         router.push(`/achievements${qs ? `?${qs}` : ""}`);
       });
-      if (next.length > 0) {
-        track("search_submit", { scope: "achievements", query_len: next.length, has_filter: false });
-      }
     }, 300);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps

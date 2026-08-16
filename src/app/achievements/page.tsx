@@ -11,7 +11,8 @@ import {
 } from "@/lib/queries/achievements";
 import { AchievementSearch } from "@/components/achievements/achievement-search";
 import { AchievementRow } from "@/components/achievements/achievement-row";
-import type { AchievementRow as Row } from "@/lib/types/achievement";
+import type { AchievementRow as Row, AchievementSearchRow } from "@/lib/types/achievement";
+import { SearchBeacon } from "@/components/analytics/search-beacon";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,7 @@ export default async function AchievementsPage({ searchParams }: PageProps) {
   const categories = getAchievementCategories();
   const catParam = Number(params.cat);
   const activeCat = categories.find((c) => c.id === catParam) ?? categories[0];
+  const searchRows = search ? searchAchievements(search) : null;
 
   const total = categories.reduce(
     (sum, c) => sum + c.subCats.reduce((s, sc) => s + sc.count, 0),
@@ -48,10 +50,16 @@ export default async function AchievementsPage({ searchParams }: PageProps) {
 
       <Suspense fallback={null}>
         <AchievementSearch initialSearch={search} />
+        <SearchBeacon
+          scope="achievements"
+          query={search}
+          hasFilter={false}
+          resultCount={searchRows?.length ?? 0}
+        />
       </Suspense>
 
       {search ? (
-        <SearchResults keyword={search} />
+        <SearchResults rows={searchRows ?? []} keyword={search} />
       ) : (
         <>
           <nav aria-label="瀏覽方式" className="flex flex-wrap gap-1.5">
@@ -225,8 +233,7 @@ function RewardGroups() {
   );
 }
 
-function SearchResults({ keyword }: { keyword: string }) {
-  const rows = searchAchievements(keyword);
+function SearchResults({ rows, keyword }: { rows: AchievementSearchRow[]; keyword: string }) {
   return (
     <section className="space-y-2">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
