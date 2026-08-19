@@ -1,0 +1,4277 @@
+{
+  "version": "7.2.6.6",
+  "date": "2026-08-19",
+  "summary": {
+    "added": 1130,
+    "changed": 62525,
+    "removed": 5
+  },
+  "addedTables": [],
+  "removedTables": [],
+  "tables": [
+    {
+      "table": "items",
+      "label": "道具",
+      "tier": "rich",
+      "counts": {
+        "added": 2,
+        "changed": 5,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "34393"
+          ],
+          "name": "瑤星織夢禮盒",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "瑤星織夢禮盒"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "打開有機會獲得全新背飾「瑤星織夢」、黑白慧羽、青霓兔影、青冷仙芒、衷心月狐、花蝶舞衣系列外裝及副門派進階書等超值好禮。"
+            },
+            {
+              "col": "value",
+              "label": "售價",
+              "value": "100"
+            },
+            {
+              "col": "atk",
+              "label": "攻擊",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "法攻",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "法防",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "HP",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "MP",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "迴避",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "力",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "氣",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "體",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "敏",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "智",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "BONUS"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "55451"
+          ],
+          "name": "琉光幻騮",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "琉光幻騮"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "[外裝]玄光纏繞，雷電護劍，聖者之刃，斬盡邪魔，凌立天地間。"
+            },
+            {
+              "col": "value",
+              "label": "售價",
+              "value": "5"
+            },
+            {
+              "col": "atk",
+              "label": "攻擊",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "法攻",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "法防",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "HP",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "MP",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "迴避",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "力",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "氣",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "體",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "敏",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "智",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "CLAW"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "52077"
+          ],
+          "name": "瑤星織夢",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試道具",
+              "to": "瑤星織夢"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "瑤池星光凝聚成靈，於七夕之夜最為璀璨，藍色靈光如絲如縷，將相思化作星光，讓每一份深藏的心意，都能抵達最遙遠的彼端。"
+            },
+            {
+              "col": "hp",
+              "label": "HP",
+              "from": "0",
+              "to": "3900"
+            },
+            {
+              "col": "mp",
+              "label": "MP",
+              "from": "0",
+              "to": "800"
+            },
+            {
+              "col": "str",
+              "label": "力",
+              "from": "0",
+              "to": "15"
+            },
+            {
+              "col": "agi",
+              "label": "敏",
+              "from": "0",
+              "to": "15"
+            },
+            {
+              "col": "atk",
+              "label": "攻擊",
+              "from": "0",
+              "to": "200"
+            },
+            {
+              "col": "dodge",
+              "label": "迴避",
+              "from": "0",
+              "to": "120"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "54046"
+          ],
+          "name": "織女彩衣",
+          "fields": [
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "七仙女中最高貴的衣裳，穿上它就像仙女般美麗。",
+              "to": "[外裝]七仙女中最高貴的衣裳，穿上它就像仙女般美麗。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "54060"
+          ],
+          "name": "極品懸吊菜頭",
+          "fields": [
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "菜頭懸掛在眼睛前方晃啊晃，小心看久了會頭暈。",
+              "to": "[外裝]菜頭懸掛在眼睛前方晃啊晃，小心看久了會頭暈。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "54086"
+          ],
+          "name": "相戀心連心",
+          "fields": [
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "心心相連，心心相印，你我的緣分就如同紅線般交纏不分彼此。",
+              "to": "[外裝]心心相連，心心相印，你我的緣分就如同紅線般交纏不分彼此。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "55450"
+          ],
+          "name": "幽嵐緋夢褲",
+          "fields": [
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "深邃緋色流轉嵐氣，粉蝶輕舞藏夢於影，少女踏花而行，夢幻如幽谷山嵐，每一步都像在編織一首未完的夢，柔美而悠遠。",
+              "to": "琉璃燈火搖曳，光影如夢似幻，/n每一抹光芒都是斬破黑暗的誓言，/n燈燃處，幻影消散，照亮前路，/n如同黎明前最溫柔的那道曙光"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "achievements",
+      "label": "成就",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 3,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "18049"
+          ],
+          "name": "擂臺常青",
+          "fields": [
+            {
+              "col": "description",
+              "label": "描述",
+              "from": "參加家族比武大賽1000次",
+              "to": "參加家族比武大賽500次"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "18050"
+          ],
+          "name": "一代宗師",
+          "fields": [
+            {
+              "col": "description",
+              "label": "描述",
+              "from": "參加家族比武大賽2000次",
+              "to": "參加家族比武大賽1000次"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "38806"
+          ],
+          "name": "歷盡烈漠禁地斬狂沙",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "烈漠禁地斬狂沙",
+              "to": "歷盡烈漠禁地斬狂沙"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "message_options",
+      "label": "對話選項",
+      "tier": "rich",
+      "counts": {
+        "added": 2,
+        "changed": 0,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "72",
+            "72713",
+            "1"
+          ],
+          "name": "親自找材料",
+          "fields": [
+            {
+              "col": "text",
+              "label": "選項文字",
+              "value": "親自找材料"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "72",
+            "72713",
+            "2"
+          ],
+          "name": "準備小花金幣十枚",
+          "fields": [
+            {
+              "col": "text",
+              "label": "選項文字",
+              "value": "準備小花金幣十枚"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "mission_steps",
+      "label": "任務步驟",
+      "tier": "rich",
+      "counts": {
+        "added": 615,
+        "changed": 11,
+        "removed": 5
+      },
+      "added": [
+        {
+          "idParts": [
+            "409",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "409",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待1"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "409",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待2"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "409",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "409",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "409",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "409",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "409",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "409",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "409",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "409",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "409",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "409",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "409",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "409",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待1"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待2"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待1"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待2"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待1"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待2"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待1"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待2"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待1"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待2"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待1"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待2"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待1"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待2"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待1"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待2"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待1"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待2"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待1"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待2"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待1"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待2"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待1"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待2"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10740",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10740",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待1"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10740",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待2"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10740",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10740",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        }
+      ],
+      "addedTruncated": 415,
+      "removed": [
+        {
+          "idParts": [
+            "10722",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10722",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10722",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10722",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10722",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "399",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "前往霧林找探查北邊陷阱狀況",
+              "to": "前往霧林找探查1北邊陷阱狀況"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10722",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待0",
+              "to": "步驟提示01"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10722",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待1",
+              "to": "再與紙影匠．沈微對話"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10722",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待2",
+              "to": "找花田老農"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10722",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待3",
+              "to": "找花田老農進入金針花田並清除數支蟲"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10722",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待4",
+              "to": "進入金針花田並趕走數個採花賊"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10722",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待5",
+              "to": "進入金針花田並獲得金針花[item33653×10]給紙影匠．沈微"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10722",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待6",
+              "to": "收集五色細繩五色細繩[item33649×10]給紙影匠．沈微"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10722",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待7",
+              "to": "收集絢麗彩紙[item33648×10]給紙影匠．沈微"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10722",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待8",
+              "to": "收集小花金幣[item24171×10]給紙影匠．沈微"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10722",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待9",
+              "to": "再與紙影匠．沈微對話"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "missions",
+      "label": "任務",
+      "tier": "rich",
+      "counts": {
+        "added": 41,
+        "changed": 1,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "409"
+          ],
+          "name": "敬請期待",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "敬請期待"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "劇情到此告一段落，接下來這一路上又會遇到什麼驚心動魄的危險事件？敬請期待。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "410"
+          ],
+          "name": "敬請期待",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "敬請期待"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "劇情到此告一段落，接下來這一路上又會遇到什麼驚心動魄的危險事件？敬請期待。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "411"
+          ],
+          "name": "敬請期待",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "敬請期待"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "劇情到此告一段落，接下來這一路上又會遇到什麼驚心動魄的危險事件？敬請期待。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "412"
+          ],
+          "name": "敬請期待",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "敬請期待"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "劇情到此告一段落，接下來這一路上又會遇到什麼驚心動魄的危險事件？敬請期待。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "413"
+          ],
+          "name": "敬請期待",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "敬請期待"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "劇情到此告一段落，接下來這一路上又會遇到什麼驚心動魄的危險事件？敬請期待。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "414"
+          ],
+          "name": "敬請期待",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "敬請期待"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "劇情到此告一段落，接下來這一路上又會遇到什麼驚心動魄的危險事件？敬請期待。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10733"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10734"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10735"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10736"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10737"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10738"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10739"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10740"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10741"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10742"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10743"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10744"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10745"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10746"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10747"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10748"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10749"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10750"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10751"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10752"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10753"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10754"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10755"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10756"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10757"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10758"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10759"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10760"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10761"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10762"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10763"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10764"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10765"
+          ],
+          "name": "保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "保留"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "敬請期待"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20561"
+          ],
+          "name": "長篇劇情對話_計次2",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "長篇劇情對話_計次2"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "忍者與海盜支線-永恆的黃昏"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20562"
+          ],
+          "name": "長篇劇情對話_計時2",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "長篇劇情對話_計時2"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "忍者與海盜支線-永恆的黃昏"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "10722"
+          ],
+          "name": "花影寄相思",
+          "fields": [
+            {
+              "col": "help",
+              "label": "說明",
+              "from": "敬請期待",
+              "to": "近日一名江湖紙影匠來到忘憂村，想以金針花、彩紙、五色細繩，製作一批紙影花燈，邀請村民夜裡一同賞影祈福。只是紙影匠手邊材料不足，於是請玩家協助完成這場金針花季的花影小會。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc",
+      "label": "NPC",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 6,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "13597"
+          ],
+          "name": "花影昆蟲",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "沙漠荒馬",
+              "to": "花影昆蟲"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13598"
+          ],
+          "name": "採花賊",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "沙漠馬賊",
+              "to": "採花賊"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13599"
+          ],
+          "name": "金針花",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "疾風刀客",
+              "to": "金針花"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13600"
+          ],
+          "name": "花影昆蟲",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "沙漠荒馬",
+              "to": "花影昆蟲"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13601"
+          ],
+          "name": "採花賊",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "沙漠馬賊",
+              "to": "採花賊"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13602"
+          ],
+          "name": "金針花",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "疾風刀客",
+              "to": "金針花"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "compounds",
+      "label": "compounds",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 5,
+        "removed": 0
+      }
+    },
+    {
+      "table": "item_images",
+      "label": "item_images",
+      "tier": "count",
+      "counts": {
+        "added": 3,
+        "changed": 0,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_dims",
+      "label": "map_dims",
+      "tier": "count",
+      "counts": {
+        "added": 5,
+        "changed": 16,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_placements",
+      "label": "map_placements",
+      "tier": "count",
+      "counts": {
+        "added": 359,
+        "changed": 42389,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_warps",
+      "label": "地圖傳送點",
+      "tier": "count",
+      "counts": {
+        "added": 3,
+        "changed": 2620,
+        "removed": 0
+      }
+    },
+    {
+      "table": "messages",
+      "label": "對話訊息",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 75,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_refs",
+      "label": "任務關聯",
+      "tier": "count",
+      "counts": {
+        "added": 4,
+        "changed": 898,
+        "removed": 0
+      }
+    },
+    {
+      "table": "monster_spawns",
+      "label": "monster_spawns",
+      "tier": "count",
+      "counts": {
+        "added": 96,
+        "changed": 16489,
+        "removed": 0
+      }
+    },
+    {
+      "table": "npc_images",
+      "label": "npc_images",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 6,
+        "removed": 0
+      }
+    },
+    {
+      "table": "stages",
+      "label": "stages",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 1,
+        "removed": 0
+      }
+    }
+  ],
+  "ai": {
+    "model": "claude-opus-4-8",
+    "edited": true,
+    "highlights": [
+      "七夕限定背飾「瑤星織夢」正式實裝：原本掛「測試道具」的佔位被填上正式數值（HP+3900、MP+800、攻擊+200、迴避+120、力/敏各+15），確定上線可用。",
+      "新增「瑤星織夢禮盒」，依說明開箱有機會獲得瑤星織夢背飾、黑白慧羽、青霓兔影、青冷仙芒、衷心月狐、花蝶舞衣系列外裝，以及副門派進階書。",
+      "新增外裝「琉光幻騮」（CLAW 類型）。",
+      "新任務「花影寄相思」上線：忘憂村來了紙影匠．沈微，委託玩家蒐集金針花、絢麗彩紙、五色細繩、小花金幣製作紙影花燈，原本「敬請期待」佔位已填入正式劇情與步驟。",
+      "花影寄相思配套 NPC 就緒：採花賊、金針花、花影昆蟲（沿用原沙漠系怪改名），對話選項也補上「親自找材料」「準備小花金幣十枚」。",
+      "劇情面追加「忍者與海盜支線－永恆的黃昏」長篇劇情計次。",
+      "家族比武大賽成就門檻下修：「擂臺常青」1000→500 次、「一代宗師」2000→1000 次，衝成就更省力。",
+      "多件外裝道具補上 [外裝] 標記（織女彩衣、極品懸吊菜頭、相戀心連心等），純標籤整理不影響數值。",
+      "道具說明疑似官方貼錯：「幽嵐緋夢褲」的說明被換成明顯屬於燈類的文案（「琉璃燈火搖曳…斬破黑暗的誓言」），同系列的幽嵐緋夢帽／衣、幽嵐玄影褲都仍是原本的「幽嵐」文案；該段文字另用了字面的 /n 而非換行符。",
+      "任務系統另塞入大量「敬請期待／保留」佔位任務與步驟，屬預留坑位、本版尚未開放的內容。",
+      "地圖擺放、怪物出沒、傳送點等底層資料大批重建（數萬筆變更），屬建置調整而非玩法改動。"
+    ],
+    "tables": {}
+  }
+}
