@@ -49,10 +49,12 @@ describe("getAchievementsByCategory", () => {
     expect(a.rewardName).toBe("物攻增加");
   });
 
-  it("前置成就 self-join 取得名稱(嶄露頭角 → 前置:初有所成)", () => {
-    const rows = getAchievementsByCategory(1);
-    const a = rows.find((r) => r.name === "嶄露頭角")!;
-    expect(a.prereqName).toBe("初有所成");
+  // v7.2.6.6 起功名錄整條成就鏈的 prereq 被清為 0,全庫僅剩期間成就 >
+  // 無名之島(sub_cat 1001)的 30002/30004 還有前置關係。
+  it("前置成就 self-join 取得名稱(無名島外也是諸般委託皆肯接 → 前置:忍村來客混成半個熟人)", () => {
+    const rows = getAchievementsByCategory(101);
+    const a = rows.find((r) => r.id === 30002)!;
+    expect(a.prereqName).toBe("忍村來客混成半個熟人");
   });
 
   it("不存在的分類回傳空陣列", () => {

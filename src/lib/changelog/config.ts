@@ -106,7 +106,13 @@ export const PROFILES: Record<string, TableProfile> = {
     label: "成就",
     identity: ["id"],
     displayName: "name",
-    fields: { name: "名稱", description: "描述", points: "點數", reward_amount: "獎勵數量" },
+    fields: {
+      name: "名稱",
+      description: "描述",
+      points: "點數",
+      reward_amount: "獎勵數量",
+      prereq_achievement_id: "前置成就",
+    },
     detailRoute: () => "/achievements",
   },
   shop_sells: {

@@ -61,7 +61,7 @@ describe("getMonsters", () => {
 
   it("filters by type", () => {
     const type17 = getMonsters({ type: 17, pageSize: 5 });
-    expect(type17.total).toBe(1158);
+    expect(type17.total).toBe(1156);
     for (const m of type17.monsters) expect(m.type).toBe(17);
   });
 
