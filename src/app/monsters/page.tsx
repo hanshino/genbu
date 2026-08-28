@@ -111,6 +111,8 @@ export default async function MonstersPage({ searchParams }: PageProps) {
         sort={{ sortBy, sortDir, searchParamsStr, basePath: "/monsters" }}
         spawnsByMonster={spawnsByMonster}
         portraitMap={portraitMap}
+        search={search}
+        unfilteredTotal={result.unfilteredTotal}
       />
 
       {result.totalPages > 1 && (

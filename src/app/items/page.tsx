@@ -53,6 +53,8 @@ export default async function ItemsPage({ searchParams }: PageProps) {
         items={result.items}
         sort={{ sortBy, sortDir, searchParamsStr, basePath: "/items" }}
         iconMap={iconMap}
+        search={search}
+        unfilteredTotal={result.unfilteredTotal}
       />
 
       {result.totalPages > 1 && (
