@@ -89,7 +89,9 @@ export function solveForestMatrix(input: ForestMatrixInput): ForestMatrixResult 
   for (const name of ROOM_NAMES) {
     const [α, β, γ] = COEFFICIENTS[name];
     const v = α * a + β * b + γ * c;
-    if (!Number.isInteger(v) || v < 1 || v > 9) {
+    // ponytail: 推算格可以是 0（實測 sum=12 晶6 阜5 → 彤=0），只有 NPC 給的
+    // 兩間關閉房間限制在 1~9（見上方輸入驗證與 number-pad-popover 的按鍵）。
+    if (!Number.isInteger(v) || v < 0 || v > 9) {
       return { ok: false, reason: "no_valid_solution" };
     }
     cells[name] = v;

@@ -31,7 +31,7 @@ const REASON_MESSAGE: Record<
   same_room: "兩間房間不能重複",
   center_known: "帝之間由總和自動決定，不能當作關閉的房間",
   redundant_pair: "這兩間互為對稱（通過帝之間的同一條線），無法唯一求解",
-  no_valid_solution: "這組輸入無合法解（推算出的格子超出 1~9）",
+  no_valid_solution: "這組輸入無合法解（推算出的格子超出 0~9）",
 };
 
 export function ForestMatrixSolver() {

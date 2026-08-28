@@ -167,16 +167,40 @@ describe("solveForestMatrix — error reasons", () => {
     if (!r.ok) expect(r.reason).toBe("redundant_pair");
   });
 
-  it("inputs that force a cell out of 1..9 → no_valid_solution", () => {
+  it("inputs that force a cell out of 0..9 → no_valid_solution", () => {
     const r = solveForestMatrix({
       sum: 12,
       known: [
         { room: "魁", value: 1 },
-        { room: "阜", value: 1 },
+        { room: "阜", value: 9 },
       ],
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("no_valid_solution");
+  });
+
+  it("sum=12, (晶=6, 阜=5) → 彤=0 is a legal board, not no_valid_solution", () => {
+    const cells = ok(
+      solveForestMatrix({
+        sum: 12,
+        known: [
+          { room: "晶", value: 6 },
+          { room: "阜", value: 5 },
+        ],
+      }),
+    );
+    expect(cells.彤).toBe(0);
+    const grid = [
+      [cells.魁, cells.寶, cells.牡],
+      [cells.晶, cells.帝, cells.蒼],
+      [cells.阜, cells.彤, cells.岡],
+    ];
+    for (const row of grid) expect(row.reduce((a, b) => a + b, 0)).toBe(12);
+    for (let c = 0; c < 3; c++) {
+      expect(grid[0][c] + grid[1][c] + grid[2][c]).toBe(12);
+    }
+    expect(grid[0][0] + grid[1][1] + grid[2][2]).toBe(12);
+    expect(grid[0][2] + grid[1][1] + grid[2][0]).toBe(12);
   });
 });
 
