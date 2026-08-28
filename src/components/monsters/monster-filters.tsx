@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -45,16 +45,24 @@ export function MonsterFilters({
   const [isNormal, setIsNormal] = useState(initialIsNormal);
   const [levelMin, setLevelMin] = useState(initialLevelMin);
   const [levelMax, setLevelMax] = useState(initialLevelMax);
+  const composingRef = useRef(false);
+  const [isComposing, setIsComposing] = useState(false);
+  const committedLevelsRef = useRef({ min: initialLevelMin, max: initialLevelMax });
   const [, startTransition] = useTransition();
 
   // search 與等級上下限都是可自由輸入的欄位 → 一起 debounce，避免每敲一鍵就打 URL。
   useEffect(() => {
+    const levelsChanged =
+      levelMin !== committedLevelsRef.current.min || levelMax !== committedLevelsRef.current.max;
     const handle = setTimeout(() => {
+      // Keep level changes independent: an unrelated level edit must not wait for IME completion.
+      if (isComposing && !levelsChanged) return;
       pushState({ search, type, elemental, hasDrop, isNormal, levelMin, levelMax });
+      committedLevelsRef.current = { min: levelMin, max: levelMax };
     }, 300);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, levelMin, levelMax]);
+  }, [search, levelMin, levelMax, isComposing]);
 
   function pushState(next: {
     search: string;
@@ -66,7 +74,8 @@ export function MonsterFilters({
     levelMax: string;
   }) {
     const params = new URLSearchParams(searchParams.toString());
-    if (next.search.trim()) params.set("search", next.search.trim());
+    const nextSearch = composingRef.current ? searchParams.get("search") ?? "" : next.search;
+    if (nextSearch.trim()) params.set("search", nextSearch.trim());
     else params.delete("search");
     if (next.type && next.type !== FILTER_ALL) params.set("type", next.type);
     else params.delete("type");
@@ -98,6 +107,14 @@ export function MonsterFilters({
           aria-label="搜尋怪物名稱或編號"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          onCompositionStart={() => {
+            composingRef.current = true;
+            setIsComposing(true);
+          }}
+          onCompositionEnd={() => {
+            composingRef.current = false;
+            setIsComposing(false);
+          }}
           inputMode="search"
           className="sm:max-w-xs"
         />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -27,20 +27,24 @@ export function ItemFilters({
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(initialSearch);
   const [type, setType] = useState(initialType || ALL_TYPES);
+  const composingRef = useRef(false);
+  const [isComposing, setIsComposing] = useState(false);
   const [, startTransition] = useTransition();
 
   // Debounce search updates to URL
   useEffect(() => {
+    if (isComposing) return;
     const handle = setTimeout(() => {
       pushState({ search, type });
     }, 300);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+  }, [search, isComposing]);
 
   function pushState(next: { search: string; type: string }) {
     const params = new URLSearchParams(searchParams.toString());
-    if (next.search.trim()) params.set("search", next.search.trim());
+    const nextSearch = composingRef.current ? searchParams.get("search") ?? "" : next.search;
+    if (nextSearch.trim()) params.set("search", nextSearch.trim());
     else params.delete("search");
     if (next.type && next.type !== ALL_TYPES) params.set("type", next.type);
     else params.delete("type");
@@ -56,6 +60,14 @@ export function ItemFilters({
         placeholder="搜尋道具名稱或編號..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        onCompositionStart={() => {
+          composingRef.current = true;
+          setIsComposing(true);
+        }}
+        onCompositionEnd={() => {
+          composingRef.current = false;
+          setIsComposing(false);
+        }}
         inputMode="search"
         className="sm:max-w-xs"
       />
