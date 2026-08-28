@@ -99,8 +99,8 @@ describe("diffDatabases — 系統性摺疊", () => {
 
   it("單一 from→to 覆蓋 >90% 且 ≥100 筆 → 摺疊成 systematic，並從逐列明細移除", () => {
     // old: 150 筆 atk=0；new: 全部 atk=1，其中 id=1 另外 value 90→95
-    let oldRows = "INSERT INTO items VALUES ";
-    let newRows = "INSERT INTO items VALUES ";
+    const oldRows = "INSERT INTO items VALUES ";
+    const newRows = "INSERT INTO items VALUES ";
     const parts: string[] = [];
     const partsNew: string[] = [];
     for (let i = 1; i <= 150; i++) {
@@ -136,8 +136,8 @@ describe("diffDatabases — 系統性摺疊", () => {
 
 describe("diffDatabases — 防呆", () => {
   it("整表重建：added+removed 超過列數 50% → rebuilt，不逐列噴出", () => {
-    let oldRows = "INSERT INTO t VALUES ";
-    let newRows = "INSERT INTO t VALUES ";
+    const oldRows = "INSERT INTO t VALUES ";
+    const newRows = "INSERT INTO t VALUES ";
     const o: string[] = [];
     const n: string[] = [];
     for (let i = 1; i <= 100; i++) o.push(`(${i})`);

@@ -30,7 +30,7 @@ describe("images.ts 解析器", () => {
   });
 
   it("getItemIconMap 去重且支援超過分塊大小的輸入", () => {
-    const many = Array.from({ length: 950 }, (_, i) => ITEM_WITH_ICON); // 全同 → 去重成 1
+    const many = Array.from({ length: 950 }, () => ITEM_WITH_ICON); // 全同 → 去重成 1
     const map = getItemIconMap(many);
     expect(map.get(ITEM_WITH_ICON)).toBeDefined();
   });
