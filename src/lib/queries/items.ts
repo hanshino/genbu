@@ -94,6 +94,11 @@ export interface GetItemsResult {
   page: number;
   pageSize: number;
   totalPages: number;
+  /**
+   * 只套用搜尋字、不套用任何篩選時的總筆數。
+   * 僅在「有篩選 + 篩完 0 筆」時才會計算，其餘情況為 undefined（不多跑查詢）。
+   */
+  unfilteredTotal?: number;
 }
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -119,6 +124,10 @@ export function getItems(params: GetItemsParams = {}): GetItemsResult {
     }
   }
 
+  // 搜尋字自己的條件（不含篩選），供「清除篩選後會有幾筆」的 count 重用。
+  const searchConditions = [...conditions];
+  const searchArgs = [...args];
+
   if (params.type) {
     conditions.push("type_name = ?");
     args.push(params.type);
@@ -127,9 +136,22 @@ export function getItems(params: GetItemsParams = {}): GetItemsResult {
   const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
   const db = getDb();
 
-  const total = (
-    db.prepare(`SELECT COUNT(*) AS c FROM items ${whereSql}`).get(...args) as { c: number }
-  ).c;
+  const countMatching = (conds: string[], a: (string | number)[]) =>
+    (
+      db
+        .prepare(
+          `SELECT COUNT(*) AS c FROM items ${conds.length > 0 ? `WHERE ${conds.join(" AND ")}` : ""}`,
+        )
+        .get(...a) as { c: number }
+    ).c;
+
+  const total = countMatching(conditions, args);
+
+  // ponytail: 只有「有套篩選 + 篩完 0 筆」才會多跑這一次 count，
+  // 有結果的正常路徑仍維持 count + list 兩句，不受影響。
+  const filterActive = conditions.length > searchConditions.length;
+  const unfilteredTotal =
+    total === 0 && filterActive ? countMatching(searchConditions, searchArgs) : undefined;
 
   const orderBy = buildOrderBy({
     allowlist: ITEM_SORT_ALLOWLIST,
@@ -151,6 +173,7 @@ export function getItems(params: GetItemsParams = {}): GetItemsResult {
     page,
     pageSize,
     totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    unfilteredTotal,
   };
 }
 

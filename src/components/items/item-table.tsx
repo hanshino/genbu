@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { SortableHead, type SortContext } from "@/components/common/sortable-head";
 import { ItemIcon } from "@/components/common/item-icon";
+import { EmptyResult } from "@/components/common/empty-result";
 import type { Item } from "@/lib/types/item";
 import type { EntityImage } from "@/lib/queries/images";
 import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
@@ -18,14 +19,19 @@ interface ItemTableProps {
   items: Item[];
   sort: SortContext;
   iconMap: Map<number, EntityImage>;
+  search?: string;
+  unfilteredTotal?: number;
 }
 
-export function ItemTable({ items, sort, iconMap }: ItemTableProps) {
+export function ItemTable({ items, sort, iconMap, search = "", unfilteredTotal }: ItemTableProps) {
   if (items.length === 0) {
     return (
-      <div className="rounded-lg border border-border/60 bg-card px-6 py-12 text-center text-muted-foreground">
-        找不到符合條件的道具
-      </div>
+      <EmptyResult
+        noun="道具"
+        search={search}
+        unfilteredTotal={unfilteredTotal}
+        basePath="/items"
+      />
     );
   }
 

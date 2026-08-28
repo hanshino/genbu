@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { SortableHead, type SortContext } from "@/components/common/sortable-head";
 import { SpawnMapsCell } from "@/components/monsters/spawn-maps-cell";
 import { EntityPortrait } from "@/components/common/entity-portrait";
+import { EmptyResult } from "@/components/common/empty-result";
 import { monsterTypeLabel } from "@/lib/constants/monster-type";
 import type { MonsterSummary } from "@/lib/types/monster";
 import type { MonsterStageSpawn } from "@/lib/types/monster-spawn";
@@ -21,14 +22,26 @@ interface MonsterTableProps {
   sort: SortContext;
   spawnsByMonster: Map<number, MonsterStageSpawn[]>;
   portraitMap: Map<number, EntityImage>;
+  search?: string;
+  unfilteredTotal?: number;
 }
 
-export function MonsterTable({ monsters, sort, spawnsByMonster, portraitMap }: MonsterTableProps) {
+export function MonsterTable({
+  monsters,
+  sort,
+  spawnsByMonster,
+  portraitMap,
+  search = "",
+  unfilteredTotal,
+}: MonsterTableProps) {
   if (monsters.length === 0) {
     return (
-      <div className="rounded-lg border border-border/60 bg-card px-6 py-12 text-center text-muted-foreground">
-        找不到符合條件的怪物
-      </div>
+      <EmptyResult
+        noun="怪物"
+        search={search}
+        unfilteredTotal={unfilteredTotal}
+        basePath="/monsters"
+      />
     );
   }
 

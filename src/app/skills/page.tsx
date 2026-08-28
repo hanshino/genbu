@@ -79,6 +79,8 @@ export default async function SkillsPage({ searchParams }: PageProps) {
       <SkillTable
         skills={result.skills}
         sort={{ sortBy, sortDir, searchParamsStr, basePath: "/skills" }}
+        search={search}
+        unfilteredTotal={result.unfilteredTotal}
       />
 
       {result.totalPages > 1 && (

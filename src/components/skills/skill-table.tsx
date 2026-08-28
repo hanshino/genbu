@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { SortableHead, type SortContext } from "@/components/common/sortable-head";
+import { EmptyResult } from "@/components/common/empty-result";
 import { magicClanListLabel } from "@/lib/constants/magic-clan";
 import { magicTargetLabel } from "@/lib/constants/magic-target";
 import { magicAttribLabel, MAGIC_ATTRIB_COLOR } from "@/lib/constants/magic-attrib";
@@ -18,14 +19,19 @@ import type { MagicSummary } from "@/lib/types/magic";
 interface SkillTableProps {
   skills: MagicSummary[];
   sort: SortContext;
+  search?: string;
+  unfilteredTotal?: number;
 }
 
-export function SkillTable({ skills, sort }: SkillTableProps) {
+export function SkillTable({ skills, sort, search = "", unfilteredTotal }: SkillTableProps) {
   if (skills.length === 0) {
     return (
-      <div className="rounded-lg border border-border/60 bg-card px-6 py-12 text-center text-muted-foreground">
-        找不到符合條件的技能
-      </div>
+      <EmptyResult
+        noun="技能"
+        search={search}
+        unfilteredTotal={unfilteredTotal}
+        basePath="/skills"
+      />
     );
   }
 
