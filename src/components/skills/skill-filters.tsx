@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -45,19 +45,23 @@ export function SkillFilters({
   const [clan, setClan] = useState(initialClan || FILTER_ALL);
   const [target, setTarget] = useState(initialTarget || FILTER_ALL);
   const [skillType, setSkillType] = useState(initialSkillType || FILTER_ALL);
+  const composingRef = useRef(false);
+  const [isComposing, setIsComposing] = useState(false);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
+    if (isComposing) return;
     const handle = setTimeout(() => {
       pushState({ search, clan, target, skillType });
     }, 300);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+  }, [search, isComposing]);
 
   function pushState(next: FilterState) {
     const params = new URLSearchParams(searchParams.toString());
-    if (next.search.trim()) params.set("search", next.search.trim());
+    const nextSearch = composingRef.current ? searchParams.get("search") ?? "" : next.search;
+    if (nextSearch.trim()) params.set("search", nextSearch.trim());
     else params.delete("search");
     if (next.clan && next.clan !== FILTER_ALL) params.set("clan", next.clan);
     else params.delete("clan");
@@ -87,6 +91,14 @@ export function SkillFilters({
         aria-label="搜尋技能名稱或編號"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        onCompositionStart={() => {
+          composingRef.current = true;
+          setIsComposing(true);
+        }}
+        onCompositionEnd={() => {
+          composingRef.current = false;
+          setIsComposing(false);
+        }}
         inputMode="search"
         className="sm:max-w-xs"
       />
