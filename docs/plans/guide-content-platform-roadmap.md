@@ -100,6 +100,13 @@
 - **驗證方式：** DB query fixture/schema smoke、雙向 link spot check、source-to-claim audit；browser/mobile manual smoke 不在已宣稱的驗證內。
 - **designer gate：** 玩家能區分「資料庫欄位」「攻略步驟」「玩家推測」；長表格與迷宮步驟在手機不阻塞主要任務。
 
+#### Phase 1 增量 — 道具取得與用途資訊整合（Completed / merged PR #38）
+
+- **目標／項目：** 在既有 `/items/[id]` 中，把怪物掉落與出沒地圖、商店販售及煉化產出整理為「如何取得」；把煉化消耗、任務引用與商店收購分開列為「用途與去向」；覺醒與強化另列為「強化與覺醒」。
+- **交付狀態：** 已完成並 merged。PR：[ #38 ](https://github.com/hanshino/genbu/pull/38)。未新增 route、CMS、dependency 或 DB/query 契約。
+- **證據邊界：** 掉落欄位只標示為資料庫原始數值，不宣稱官方機率；`mission_refs` 未區分繳交與獎勵，因此只標示任務引用／需求，不宣稱任務可取得；查無紀錄不等於遊戲內無取得方式。
+- **驗證方式：** typecheck、lint、614 tests、production build 通過；已 spot check 多種來源組合與空狀態的道具頁。完整 browser/mobile/accessibility smoke 仍未執行。
+
 ### Phase 2 — 地圖與 NPC 資料導覽（Completed）；移動路線 Deferred
 
 - **目標／項目：** 在地圖上呈現 NPC placement，逐步補充移動路徑、定時／條件出現、任務相關位置與「常駐／移動／未知」狀態；每個移動 claim 必須有 field-test 或可核實來源。
@@ -160,7 +167,7 @@
 
 | 主題群 | 可做內容 | 現有證據／限制 |
 |---|---|---|
-| 道具與裝備 | item index/detail、屬性、random attributes、掉落來源、ranking、compare、覺醒、合成、商店 | routes `src/app/items/`、`ranking/`、`compare/`、`compounds/`；完整 coverage 未執行 |
+| 道具與裝備 | item index/detail、屬性、random attributes、掉落與出沒地圖、商店販售、煉化取得、用途、ranking、compare、覺醒、強化 | `/items/[id]` 的取得／用途／強化資訊整合已由 PR #38 完成；查無 DB 紀錄不代表遊戲內無取得方式，完整 coverage 未執行 |
 | 怪物 | 搜尋、stats、抗性、掉落、道具反查、狩獵 guide | `src/app/monsters/`、`src/lib/queries/monsters.ts`；百分比是含空槽的資料表權重換算，需與官方承諾區分 |
 | 技能與職業 | skill list/detail、level、clan/target/type、技能書 | `src/app/skills/`、`src/lib/queries/magic.ts`；經脈／星曜未證明 |
 | 任務與迷宮 | 任務群、步驟、NPC/地圖/物品 refs、160/175/180 tools | `src/app/missions/`、`src/app/tools/`、`src/lib/solvers/`；solver 不等於 field-test |
@@ -242,6 +249,7 @@
 | 2026-08-13 | official／field-test／community 來源交叉驗證 | **尚未執行** | orchestrator |
 | 2026-08-13 | browser/mobile/accessibility/performance smoke | **browser/mobile manual smoke 尚未執行** | orchestrator |
 | 2026-08-13 | roadmap diff | **已由 orchestrator 核對** | orchestrator |
+| 2026-08-28 | 道具取得與用途資訊整合（PR #38） | **typecheck、lint、614 tests、production build 通過；多種來源組合與空狀態 spot check 通過；未新增 route，SQLite/query logic unchanged** | designer；orchestrator |
 
 ## 10. Decision log
 
@@ -256,3 +264,4 @@
 | Phase 6 採條件式 platform enhancement | 先以內容品質、需求與維護證據決定平台投資，避免 speculative work | 2026-08-13；已記錄 |
 | Phase 5 deferred | live read-only audit 無 family/guild/marriage/love table，現有 keyword/class constants 不足以證明流程；需 official source + current-version field-test + costs/cooldowns/irreversible outcomes 才 restart | 2026-08-13；已記錄 |
 | Phase 6 no-op | published guides = 6；search/filter、CMS、related guides、broken-link/freshness automation 均未達門檻，因此維持 conditional / not started | 2026-08-13；已記錄 |
+| 先整合既有道具資料路徑，不新增攻略 CMS | 現有 query 已能提供怪物掉落／出沒地圖、商店、煉化、任務與覺醒資料；重整 `/items/[id]` 即可完成玩家的「如何取得」任務，避免重複資料層與人工內容維護 | 2026-08-28；PR #38 已完成 |
