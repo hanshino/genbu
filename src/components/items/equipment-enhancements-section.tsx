@@ -1,4 +1,3 @@
-import { getEquipmentEnhancementsForItemType } from "@/lib/queries/compound";
 import type { CompoundUse } from "@/lib/queries/compound";
 import { collectCompoundItemIds } from "@/lib/compound-grouping";
 import { getItemIconMap } from "@/lib/queries/images";
@@ -50,8 +49,7 @@ function bucketByBonus(uses: CompoundUse[]): BonusBucket[] {
   return result;
 }
 
-export function EquipmentEnhancementsSection({ itemType }: { itemType: string | null }) {
-  const uses = getEquipmentEnhancementsForItemType(itemType);
+export function EquipmentEnhancementsSection({ uses }: { uses: CompoundUse[] }) {
   if (uses.length === 0) return null;
 
   const buckets = bucketByBonus(uses);
@@ -59,8 +57,8 @@ export function EquipmentEnhancementsSection({ itemType }: { itemType: string | 
 
   return (
     <section className="space-y-3">
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-lg font-medium">可用強化</h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h3 className="text-base font-medium">可用強化</h3>
         <span className="text-xs text-muted-foreground">
           同槽位裝備通用 · {uses.length} 條配方 · {buckets.length} 種屬性
         </span>

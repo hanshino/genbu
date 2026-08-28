@@ -14,25 +14,22 @@ import {
 } from "@/components/compounds/material-link";
 import { OutputCell } from "@/components/compounds/output-cell";
 import { collectCompoundItemIds, groupCompoundsByGroupName } from "@/lib/compound-grouping";
-import { getCompoundUsesForItem } from "@/lib/queries/compound";
+import type { CompoundUse } from "@/lib/queries/compound";
 import { getItemIconMap } from "@/lib/queries/images";
+import { ItemSubSection } from "@/components/items/item-section-group";
 
-export function CompoundUsesSection({ itemId }: { itemId: number }) {
-  const uses = getCompoundUsesForItem(itemId);
+export function CompoundUsesSection({ uses }: { uses: CompoundUse[] }) {
   if (uses.length === 0) return null;
 
   const groupBlocks = groupCompoundsByGroupName(uses);
   const iconMap = getItemIconMap(collectCompoundItemIds(uses));
 
   return (
-    <section className="space-y-3">
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-lg font-medium">煉化用途</h2>
-        <span className="text-xs text-muted-foreground">
-          作為主材料 · {uses.length} 條配方
-        </span>
-      </div>
-
+    <ItemSubSection
+      title="煉化材料"
+      summary={`可投入 ${uses.length} 條配方`}
+      footer="此道具在這些配方中作為主材料被消耗。產出機率以單次嘗試計算；同一條配方所有可能產出（含未產出）的機率合計為 100%。裝備類煉化失敗會掉到「失敗回收」道具。"
+    >
       <div className="space-y-4">
         {groupBlocks.map(([groupName, items]) => (
           <div key={groupName} className="space-y-2">
@@ -107,10 +104,6 @@ export function CompoundUsesSection({ itemId }: { itemId: number }) {
           </div>
         ))}
       </div>
-
-      <p className="text-xs text-muted-foreground">
-        產出機率以單次嘗試計算；同一條配方所有可能產出（含未產出）的機率合計為 100%。裝備類煉化失敗會掉到「失敗回收」道具。
-      </p>
-    </section>
+    </ItemSubSection>
   );
 }

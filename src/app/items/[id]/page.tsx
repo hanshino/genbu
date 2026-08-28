@@ -1,11 +1,19 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon, HammerIcon, PackageSearchIcon, TrendingUpIcon } from "lucide-react";
 import { BackLink } from "@/components/common/back-link";
 import { getItemById, getItemRands, getItemRandsByIds, getItemsByType } from "@/lib/queries/items";
 import { getMonstersByDropItem } from "@/lib/queries/monsters";
 import { getStagesForMonsters } from "@/lib/queries/monster-spawns";
+import { getShopsBuyingItem, getShopsSellingItem } from "@/lib/queries/shops";
+import {
+  getCompoundSourcesForItem,
+  getCompoundUsesForItem,
+  getEquipmentEnhancementsForItemType,
+} from "@/lib/queries/compound";
+import { getMissionsUsingItem } from "@/lib/queries/missions";
+import { getAwakeningPath } from "@/lib/queries/awakening";
 import {
   presets,
   scoreItemAcrossPresets,
@@ -22,8 +30,9 @@ import { AwakeningSection } from "@/components/items/awakening-section";
 import { CompoundSourcesSection } from "@/components/items/compound-sources-section";
 import { CompoundUsesSection } from "@/components/items/compound-uses-section";
 import { EquipmentEnhancementsSection } from "@/components/items/equipment-enhancements-section";
-import { ShopAvailabilitySection } from "@/components/items/shop-availability-section";
+import { ShopBuybackSection, ShopSalesSection } from "@/components/items/shop-availability-section";
 import { MissionUsesSection } from "@/components/items/mission-uses-section";
+import { ItemSectionGroup, summarizeSourceRoutes } from "@/components/items/item-section-group";
 import { CompareButton } from "@/components/items/compare-button";
 import { ItemTags } from "@/components/items/item-tags";
 import { PresetPercentile } from "@/components/items/preset-percentile";
@@ -60,6 +69,24 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
   const cover = imageOfItem(item);
   const fallbackIcon = cover ? null : getItemIcon(item.id);
   const sourcePortraitMap = getNpcImageMap(sources.map((s) => s.id));
+
+  // 取得途徑 / 用途 / 強化的資料在此一次取齊：分組是否渲染要看筆數，
+  // 若仍留在各子元件內查詢，page 端無法在全部為空時避免印出空的分組外框。
+  const shopSales = getShopsSellingItem(item.id);
+  const shopBuys = getShopsBuyingItem(item.id);
+  const compoundSources = getCompoundSourcesForItem(item.id);
+  const compoundUses = getCompoundUsesForItem(item.id);
+  const missionUses = getMissionsUsingItem(item.id);
+  const awakeningPath = getAwakeningPath(item);
+  const enhancements = getEquipmentEnhancementsForItemType(item.type);
+
+  const sourceSummary = summarizeSourceRoutes({
+    drops: sources.length,
+    shops: shopSales.length,
+    compounds: compoundSources.length,
+  });
+  const hasUses = compoundUses.length > 0 || missionUses.length > 0 || shopBuys.length > 0;
+  const hasProgression = awakeningPath != null || enhancements.length > 0;
 
   const phase2 = isPhase2Type(item.type);
   let maxValues: Record<string, number> = {};
@@ -120,23 +147,58 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
 
       <ItemRandTable rands={rands} />
 
-      <ItemDropList
-        sources={sources}
-        spawnsByMonster={spawnsByMonster}
-        portraitMap={sourcePortraitMap}
-      />
+      <ItemSectionGroup
+        id="how-to-get"
+        title="如何取得"
+        icon={<PackageSearchIcon />}
+        description={sourceSummary ? `目前資料庫可查到的入手途徑：${sourceSummary}。` : undefined}
+      >
+        {sourceSummary ? (
+          <>
+            <ItemDropList
+              sources={sources}
+              spawnsByMonster={spawnsByMonster}
+              portraitMap={sourcePortraitMap}
+            />
 
-      <ShopAvailabilitySection itemId={item.id} />
+            <ShopSalesSection sales={shopSales} />
 
-      <AwakeningSection item={item} />
+            <CompoundSourcesSection itemId={item.id} sources={compoundSources} />
+          </>
+        ) : (
+          <p className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-sm leading-relaxed text-muted-foreground">
+            資料庫中查無此道具的怪物掉落、商店販售或煉化配方紀錄。它可能來自任務獎勵、活動、商城或其他尚未收錄的來源。
+          </p>
+        )}
+      </ItemSectionGroup>
 
-      <EquipmentEnhancementsSection itemType={item.type} />
+      {hasUses && (
+        <ItemSectionGroup
+          id="item-uses"
+          title="用途與去向"
+          icon={<HammerIcon />}
+          description="以下為此道具的消耗與出清方式，不是取得來源。"
+        >
+          <CompoundUsesSection uses={compoundUses} />
 
-      <CompoundSourcesSection itemId={item.id} />
+          <MissionUsesSection uses={missionUses} />
 
-      <CompoundUsesSection itemId={item.id} />
+          <ShopBuybackSection buys={shopBuys} />
+        </ItemSectionGroup>
+      )}
 
-      <MissionUsesSection itemId={item.id} />
+      {hasProgression && (
+        <ItemSectionGroup
+          id="item-progression"
+          title="強化與覺醒"
+          icon={<TrendingUpIcon />}
+          description="取得之後可以怎麼把它變強；成本與機率皆為資料庫數值，非官方公告。"
+        >
+          {awakeningPath && <AwakeningSection path={awakeningPath} />}
+
+          <EquipmentEnhancementsSection uses={enhancements} />
+        </ItemSectionGroup>
+      )}
     </div>
   );
 }
