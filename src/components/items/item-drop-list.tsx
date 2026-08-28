@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { SpawnMapsCell } from "@/components/monsters/spawn-maps-cell";
 import { EntityPortrait } from "@/components/common/entity-portrait";
+import { ItemSubSection } from "@/components/items/item-section-group";
 import type { MonsterDropSource } from "@/lib/types/monster";
 import type { MonsterStageSpawn } from "@/lib/types/monster-spawn";
 import type { EntityImage } from "@/lib/queries/images";
@@ -25,9 +26,12 @@ export function ItemDropList({
   if (sources.length === 0) return null;
 
   return (
-    <section className="space-y-2">
-      <h2 className="text-lg font-medium">掉落來源</h2>
-      <div className="rounded-lg border border-border/60 overflow-hidden">
+    <ItemSubSection
+      title="怪物掉落"
+      summary={`${sources.length} 隻怪物會掉落`}
+      footer="掉落率為資料庫原始數值，不是官方公布的機率；同一欄位比較時數值越高代表越容易掉到。點怪物名稱可看牠的完整掉落表，點地圖名稱可看出沒位置。"
+    >
+      <div className="overflow-hidden rounded-lg border border-border/60">
         <Table>
           <TableHeader>
             <TableRow>
@@ -64,7 +68,6 @@ export function ItemDropList({
           </TableBody>
         </Table>
       </div>
-      <p className="text-xs text-muted-foreground">掉落率為遊戲原始數值，數值越高機率越大</p>
-    </section>
+    </ItemSubSection>
   );
 }

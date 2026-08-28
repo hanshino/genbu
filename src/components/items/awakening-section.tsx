@@ -9,8 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { computeCumulative } from "@/lib/awakening-cost";
-import { getAwakeningPath } from "@/lib/queries/awakening";
-import type { Item } from "@/lib/types/item";
+import type { AwakeningPath } from "@/lib/types/awakening";
 import { cn } from "@/lib/utils";
 
 const MILESTONE_STAGES = new Set([10, 15, 18, 20]);
@@ -44,10 +43,7 @@ function getProbRisk(p: number): RiskBand {
   return RISK_BANDS.find((b) => p >= b.min) ?? RISK_BANDS[RISK_BANDS.length - 1];
 }
 
-export function AwakeningSection({ item }: { item: Item }) {
-  const path = getAwakeningPath(item);
-  if (!path) return null;
-
+export function AwakeningSection({ path }: { path: AwakeningPath }) {
   const cumulative = computeCumulative(path.stages);
   const bonusColumns = path.stages[0]?.bonuses ?? [];
 
@@ -57,8 +53,8 @@ export function AwakeningSection({ item }: { item: Item }) {
 
   return (
     <section className="space-y-3">
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-lg font-medium">覺醒升階</h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h3 className="text-base font-medium">覺醒升階</h3>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span>覺醒類別</span>
           <Badge variant="outline" className="font-mono">
