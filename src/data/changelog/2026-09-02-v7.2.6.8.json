@@ -1,0 +1,198 @@
+{
+  "version": "7.2.6.8",
+  "date": "2026-09-02",
+  "summary": {
+    "added": 0,
+    "changed": 4,
+    "removed": 3
+  },
+  "addedTables": [],
+  "removedTables": [],
+  "tables": [
+    {
+      "table": "achievements",
+      "label": "成就",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 4,
+        "removed": 3
+      },
+      "removed": [
+        {
+          "idParts": [
+            "15210"
+          ],
+          "name": "七星劍塔隱關力戰七星火雀",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "七星劍塔隱關力戰七星火雀"
+            },
+            {
+              "col": "description",
+              "label": "描述",
+              "value": "打敗位於七星劍塔隱藏關的七星火雀10次"
+            },
+            {
+              "col": "points",
+              "label": "點數",
+              "value": "5"
+            },
+            {
+              "col": "reward_amount",
+              "label": "獎勵數量",
+              "value": "0"
+            },
+            {
+              "col": "prereq_achievement_id",
+              "label": "前置成就",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "15211"
+          ],
+          "name": "七星劍塔熟破火雀燎原羽勢",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "七星劍塔熟破火雀燎原羽勢"
+            },
+            {
+              "col": "description",
+              "label": "描述",
+              "value": "打敗位於七星劍塔隱藏關的七星火雀30次"
+            },
+            {
+              "col": "points",
+              "label": "點數",
+              "value": "5"
+            },
+            {
+              "col": "reward_amount",
+              "label": "獎勵數量",
+              "value": "0"
+            },
+            {
+              "col": "prereq_achievement_id",
+              "label": "前置成就",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "15212"
+          ],
+          "name": "七星火雀毛被打光變禿鳥",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "七星火雀毛被打光變禿鳥"
+            },
+            {
+              "col": "description",
+              "label": "描述",
+              "value": "打敗位於七星劍塔隱藏關的七星火雀100次"
+            },
+            {
+              "col": "points",
+              "label": "點數",
+              "value": "10"
+            },
+            {
+              "col": "reward_amount",
+              "label": "獎勵數量",
+              "value": "1"
+            },
+            {
+              "col": "prereq_achievement_id",
+              "label": "前置成就",
+              "value": "0"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "22"
+          ],
+          "name": "三載恆心",
+          "fields": [
+            {
+              "col": "description",
+              "label": "描述",
+              "from": "完成(月)重複成就累計100次",
+              "to": "完成(月)重複成就累計50次"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "23"
+          ],
+          "name": "五載成蹊",
+          "fields": [
+            {
+              "col": "description",
+              "label": "描述",
+              "from": "完成(月)重複成就累計200次",
+              "to": "完成(月)重複成就累計100次"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "24"
+          ],
+          "name": "百月如一",
+          "fields": [
+            {
+              "col": "description",
+              "label": "描述",
+              "from": "完成(月)重複成就累計300次",
+              "to": "完成(月)重複成就累計150次"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30013"
+          ],
+          "name": "花影滿村情意長",
+          "fields": [
+            {
+              "col": "description",
+              "label": "描述",
+              "from": "完成【無名之島】期間任務：花影寄相思20次",
+              "to": "完成【無名之島】期間任務：花影寄相思15次"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "ai": {
+    "model": "claude-opus-4-8",
+    "edited": false,
+    "highlights": [
+      "本次改版主打成就系統微調：月重複成就與無名之島活動成就的達標門檻普遍下修，玩家更好衝成就；同時移除七星火雀關卡的三個成就。",
+      "三個「完成(月)重複成就」門檻直接砍半——三載恆心 100→50 次、五載成蹊 200→100 次、百月如一 300→150 次，長期刷月成就的壓力大減。",
+      "無名之島期間任務成就「花影滿村情意長」，花影寄相思的完成次數從 20 次下修到 15 次，活動達標更輕鬆。",
+      "移除三個七星劍塔／七星火雀相關成就：「七星劍塔隱關力戰七星火雀」「七星劍塔熟破火雀燎原羽勢」「七星火雀毛被打光變禿鳥」，該關卡成就疑似退場。"
+    ],
+    "tables": {
+      "achievements": {
+        "mode": "detail",
+        "note": "4 筆成就描述變更全是門檻下修（三個月重複成就砍半、花影寄相思 20→15），另移除 3 個七星火雀關卡成就；屬實際玩法調整，值得逐列攤開。"
+      }
+    }
+  }
+}
