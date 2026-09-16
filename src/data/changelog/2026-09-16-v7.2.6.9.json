@@ -1,0 +1,1051 @@
+{
+  "version": "7.2.6.9",
+  "date": "2026-09-16",
+  "summary": {
+    "added": 8,
+    "changed": 60898,
+    "removed": 19
+  },
+  "addedTables": [],
+  "removedTables": [],
+  "tables": [
+    {
+      "table": "items",
+      "label": "道具",
+      "tier": "rich",
+      "counts": {
+        "added": 1,
+        "changed": 12,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "34394"
+          ],
+          "name": "中秋晶寅禮盒",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "中秋晶寅禮盒"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "打開有機會獲得全新坐騎「皓月晶寅」、幽鳳夢獸、混沌臥龍、御珠靈鼠、炫藍疾風、煙漠雙影列外裝及副門派進階書等超值好禮。"
+            },
+            {
+              "col": "value",
+              "label": "售價",
+              "value": "100"
+            },
+            {
+              "col": "atk",
+              "label": "攻擊",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "法攻",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "法防",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "HP",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "MP",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "迴避",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "力",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "氣",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "體",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "敏",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "智",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "BONUS"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "33239"
+          ],
+          "name": "鮮桂花",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "羊肉",
+              "to": "鮮桂花"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "補體虛，祛寒冷，溫補氣血；益腎氣，補形衰，開胃健力。\\n\\n活動道具，活動結束後將回收。",
+              "to": "《活動道具》嬌小花蕊蘊藏濃郁芬芳，香飄十里不絕。\\n\\n活動道具，活動結束後將回收。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33240"
+          ],
+          "name": "桂花月餅",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "料酒",
+              "to": "桂花月餅"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "去腥提味，忌溢、忌多。\\n\\n活動道具，活動結束後將回收。",
+              "to": "《活動道具》玉色月餅裹著金桂芬芳，一嚐便知秋日溫柔。\\n\\n活動道具，活動結束後將統一回收"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "from": "NORMAL_ITEM",
+              "to": "POTION"
+            },
+            {
+              "col": "value",
+              "label": "售價",
+              "from": "100",
+              "to": "10"
+            },
+            {
+              "col": "hp",
+              "label": "HP",
+              "from": "0",
+              "to": "6666"
+            },
+            {
+              "col": "mp",
+              "label": "MP",
+              "from": "0",
+              "to": "666"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "50690"
+          ],
+          "name": "皓月晶寅",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試物品",
+              "to": "皓月晶寅"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "霜華凝聚成虎，寒氣逼人卻不失靈動，當滿月高懸夜空，它靜立雪原，目光凝視著那輪皎潔，與月光共舞，訴說著千年不變的孤高與堅毅。"
+            },
+            {
+              "col": "hp",
+              "label": "HP",
+              "from": "0",
+              "to": "3700"
+            },
+            {
+              "col": "mp",
+              "label": "MP",
+              "from": "0",
+              "to": "1100"
+            },
+            {
+              "col": "pow",
+              "label": "氣",
+              "from": "0",
+              "to": "15"
+            },
+            {
+              "col": "wis",
+              "label": "智",
+              "from": "0",
+              "to": "15"
+            },
+            {
+              "col": "matk",
+              "label": "法攻",
+              "from": "0",
+              "to": "200"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "from": "0",
+              "to": "140"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "53463"
+          ],
+          "name": "測試道具",
+          "fields": [
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "from": "60",
+              "to": "80"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "53464"
+          ],
+          "name": "測試道具",
+          "fields": [
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "from": "50",
+              "to": "70"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "53465"
+          ],
+          "name": "測試道具",
+          "fields": [
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "from": "40",
+              "to": "60"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "53469"
+          ],
+          "name": "蕊心破鋒",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試道具",
+              "to": "蕊心破鋒"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "清蓮映月，劍鋒含宸光，宸光流轉間，清靈之氣瀰漫四方，溫柔而堅定，如蓮出淤泥，以最純粹的姿態，守護心中那片淨土。"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "from": "60",
+              "to": "80"
+            },
+            {
+              "col": "hp",
+              "label": "HP",
+              "from": "0",
+              "to": "2500"
+            },
+            {
+              "col": "mp",
+              "label": "MP",
+              "from": "0",
+              "to": "700"
+            },
+            {
+              "col": "str",
+              "label": "力",
+              "from": "0",
+              "to": "10"
+            },
+            {
+              "col": "atk",
+              "label": "攻擊",
+              "from": "0",
+              "to": "200"
+            },
+            {
+              "col": "matk",
+              "label": "法攻",
+              "from": "0",
+              "to": "200"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "from": "0",
+              "to": "150"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "53470"
+          ],
+          "name": "蕊心藏鋒",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試道具",
+              "to": "蕊心藏鋒"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "清蓮映月，劍鋒含曜光，曜光流轉間，清靈之氣瀰漫四方，溫柔而堅定，如蓮出淤泥，以最純粹的姿態，守護心中那片淨土。"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "from": "50",
+              "to": "70"
+            },
+            {
+              "col": "hp",
+              "label": "HP",
+              "from": "0",
+              "to": "2000"
+            },
+            {
+              "col": "mp",
+              "label": "MP",
+              "from": "0",
+              "to": "600"
+            },
+            {
+              "col": "str",
+              "label": "力",
+              "from": "0",
+              "to": "8"
+            },
+            {
+              "col": "atk",
+              "label": "攻擊",
+              "from": "0",
+              "to": "160"
+            },
+            {
+              "col": "matk",
+              "label": "法攻",
+              "from": "0",
+              "to": "160"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "from": "0",
+              "to": "125"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "53471"
+          ],
+          "name": "蕊心含鋒",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試道具",
+              "to": "蕊心含鋒"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "清蓮映月，劍鋒含韶光，韶光流轉間，清靈之氣瀰漫四方，溫柔而堅定，如蓮出淤泥，以最純粹的姿態，守護心中那片淨土。"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "from": "40",
+              "to": "60"
+            },
+            {
+              "col": "hp",
+              "label": "HP",
+              "from": "0",
+              "to": "1500"
+            },
+            {
+              "col": "mp",
+              "label": "MP",
+              "from": "0",
+              "to": "500"
+            },
+            {
+              "col": "str",
+              "label": "力",
+              "from": "0",
+              "to": "6"
+            },
+            {
+              "col": "atk",
+              "label": "攻擊",
+              "from": "0",
+              "to": "120"
+            },
+            {
+              "col": "matk",
+              "label": "法攻",
+              "from": "0",
+              "to": "120"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "from": "0",
+              "to": "100"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "53858"
+          ],
+          "name": "冰晶戰狼",
+          "fields": [
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "一躍跨千里，冰晶抗萬嶽，吼聲憾日月，力戰誰敢卻。",
+              "to": "[外裝]一躍跨千里，冰晶抗萬嶽，吼聲憾日月，力戰誰敢卻。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "55450"
+          ],
+          "name": "幽嵐緋夢褲",
+          "fields": [
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "琉璃燈火搖曳，光影如夢似幻，/n每一抹光芒都是斬破黑暗的誓言，/n燈燃處，幻影消散，照亮前路，/n如同黎明前最溫柔的那道曙光",
+              "to": "深邃玄色流轉嵐氣，金翼微展藏鋒於影，少年踏風而行，神秘如幽谷山嵐，每一步都像在書寫一首未完的詩，深沉而悠遠。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "55451"
+          ],
+          "name": "琉光幻騮",
+          "fields": [
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "[外裝]玄光纏繞，雷電護劍，聖者之刃，斬盡邪魔，凌立天地間。",
+              "to": "琉璃燈火搖曳，光影如夢似幻，/n每一抹光芒都是斬破黑暗的誓言，/n燈燃處，幻影消散，照亮前路，/n如同黎明前最溫柔的那道曙光"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "achievements",
+      "label": "成就",
+      "tier": "rich",
+      "counts": {
+        "added": 1,
+        "changed": 0,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "30019"
+          ],
+          "name": "望月傳香",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "望月傳香"
+            },
+            {
+              "col": "description",
+              "label": "描述",
+              "value": "與秋香婆共度中秋，深諳分餅團圓之道。"
+            },
+            {
+              "col": "points",
+              "label": "點數",
+              "value": "0"
+            },
+            {
+              "col": "reward_amount",
+              "label": "獎勵數量",
+              "value": "500"
+            },
+            {
+              "col": "prereq_achievement_id",
+              "label": "前置成就",
+              "value": "0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "mission_steps",
+      "label": "任務步驟",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 4,
+        "removed": 11
+      },
+      "removed": [
+        {
+          "idParts": [
+            "10727",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10727",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10727",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10727",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10727",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10727",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10727",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10727",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10727",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10727",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10727",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "10727",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待0",
+              "to": "吃吃喝喝中，5分鐘後與秋香婆交談。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10727",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待1",
+              "to": "協助將文旦分給村中幼童。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10727",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待2",
+              "to": "返回與秋香婆對話。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10727",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待3",
+              "to": "前往崑崙草原採集鮮桂花[item33239×10]後與秋香婆對話。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "missions",
+      "label": "任務",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 1,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "10727"
+          ],
+          "name": "中秋弄月烤肉香",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留",
+              "to": "中秋弄月烤肉香"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "from": "敬請期待",
+              "to": "烤肉香竟引出拔劍大俠？柚子皮做的神秘帽子又是什麼？中秋團圓的真正滋味，你猜到了嗎？"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc",
+      "label": "NPC",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 2,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "7160"
+          ],
+          "name": "村中幼童",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "翠羽鳥",
+              "to": "村中幼童"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7161"
+          ],
+          "name": "秋香婆",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "伊佳人",
+              "to": "秋香婆"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc_strings",
+      "label": "NPC 對話",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 3,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "30869"
+          ],
+          "name": "村中幼童",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "翠羽鳥",
+              "to": "村中幼童"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30870"
+          ],
+          "name": "秋香婆",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "伊佳人",
+              "to": "秋香婆"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31404"
+          ],
+          "name": "成就大師",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "孩童們",
+              "to": "成就大師"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "item_images",
+      "label": "item_images",
+      "tier": "count",
+      "counts": {
+        "added": 4,
+        "changed": 6,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_dims",
+      "label": "map_dims",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 6,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_placements",
+      "label": "map_placements",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 43295,
+        "removed": 8
+      }
+    },
+    {
+      "table": "messages",
+      "label": "對話訊息",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 101,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_refs",
+      "label": "任務關聯",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 877,
+        "removed": 0
+      }
+    },
+    {
+      "table": "monster_spawns",
+      "label": "monster_spawns",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 16585,
+        "removed": 0
+      }
+    },
+    {
+      "table": "npc_images",
+      "label": "npc_images",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 6,
+        "removed": 0
+      }
+    }
+  ],
+  "ai": {
+    "model": "claude-opus-4-8",
+    "edited": false,
+    "highlights": [
+      "中秋改版來啦！新坐騎「皓月晶寅」登場——霜華凝聚成虎的白虎座騎，HP+3700、MP+1100、法攻+200、命中+140，還附氣+15/智+15，法系騎乘一把抓。",
+      "想收皓月晶寅就靠「中秋晶寅禮盒」，開箱有機會獲得牠；禮盒說明還點名幽鳳夢獸、混沌臥龍、御珠靈鼠、炫藍疾風、煙漠雙影列外裝及副門派進階書等好禮（依禮盒說明轉述）。",
+      "新武器「蕊心」三階同步上線：含鋒(需60)、藏鋒(需70)、破鋒(需80)，走物法雙修路線，最頂的破鋒攻擊/法攻各200、命中150、HP+2500、MP+700。",
+      "中秋活動任務「中秋弄月烤肉香」正式上線（原本還掛著「保留／敬請期待」）：跟秋香婆吃吃喝喝、幫村中幼童分文旦，還得跑崑崙草原採鮮桂花×10。",
+      "新成就「望月傳香」——與秋香婆共度中秋、深諳分餅團圓之道，獎勵數量500。",
+      "中秋限定吃食報到：桂花月餅(補HP6666/MP666)、鮮桂花(採集材料)，都是活動道具、活動結束統一回收，要衝要快。",
+      "熟面孔換裝當NPC：翠羽鳥變成「村中幼童」、伊佳人變成「秋香婆」，就是這次中秋活動的關鍵人物。"
+    ],
+    "tables": {
+      "items": {
+        "mode": "detail",
+        "note": "本版重頭戲全塞這：新坐騎皓月晶寅、蕊心三階武器（含鋒/藏鋒/破鋒）、中秋晶寅禮盒，外加桂花月餅、鮮桂花等中秋活動吃食，值得逐列攤開。另有冰晶戰狼補上[外裝]標記、幽嵐緋夢褲與琉光幻騮換說明文案。"
+      },
+      "achievements": {
+        "mode": "detail",
+        "note": "新成就「望月傳香」，中秋主題，跟秋香婆分餅團圓。"
+      },
+      "missions": {
+        "mode": "detail",
+        "note": "「中秋弄月烤肉香」從『保留／敬請期待』填實上線，這是本版活動主線。"
+      },
+      "mission_steps": {
+        "mode": "detail",
+        "note": "中秋任務步驟由『敬請期待0～3』填成實際流程：秋香婆吃喝5分鐘、分文旦給幼童、返回對話、崑崙草原採鮮桂花×10。同時清掉11筆舊步驟。"
+      },
+      "npc": {
+        "mode": "detail",
+        "note": "翠羽鳥→村中幼童、伊佳人→秋香婆，中秋活動關鍵NPC換名登場。"
+      },
+      "npc_strings": {
+        "mode": "detail",
+        "note": "配合換名，村中幼童／秋香婆／成就大師（原孩童們）顯示名同步更新。"
+      },
+      "map_placements": {
+        "mode": "summary",
+        "note": "4.3萬筆地圖擺放座標批量變更，屬地圖建置資料整理，非玩法更新，一句帶過。"
+      },
+      "monster_spawns": {
+        "mode": "summary",
+        "note": "1.6萬筆刷怪點批量調整，建置面資料整理，玩法端基本無感。"
+      },
+      "mission_refs": {
+        "mode": "summary",
+        "note": "任務關聯877筆批量變更，多為索引／關聯重建，建置調整。"
+      },
+      "messages": {
+        "mode": "summary",
+        "note": "對話訊息101筆更新，多為文案微調，建置面帶過。"
+      },
+      "item_images": {
+        "mode": "summary",
+        "note": "道具圖檔小量增修（配合新道具貼圖），建置面。"
+      },
+      "npc_images": {
+        "mode": "summary",
+        "note": "NPC圖檔6筆更新（配合換名／新NPC），建置面。"
+      },
+      "map_dims": {
+        "mode": "summary",
+        "note": "地圖尺寸6筆調整，建置面。"
+      }
+    }
+  }
+}
