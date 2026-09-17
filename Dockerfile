@@ -13,7 +13,8 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build && rm -f .next/standalone/tthol.sqlite
+# build 期只是要讓 Next 能收集 route 資料，不會進 image；真正的金鑰由 runtime env 注入
+RUN SESSION_SECRET=build-only npm run build && rm -f .next/standalone/tthol.sqlite
 
 # -- runner --
 FROM base AS runner

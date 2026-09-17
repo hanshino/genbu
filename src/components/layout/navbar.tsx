@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { ChevronDownIcon, MenuIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, LogInIcon, LogOutIcon, MenuIcon, XIcon } from "lucide-react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AccountMenu, AccountMenuCompact } from "@/components/auth/account-menu";
+import { AccountUser, IdentityBlock, IdentityTag, loginHref } from "@/components/auth/account";
+import { WelcomeBanner } from "@/components/auth/welcome-banner";
 
 type NavLink = { href: string; label: string; exact?: boolean };
 type NavGroup = { label: string; items: NavLink[] };
@@ -53,7 +56,7 @@ function isGroupActive(pathname: string, group: NavGroup) {
   return group.items.some((i) => isActive(pathname, i.href, i.exact));
 }
 
-export function Navbar() {
+export function Navbar({ user }: { user: AccountUser | null }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -74,95 +77,159 @@ export function Navbar() {
           <DesktopLink href="/changelog" label="更新紀錄" pathname={pathname} />
         </nav>
 
-        <div className="ml-auto hidden md:block">
+        <div className="ml-auto hidden items-center gap-2 md:flex">
           <DesktopLink href="/about" label="關於" pathname={pathname} muted />
+          <AccountMenu user={user} />
         </div>
 
-        <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
-          <DialogPrimitive.Trigger
-            aria-label="開啟選單"
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "icon-sm" }),
-              "ml-auto md:hidden",
-            )}
-          >
-            <MenuIcon className="size-5" aria-hidden />
-          </DialogPrimitive.Trigger>
-          <DialogPrimitive.Portal>
-            <DialogPrimitive.Backdrop className="data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 fixed inset-0 z-50 bg-black/30 backdrop-blur-sm" />
-            <DialogPrimitive.Popup
-              aria-label="網站導覽"
-              className="border-border/60 bg-background data-open:animate-in data-open:slide-in-from-right data-closed:animate-out data-closed:slide-out-to-right fixed inset-y-0 right-0 z-50 flex w-72 max-w-[85vw] flex-col overflow-y-auto border-l p-4 shadow-xl duration-200"
+        <div className="ml-auto flex items-center gap-1 md:hidden">
+          <AccountMenuCompact user={user} />
+
+          <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
+            <DialogPrimitive.Trigger
+              aria-label="開啟選單"
+              className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }))}
             >
-              <div className="mb-4 flex items-center justify-between">
-                <DialogPrimitive.Title className="flex items-baseline gap-2">
-                  <span className="font-heading text-primary text-lg font-bold">玄武</span>
-                  <span className="text-muted-foreground text-xs">Genbu</span>
-                </DialogPrimitive.Title>
-                <DialogPrimitive.Close
-                  aria-label="關閉選單"
-                  className="text-muted-foreground focus-visible:ring-ring rounded-sm p-1 opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none"
-                >
-                  <XIcon className="size-4" aria-hidden />
-                </DialogPrimitive.Close>
-              </div>
+              <MenuIcon className="size-5" aria-hidden />
+            </DialogPrimitive.Trigger>
+            <DialogPrimitive.Portal>
+              <DialogPrimitive.Backdrop className="data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 fixed inset-0 z-50 bg-black/30 backdrop-blur-sm" />
+              <DialogPrimitive.Popup
+                aria-label="網站導覽"
+                className="border-border/60 bg-background data-open:animate-in data-open:slide-in-from-right data-closed:animate-out data-closed:slide-out-to-right fixed inset-y-0 right-0 z-50 flex w-72 max-w-[85vw] flex-col overflow-y-auto border-l p-4 shadow-xl duration-200"
+              >
+                <div className="mb-4 flex items-center justify-between">
+                  <DialogPrimitive.Title className="flex items-baseline gap-2">
+                    <span className="font-heading text-primary text-lg font-bold">玄武</span>
+                    <span className="text-muted-foreground text-xs">Genbu</span>
+                  </DialogPrimitive.Title>
+                  <DialogPrimitive.Close
+                    aria-label="關閉選單"
+                    className="text-muted-foreground focus-visible:ring-ring rounded-sm p-1 opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none"
+                  >
+                    <XIcon className="size-4" aria-hidden />
+                  </DialogPrimitive.Close>
+                </div>
 
-              <nav className="flex flex-col gap-4">
-                <MobileLink
-                  href="/"
-                  label="首頁"
-                  pathname={pathname}
-                  onNavigate={() => setOpen(false)}
-                />
-
-                {navGroups.map((group) => (
-                  <div key={group.label}>
-                    <p className="text-muted-foreground px-3 pb-1.5 text-xs font-medium tracking-wider uppercase">
-                      {group.label}
-                    </p>
-                    <div className="flex flex-col gap-1">
-                      {group.items.map((item) => (
-                        <MobileLink
-                          key={item.href}
-                          href={item.href}
-                          label={item.label}
-                          exact={item.exact}
-                          pathname={pathname}
-                          onNavigate={() => setOpen(false)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-
-                <MobileLink
-                  href="/guides"
-                  label="攻略"
-                  pathname={pathname}
-                  onNavigate={() => setOpen(false)}
-                />
-
-                <MobileLink
-                  href="/changelog"
-                  label="更新紀錄"
-                  pathname={pathname}
-                  onNavigate={() => setOpen(false)}
-                />
-
-                <div className="border-border/60 mt-2 border-t pt-3">
+                <nav className="flex flex-col gap-4">
                   <MobileLink
-                    href="/about"
-                    label="關於"
+                    href="/"
+                    label="首頁"
                     pathname={pathname}
                     onNavigate={() => setOpen(false)}
                   />
-                </div>
-              </nav>
-            </DialogPrimitive.Popup>
-          </DialogPrimitive.Portal>
-        </DialogPrimitive.Root>
+
+                  {navGroups.map((group) => (
+                    <div key={group.label}>
+                      <p className="text-muted-foreground px-3 pb-1.5 text-xs font-medium tracking-wider uppercase">
+                        {group.label}
+                      </p>
+                      <div className="flex flex-col gap-1">
+                        {group.items.map((item) => (
+                          <MobileLink
+                            key={item.href}
+                            href={item.href}
+                            label={item.label}
+                            exact={item.exact}
+                            pathname={pathname}
+                            onNavigate={() => setOpen(false)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+
+                  <MobileLink
+                    href="/guides"
+                    label="攻略"
+                    pathname={pathname}
+                    onNavigate={() => setOpen(false)}
+                  />
+
+                  <MobileLink
+                    href="/changelog"
+                    label="更新紀錄"
+                    pathname={pathname}
+                    onNavigate={() => setOpen(false)}
+                  />
+
+                  <div className="border-border/60 mt-2 border-t pt-3">
+                    <MobileLink
+                      href="/about"
+                      label="關於"
+                      pathname={pathname}
+                      onNavigate={() => setOpen(false)}
+                    />
+                  </div>
+
+                  <MobileAccount user={user} onNavigate={() => setOpen(false)} />
+                </nav>
+              </DialogPrimitive.Popup>
+            </DialogPrimitive.Portal>
+          </DialogPrimitive.Root>
+        </div>
       </div>
+
+      <WelcomeBanner user={user} />
     </header>
+  );
+}
+
+function MobileAccount({ user, onNavigate }: { user: AccountUser | null; onNavigate: () => void }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [pending, setPending] = useState(false);
+
+  if (!user) {
+    const query = searchParams.toString();
+    const returnTo = pathname === "/login" ? "/" : query ? `${pathname}?${query}` : pathname;
+    return (
+      <div className="border-border/60 mt-2 border-t pt-3">
+        <a
+          href={loginHref(returnTo)}
+          className={cn(buttonVariants({ variant: "outline" }), "h-10 w-full gap-1.5 text-base")}
+        >
+          <LogInIcon aria-hidden />
+          登入
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-border/60 mt-2 border-t pt-3">
+      <div className="flex items-center gap-2 px-3 pb-2">
+        <IdentityBlock {...user} />
+        <span className="flex min-w-0 items-baseline gap-1">
+          <span className="truncate font-medium">{user.nickname}</span>
+          <IdentityTag tag={user.tag} className="text-xs" />
+        </span>
+      </div>
+      <div className="flex flex-col gap-1">
+        <MobileLink href="/me" label="個人設定" pathname={pathname} onNavigate={onNavigate} />
+        <button
+          type="button"
+          disabled={pending}
+          onClick={async () => {
+            setPending(true);
+            try {
+              const response = await fetch("/api/auth/logout", { method: "POST" });
+              if (!response.ok) throw new Error("logout failed");
+              onNavigate();
+              router.replace("/");
+              router.refresh();
+            } catch {
+              setPending(false);
+            }
+          }}
+          className="text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-2.5 rounded-md px-3 py-2.5 text-left text-base transition-colors disabled:pointer-events-none disabled:opacity-50"
+        >
+          <LogOutIcon className="size-4" aria-hidden />
+          {pending ? "登出中…" : "登出"}
+        </button>
+      </div>
+    </div>
   );
 }
 
