@@ -1,7 +1,6 @@
 # 玩家回報市價 + 登入機制
 
-> 狀態：設計討論已完成，尚未實作。
-> 本文件同時是「登入機制」新 session 的交接 prompt。
+> 狀態：**階段 1（登入）已實作並上線**（PR #40，2026-09-17）。階段 2（市價）尚未開始。
 > 建立於 2026-09-17。
 
 ---
@@ -10,7 +9,9 @@
 
 想在物品頁顯示**玩家回報的市價**。這需要三件現在都不存在的能力：可寫入的資料庫、登入、以及玩家自訂暱稱。
 
-討論過程中發現這些能力有依賴關係，不能一次做完，因此拆成三個階段。**第一階段（登入）請開新 session 處理**，本文件是它的交接說明。
+討論過程中發現這些能力有依賴關係，不能一次做完，因此拆成三個階段。階段 1 已完成，下一步是階段 2（市價）。
+
+實作後與原設計不符的地方記在文末「實作後的修正」，看那一節就好，上面的設計討論保留原樣不回頭改。
 
 ---
 
@@ -411,16 +412,84 @@ OD 專案 `genbu-market-price-e3ac` 有一版市價區塊的 mockup，**但配�
 
 ---
 
-## 給新 session 的起手式
+## 實作後的修正（2026-09-17，階段 1 上線後補）
+
+上面的設計討論保留原樣。以下是實作與部署時發現和原設計不符、或原設計沒查到的事實。**以這一節為準。**
+
+### LINE Console 現在強制 `openid` + `profile`
+
+原設計寫「scope 只用 `openid`」。實際建 channel 時，Console 的 scope 兩個是綁定的，無法只勾 `openid`。
+
+**但程式行為不變**：`src/app/api/auth/line/route.ts` 的 authorize 請求只送 `scope=openid`（核可範圍的子集，LINE 允許），玩家的同意畫面因此只會看到 `openid` 一項。`callback/route.ts` 也只取 `identity.sub`，verify 回來多出的 `name` / `picture` 直接忽略、不進 DB。
+
+結論：Console 設定比我們需要的寬，但實際請求與儲存都維持最小範圍，「不存 LINE 暱稱頭像」的立場沒有妥協。
+
+### 線上部署結構跟 repo 裡的 `docker-compose.yml` 不同
+
+repo 根目錄那份是**本機開發用**。線上是另一套：
+
+| 項目 | repo（本機） | 線上 |
+|---|---|---|
+| compose 檔 | `docker-compose.yml`（單一 service） | `~/stack/compose.yaml`，genbu 只是其中一個 service |
+| 部署方式 | `build: .` | `image: ghcr.io/hanshino/genbu:latest`，**GHCR pull-based** |
+| 反向代理 | Traefik labels | **Caddy**（`Caddyfile` 的 `reverse_proxy genbu:3000`） |
+| 資料目錄 | `/home/hanshino/data/` | `/home/ubuntu/data/` |
+
+所以：
+
+1. **改 repo 的 `docker-compose.yml` 對線上沒有任何作用。** 線上的 env 和 volume 要改 `~/stack/compose.yaml`
+2. **線上不能 `docker compose up --build`。** 要先 merge 讓 GitHub Actions 推好 image，再 `docker compose pull genbu && docker compose up -d genbu`
+3. 線上 env 用 `GENBU_` 前綴（`GENBU_LINE_CHANNEL_ID` 等）避免和 stack 內其他服務的 LINE 變數撞名，在 compose 裡才映射成容器內的 `LINE_CHANNEL_ID`
+4. 線上的 `SESSION_SECRET` 與本機是不同值，不要共用
+
+Caddy 的 `reverse_proxy` 預設會帶 `X-Forwarded-Proto`，`src/lib/auth/line.ts` 的 origin 推導在線上正常。
+
+### 線上 healthcheck 打 `/items`
+
+`~/stack/compose.yaml` 的 genbu healthcheck 會打 `/items`，而該頁會經過 root layout 的 `getCurrentUser()`。
+
+代表 **env 必須和新 image 同時就位**：任一個 `GENBU_*` 缺少，`session-token.ts` 模組載入即 throw，healthcheck 連帶失敗，容器被判 unhealthy。不能先部署再補 env。
+
+### 本機無法完整測試登入流程
+
+cookie 用 `__Host-` 前綴 + `secure: true`，瀏覽器強制要求 https，`http://localhost` 收不到 cookie，state 比對必定失敗。
+
+要在本機跑完整流程得先有 https（例如 `tailscale serve`）。單純看 UI 各狀態的話，自簽一個 session cookie 塞進瀏覽器即可。
+
+### Dockerfile 需要 build 期的 `SESSION_SECRET`
+
+`Dockerfile:16` 給了一個 build-only 假值。沒有它 `npm run build` 會直接失敗（`Failed to collect page data for /api/auth/line`），因為 Next 收集 route 資料時會載入該模組。
+
+真正的 fail-fast 由 compose 的 `${GENBU_SESSION_SECRET:?}` 在 `up` 當下負責，比模組載入更早。
+
+### 已知問題（未處理）
+
+1. **全站 15 個原本 static 的頁轉為 dynamic** — navbar 在 root layout 讀 cookie 的必然結果，試過 `<Suspense>` 包不住。對這種流量的資料站影響應該可忽略
+2. **`/changelog` 的 navbar 永遠顯示未登入** — 該頁有既有的 `export const dynamic = "force-static"`（註解說明 standalone runner 沒有 `src/`，必須 build 期讀 fs）。要修得讓 navbar 帳號區改走 client fetch，屬於另一種架構
+
+### 階段 1 實際驗證結果（線上）
+
+- 容器 healthy，healthcheck 通過
+- `/home/ubuntu/data/genbu/` 產生 `.sqlite` + `-shm` + `-wal`，owner `1001` — 「掛目錄不掛單檔」的決策確認必要
+- `journal_mode = wal`
+- 首次登入建立 user，暱稱「英雄」，session cookie 的 `sub` 格式合規、效期 90 天
+
+---
+
+## 階段 2 起手式
 
 ```
-讀 docs/plans/2026-09-17-auth-and-market-price.md，
-實作其中「階段 1（登入）的交付範圍」。
+讀 docs/plans/2026-09-17-auth-and-market-price.md。
+階段 1（登入）已完成上線，接著實作階段 2（市價）。
+
+先看文末「實作後的修正」，那裡是與原設計不符的部分。
 
 注意：
 - 站上只有亮色武俠古風主題，沒有 dark mode 切換
-- 不要裝任何 auth 套件
-- 不要動 src/lib/db.ts 的 readonly 連線
-- LINE scope 只要 openid，不拿 name / picture
-- 首次登入不跳設定畫面，預設暱稱「英雄」+ sub 末五碼辨識碼
+- 不要動 src/lib/db.ts 的 readonly 連線（遊戲資料），
+  玩家資料走 src/lib/user-db.ts
+- 身分從 src/lib/auth/session.ts 的 getCurrentUser() 取，
+  回傳 { sub, nickname, tag }
+- price_reports / votes 兩張表還沒建，要在 user-db 的建表流程補
+- 市價 mockup 要重做（OD 專案 genbu-market-price-e3ac 那版配色是錯的）
 ```
