@@ -5,10 +5,18 @@ services:
       dockerfile: Dockerfile
     container_name: genbu
     restart: always
+    environment:
+      LINE_CHANNEL_ID: ${LINE_CHANNEL_ID:?請設定 LINE_CHANNEL_ID}
+      LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET:?請設定 LINE_CHANNEL_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET:?請設定 SESSION_SECRET}
+      GENBU_USER_DB_PATH: ${GENBU_USER_DB_PATH:-/app/data/genbu-user.sqlite}
     networks:
       - traefik
     volumes:
       - /home/hanshino/data/tthol.sqlite:/app/tthol.sqlite:ro
+      # host 先建立目錄並 chown 1001:1001 /home/hanshino/data/genbu（nextjs user）。
+      # WAL 的 -wal / -shm 也需可寫，因此掛目錄而非單檔。
+      - /home/hanshino/data/genbu:/app/data
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.genbu.rule=Host(`genbu.hanshino.dev`)"

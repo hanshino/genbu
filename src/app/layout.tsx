@@ -5,6 +5,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { CompareBar } from "@/components/compare/compare-bar";
 import { UmamiAnalytics } from "@/components/analytics/umami";
+import { getCurrentUser } from "@/lib/auth/session";
 
 const notoSansTC = Noto_Sans_TC({
   subsets: ["latin"],
@@ -30,18 +31,19 @@ export const metadata: Metadata = {
   description: "武林同萌傳 (TTHOL) 道具查詢、裝備比較、副本解謎工具",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getCurrentUser();
   return (
     <html
       lang="zh-TW"
       className={`${notoSansTC.variable} ${notoSerifTC.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Navbar />
+        <Navbar user={user && { nickname: user.nickname, tag: user.tag }} />
         <main className="flex-1">{children}</main>
         <Footer />
         <CompareBar />
