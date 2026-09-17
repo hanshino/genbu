@@ -45,6 +45,7 @@ import {
   relativeTime,
 } from "@/lib/market-price";
 import { useTwdRate } from "@/lib/hooks/use-twd-rate";
+import { track } from "@/lib/analytics/track";
 import { cn } from "@/lib/utils";
 
 const CURRENCIES: CurrencyId[] = ["silver", "official", "twd"];
@@ -119,6 +120,7 @@ export function MarketPriceSection({
         return;
       }
       setStatus(null);
+      track("price_vote", { direction: next === 0 ? "cancel" : next === 1 ? "up" : "down" });
       setReports((prev) =>
         (prev ?? []).map((r) =>
           r.id === report.id ? { ...r, netVotes: data.netVotes, myVote: next } : r,
@@ -305,6 +307,7 @@ export function MarketPriceSection({
           {/* LINE 綠是全站唯一的品牌色例外，跟登入頁一致。 */}
           <a
             href={loginHref(returnTo)}
+            onClick={() => track("login_start", { source: "market_price" })}
             className="flex h-9 items-center justify-center gap-2 rounded-lg bg-[#06C755] px-4 text-sm font-medium text-white shadow-sm transition-colors outline-none hover:bg-[#05A948] focus-visible:ring-3 focus-visible:ring-[#06C755]/45 active:translate-y-px max-sm:w-full"
           >
             <LineIcon className="size-4" />
@@ -472,6 +475,7 @@ function ReportForm({
         return;
       }
       setAmount("");
+      track("price_report", { server, currency });
       onReported();
     } catch {
       onError("連線失敗，請稍後再試。");
@@ -643,6 +647,7 @@ function RatePopover({
                 return;
               }
               onSave(value * SILVER_PER_WAN);
+              track("twd_rate_set", { first: rate == null });
               setOpen(false);
             }}
           >
