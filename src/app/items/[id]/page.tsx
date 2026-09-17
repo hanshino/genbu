@@ -33,11 +33,13 @@ import { EquipmentEnhancementsSection } from "@/components/items/equipment-enhan
 import { ShopBuybackSection, ShopSalesSection } from "@/components/items/shop-availability-section";
 import { MissionUsesSection } from "@/components/items/mission-uses-section";
 import { ItemSectionGroup, summarizeSourceRoutes } from "@/components/items/item-section-group";
+import { MarketPriceSection } from "@/components/items/market-price-section";
 import { CompareButton } from "@/components/items/compare-button";
 import { ItemTags } from "@/components/items/item-tags";
 import { PresetPercentile } from "@/components/items/preset-percentile";
 import { imageOfItem } from "@/lib/equipment-images";
 import { getItemIcon, getNpcImageMap } from "@/lib/queries/images";
+import { getCurrentUser } from "@/lib/auth/session";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -62,6 +64,8 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
 
   const item = getItemById(itemId);
   if (!item) notFound();
+
+  const user = await getCurrentUser();
 
   const rands = getItemRands(String(item.id));
   const sources = getMonstersByDropItem(item.id);
@@ -146,6 +150,14 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
       )}
 
       <ItemRandTable rands={rands} />
+
+      {/* 「這是什麼 → 值多少 → 哪裡拿 → 拿來幹嘛」：市價接在道具本身的數值之後、
+          入手途徑之前。資料由 client 自己打 API，不影響這頁的伺服器渲染。 */}
+      <MarketPriceSection
+        itemId={item.id}
+        itemName={item.name}
+        user={user && { nickname: user.nickname, tag: user.tag }}
+      />
 
       <ItemSectionGroup
         id="how-to-get"

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth/session";
-import { isSameOrigin } from "@/lib/auth/line";
+import { requireAuth } from "@/lib/auth/require-auth";
 import { getUserDb } from "@/lib/user-db";
 
 export const runtime = "nodejs";
@@ -8,9 +7,8 @@ export const runtime = "nodejs";
 export async function PATCH(request: Request) {
   const fail = (error: string) => NextResponse.json({ error }, { status: 400 });
   try {
-    if (!isSameOrigin(request)) return fail("請從本站修改暱稱。");
-    const session = await getSession();
-    if (!session) return fail("登入已過期，請重新登入。");
+    const session = await requireAuth(request);
+    if (session instanceof NextResponse) return session;
     const body = await request.json();
     if (!body || typeof body.nickname !== "string") return fail("請輸入暱稱。");
     const nickname = body.nickname.trim();
