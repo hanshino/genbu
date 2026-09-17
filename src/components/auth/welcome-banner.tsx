@@ -38,24 +38,33 @@ export function WelcomeBanner({ user }: { user: AccountUser | null }) {
   if (!show || !user) return null;
 
   return (
+    // 用青瓷 --chart-2 不用朱砂 --primary：朱砂是主題的警示/主要動作色，
+    // 淡紅底一眼看過去像錯誤，但這是登入成功的正向提示。
     <div
       role="status"
-      className="border-primary/25 bg-primary/8 animate-in slide-in-from-top-2 fade-in-0 border-b duration-300"
+      className="border-chart-2/40 bg-chart-2/8 animate-in slide-in-from-top-2 fade-in-0 border-b duration-300"
     >
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5">
-        <CircleCheckBigIcon className="text-primary size-4 shrink-0" aria-hidden />
-        <p className="text-sm">
-          已登入。你目前的名字是 <span className="font-medium">{user.nickname}</span>
-          <IdentityTag tag={user.tag} className="text-xs" />
-          ，可以改成你習慣的。
-        </p>
-        <Link
-          href="/me"
-          onClick={() => setDismissed(true)}
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "ml-auto")}
-        >
-          修改暱稱
-        </Link>
+      <div className="mx-auto flex max-w-6xl items-start gap-3 px-4 py-2.5 sm:items-center">
+        <CircleCheckBigIcon className="text-chart-2 mt-0.5 size-4 shrink-0 sm:mt-0" aria-hidden />
+
+        {/* 窄版：文字一行、按鈕退到下一行靠左；sm 以上才拉回同一列並推到右邊。 */}
+        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <p className="text-sm">
+            已登入。你目前的名字是 <span className="font-medium">{user.nickname}</span>
+            <IdentityTag tag={user.tag} className="text-xs" />
+            ，可以改成你習慣的。
+          </p>
+          <Link
+            href="/me"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              "self-start sm:ml-auto",
+            )}
+          >
+            修改暱稱
+          </Link>
+        </div>
+
         <button
           type="button"
           aria-label="關閉提示"
@@ -65,7 +74,7 @@ export function WelcomeBanner({ user }: { user: AccountUser | null }) {
           }}
           className={cn(
             buttonVariants({ variant: "ghost", size: "icon-sm" }),
-            "text-muted-foreground",
+            "text-muted-foreground -mr-1 shrink-0",
           )}
         >
           <XIcon aria-hidden />
