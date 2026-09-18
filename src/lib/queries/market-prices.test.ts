@@ -30,7 +30,11 @@ function makeMemDb(): Database.Database {
       currency   TEXT NOT NULL,
       amount     INTEGER NOT NULL,
       author_sub TEXT NOT NULL,
-      created_at INTEGER NOT NULL
+      created_at INTEGER NOT NULL,
+      awaken      INTEGER,
+      bind_left   INTEGER,
+      bind_expand INTEGER,
+      enhance     TEXT
     );
     CREATE INDEX idx_price_reports_item ON price_reports(item_id);
     CREATE TABLE votes (
@@ -136,6 +140,47 @@ describe("createReport / hasReportedRecently", () => {
     expect(hasReportedRecently(200, "fish", "U_author", 300)).toBe(false); // 不同伺服器不算
     expect(hasReportedRecently(999, "flower", "U_author", 300)).toBe(false); // 不同物品不算
   });
+
+  it("補充狀態存得進去也讀得回來", () => {
+    mem
+      .prepare("INSERT INTO users (sub, nickname, created_at) VALUES ('U_author', '英雄', 1000)")
+      .run();
+    createReport({
+      itemId: 201,
+      server: "fish",
+      currency: "silver",
+      amount: 100,
+      authorSub: "U_author",
+      awaken: 12,
+      bindLeft: 1,
+      bindExpand: 4,
+      enhance: ["matk:8", "hit:7"],
+    });
+
+    const [report] = getItemReports(201, null);
+    expect(report.awaken).toBe(12);
+    expect(report.bindLeft).toBe(1);
+    expect(report.bindExpand).toBe(4);
+    expect(report.enhance).toEqual(["matk:8", "hit:7"]);
+  });
+
+  it("沒填補充狀態的回報讀回來是乾淨裝，不是 null 撒一地", () => {
+    mem
+      .prepare("INSERT INTO users (sub, nickname, created_at) VALUES ('U_author', '英雄', 1000)")
+      .run();
+    createReport({
+      itemId: 202,
+      server: "fish",
+      currency: "silver",
+      amount: 100,
+      authorSub: "U_author",
+    });
+
+    const [report] = getItemReports(202, null);
+    expect(report.awaken).toBe(0);
+    expect(report.bindLeft).toBeNull();
+    expect(report.enhance).toEqual([]);
+  });
 });
 
 describe("setVote", () => {
@@ -234,6 +279,24 @@ describe("getRecentReports", () => {
     expect(recent.map((r) => [r.itemId, r.nickname, r.server])).toEqual([
       [2, "柳三刀", "flower"],
       [3, "英雄", "fish"],
+    ]);
+  });
+
+  it("標出覺醒過／強化過的，首頁才不會把它當成該物品的行情", () => {
+    mem.prepare("INSERT INTO users (sub, nickname, created_at) VALUES ('U_a', '英雄', 1000)").run();
+    const insert = mem.prepare(
+      `INSERT INTO price_reports
+         (item_id, server, currency, amount, author_sub, created_at, awaken, enhance)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    insert.run(1, "fish", "silver", 100, "U_a", 3000, 0, null);
+    insert.run(2, "fish", "silver", 200, "U_a", 2000, 12, null);
+    insert.run(3, "fish", "silver", 300, "U_a", 1000, 0, "matk:8");
+
+    expect(getRecentReports(3).map((r) => [r.itemId, r.modified])).toEqual([
+      [1, false],
+      [2, true],
+      [3, true],
     ]);
   });
 

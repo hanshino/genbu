@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronRightIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDb } from "@/lib/db";
 import { getItemsByIds } from "@/lib/queries/items";
@@ -144,6 +145,8 @@ export default function HomePage() {
                       {r.money.unit}
                     </span>
                   </span>
+                  {/* 覺醒過、強化過的價差可以到好幾倍，不標出來會被當成這件的行情。 */}
+                  {r.modified && <Badge variant="outline">動過</Badge>}
                   <span className="ml-auto text-xs whitespace-nowrap text-muted-foreground">
                     {r.serverName} · {relativeTime(r.createdAt)}
                   </span>

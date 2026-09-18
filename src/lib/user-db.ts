@@ -5,6 +5,24 @@ const globalDb = globalThis as typeof globalThis & {
   _userDb?: Database.Database;
 };
 
+// price_reports 後來才加的欄位。CREATE TABLE IF NOT EXISTS 對既有的表什麼都不做，
+// 所以開連線時自己比對一次；全部可為 NULL，舊資料不用回填（NULL 就是「沒填」）。
+const PRICE_REPORT_COLUMNS: readonly [string, string][] = [
+  ["awaken", "INTEGER"],
+  ["bind_left", "INTEGER"],
+  ["bind_expand", "INTEGER"],
+  ["enhance", "TEXT"],
+];
+
+function addMissingColumns(db: Database.Database): void {
+  const existing = new Set(
+    (db.pragma("table_info(price_reports)") as { name: string }[]).map((column) => column.name),
+  );
+  for (const [name, type] of PRICE_REPORT_COLUMNS) {
+    if (!existing.has(name)) db.exec(`ALTER TABLE price_reports ADD COLUMN ${name} ${type}`);
+  }
+}
+
 export function getUserDb(): Database.Database {
   if (!globalDb._userDb) {
     const db = new Database(process.env.GENBU_USER_DB_PATH || "/app/data/genbu-user.sqlite", {
@@ -27,6 +45,7 @@ export function getUserDb(): Database.Database {
         created_at INTEGER NOT NULL
       )`);
       db.exec(`CREATE INDEX IF NOT EXISTS idx_price_reports_item ON price_reports(item_id)`);
+      addMissingColumns(db);
       db.exec(`CREATE TABLE IF NOT EXISTS votes (
         report_id INTEGER NOT NULL,
         voter_sub TEXT NOT NULL,
