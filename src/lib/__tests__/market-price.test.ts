@@ -23,6 +23,7 @@ function report(overrides: Partial<PriceReport>): PriceReport {
     amount: 1000,
     nickname: "英雄",
     tag: "a1b2c",
+    mine: false,
     netVotes: 0,
     myVote: 0,
     createdAt: NOW_SEC - DAY,

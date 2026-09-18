@@ -5,6 +5,7 @@ import {
   ReportNotFoundError,
   SelfVoteError,
   createReport,
+  deleteReport,
   getItemReports,
   getNetVotes,
   hasReportedRecently,
@@ -50,16 +51,12 @@ beforeEach(() => {
 
 describe("getItemReports", () => {
   it("回傳 netVotes / myVote / 排序正確", () => {
-    mem.prepare("INSERT INTO users (sub, nickname, created_at) VALUES (?, ?, ?)").run(
-      "U_author",
-      "英雄",
-      1000,
-    );
-    mem.prepare("INSERT INTO users (sub, nickname, created_at) VALUES (?, ?, ?)").run(
-      "U_voter",
-      "英雄",
-      1000,
-    );
+    mem
+      .prepare("INSERT INTO users (sub, nickname, created_at) VALUES (?, ?, ?)")
+      .run("U_author", "英雄", 1000);
+    mem
+      .prepare("INSERT INTO users (sub, nickname, created_at) VALUES (?, ?, ?)")
+      .run("U_voter", "英雄", 1000);
 
     // report A: 較晚建立，但票數較高 → 應排第一
     mem
@@ -90,7 +87,9 @@ describe("getItemReports", () => {
   });
 
   it("未登入（viewerSub 為 null）myVote 一律 0", () => {
-    mem.prepare("INSERT INTO users (sub, nickname, created_at) VALUES ('U_author', '英雄', 1000)").run();
+    mem
+      .prepare("INSERT INTO users (sub, nickname, created_at) VALUES ('U_author', '英雄', 1000)")
+      .run();
     mem
       .prepare(
         `INSERT INTO price_reports (id, item_id, server, currency, amount, author_sub, created_at)
@@ -103,7 +102,9 @@ describe("getItemReports", () => {
   });
 
   it("暱稱改變時歷史回報一起變（不存 author_name 快照）", () => {
-    mem.prepare("INSERT INTO users (sub, nickname, created_at) VALUES ('U_author', '英雄', 1000)").run();
+    mem
+      .prepare("INSERT INTO users (sub, nickname, created_at) VALUES ('U_author', '英雄', 1000)")
+      .run();
     mem
       .prepare(
         `INSERT INTO price_reports (id, item_id, server, currency, amount, author_sub, created_at)
@@ -119,7 +120,9 @@ describe("getItemReports", () => {
 
 describe("createReport / hasReportedRecently", () => {
   it("建立回報後可查到，且冷卻期內視為已回報", () => {
-    mem.prepare("INSERT INTO users (sub, nickname, created_at) VALUES ('U_author', '英雄', 1000)").run();
+    mem
+      .prepare("INSERT INTO users (sub, nickname, created_at) VALUES ('U_author', '英雄', 1000)")
+      .run();
     const id = createReport({
       itemId: 200,
       server: "flower",
@@ -136,8 +139,12 @@ describe("createReport / hasReportedRecently", () => {
 
 describe("setVote", () => {
   beforeEach(() => {
-    mem.prepare("INSERT INTO users (sub, nickname, created_at) VALUES ('U_author', '英雄', 1000)").run();
-    mem.prepare("INSERT INTO users (sub, nickname, created_at) VALUES ('U_voter', '英雄', 1000)").run();
+    mem
+      .prepare("INSERT INTO users (sub, nickname, created_at) VALUES ('U_author', '英雄', 1000)")
+      .run();
+    mem
+      .prepare("INSERT INTO users (sub, nickname, created_at) VALUES ('U_voter', '英雄', 1000)")
+      .run();
     mem
       .prepare(
         `INSERT INTO price_reports (id, item_id, server, currency, amount, author_sub, created_at)
@@ -170,5 +177,38 @@ describe("setVote", () => {
 
   it("report 不存在丟 ReportNotFoundError", () => {
     expect(() => setVote(999, "U_voter", 1)).toThrow(ReportNotFoundError);
+  });
+});
+
+describe("deleteReport", () => {
+  function seed() {
+    mem
+      .prepare("INSERT INTO users (sub, nickname, created_at) VALUES (?, ?, ?)")
+      .run("U_author", "英雄", 1000);
+    mem
+      .prepare(
+        `INSERT INTO price_reports (id, item_id, server, currency, amount, author_sub, created_at)
+         VALUES (1, 24086, 'fish', 'silver', 1000000, 'U_author', 1000)`,
+      )
+      .run();
+    mem.prepare("INSERT INTO votes (report_id, voter_sub, value) VALUES (1, 'U_voter', -1)").run();
+  }
+
+  it("作者刪得掉，連同票一起清掉", () => {
+    seed();
+    expect(deleteReport(1, "U_author")).toBe(true);
+    expect(mem.prepare("SELECT COUNT(*) AS n FROM price_reports").get()).toEqual({ n: 0 });
+    expect(mem.prepare("SELECT COUNT(*) AS n FROM votes").get()).toEqual({ n: 0 });
+  });
+
+  it("不是作者就刪不掉，資料原封不動", () => {
+    seed();
+    expect(deleteReport(1, "U_someone_else")).toBe(false);
+    expect(mem.prepare("SELECT COUNT(*) AS n FROM price_reports").get()).toEqual({ n: 1 });
+    expect(mem.prepare("SELECT COUNT(*) AS n FROM votes").get()).toEqual({ n: 1 });
+  });
+
+  it("回報不存在回 false", () => {
+    expect(deleteReport(999, "U_author")).toBe(false);
   });
 });
