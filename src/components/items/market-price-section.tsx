@@ -10,6 +10,7 @@ import {
   LockIcon,
   ThumbsDownIcon,
   ThumbsUpIcon,
+  Trash2Icon,
   TriangleAlertIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +42,7 @@ import {
   SILVER_PER_WAN,
   formatAmount,
   formatReference,
+  formatSilver,
   referencePrice,
   relativeTime,
 } from "@/lib/market-price";
@@ -50,9 +52,9 @@ import { cn } from "@/lib/utils";
 
 const CURRENCIES: CurrencyId[] = ["silver", "official", "twd"];
 
-/** 回報表單的輸入單位：銀兩太長，玩家習慣講「萬」。 */
+/** 回報表單的輸入單位：銀兩是遊戲裡最小的那一元，照原值收。 */
 const INPUT_UNITS: Record<CurrencyId, string> = {
-  silver: "萬銀兩",
+  silver: "銀兩",
   official: "官幣",
   twd: "台幣",
 };
@@ -98,6 +100,7 @@ export function MarketPriceSection({
   const rows = (reports ?? []).filter((r) => r.server === server);
   const reference = referencePrice(reports ?? [], server, rate);
   const price = formatReference(reference.silver, currency, rate);
+  const rateText = rate == null ? null : formatSilver(rate);
   const serverName = SERVERS.find((s) => s.id === server)!.name;
   // 正在看台幣卻沒設匯率：主數字是「—」，得給個出口。
   const needsRate = currency === "twd" && rate == null;
@@ -126,6 +129,23 @@ export function MarketPriceSection({
           r.id === report.id ? { ...r, netVotes: data.netVotes, myVote: next } : r,
         ),
       );
+    } catch {
+      setStatus({ kind: "error", message: "連線失敗，請稍後再試。" });
+    }
+  }
+
+  async function remove(report: PriceReport) {
+    // ponytail: 原生 confirm 就擋得住誤觸，要換成 AlertDialog 再說。
+    if (!window.confirm("刪除這筆回報？刪掉就救不回來了。")) return;
+    try {
+      const response = await fetch(`/api/reports/${report.id}`, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) {
+        setStatus({ kind: "error", message: data?.error ?? "刪除失敗，請稍後再試。" });
+        return;
+      }
+      setStatus({ kind: "ok", message: "已刪除這筆回報。" });
+      void load();
     } catch {
       setStatus({ kind: "error", message: "連線失敗，請稍後再試。" });
     }
@@ -214,8 +234,8 @@ export function MarketPriceSection({
           <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-dashed border-border bg-card px-3 py-2 text-xs text-muted-foreground">
             <InfoIcon className="size-3.5 shrink-0" aria-hidden />
             <span>
-              {rate != null
-                ? `已照 1 台幣 = ${(rate / SILVER_PER_WAN).toLocaleString("zh-TW", { maximumFractionDigits: 2 })} 萬銀兩換算，現金報價已算進來`
+              {rateText
+                ? `已照 1 台幣 = ${rateText.value} ${rateText.unit}換算，現金報價已算進來`
                 : reference.cash > 0
                   ? `另有 ${reference.cash} 筆現金報價未納入計算`
                   : "還沒設過台幣匯率"}
@@ -253,6 +273,7 @@ export function MarketPriceSection({
                   rate={rate}
                   loggedIn={user != null}
                   onVote={vote}
+                  onDelete={remove}
                 />
               ))}
             </ul>
@@ -324,11 +345,13 @@ function ReportRow({
   rate,
   loggedIn,
   onVote,
+  onDelete,
 }: {
   report: PriceReport;
   rate: number | null;
   loggedIn: boolean;
   onVote: (report: PriceReport, value: 1 | -1) => void;
+  onDelete: (report: PriceReport) => void;
 }) {
   const disputed = report.netVotes < 0;
   const amount = formatAmount(report.amount, report.currency);
@@ -367,13 +390,16 @@ function ReportRow({
           </div>
         </div>
 
+        {/* 自己的回報投不了票（後端也擋），那兩顆按鈕換成刪除，不留按了就報錯的東西。 */}
         <div className="flex shrink-0 items-center">
-          <VoteButton
-            direction={1}
-            active={report.myVote === 1}
-            loggedIn={loggedIn}
-            onClick={() => onVote(report, 1)}
-          />
+          {!report.mine && (
+            <VoteButton
+              direction={1}
+              active={report.myVote === 1}
+              loggedIn={loggedIn}
+              onClick={() => onVote(report, 1)}
+            />
+          )}
           <span
             className={cn(
               "min-w-8 text-center text-sm tabular-nums",
@@ -386,12 +412,25 @@ function ReportRow({
           >
             {report.netVotes > 0 ? `+${report.netVotes}` : report.netVotes}
           </span>
-          <VoteButton
-            direction={-1}
-            active={report.myVote === -1}
-            loggedIn={loggedIn}
-            onClick={() => onVote(report, -1)}
-          />
+          {report.mine ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="刪除我的回報"
+              onClick={() => onDelete(report)}
+              className="size-11 text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:size-8"
+            >
+              <Trash2Icon aria-hidden />
+            </Button>
+          ) : (
+            <VoteButton
+              direction={-1}
+              active={report.myVote === -1}
+              loggedIn={loggedIn}
+              onClick={() => onVote(report, -1)}
+            />
+          )}
         </div>
       </div>
     </li>
@@ -451,6 +490,10 @@ function ReportForm({
   const [currency, setCurrency] = useState<CurrencyId>("silver");
   const [sending, setSending] = useState(false);
 
+  // 銀兩照原值收，位數一多就難讀，超過一萬時把萬／億回放出來對眼睛。
+  const typed = Number(amount);
+  const preview = currency === "silver" && typed >= SILVER_PER_WAN ? formatSilver(typed) : null;
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     const input = Number(amount);
@@ -459,8 +502,7 @@ function ReportForm({
       amountRef.current?.focus();
       return;
     }
-    // 銀兩用「萬」收，送出前換回銀兩；官幣與台幣照原值。
-    const value = Math.round(currency === "silver" ? input * SILVER_PER_WAN : input);
+    const value = Math.round(input);
 
     setSending(true);
     try {
@@ -494,8 +536,16 @@ function ReportForm({
         className="mt-3 grid grid-cols-2 items-end gap-2.5 sm:grid-cols-[minmax(0,1fr)_7.5rem_9rem_auto]"
       >
         <div className="col-span-2 sm:col-span-1">
-          <label htmlFor="price-amount" className="mb-1.5 block text-xs text-muted-foreground">
-            價格（{INPUT_UNITS[currency]}）
+          <label
+            htmlFor="price-amount"
+            className="mb-1.5 flex items-baseline justify-between gap-2 text-xs text-muted-foreground"
+          >
+            <span>價格（{INPUT_UNITS[currency]}）</span>
+            {preview && (
+              <span className="tabular-nums">
+                = {preview.value} {preview.unit}
+              </span>
+            )}
           </label>
           <Input
             id="price-amount"
@@ -505,7 +555,9 @@ function ReportForm({
             min={0}
             step="any"
             value={amount}
-            placeholder={currency === "silver" ? "1850" : currency === "official" ? "18" : "600"}
+            placeholder={
+              currency === "silver" ? "18500000" : currency === "official" ? "18" : "600"
+            }
             onChange={(event) => setAmount(event.target.value)}
             className="h-9 tabular-nums"
           />
@@ -583,7 +635,7 @@ function RatePopover({
       onOpenChange={(next) => {
         setOpen(next);
         if (next) {
-          setDraft(rate == null ? "" : String(rate / SILVER_PER_WAN));
+          setDraft(rate == null ? "" : String(rate));
           setInvalid(false);
         }
       }}
@@ -614,16 +666,16 @@ function RatePopover({
             min={0}
             step="any"
             value={draft}
-            placeholder="2.5"
-            aria-label="每 1 台幣可換得的萬銀兩"
+            placeholder="25000"
+            aria-label="每 1 台幣可換得的銀兩"
             aria-invalid={invalid || undefined}
             onChange={(event) => {
               setDraft(event.target.value);
               setInvalid(false);
             }}
-            className="h-8 w-24 tabular-nums"
+            className="h-8 w-28 tabular-nums"
           />
-          <span className="text-[13px] whitespace-nowrap text-muted-foreground">萬銀兩</span>
+          <span className="text-[13px] whitespace-nowrap text-muted-foreground">銀兩</span>
         </div>
 
         <p className="flex items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
@@ -646,7 +698,7 @@ function RatePopover({
                 setInvalid(true);
                 return;
               }
-              onSave(value * SILVER_PER_WAN);
+              onSave(value);
               track("twd_rate_set", { first: rate == null });
               setOpen(false);
             }}

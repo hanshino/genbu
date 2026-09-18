@@ -13,6 +13,7 @@ export type PriceReport = {
   tag: string; // author_sub 末五碼，跟 session.ts 的 tag 算法一致
   netVotes: number;
   myVote: 0 | 1 | -1; // 目前使用者的投票，未登入一律 0
+  mine: boolean; // 目前使用者是不是作者；只有作者刪得掉自己的回報
   createdAt: number;
 };
 
@@ -29,7 +30,7 @@ type ReportRow = {
   my_vote: number | null;
 };
 
-function toReport(row: ReportRow): PriceReport {
+function toReport(row: ReportRow, viewerSub: string | null): PriceReport {
   return {
     id: row.id,
     itemId: row.item_id,
@@ -40,6 +41,7 @@ function toReport(row: ReportRow): PriceReport {
     tag: row.author_sub.slice(-5),
     netVotes: row.net_votes,
     myVote: (row.my_vote ?? 0) as 0 | 1 | -1,
+    mine: viewerSub != null && row.author_sub === viewerSub,
     createdAt: row.created_at,
   };
 }
@@ -63,7 +65,7 @@ export function getItemReports(itemId: number, viewerSub: string | null): PriceR
        ORDER BY net_votes DESC, pr.created_at DESC`,
     )
     .all(viewerSub, itemId) as ReportRow[];
-  return rows.map(toReport);
+  return rows.map((row) => toReport(row, viewerSub));
 }
 
 export type CreateReportInput = {
@@ -105,6 +107,20 @@ export function hasReportedRecently(
   return row !== undefined;
 }
 
+// 只有作者本人刪得掉；沒刪到（不存在或不是你的）回 false，呼叫端不用另外查歸屬。
+// votes 沒有 FK cascade，同一個 transaction 裡一起清掉免得留下孤兒票。
+export function deleteReport(reportId: number, authorSub: string): boolean {
+  const db = getUserDb();
+  return db.transaction(() => {
+    const result = db
+      .prepare("DELETE FROM price_reports WHERE id = ? AND author_sub = ?")
+      .run(reportId, authorSub);
+    if (result.changes === 0) return false;
+    db.prepare("DELETE FROM votes WHERE report_id = ?").run(reportId);
+    return true;
+  })();
+}
+
 export class ReportNotFoundError extends Error {}
 export class SelfVoteError extends Error {}
 
@@ -112,9 +128,8 @@ export class SelfVoteError extends Error {}
 // 禁止對自己的回報投票：作者與投票者相同時丟 SelfVoteError，由 handler 轉成 400。
 export function setVote(reportId: number, voterSub: string, value: 1 | -1 | 0): void {
   const db = getUserDb();
-  const report = db
-    .prepare("SELECT author_sub FROM price_reports WHERE id = ?")
-    .get(reportId) as { author_sub: string } | undefined;
+  const report = db.prepare("SELECT author_sub FROM price_reports WHERE id = ?").get(reportId) as
+    { author_sub: string } | undefined;
   if (!report) throw new ReportNotFoundError();
   if (report.author_sub === voterSub) throw new SelfVoteError();
 

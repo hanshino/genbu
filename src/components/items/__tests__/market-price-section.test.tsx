@@ -18,6 +18,7 @@ function report(overrides: Partial<PriceReport>): PriceReport {
     tag: "4b201",
     netVotes: 0,
     myVote: 0,
+    mine: false,
     createdAt: NOW_SEC - 3600,
     ...overrides,
   };
@@ -92,6 +93,75 @@ describe("MarketPriceSection", () => {
     expect(await screen.findByText(/還沒有人報過價/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "我來報第一筆" })).not.toBeInTheDocument();
     expect(screen.getByText("使用 LINE 登入")).toBeInTheDocument();
+  });
+
+  it("銀兩照原值回報，超過一萬才回放萬／億幫忙讀位數", async () => {
+    mockPrices([]);
+    const user = (await import("@testing-library/user-event")).default.setup();
+    render(
+      <MarketPriceSection
+        itemId={24086}
+        itemName="玄鐵重劍"
+        user={{ nickname: "英雄", tag: "8a3f2" }}
+      />,
+    );
+
+    const amount = await screen.findByLabelText(/價格/);
+    // 1,000 銀兩是合法回報，不該被逼著用「萬」，也不必回放。
+    await user.type(amount, "1000");
+    expect(screen.queryByText(/^= /)).not.toBeInTheDocument();
+
+    await user.type(amount, "000");
+    expect(screen.getByText("= 100 萬銀兩")).toBeInTheDocument();
+  });
+
+  it("只有自己的回報給刪除鈕，確認後才真的打 DELETE", async () => {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (init?.method === "DELETE") return { ok: true, json: async () => ({ ok: true }) };
+      return { ok: true, json: async () => ({ reports: [report({ id: 7, mine: true })] }) };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = (await import("@testing-library/user-event")).default.setup();
+    render(
+      <MarketPriceSection
+        itemId={24086}
+        itemName="玄鐵重劍"
+        user={{ nickname: "英雄", tag: "4b201" }}
+      />,
+    );
+
+    const remove = await screen.findByRole("button", { name: "刪除我的回報" });
+    // 自己的回報投不了票，那兩顆按鈕不該還在。
+    expect(screen.queryByRole("button", { name: "認同這筆回報" })).not.toBeInTheDocument();
+
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => false),
+    );
+    await user.click(remove);
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === "DELETE")).toBe(false);
+
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
+    await user.click(remove);
+    expect(fetchMock).toHaveBeenCalledWith("/api/reports/7", { method: "DELETE" });
+    expect(await screen.findByText("已刪除這筆回報。")).toBeInTheDocument();
+  });
+
+  it("別人的回報沒有刪除鈕", async () => {
+    mockPrices([report({ id: 1 })]);
+    render(
+      <MarketPriceSection
+        itemId={24086}
+        itemName="玄鐵重劍"
+        user={{ nickname: "路人", tag: "8a3f2" }}
+      />,
+    );
+
+    await screen.findByRole("button", { name: "認同這筆回報" });
+    expect(screen.queryByRole("button", { name: "刪除我的回報" })).not.toBeInTheDocument();
   });
 
   it("已登入才出現回報表單", async () => {
