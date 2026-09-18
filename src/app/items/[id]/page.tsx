@@ -153,10 +153,14 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
 
       {/* 「這是什麼 → 值多少 → 哪裡拿 → 拿來幹嘛」：市價接在道具本身的數值之後、
           入手途徑之前。資料由 client 自己打 API，不影響這頁的伺服器渲染。 */}
+      {/* 補充狀態要問什麼，看這件裝備動得了什麼手腳：坐騎、背飾有覺醒沒強化，
+          飾品、拳套、弓有強化沒覺醒，消耗品兩者皆無、整塊不出現。 */}
       <MarketPriceSection
         itemId={item.id}
         itemName={item.name}
         user={user && { nickname: user.nickname, tag: user.tag }}
+        canEnhance={enhancements.length > 0}
+        awakenMax={awakeningPath?.stages.length ?? 0}
       />
 
       <ItemSectionGroup

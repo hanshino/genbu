@@ -1,3 +1,4 @@
+import { decodeEnhance, encodeEnhance } from "@/lib/enhance";
 import { getUserDb } from "@/lib/user-db";
 
 export type ServerId = "fish" | "flower";
@@ -15,6 +16,10 @@ export type PriceReport = {
   myVote: 0 | 1 | -1; // 目前使用者的投票，未登入一律 0
   mine: boolean; // 目前使用者是不是作者；只有作者刪得掉自己的回報
   createdAt: number;
+  awaken: number; // 覺醒階數，0 = 沒覺醒（欄位為 NULL 的舊資料也算 0）
+  bindLeft: number | null; // 綁定次數；null = 回報者沒填
+  bindExpand: number | null; // 可擴次數；null = 回報者沒填
+  enhance: string[]; // 強化編碼，見 lib/enhance.ts；[] = 沒強化
 };
 
 type ReportRow = {
@@ -28,6 +33,10 @@ type ReportRow = {
   nickname: string;
   net_votes: number;
   my_vote: number | null;
+  awaken: number | null;
+  bind_left: number | null;
+  bind_expand: number | null;
+  enhance: string | null;
 };
 
 function toReport(row: ReportRow, viewerSub: string | null): PriceReport {
@@ -43,6 +52,10 @@ function toReport(row: ReportRow, viewerSub: string | null): PriceReport {
     myVote: (row.my_vote ?? 0) as 0 | 1 | -1,
     mine: viewerSub != null && row.author_sub === viewerSub,
     createdAt: row.created_at,
+    awaken: row.awaken ?? 0,
+    bindLeft: row.bind_left,
+    bindExpand: row.bind_expand,
+    enhance: decodeEnhance(row.enhance),
   };
 }
 
@@ -54,6 +67,7 @@ export function getItemReports(itemId: number, viewerSub: string | null): PriceR
     .prepare(
       `SELECT
          pr.id, pr.item_id, pr.server, pr.currency, pr.amount, pr.author_sub, pr.created_at,
+         pr.awaken, pr.bind_left, pr.bind_expand, pr.enhance,
          u.nickname,
          COALESCE(SUM(v.value), 0) AS net_votes,
          (SELECT value FROM votes WHERE report_id = pr.id AND voter_sub = ?) AS my_vote
@@ -76,6 +90,8 @@ export type RecentReport = {
   amount: number;
   nickname: string;
   createdAt: number;
+  /** 覺醒過或強化過：首頁得標出來，不然這個價會被當成該物品的行情。 */
+  modified: boolean;
 };
 
 // 首頁「最近回報」用。物品名稱在唯讀的遊戲資料庫、回報在玩家資料庫，兩個 sqlite 檔
@@ -85,13 +101,17 @@ export function getRecentReports(limit: number): RecentReport[] {
   const db = getUserDb();
   const rows = db
     .prepare(
-      `SELECT pr.id, pr.item_id, pr.server, pr.currency, pr.amount, u.nickname, pr.created_at
+      `SELECT pr.id, pr.item_id, pr.server, pr.currency, pr.amount, u.nickname, pr.created_at,
+              pr.awaken, pr.enhance
        FROM price_reports pr
        JOIN users u ON u.sub = pr.author_sub
        ORDER BY pr.created_at DESC
        LIMIT ?`,
     )
-    .all(limit) as Omit<ReportRow, "author_sub" | "net_votes" | "my_vote">[];
+    .all(limit) as Omit<
+    ReportRow,
+    "author_sub" | "net_votes" | "my_vote" | "bind_left" | "bind_expand"
+  >[];
   return rows.map((row) => ({
     id: row.id,
     itemId: row.item_id,
@@ -100,6 +120,7 @@ export function getRecentReports(limit: number): RecentReport[] {
     amount: row.amount,
     nickname: row.nickname,
     createdAt: row.created_at,
+    modified: (row.awaken ?? 0) > 0 || decodeEnhance(row.enhance).length > 0,
   }));
 }
 
@@ -109,6 +130,10 @@ export type CreateReportInput = {
   currency: CurrencyId;
   amount: number;
   authorSub: string;
+  awaken?: number;
+  bindLeft?: number | null;
+  bindExpand?: number | null;
+  enhance?: readonly string[];
 };
 
 export function createReport(input: CreateReportInput): number {
@@ -116,10 +141,23 @@ export function createReport(input: CreateReportInput): number {
   const now = Math.floor(Date.now() / 1000);
   const result = db
     .prepare(
-      `INSERT INTO price_reports (item_id, server, currency, amount, author_sub, created_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO price_reports
+         (item_id, server, currency, amount, author_sub, created_at,
+          awaken, bind_left, bind_expand, enhance)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .run(input.itemId, input.server, input.currency, input.amount, input.authorSub, now);
+    .run(
+      input.itemId,
+      input.server,
+      input.currency,
+      input.amount,
+      input.authorSub,
+      now,
+      input.awaken ?? 0,
+      input.bindLeft ?? null,
+      input.bindExpand ?? null,
+      encodeEnhance(input.enhance ?? []),
+    );
   return Number(result.lastInsertRowid);
 }
 

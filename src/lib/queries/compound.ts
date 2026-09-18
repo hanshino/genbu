@@ -161,6 +161,13 @@ export function bonusLabel(bonusType: string): string | undefined {
 export const ENHANCEMENT_BONUS_TYPES: readonly string[] = Object.keys(BONUS_TO_ATTR_KEY);
 
 /**
+ * 同一組屬性，但取 items 欄位 key。
+ * lib/enhance.ts 的 ENHANCE_ATTR_KEYS 是給 client 用的副本（那邊不能碰 DB），
+ * 兩份必須一致——不一致由 __tests__/enhance.test.ts 擋下來。
+ */
+export const ENHANCEMENT_ATTR_KEYS: readonly string[] = Object.values(BONUS_TO_ATTR_KEY);
+
+/**
  * 產出條目的種類：決定 UI 怎麼渲染數值欄。
  * - "item"  ：產出物品（label = 物品名、itemId 有值；min/max = 數量範圍）
  * - "bonus" ：裝備加成屬性（label = 屬性中文、itemId = null；min/max = 加值範圍 +N）

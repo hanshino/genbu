@@ -64,6 +64,17 @@ export function median(values: readonly number[]): number | null {
   return sorted.length % 2 === 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
+/**
+ * 乾淨裝：沒覺醒也沒強化，才是可以互相比較的同一種東西。
+ *
+ * 覺醒過或強化過的是一物一價——每個屬性組合的樣本數都是 1，混進中位數只會讓參考價失真，
+ * 所以這種回報照樣收、照樣顯示，但不進計算。綁定次數不在判斷內：它的價差等於解綁／擴充
+ * 道具的成本，那些道具自己在站上也有市價，讓看的人自己加減。
+ */
+export function isClean(report: PriceReport): boolean {
+  return report.awaken === 0 && report.enhance.length === 0;
+}
+
 export interface ReferencePrice {
   /** 中位數，單位銀兩；沒有可用回報時為 null。 */
   silver: number | null;
@@ -74,7 +85,7 @@ export interface ReferencePrice {
 }
 
 /**
- * 篩出當前伺服器 → 近 30 天 → 認同數不為負 → 正規化成銀兩 → 取中位數。
+ * 篩出當前伺服器 → 近 30 天 → 認同數不為負 → 乾淨裝 → 正規化成銀兩 → 取中位數。
  *
  * 用中位數不是平均，一筆離譜價不會把結果整個拉歪。
  */
@@ -92,6 +103,7 @@ export function referencePrice(
     if (report.server !== server) continue;
     if (report.createdAt < since) continue;
     if (report.netVotes < 0) continue;
+    if (!isClean(report)) continue;
     if (report.currency === "twd") cash++;
     const silver = toSilver(report.amount, report.currency, rate);
     if (silver != null) values.push(silver);

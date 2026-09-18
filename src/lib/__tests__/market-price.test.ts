@@ -4,6 +4,7 @@ import {
   formatAmount,
   formatReference,
   formatSilver,
+  isClean,
   median,
   referencePrice,
   relativeTime,
@@ -27,6 +28,10 @@ function report(overrides: Partial<PriceReport>): PriceReport {
     netVotes: 0,
     myVote: 0,
     createdAt: NOW_SEC - DAY,
+    awaken: 0,
+    bindLeft: null,
+    bindExpand: null,
+    enhance: [],
     ...overrides,
   };
 }
@@ -93,6 +98,34 @@ describe("referencePrice", () => {
 
   it("完全沒有可用回報時參考價為 null", () => {
     expect(referencePrice([], "fish", null, NOW).silver).toBeNull();
+  });
+
+  it("覺醒過、強化過的不進中位數——那是一物一價，混進來參考價就失真", () => {
+    const withModified = [
+      ...reports,
+      report({ id: 7, amount: 999_999_999, awaken: 12 }),
+      report({ id: 8, amount: 999_999_999, enhance: ["matk:8"] }),
+    ];
+    expect(referencePrice(withModified, "fish", null, NOW)).toEqual({
+      silver: 2000,
+      count: 3,
+      cash: 0,
+    });
+  });
+
+  it("綁定次數不影響參考價：價差等於解綁道具的成本，讓看的人自己加減", () => {
+    const withBind = [...reports, report({ id: 7, amount: 4000, bindLeft: 1, bindExpand: 0 })];
+    // [1000, 2000, 3000, 4000] 的中位數 2500，那筆照樣算進來
+    expect(referencePrice(withBind, "fish", null, NOW).count).toBe(4);
+  });
+});
+
+describe("isClean", () => {
+  it("沒覺醒也沒強化才算乾淨裝", () => {
+    expect(isClean(report({}))).toBe(true);
+    expect(isClean(report({ awaken: 1 }))).toBe(false);
+    expect(isClean(report({ enhance: ["hit:7"] }))).toBe(false);
+    expect(isClean(report({ bindLeft: 0, bindExpand: 0 }))).toBe(true);
   });
 });
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
+  ChevronDownIcon,
   CircleAlertIcon,
   CircleCheckBigIcon,
   CoinsIcon,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -35,7 +37,9 @@ import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { AccountUser, IdentityBlock, IdentityTag, loginHref } from "@/components/auth/account";
 import { LineIcon } from "@/components/auth/line-icon";
+import { EnhanceInput } from "@/components/items/enhance-input";
 import type { CurrencyId, PriceReport, ServerId } from "@/lib/queries/market-prices";
+import { MAX_BIND, formatEnhance } from "@/lib/enhance";
 import {
   CURRENCY_LABELS,
   SERVERS,
@@ -43,6 +47,7 @@ import {
   formatAmount,
   formatReference,
   formatSilver,
+  isClean,
   referencePrice,
   relativeTime,
 } from "@/lib/market-price";
@@ -65,10 +70,16 @@ export function MarketPriceSection({
   itemId,
   itemName,
   user,
+  canEnhance = false,
+  awakenMax = 0,
 }: {
   itemId: number;
   itemName: string;
   user: AccountUser | null;
+  /** 這件裝備查得到強化配方（坐騎、背飾沒有，消耗品也沒有）。 */
+  canEnhance?: boolean;
+  /** 這件裝備的覺醒階數上限；0 = 不能覺醒（飾品、消耗品）。 */
+  awakenMax?: number;
 }) {
   const returnTo = usePathname();
   const [reports, setReports] = useState<PriceReport[] | null>(null);
@@ -98,6 +109,12 @@ export function MarketPriceSection({
   }, [load]);
 
   const rows = (reports ?? []).filter((r) => r.server === server);
+  // 這件裝備動得了手腳，列表才需要分兩區；藥水、材料維持原本一條列表。
+  const hasState = canEnhance || awakenMax > 0;
+  const cleanRows = hasState ? rows.filter(isClean) : rows;
+  const modifiedRows = hasState ? rows.filter((r) => !isClean(r)) : [];
+  // 坐騎、背飾沒有強化槽，那邊「動過」只可能是覺醒，標題就別寫強化。
+  const modifiedLabel = canEnhance ? "強化過" : "覺醒過";
   const reference = referencePrice(reports ?? [], server, rate);
   const price = formatReference(reference.silver, currency, rate);
   const rateText = rate == null ? null : formatSilver(rate);
@@ -194,7 +211,10 @@ export function MarketPriceSection({
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <div className="text-xs text-muted-foreground">參考價 · {serverName}</div>
+            <div className="text-xs text-muted-foreground">
+              參考價 · {serverName}
+              {hasState && " · 乾淨裝"}
+            </div>
             <div className="mt-1 flex flex-wrap items-end gap-2">
               <span className="font-heading text-[34px] leading-none font-semibold tracking-tight text-primary tabular-nums sm:text-[42px]">
                 {price.value}
@@ -226,7 +246,7 @@ export function MarketPriceSection({
             ? "設定台幣匯率後才看得到台幣金額。"
             : reference.silver == null
               ? `${serverName}目前沒有可用的回報。`
-              : `由 ${reference.count} 筆回報算出 · 取近 30 天、認同數不為負的回報中位數`}
+              : `由 ${reference.count} 筆${hasState ? "乾淨裝" : ""}回報算出 · 取近 30 天、認同數不為負的回報中位數`}
         </p>
 
         {/* 有現金報價、或正看著台幣卻沒設匯率，都要留一個設定入口，不能走進死路。 */}
@@ -253,30 +273,57 @@ export function MarketPriceSection({
         </p>
       ) : reports.length === 0 ? (
         <EmptyState itemName={itemName} onReport={() => amountRef.current?.focus()} user={user} />
+      ) : rows.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          {serverName}還沒有人回報，但另一個伺服器有。
+        </p>
       ) : (
         <>
-          <div className="flex items-baseline justify-between gap-3">
-            <h3 className="text-sm font-medium">最近的回報</h3>
-            <span className="text-xs text-muted-foreground">依認同數排序</span>
-          </div>
+          {cleanRows.length > 0 && (
+            <>
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-sm font-medium">{hasState ? "乾淨裝" : "最近的回報"}</h3>
+                <span className="text-xs text-muted-foreground">依認同數排序</span>
+              </div>
+              <ul className="mt-1.5">
+                {cleanRows.map((report) => (
+                  <ReportRow
+                    key={report.id}
+                    report={report}
+                    rate={rate}
+                    loggedIn={user != null}
+                    onVote={vote}
+                    onDelete={remove}
+                  />
+                ))}
+              </ul>
+            </>
+          )}
 
-          {rows.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              {serverName}還沒有人回報，但另一個伺服器有。
-            </p>
-          ) : (
-            <ul className="mt-1.5">
-              {rows.map((report) => (
-                <ReportRow
-                  key={report.id}
-                  report={report}
-                  rate={rate}
-                  loggedIn={user != null}
-                  onVote={vote}
-                  onDelete={remove}
-                />
-              ))}
-            </ul>
+          {modifiedRows.length > 0 && (
+            <>
+              {cleanRows.length > 0 && <Separator className="my-3.5" />}
+              <div>
+                <h3 className="text-sm font-medium">
+                  {modifiedLabel} · {modifiedRows.length} 筆
+                </h3>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                  每件加的東西都不一樣，一物一價，不進乾淨裝的參考價。
+                </p>
+              </div>
+              <ul className="mt-1.5">
+                {modifiedRows.map((report) => (
+                  <ReportRow
+                    key={report.id}
+                    report={report}
+                    rate={rate}
+                    loggedIn={user != null}
+                    onVote={vote}
+                    onDelete={remove}
+                  />
+                ))}
+              </ul>
+            </>
           )}
         </>
       )}
@@ -311,6 +358,8 @@ export function MarketPriceSection({
           server={server}
           onServerChange={setServer}
           amountRef={amountRef}
+          canEnhance={canEnhance}
+          awakenMax={awakenMax}
           onReported={() => {
             setStatus({ kind: "ok", message: "已送出，感謝回報。" });
             void load();
@@ -357,6 +406,11 @@ function ReportRow({
   const amount = formatAmount(report.amount, report.currency);
   // 台幣沒設匯率時這筆沒進中位數，講明白比默默略過好。
   const excluded = report.currency === "twd" && rate == null;
+  // 兩個數字要嘛一起有意義，要嘛不顯示：只填一半看不出這件還能轉手幾次。
+  const bind =
+    report.bindLeft != null && report.bindExpand != null
+      ? `綁 ${report.bindLeft} 擴 ${report.bindExpand}`
+      : null;
 
   return (
     <li className="border-t border-border/60 first:border-t-0">
@@ -380,6 +434,25 @@ function ReportRow({
             <IdentityTag tag={report.tag} className="text-[11px]" />
             <span aria-hidden>·</span>
             <span>{relativeTime(report.createdAt)}</span>
+            {report.enhance.map((code) => (
+              <Badge
+                key={code}
+                variant="outline"
+                className="border-primary/35 bg-primary/10 text-primary tabular-nums"
+              >
+                {formatEnhance(code)}
+              </Badge>
+            ))}
+            {report.awaken > 0 && (
+              <Badge variant="outline" className="tabular-nums">
+                覺醒 +{report.awaken}
+              </Badge>
+            )}
+            {bind && (
+              <Badge variant="outline" className="tabular-nums">
+                {bind}
+              </Badge>
+            )}
             {excluded && <Badge variant="outline">未納入計算</Badge>}
             {disputed && (
               <Badge variant="destructive">
@@ -476,6 +549,8 @@ function ReportForm({
   server,
   onServerChange,
   amountRef,
+  canEnhance,
+  awakenMax,
   onReported,
   onError,
 }: {
@@ -483,12 +558,25 @@ function ReportForm({
   server: ServerId;
   onServerChange: (server: ServerId) => void;
   amountRef: React.RefObject<HTMLInputElement | null>;
+  canEnhance: boolean;
+  awakenMax: number;
   onReported: () => void;
   onError: (message: string) => void;
 }) {
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<CurrencyId>("silver");
   const [sending, setSending] = useState(false);
+  const [stateOpen, setStateOpen] = useState(false);
+  const [awaken, setAwaken] = useState("");
+  const [bindLeft, setBindLeft] = useState("");
+  const [bindExpand, setBindExpand] = useState("");
+  const [enhance, setEnhance] = useState<string[]>([]);
+
+  const canAwaken = awakenMax > 0;
+  const hasState = canEnhance || canAwaken;
+  const modifiedLabel = canEnhance ? "強化過" : "覺醒過";
+  const modifiable = [canEnhance && "強化", canAwaken && "覺醒"].filter(Boolean).join("或");
+  const stateSummary = enhance.length > 0 || Number(awaken) > 0 ? modifiedLabel : "乾淨裝";
 
   // 銀兩照原值收，位數一多就難讀，超過一萬時把萬／億回放出來對眼睛。
   const typed = Number(amount);
@@ -509,7 +597,15 @@ function ReportForm({
       const response = await fetch(`/api/items/${itemId}/prices`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: value, currency, server }),
+        body: JSON.stringify({
+          amount: value,
+          currency,
+          server,
+          awaken: awaken === "" ? null : Number(awaken),
+          bindLeft: bindLeft === "" ? null : Number(bindLeft),
+          bindExpand: bindExpand === "" ? null : Number(bindExpand),
+          enhance,
+        }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -517,7 +613,16 @@ function ReportForm({
         return;
       }
       setAmount("");
-      track("price_report", { server, currency });
+      setAwaken("");
+      setBindLeft("");
+      setBindExpand("");
+      setEnhance([]);
+      setStateOpen(false);
+      track("price_report", {
+        server,
+        currency,
+        modified: Number(awaken) > 0 || enhance.length > 0,
+      });
       onReported();
     } catch {
       onError("連線失敗，請稍後再試。");
@@ -531,79 +636,166 @@ function ReportForm({
       <h3 className="text-sm font-medium">回報你看到的價格</h3>
       <p className="mt-0.5 text-xs text-muted-foreground">你在哪個伺服器買賣到的，就填哪個。</p>
 
-      <form
-        onSubmit={submit}
-        className="mt-3 grid grid-cols-2 items-end gap-2.5 sm:grid-cols-[minmax(0,1fr)_7.5rem_9rem_auto]"
-      >
-        <div className="col-span-2 sm:col-span-1">
-          <label
-            htmlFor="price-amount"
-            className="mb-1.5 flex items-baseline justify-between gap-2 text-xs text-muted-foreground"
-          >
-            <span>價格（{INPUT_UNITS[currency]}）</span>
-            {preview && (
-              <span className="tabular-nums">
-                = {preview.value} {preview.unit}
+      <form onSubmit={submit} className="mt-3 space-y-3">
+        <div className="grid grid-cols-2 items-end gap-2.5 sm:grid-cols-[minmax(0,1fr)_7.5rem_9rem]">
+          <div className="col-span-2 sm:col-span-1">
+            <label
+              htmlFor="price-amount"
+              className="mb-1.5 flex items-baseline justify-between gap-2 text-xs text-muted-foreground"
+            >
+              <span>價格（{INPUT_UNITS[currency]}）</span>
+              {preview && (
+                <span className="tabular-nums">
+                  = {preview.value} {preview.unit}
+                </span>
+              )}
+            </label>
+            <Input
+              id="price-amount"
+              ref={amountRef}
+              type="number"
+              inputMode="decimal"
+              min={0}
+              step="any"
+              value={amount}
+              placeholder={
+                currency === "silver" ? "18500000" : currency === "official" ? "18" : "600"
+              }
+              onChange={(event) => setAmount(event.target.value)}
+              className="h-9 tabular-nums"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs text-muted-foreground">幣別</label>
+            <Select
+              value={currency}
+              onValueChange={(value) => value && setCurrency(value as CurrencyId)}
+            >
+              <SelectTrigger className="h-9 w-full" aria-label="幣別">
+                <SelectValue>{(value) => INPUT_UNITS[value as CurrencyId]}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {INPUT_UNITS[c]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs text-muted-foreground">伺服器</label>
+            <Select
+              value={server}
+              onValueChange={(value) => value && onServerChange(value as ServerId)}
+            >
+              <SelectTrigger className="h-9 w-full" aria-label="伺服器">
+                <SelectValue>
+                  {(value) => SERVERS.find((s) => s.id === value)?.name ?? ""}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {SERVERS.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {hasState && (
+          <Collapsible open={stateOpen} onOpenChange={setStateOpen}>
+            <CollapsibleTrigger className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-dashed border-border px-3 text-xs hover:bg-muted/50">
+              <span className="flex items-center gap-2">
+                補充狀態
+                <span className="text-muted-foreground">選填</span>
               </span>
-            )}
-          </label>
-          <Input
-            id="price-amount"
-            ref={amountRef}
-            type="number"
-            inputMode="decimal"
-            min={0}
-            step="any"
-            value={amount}
-            placeholder={
-              currency === "silver" ? "18500000" : currency === "official" ? "18" : "600"
-            }
-            onChange={(event) => setAmount(event.target.value)}
-            className="h-9 tabular-nums"
-          />
-        </div>
+              <span className="flex items-center gap-2 text-muted-foreground">
+                {!stateOpen && <span>{stateSummary}</span>}
+                <ChevronDownIcon
+                  className={cn("size-4 transition-transform", stateOpen && "rotate-180")}
+                  aria-hidden
+                />
+              </span>
+            </CollapsibleTrigger>
 
-        <div>
-          <label className="mb-1.5 block text-xs text-muted-foreground">幣別</label>
-          <Select
-            value={currency}
-            onValueChange={(value) => value && setCurrency(value as CurrencyId)}
-          >
-            <SelectTrigger className="h-9 w-full" aria-label="幣別">
-              <SelectValue>{(value) => INPUT_UNITS[value as CurrencyId]}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {CURRENCIES.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {INPUT_UNITS[c]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+            <CollapsiblePanel>
+              <div className="mt-2.5 space-y-3 rounded-lg border border-border/60 bg-muted p-3.5">
+                {canAwaken && (
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                    <label htmlFor="price-awaken" className="w-8 shrink-0 text-xs">
+                      覺醒
+                    </label>
+                    <Input
+                      id="price-awaken"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={awakenMax}
+                      step={1}
+                      value={awaken}
+                      placeholder="0"
+                      onChange={(event) => setAwaken(event.target.value)}
+                      className="h-9 w-20 tabular-nums"
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      這件最高 +{awakenMax}，沒填當 +0
+                    </span>
+                  </div>
+                )}
 
-        <div>
-          <label className="mb-1.5 block text-xs text-muted-foreground">伺服器</label>
-          <Select
-            value={server}
-            onValueChange={(value) => value && onServerChange(value as ServerId)}
-          >
-            <SelectTrigger className="h-9 w-full" aria-label="伺服器">
-              <SelectValue>
-                {(value) => SERVERS.find((s) => s.id === value)?.name ?? ""}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {SERVERS.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                  <span className="w-8 shrink-0 text-xs">綁定</span>
+                  <Input
+                    aria-label="綁定次數"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={MAX_BIND}
+                    step={1}
+                    value={bindLeft}
+                    placeholder="2"
+                    onChange={(event) => setBindLeft(event.target.value)}
+                    className="h-9 w-20 tabular-nums"
+                  />
+                  <span className="text-xs text-muted-foreground">可擴</span>
+                  <Input
+                    aria-label="可擴次數"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={MAX_BIND}
+                    step={1}
+                    value={bindExpand}
+                    placeholder="6"
+                    onChange={(event) => setBindExpand(event.target.value)}
+                    className="h-9 w-20 tabular-nums"
+                  />
+                </div>
 
-        <Button type="submit" size="lg" disabled={sending} className="col-span-2 sm:col-span-1">
+                {canEnhance && (
+                  <div className="space-y-1.5">
+                    <label htmlFor="price-enhance" className="block text-xs">
+                      強化
+                    </label>
+                    <EnhanceInput id="price-enhance" value={enhance} onChange={setEnhance} />
+                  </div>
+                )}
+
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  填了{modifiable}，這筆會列在「{modifiedLabel}
+                  」，不進乾淨裝的參考價。綁定次數只顯示，不影響計算。
+                </p>
+              </div>
+            </CollapsiblePanel>
+          </Collapsible>
+        )}
+
+        <Button type="submit" size="lg" disabled={sending} className="w-full sm:w-auto sm:min-w-36">
           {sending ? "送出中…" : "送出回報"}
         </Button>
       </form>
