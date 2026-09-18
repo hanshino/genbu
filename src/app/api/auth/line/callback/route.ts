@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserDb } from "@/lib/user-db";
+import { randomNpcName } from "@/lib/queries/npc-names";
 import {
   AUTH_COOKIE_OPTIONS,
   SESSION_COOKIE,
@@ -60,9 +61,9 @@ export async function GET(request: NextRequest) {
     // 衝突時不更新，保留玩家已設定的暱稱；並行首次登入也安全。
     getUserDb()
       .prepare(
-        "INSERT INTO users (sub, nickname, created_at) VALUES (?, '英雄', ?) ON CONFLICT(sub) DO NOTHING",
+        "INSERT INTO users (sub, nickname, created_at) VALUES (?, ?, ?) ON CONFLICT(sub) DO NOTHING",
       )
-      .run(identity.sub, Math.floor(Date.now() / 1000));
+      .run(identity.sub, randomNpcName(), Math.floor(Date.now() / 1000));
     response = NextResponse.redirect(new URL(safeReturnTo(flow.returnTo), origin));
     response.cookies.set(
       SESSION_COOKIE,
