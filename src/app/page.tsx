@@ -2,6 +2,9 @@ import Link from "next/link";
 import { ChevronRightIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDb } from "@/lib/db";
+import { getItemsByIds } from "@/lib/queries/items";
+import { getRecentReports } from "@/lib/queries/market-prices";
+import { SERVERS, formatAmount, relativeTime } from "@/lib/market-price";
 
 interface Feature {
   title: string;
@@ -71,8 +74,28 @@ function getStats() {
   return { items: counts[0], magic: counts[1], monsters: counts[2] };
 }
 
+// 回報在玩家資料庫、名稱在唯讀遊戲資料庫，跨檔不能 JOIN，分兩段查再拼起來。
+function getRecentPrices() {
+  const reports = getRecentReports(5);
+  const names = new Map(getItemsByIds(reports.map((r) => r.itemId)).map((i) => [i.id, i.name]));
+  return reports.flatMap((r) => {
+    const name = names.get(r.itemId);
+    // 遊戲資料更新後物品可能不在了，寧可少一列也不要顯示「未知物品」。
+    if (name == null) return [];
+    return [
+      {
+        ...r,
+        name,
+        money: formatAmount(r.amount, r.currency),
+        serverName: SERVERS.find((s) => s.id === r.server)?.name ?? r.server,
+      },
+    ];
+  });
+}
+
 export default function HomePage() {
   const stats = getStats();
+  const recent = getRecentPrices();
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:py-16">
@@ -89,6 +112,46 @@ export default function HomePage() {
         <p className="mx-auto mt-6 max-w-xl text-sm leading-relaxed text-muted-foreground">
           道具查詢、裝備流派比較、副本解謎工具 — 集中一處、即時查得。
         </p>
+      </section>
+
+      {/* 市價本來只在物品詳情頁看得到，沒逛到那頁的人不知道可以報價，放首頁當入口。 */}
+      <section className="mt-10 rounded-lg border border-border/60 bg-card p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <h2 className="text-sm font-medium">最近的市價回報</h2>
+          <p className="text-xs text-muted-foreground">價格由玩家自己回報，登入後誰都能報。</p>
+        </div>
+
+        {recent.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            還沒有人回報過價格。到任一{" "}
+            <Link href="/items" className="text-primary underline underline-offset-3">
+              物品頁
+            </Link>{" "}
+            就能報第一筆。
+          </p>
+        ) : (
+          <ul className="mt-1.5">
+            {recent.map((r) => (
+              <li key={r.id} className="border-t border-border/60 first:border-t-0">
+                <Link
+                  href={`/items/${r.itemId}`}
+                  className="-mx-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-md px-2 py-2 transition-colors hover:bg-muted/50"
+                >
+                  <span className="text-sm font-medium">{r.name}</span>
+                  <span className="font-heading text-sm font-semibold tabular-nums">
+                    {r.money.value}
+                    <span className="ml-0.5 font-sans text-xs font-normal text-muted-foreground">
+                      {r.money.unit}
+                    </span>
+                  </span>
+                  <span className="ml-auto text-xs whitespace-nowrap text-muted-foreground">
+                    {r.serverName} · {relativeTime(r.createdAt)}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

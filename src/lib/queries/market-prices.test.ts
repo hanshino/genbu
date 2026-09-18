@@ -7,6 +7,7 @@ import {
   createReport,
   deleteReport,
   getItemReports,
+  getRecentReports,
   getNetVotes,
   hasReportedRecently,
   setVote,
@@ -210,5 +211,33 @@ describe("deleteReport", () => {
 
   it("回報不存在回 false", () => {
     expect(deleteReport(999, "U_author")).toBe(false);
+  });
+});
+
+describe("getRecentReports", () => {
+  it("跨伺服器、依時間新到舊，帶上暱稱並吃 limit", () => {
+    mem
+      .prepare("INSERT INTO users (sub, nickname, created_at) VALUES (?, ?, ?)")
+      .run("U_a", "英雄", 1000);
+    mem
+      .prepare("INSERT INTO users (sub, nickname, created_at) VALUES (?, ?, ?)")
+      .run("U_b", "柳三刀", 1000);
+    const insert = mem.prepare(
+      `INSERT INTO price_reports (item_id, server, currency, amount, author_sub, created_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    );
+    insert.run(1, "fish", "silver", 100, "U_a", 1000);
+    insert.run(2, "flower", "official", 18, "U_b", 3000);
+    insert.run(3, "fish", "silver", 300, "U_a", 2000);
+
+    const recent = getRecentReports(2);
+    expect(recent.map((r) => [r.itemId, r.nickname, r.server])).toEqual([
+      [2, "柳三刀", "flower"],
+      [3, "英雄", "fish"],
+    ]);
+  });
+
+  it("沒有回報時回空陣列", () => {
+    expect(getRecentReports(5)).toEqual([]);
   });
 });

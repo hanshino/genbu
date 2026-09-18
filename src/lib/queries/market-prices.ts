@@ -68,6 +68,41 @@ export function getItemReports(itemId: number, viewerSub: string | null): PriceR
   return rows.map((row) => toReport(row, viewerSub));
 }
 
+export type RecentReport = {
+  id: number;
+  itemId: number;
+  server: ServerId;
+  currency: CurrencyId;
+  amount: number;
+  nickname: string;
+  createdAt: number;
+};
+
+// 首頁「最近回報」用。物品名稱在唯讀的遊戲資料庫、回報在玩家資料庫，兩個 sqlite 檔
+// 不能 JOIN，名稱由呼叫端用 getItemsByIds 補上。
+// ponytail: created_at 沒有索引，幾百筆的表全掃也是微秒級；真的塞到十萬筆再加。
+export function getRecentReports(limit: number): RecentReport[] {
+  const db = getUserDb();
+  const rows = db
+    .prepare(
+      `SELECT pr.id, pr.item_id, pr.server, pr.currency, pr.amount, u.nickname, pr.created_at
+       FROM price_reports pr
+       JOIN users u ON u.sub = pr.author_sub
+       ORDER BY pr.created_at DESC
+       LIMIT ?`,
+    )
+    .all(limit) as Omit<ReportRow, "author_sub" | "net_votes" | "my_vote">[];
+  return rows.map((row) => ({
+    id: row.id,
+    itemId: row.item_id,
+    server: row.server,
+    currency: row.currency,
+    amount: row.amount,
+    nickname: row.nickname,
+    createdAt: row.created_at,
+  }));
+}
+
 export type CreateReportInput = {
   itemId: number;
   server: ServerId;
