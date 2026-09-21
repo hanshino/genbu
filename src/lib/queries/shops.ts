@@ -56,6 +56,12 @@ export function getShops(): ShopSummary[] {
   });
 }
 
+/** 全部商店 id（sitemap 用的輕量查詢）。 */
+export function getAllShopIds(): number[] {
+  const db = getDb();
+  return (db.prepare(`SELECT id FROM shops`).all() as { id: number }[]).map((r) => r.id);
+}
+
 /** 單一商店 + 販售(依售價)與收購清單;不存在回傳 null。 */
 export function getShopDetail(id: number): ShopDetail | null {
   const db = getDb();

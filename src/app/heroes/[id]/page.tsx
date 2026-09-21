@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${hero.name} · 英雄 · 玄武`,
     description: `${hero.name} 的基本數值與參與的英雄組合`,
+    alternates: { canonical: `/heroes/${hero.id}` },
   };
 }
 

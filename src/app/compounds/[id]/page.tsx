@@ -28,6 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${group.name ?? `#${group.id}`} · 煉化配方 · 玄武`,
     description: `${group.name} 群組的全部煉化配方`,
+    alternates: { canonical: `/compounds/${group.id}` },
   };
 }
 

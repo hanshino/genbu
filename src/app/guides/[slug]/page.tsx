@@ -52,6 +52,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${guide.title} · 攻略 · 玄武`,
     description: guide.summary,
+    alternates: { canonical: `/guides/${guide.slug}` },
   };
 }
 

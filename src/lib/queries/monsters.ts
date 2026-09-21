@@ -305,6 +305,14 @@ export function getDropsForMonster(monsterId: number): MonsterDropTable {
   return { drops, totalWeight };
 }
 
+/** 全部怪物 id（sitemap 用的輕量查詢）。與 getMonsterById 相同的 type > 0 過濾條件。 */
+export function getAllMonsterIds(): number[] {
+  const db = getDb();
+  return (
+    db.prepare(`SELECT id FROM npc WHERE type > 0`).all() as { id: number }[]
+  ).map((r) => r.id);
+}
+
 // npc.type 有出現的值（facet 用）
 export function getDistinctMonsterTypes(): number[] {
   const db = getDb();

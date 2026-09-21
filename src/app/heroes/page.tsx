@@ -9,6 +9,7 @@ import type { HeroSummary } from "@/lib/types/hero";
 export const metadata: Metadata = {
   title: "英雄 · 玄武",
   description: "武林同萌傳 hero 表的英雄清單、原始分組與參與組合數",
+  alternates: { canonical: "/heroes" },
 };
 
 export default function HeroesPage() {

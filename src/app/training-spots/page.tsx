@@ -23,6 +23,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "練功地圖 · 玄武",
   description: "輸入你的等級，依資料庫怪物等級尋找候選地圖",
+  alternates: { canonical: "/training-spots" },
 };
 
 interface PageProps {

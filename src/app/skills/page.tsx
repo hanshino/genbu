@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import {
   getSkills,
   getDistinctClans,
@@ -13,6 +14,12 @@ import { Pagination } from "@/components/common/pagination";
 import { SearchBeacon } from "@/components/analytics/search-beacon";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "技能瀏覽 · 玄武",
+  description: "瀏覽武林同萌傳全門派技能，依門派、目標與技能分類篩選，查看等級成長數值",
+  alternates: { canonical: "/skills" },
+};
 
 interface PageProps {
   searchParams: Promise<{

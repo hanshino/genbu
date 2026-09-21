@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${monster.name} · 怪物 · 玄武`,
     description: `${monster.name} 的屬性、掉落與出現資訊`,
+    alternates: { canonical: `/monsters/${monster.id}` },
   };
 }
 

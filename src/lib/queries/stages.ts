@@ -97,6 +97,14 @@ export function getAllStageListItems(): StageListItem[] {
   }));
 }
 
+/** 全部具名地圖 id（sitemap 用）。與 /maps/[id] 的 notFound() 條件一致：需要 name IS NOT NULL。 */
+export function getAllStageIds(): number[] {
+  const db = getDb();
+  return (
+    db.prepare(`SELECT id FROM stages WHERE name IS NOT NULL`).all() as { id: number }[]
+  ).map((r) => r.id);
+}
+
 /** 取得單一地圖的完整資訊（含群組鄰居 / 入向連結 / 任務）。 */
 export function getStageDetail(id: number): StageDetail | null {
   const db = getDb();

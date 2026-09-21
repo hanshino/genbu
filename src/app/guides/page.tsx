@@ -15,6 +15,7 @@ import { getPublishedGuides, type Guide, type GuideCategory } from "@/data/guide
 export const metadata: Metadata = {
   title: "攻略 · 玄武",
   description: "以資料庫與已核對來源整理的武林同萌傳攻略，每篇標示來源與核對日期。",
+  alternates: { canonical: "/guides" },
 };
 
 const CATEGORY_LABELS: Record<GuideCategory, string> = {

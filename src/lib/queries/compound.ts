@@ -87,6 +87,14 @@ export function getCompoundGroupById(id: number): CompoundGroup | null {
   return row ?? null;
 }
 
+/** 全部煉化群組 id（sitemap 用的輕量查詢）。 */
+export function getAllCompoundGroupIds(): number[] {
+  const db = getDb();
+  return (
+    db.prepare(`SELECT id FROM compound_groups`).all() as { id: number }[]
+  ).map((r) => r.id);
+}
+
 export function getCompoundById(id: number): Compound | null {
   const db = getDb();
   const row = db

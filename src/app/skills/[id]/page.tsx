@@ -41,6 +41,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   return {
     title: `${anchor.name} · 技能 · 玄武`,
     description: `${anchor.name} 的全等級數值與同門派技能`,
+    alternates: { canonical: `/skills/${skillId}` },
   };
 }
 

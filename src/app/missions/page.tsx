@@ -8,6 +8,7 @@ import { MissionList } from "@/components/missions/mission-list";
 export const metadata: Metadata = {
   title: "任務 · 玄武",
   description: "瀏覽全部任務、步驟與所需物品",
+  alternates: { canonical: "/missions" },
 };
 
 export default function MissionsHubPage() {

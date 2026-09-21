@@ -35,6 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${shopLabel(shop)} · 商店 · 玄武`,
     description: `${shopLabel(shop)}(${shopTitle(shop.id)})的販售與收購清單`,
+    alternates: { canonical: `/shops/${shop.id}` },
   };
 }
 

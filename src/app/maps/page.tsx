@@ -8,6 +8,7 @@ import { MapList } from "@/components/maps/map-list";
 export const metadata: Metadata = {
   title: "地圖 · 玄武",
   description: "瀏覽全部場景地圖、所屬區域與屬性旗標",
+  alternates: { canonical: "/maps" },
 };
 
 export default function MapsHubPage() {

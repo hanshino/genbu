@@ -4,6 +4,7 @@ import { ToolCard } from "@/components/tools/tool-card";
 export const metadata: Metadata = {
   title: "工具總覽 | Genbu",
   description: "查詢強化配方與使用副本解謎工具。",
+  alternates: { canonical: "/tools" },
 };
 
 export default function ToolsHubPage() {

@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${mission.name ?? `任務 ${mission.id}`} · 任務 · 玄武`,
     description: mission.help ?? `${mission.name} 的步驟與所需物品`,
+    alternates: { canonical: `/missions/${mission.id}` },
   };
 }
 

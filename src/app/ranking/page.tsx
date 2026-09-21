@@ -7,6 +7,7 @@ import { RankingClient } from "./ranking-client";
 export const metadata: Metadata = {
   title: "裝備排行榜 · 玄武",
   description: "座騎 / 背飾 的自訂加權排行",
+  alternates: { canonical: "/ranking" },
 };
 
 interface Props {

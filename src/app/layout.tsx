@@ -27,6 +27,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://genbu.hanshino.dev"),
   title: "玄武 · 武林同萌傳資料庫",
   description: "武林同萌傳 (TTHOL) 道具查詢、裝備比較、副本解謎工具",
 };

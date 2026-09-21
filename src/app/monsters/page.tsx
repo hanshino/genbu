@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import {
   getMonsters,
   getDistinctMonsterTypes,
@@ -14,6 +15,12 @@ import { Pagination } from "@/components/common/pagination";
 import { SearchBeacon } from "@/components/analytics/search-beacon";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "怪物查詢 · 玄武",
+  description: "查詢武林同萌傳全部怪物的等級、屬性、HP 與掉落道具，支援等級區間與掉落條件篩選",
+  alternates: { canonical: "/monsters" },
+};
 
 interface PageProps {
   searchParams: Promise<{

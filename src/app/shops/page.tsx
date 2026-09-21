@@ -8,6 +8,7 @@ import type { ShopKind, ShopSummary } from "@/lib/types/shop";
 export const metadata: Metadata = {
   title: "商店 · 玄武",
   description: "武林同萌傳 NPC 商店販售與收購清單",
+  alternates: { canonical: "/shops" },
 };
 
 export default function ShopsPage() {
