@@ -9,6 +9,7 @@ import { getAllCompoundGroupsWithStats } from "@/lib/queries/compound";
 export const metadata: Metadata = {
   title: "煉化配方 · 玄武",
   description: "瀏覽全部煉化群組與配方",
+  alternates: { canonical: "/compounds" },
 };
 
 function formatLevelRange(min: number | null, max: number | null): string {

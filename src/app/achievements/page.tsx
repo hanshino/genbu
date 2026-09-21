@@ -19,6 +19,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "成就 · 玄武",
   description: "武林同萌傳全部成就分類瀏覽:點數、描述、獎勵一覽",
+  alternates: { canonical: "/achievements" },
 };
 
 interface PageProps {

@@ -26,6 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${stage.name ?? `地圖 ${stage.id}`} · 地圖 · 玄武`,
     description: `${stage.name} 的屬性、入口、相關任務`,
+    alternates: { canonical: `/maps/${stage.id}` },
   };
 }
 

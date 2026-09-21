@@ -27,6 +27,12 @@ export function getHeroes(): HeroSummary[] {
     .all() as HeroSummary[];
 }
 
+/** 全部英雄 id（sitemap 用的輕量查詢）。 */
+export function getAllHeroIds(): number[] {
+  const db = getDb();
+  return (db.prepare(`SELECT id FROM hero`).all() as { id: number }[]).map((r) => r.id);
+}
+
 interface HeroDetailRow {
   id: number;
   groupId: string;

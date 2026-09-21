@@ -177,6 +177,12 @@ export function getItems(params: GetItemsParams = {}): GetItemsResult {
   };
 }
 
+/** 全部 item id（sitemap 用的輕量查詢，不 join 其他表）。 */
+export function getAllItemIds(): number[] {
+  const db = getDb();
+  return (db.prepare(`SELECT id FROM items`).all() as { id: number }[]).map((r) => r.id);
+}
+
 export function getItemById(id: number): Item | null {
   const db = getDb();
   const row = db

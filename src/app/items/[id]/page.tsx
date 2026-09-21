@@ -53,6 +53,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${item.name} · 道具 · 玄武`,
     description: item.summary ?? item.note ?? `${item.name} 的詳細屬性與掉落來源`,
+    alternates: { canonical: `/items/${item.id}` },
   };
 }
 

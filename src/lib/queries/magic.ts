@@ -139,6 +139,15 @@ export function getSkillById(id: number): Magic[] {
   return db.prepare(`SELECT * FROM magic WHERE id = ? ORDER BY level ASC`).all(id) as Magic[];
 }
 
+/**
+ * 全部 distinct 的 magic.id（sitemap 用）。/skills/[id] 只認 id（level 為可選消歧義參數），
+ * 只要 id 在 magic 表出現過，resolveAnchor() 就能 fallback 到第一筆，不會 404。
+ */
+export function getAllSkillIds(): number[] {
+  const db = getDb();
+  return (db.prepare(`SELECT DISTINCT id FROM magic`).all() as { id: number }[]).map((r) => r.id);
+}
+
 // (id, level) 是 magic 表的自然唯一 key，用來從 URL 的 ?level= 解出具體技能。
 export function getSkillRow(id: number, level: number): Magic | null {
   const db = getDb();

@@ -43,6 +43,12 @@ export function getAllMissionListItems(): MissionListItem[] {
   return rows;
 }
 
+/** 全部任務 id（sitemap 用的輕量查詢）。 */
+export function getAllMissionIds(): number[] {
+  const db = getDb();
+  return (db.prepare(`SELECT id FROM missions`).all() as { id: number }[]).map((r) => r.id);
+}
+
 export function getMissionDetail(id: number): MissionDetail | null {
   const db = getDb();
   const row = db
