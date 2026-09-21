@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { AccountMenu, AccountMenuCompact } from "@/components/auth/account-menu";
 import { AccountUser, IdentityBlock, IdentityTag, loginHref } from "@/components/auth/account";
 import { WelcomeBanner } from "@/components/auth/welcome-banner";
+import { track } from "@/lib/analytics/track";
 
 type NavLink = { href: string; label: string; exact?: boolean };
 type NavGroup = { label: string; items: NavLink[] };
@@ -188,6 +189,7 @@ function MobileAccount({ user, onNavigate }: { user: AccountUser | null; onNavig
       <div className="border-border/60 mt-2 border-t pt-3">
         <a
           href={loginHref(returnTo)}
+          onClick={() => track("login_start", { source: "navbar_mobile" })}
           className={cn(buttonVariants({ variant: "outline" }), "h-10 w-full gap-1.5 text-base")}
         >
           <LogInIcon aria-hidden />

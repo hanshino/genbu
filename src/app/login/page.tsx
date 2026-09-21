@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { safeReturnTo } from "@/lib/auth/line";
 import { loginHref } from "@/components/auth/account";
 import { LineIcon } from "@/components/auth/line-icon";
+import { TrackedLoginLink } from "@/components/auth/tracked-login-link";
 
 export const metadata: Metadata = {
   title: "登入 | 玄武",
@@ -38,13 +39,14 @@ export default async function LoginPage({
         </p>
 
         {/* LINE 綠是全站唯一的品牌色例外，不走主題色票。 */}
-        <a
+        <TrackedLoginLink
+          source="login_page"
           href={loginHref(returnTo)}
           className="mt-6 flex h-11 w-full items-center justify-center gap-2.5 rounded-lg bg-[#06C755] text-[0.95rem] font-medium text-white shadow-sm transition-colors outline-none hover:bg-[#05A948] focus-visible:ring-3 focus-visible:ring-[#06C755]/45 active:translate-y-px sm:mt-7"
         >
           <LineIcon className="size-5" />
           使用 LINE 登入
-        </a>
+        </TrackedLoginLink>
 
         <div className="border-border bg-muted/70 mt-4 flex items-start gap-2.5 rounded-md border px-3 py-2.5 sm:mt-5 sm:px-3.5 sm:py-3">
           <ShieldIcon className="text-muted-foreground mt-px size-4 shrink-0" aria-hidden />

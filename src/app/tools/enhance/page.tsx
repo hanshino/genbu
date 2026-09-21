@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EnhancementCard } from "@/components/tools/enhancement-card";
+import { EnhanceSearchBeacon } from "@/components/tools/enhance-search-beacon";
 import { collectCompoundItemIds } from "@/lib/compound-grouping";
 import { formatBonusRange, formatProb } from "@/lib/format/compound";
 import {
@@ -228,6 +229,16 @@ export default async function EnhanceFinderPage({ searchParams }: PageProps) {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
+      {/* 有效查詢才算一次搜尋；參數錯誤時不送事件，避免髒資料。 */}
+      {parsed.ok && (
+        <EnhanceSearchBeacon
+          attribute={attribute}
+          family={family}
+          slot={slot}
+          resultCount={allResults.length}
+        />
+      )}
+
       {/* ── 標題 ─────────────────────────────────────────────── */}
       <header className="relative border-b border-border/60 pb-5">
         <span

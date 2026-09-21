@@ -23,6 +23,7 @@ import {
   formatProbRange,
 } from "@/lib/format/compound";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics/track";
 import { ItemIcon } from "@/components/common/item-icon";
 import type { CompoundUse } from "@/lib/queries/compound";
 import type { EntityImage } from "@/lib/queries/images";
@@ -68,7 +69,12 @@ function BucketRow({
   }, [bucket.uses, sort]);
 
   return (
-    <Collapsible className="rounded-lg border border-border/60 bg-card">
+    <Collapsible
+      className="rounded-lg border border-border/60 bg-card"
+      onOpenChange={(open) => {
+        if (open) track("item_enhancement_expand", { bonus: bucket.label });
+      }}
+    >
       <CollapsibleTrigger className="group flex w-full items-center gap-3 rounded-lg px-4 py-3 hover:bg-muted/50">
         <ChevronRightIcon
           className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[panel-open]:rotate-90"

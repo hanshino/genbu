@@ -18,7 +18,12 @@ export function ShopSalesSection({ sales }: { sales: ItemShopSale[] }) {
         {sales.map((s) => {
           const currencyLabel = shopCurrencyLabel(s.currency);
           return (
-            <LinkListRow key={s.shopId} href={`/shops/${s.shopId}`}>
+            <LinkListRow
+              key={s.shopId}
+              href={`/shops/${s.shopId}`}
+              event="item_source_click"
+              eventProps={{ kind: "shop", target_id: s.shopId }}
+            >
               <span className="font-medium">{shopStoreLabel(s.kind, s.currency)}</span>
               <span className="font-mono text-xs text-muted-foreground">#{s.shopId}</span>
               {s.castleId != null && (

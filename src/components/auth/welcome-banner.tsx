@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CircleCheckBigIcon, XIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics/track";
 import { AccountUser, DEFAULT_NICKNAME, IdentityTag } from "./account";
 
 /**
@@ -17,6 +18,8 @@ export function WelcomeBanner({ user }: { user: AccountUser | null }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [dismissed, setDismissed] = useState(false);
+  // ponytail: 一次性事件用 ref 守住，router.replace 觸發的 re-render 不會重送。
+  const firedRef = useRef(false);
 
   const welcome = searchParams.get("welcome") === "1";
   // 名字改過就不用再講「你有預設名字」；未登入卻帶著參數（登入失敗）也不顯示。
@@ -29,6 +32,14 @@ export function WelcomeBanner({ user }: { user: AccountUser | null }) {
     const rest = next.toString();
     return rest ? `${pathname}?${rest}` : pathname;
   })();
+
+  // welcome=1 且有登入使用者才算真的登入成功；first_login 沿用「暱稱仍是預設值」判斷。
+  useEffect(() => {
+    if (welcome && user && !firedRef.current) {
+      firedRef.current = true;
+      track("login_success", { first_login: user.nickname === DEFAULT_NICKNAME });
+    }
+  }, [welcome, user]);
 
   // 帶了參數但不該顯示時，一樣把參數收掉，不留在網址上。
   useEffect(() => {
