@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TrackedLink } from "@/components/common/tracked-link";
 
 interface LinkListSectionProps {
   title: string;
@@ -25,17 +26,25 @@ export function LinkListSection({ title, summary, footer, children }: LinkListSe
 interface LinkListRowProps {
   href: string;
   children: React.ReactNode;
+  /** 有給才走 TrackedLink；沒有埋點需求的呼叫端維持純 next/link，不多耗一個 client 元件。 */
+  event?: string;
+  eventProps?: Record<string, string | number | boolean>;
 }
 
-export function LinkListRow({ href, children }: LinkListRowProps) {
+export function LinkListRow({ href, children, event, eventProps }: LinkListRowProps) {
+  const className =
+    "flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2.5 transition-colors hover:bg-muted/50";
   return (
     <li>
-      <Link
-        href={href}
-        className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2.5 transition-colors hover:bg-muted/50"
-      >
-        {children}
-      </Link>
+      {event ? (
+        <TrackedLink href={href} event={event} eventProps={eventProps} className={className}>
+          {children}
+        </TrackedLink>
+      ) : (
+        <Link href={href} className={className}>
+          {children}
+        </Link>
+      )}
     </li>
   );
 }

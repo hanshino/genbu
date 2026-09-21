@@ -7,6 +7,7 @@ import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { ChevronDownIcon, LogInIcon, LogOutIcon, UserIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics/track";
 import { AccountUser, IdentityBlock, IdentityTag, loginHref } from "./account";
 
 /** 登入後導回目前這一頁（含查詢字串），玩家不會被丟回首頁。 */
@@ -26,6 +27,7 @@ export function AccountMenu({ user }: { user: AccountUser | null }) {
     return (
       <a
         href={loginHref(returnTo)}
+        onClick={() => track("login_start", { source: "navbar" })}
         className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5")}
       >
         <LogInIcon aria-hidden />
@@ -65,6 +67,7 @@ export function AccountMenuCompact({ user }: { user: AccountUser | null }) {
       <a
         href={loginHref(returnTo)}
         aria-label="登入"
+        onClick={() => track("login_start", { source: "navbar" })}
         className={cn(buttonVariants({ variant: "outline", size: "icon-sm" }))}
       >
         <LogInIcon aria-hidden />

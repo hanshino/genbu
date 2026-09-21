@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -9,6 +8,7 @@ import {
 } from "@/components/ui/table";
 import { SpawnMapsCell } from "@/components/monsters/spawn-maps-cell";
 import { EntityPortrait } from "@/components/common/entity-portrait";
+import { TrackedLink } from "@/components/common/tracked-link";
 import { ItemSubSection } from "@/components/items/item-section-group";
 import type { MonsterDropSource } from "@/lib/types/monster";
 import type { MonsterStageSpawn } from "@/lib/types/monster-spawn";
@@ -53,9 +53,14 @@ export function ItemDropList({
                       alt={m.name}
                       size="sm"
                     />
-                    <Link href={`/monsters/${m.id}`} className="font-medium hover:underline">
+                    <TrackedLink
+                      href={`/monsters/${m.id}`}
+                      event="item_source_click"
+                      eventProps={{ kind: "monster", target_id: m.id }}
+                      className="font-medium hover:underline"
+                    >
                       {m.name}
-                    </Link>
+                    </TrackedLink>
                   </div>
                 </TableCell>
                 <TableCell className="text-right">{m.level}</TableCell>
