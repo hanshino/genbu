@@ -1,6 +1,16 @@
 # MSG Trigger DSL 解析
 
-`messages.triggers` 是一段純數字 token、用 `,` 分隔的 DSL；遊戲 INI 沒有 opcode 文件，要靠交叉比對來推斷。本文件記錄已破解的 opcode 與信心等級，供 `src/lib/queries/messages.ts` 的解析器引用。
+> **語意來源已上游化**：op 語意的權威來源現在是 `tthol_data` repo 的
+> `scripts/trigger_op_investigation.md` 及其 `CLAUDE.md` 的 parser 對照表，
+> 那邊解析原始 `messages.triggers` DSL 後，把結果寫回 `tthol.sqlite` 的
+> `mission_events`（任務語意事件：accept/set_step/step_done/complete/reset/
+> timer35/timer36）、`trigger_ops`（逐 op 拆解，含 a0..a4 參數）、`op_defs`
+> （op → 中文名稱 + 信心等級）三張表。**genbu 端（`src/lib/queries/messages.ts`）
+> 只查這三張表，不再自行解析 `messages.triggers` 原始 DSL** —— 下方
+> 「已解碼 opcode」表格中的 A13/A33/A34/A35/A36 已依上游最新結果更正；
+> 其餘 op 仍保留舊調查記錄供參考，若要異動請回上游 repo 修正再重新匯出。
+
+`messages.triggers` 是一段純數字 token、用 `,` 分隔的 DSL；遊戲 INI 沒有 opcode 文件，要靠交叉比對來推斷。本文件記錄已破解的 opcode 與信心等級。
 
 來源：`E:\new\SETTING\setting\msg{N}.ini` 的 `Trigger{1..8}=…` 欄位（會被 message extractor 解碼後存進 SQLite，多個 trigger 以 JSON array of arrays 形式 pack 在 `messages.triggers`）。
 
@@ -45,11 +55,11 @@
 | OP | 信心 | 推斷意義 | arg[0] 範圍命中 | 備註 |
 |---:|:---:|---|---|---|
 | 12 | ✅ | `JUMP_TO_MSG(msgId)` | 73.6% 命中本檔內 msg_id | OptStr/OptJump 鏡像；剩 26% 為跨檔跳轉 |
-| 33 | ✅ | `SET_MISSION_STATE(missionId, stepIdx, value)` | mission 91.9% | 改任務步驟 |
-| 34 | ✅ | `ACCEPT_MISSION(missionId)` | mission 89.9% | 接任務的核心動作（msg7→8 驗證） |
-| 13 | 🔶 | mission state mutator（give reward？complete？） | mission 92.9% | 跟 33/35/36 同族 |
-| 35 | 🔶 | mission state mutator | mission 91.0% | arg[1] 看起來是數值（exp/數量？） |
-| 36 | 🔶 | mission state mutator | mission 91.0% | 跟 35 結構相同，意義待分 |
+| 33 | 🔶 | `SET_MISSION_STATE(missionId, step, unknown)` — step=0 為接取(accept)，step>0 為設定目前進度(set_step) | mission 91.9% | mission_events.event ∈ {accept, set_step} |
+| 34 | 🔶 | `RESET_MISSION(missionId)` — 重置任務 | mission 89.9% | mission_events.event = reset（注意：與舊版「ACCEPT」定義相反，已更正） |
+| 13 | 🔶 | `MISSION_STEP_DONE(missionId, step)` — step<15 為完成該步驟(step_done)，step=15 為整個任務完成(complete) | mission 92.9% | mission_events.event ∈ {step_done, complete} |
+| 35 | ✅ | `SET_TIMER35(missionId, minutes)` — 設定計時器 35，-1 = 無限時，到期由 C29 檢查 | mission 91.0% | mission_events.event = timer35；1 時辰 = 10 分鐘 |
+| 36 | ✅ | `SET_TIMER36(missionId, minutes)` — 設定計時器 36，-1 = 無限時，到期由 C30 檢查 | mission 91.0% | mission_events.event = timer36；1 時辰 = 10 分鐘 |
 | 37 | 🔶 | `GIVE_ITEM(itemId, qty)` | item 99.3% | 給玩家物品 |
 | 8  | 🔶 | `TAKE_ITEM(itemId, qty)` | item 99.3% | 收回物品（任務交付） |
 | 42 | ❓ | — | mission 17%、unknown 81% | 多用途，未拆解 |
@@ -59,18 +69,23 @@
 
 ## Mission ↔ Message 連結規則
 
-`src/lib/queries/messages.ts` 的 `buildMissionLinkIndex()` 用以下規則：
+`src/lib/queries/messages.ts` 的 `getMissionDialogue()` 直接查 `mission_events`
+（`WHERE mission_id = ? AND is_mission = 1 AND is_gm = 0`），語意對照：
 
 ```
-COND opcodes 27, 28          → 若 args[0] ∈ missions.id：
-                                 expect="True"  → role = "check_progress"
-                                 expect="False" → role = "gated_off"
-
-ACT opcodes 13, 33, 34, 35, 36 → 若 args[0] ∈ missions.id：
-                                   34 → role = "accept"
-                                   33 → role = "set_state"
-                                   13/35/36 → role = "progress"
+A33 step = 0   → event = "accept"    （接取）
+A33 step > 0   → event = "set_step"  （設定目前進度到 step）
+A13 step < 15  → event = "step_done" （完成第 step 步）
+A13 step = 15  → event = "complete"  （整個任務完成）
+A34            → event = "reset"     （重置任務）
+A35            → event = "timer35"   （minutes，-1 = 無限時）
+A36            → event = "timer36"   （minutes，-1 = 無限時）
 ```
+
+`is_gm = 1` 的列一律排除（GM 專用觸發，不對應玩家實際遊玩路徑）。
+
+每則對話另外提供 `trigger_ops` 逐條翻譯（`op_defs.name_zh` + a0..a4 參數），
+`op_defs.confidence !== "confirmed"` 的條目標記為推測語意。
 
 實測連結率（針對 1,323 個任務）：覆蓋率 80%+；少數任務（特別是純地圖事件、自動劇情）不會出現在 trigger 裡，沒對話可關聯。
 
@@ -96,10 +111,13 @@ ACT:  77(869) 3(642) 48(622) 86(453) 9(306) 30(248)
 ## 重現方法
 
 ```bash
-# 1. 解析所有 trigger 並掃 opcode 分布
-node -e '...'  # 見 src/lib/queries/messages.ts 的 parseTrigger 函式
+# 1. 查某任務的事件（權威來源，見本檔頂部 note）
+SELECT file_no, msg_id, event, step, minutes
+FROM mission_events
+WHERE mission_id = ? AND is_mission = 1 AND is_gm = 0
+ORDER BY file_no, msg_id;
 
-# 2. 抽樣某 opcode 的 context
+# 2. 抽樣某 opcode 的 context（原始 DSL 層級，重新調查用）
 SELECT m.file_no, m.msg_id, m.msg, mo.text AS opt_text, m.triggers
 FROM messages m
 LEFT JOIN message_options mo USING (file_no, msg_id)
@@ -107,4 +125,5 @@ WHERE m.triggers LIKE '%"<OP>",%'
 LIMIT 20;
 ```
 
-**更新時機**：`E:\new\SETTING` 內容異動（遊戲更新後重抓 INI）就要重跑 opcode 統計，並補上新出現的 opcode。
+**更新時機**：`E:\new\SETTING` 內容異動（遊戲更新後重抓 INI）就要回 `tthol_data`
+repo 重跑 opcode 解析、重新匯出 `mission_events` / `trigger_ops` / `op_defs`。

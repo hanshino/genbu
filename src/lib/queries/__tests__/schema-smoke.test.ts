@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { getDb } from "@/lib/db";
 import {
   getAchievementCategories,
   getAchievementsByCategory,
@@ -583,5 +584,34 @@ describe("stages.ts", () => {
 describe("status.ts", () => {
   it("getStatusById", () => {
     expect(() => getStatusById(REAL_STATUS_ID)).not.toThrow();
+  });
+});
+
+describe("schema smoke — 任務對話上游解析表", () => {
+  const TABLES = [
+    "trigger_ops",
+    "dialogue_edges",
+    "op_defs",
+    "item_box_rewards",
+    "hero_codes",
+    "mission_events",
+    "mission_requirements",
+    "mission_rewards",
+  ];
+
+  it.each(TABLES)("表 %s 存在", (table) => {
+    const db = getDb();
+    const row = db
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?")
+      .get(table);
+    expect(row).toBeDefined();
+  });
+
+  it("view v_mission_overview 存在", () => {
+    const db = getDb();
+    const row = db
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'view' AND name = 'v_mission_overview'")
+      .get();
+    expect(row).toBeDefined();
   });
 });

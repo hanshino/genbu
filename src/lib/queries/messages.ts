@@ -3,198 +3,136 @@ import type {
   MessageNode,
   MessageOption,
   MissionDialogueGroup,
-  MissionMessageRole,
+  MissionEvent,
+  MissionEventKind,
+  TriggerOpTranslation,
 } from "@/lib/types/message";
 
 // =========================================================================
-// Trigger DSL parser
-// 結構（以 comma-separated token array 為單位）：
-//   [ "0",                          // header（永遠是 0）
-//     condCount,
-//     (opcode, expect("True"/"False"), argCount, ...args)^condCount,
-//     actionCount,
-//     (opcode, argCount, ...args)^actionCount ]
-// 詳見 `docs/msg-trigger-codes.md`。
+// Mission ↔ Message 對話查詢
+//
+// 語意來源已由上游 tthol_data repo 解析寫回：
+//   - mission_events：每筆對話對某任務的語意事件（接取/設定進度/完成步驟/
+//     整體完成/重置/計時器），已排除 is_gm。
+//   - trigger_ops + op_defs：單筆 trigger 內每個 cond(C)/action(A) op 的
+//     原始參數與中文釋義，供逐條列出人類可讀翻譯。
+// 詳見 docs/msg-trigger-codes.md。
 // =========================================================================
 
-interface TriggerCondition {
-  op: string;
-  expect: string;
-  args: string[];
-}
-interface TriggerAction {
-  op: string;
-  args: string[];
-}
-interface ParsedTrigger {
-  conds: TriggerCondition[];
-  acts: TriggerAction[];
-}
-
-function parseTrigger(arr: string[]): ParsedTrigger | null {
-  if (arr.length === 0 || arr[0] !== "0") return null;
-  let i = 1;
-  const condCount = parseInt(arr[i++], 10);
-  if (!Number.isFinite(condCount) || condCount < 0) return null;
-  const conds: TriggerCondition[] = [];
-  for (let c = 0; c < condCount; c++) {
-    if (i + 3 > arr.length) return null;
-    const op = arr[i++];
-    const expect = arr[i++];
-    const argc = parseInt(arr[i++], 10);
-    if (!Number.isFinite(argc) || argc < 0 || i + argc > arr.length) return null;
-    conds.push({ op, expect, args: arr.slice(i, i + argc) });
-    i += argc;
-  }
-  if (i >= arr.length) return null;
-  const actCount = parseInt(arr[i++], 10);
-  if (!Number.isFinite(actCount) || actCount < 0) return null;
-  const acts: TriggerAction[] = [];
-  for (let a = 0; a < actCount; a++) {
-    if (i + 2 > arr.length) return null;
-    const op = arr[i++];
-    const argc = parseInt(arr[i++], 10);
-    if (!Number.isFinite(argc) || argc < 0 || i + argc > arr.length) return null;
-    acts.push({ op, args: arr.slice(i, i + argc) });
-    i += argc;
-  }
-  return { conds, acts };
-}
-
-// 推斷信心度高的「第一個參數 = mission_id」opcode 集合：
-//   - 條件：C27（HAS_STATE）、C28（互補檢查）
-//   - 動作：A13、A33（SET_STATE）、A34（ACCEPT）、A35、A36（state mutators）
-// 命中率經 88–93% 抽樣驗證；不在 missions.id 範圍的 token 直接跳過。
-const MISSION_COND_OPS = new Set(["27", "28"]);
-const MISSION_ACT_OPS = new Set(["13", "33", "34", "35", "36"]);
-
-function actionRole(op: string): MissionMessageRole {
-  if (op === "34") return "accept";
-  if (op === "33") return "set_state";
-  return "progress"; // 13 / 35 / 36
-}
-
-// =========================================================================
-// Mission-message link cache
-// 50k 條 messages × 17k 條 triggers parse 結果 ~50ms；建一次後 in-memory 重用。
-// 用 globalThis 避免 Next.js HMR 重複 build。
-// =========================================================================
-
-interface MissionMessageLink {
+interface MissionEventRow {
   fileNo: number;
   msgId: number;
-  roles: Set<MissionMessageRole>;
+  event: MissionEventKind;
+  step: number | null;
+  minutes: number | null;
 }
 
-const globalCache = globalThis as typeof globalThis & {
-  _msgMissionLinkCache?: Map<number, MissionMessageLink[]>;
-};
-
-function buildMissionLinkIndex(): Map<number, MissionMessageLink[]> {
-  if (globalCache._msgMissionLinkCache) return globalCache._msgMissionLinkCache;
-
+function getMissionEventRows(missionId: number): MissionEventRow[] {
   const db = getDb();
-  const missionIds = new Set<number>(
-    (db.prepare("SELECT id FROM missions").all() as Array<{ id: number }>).map(
-      (r) => r.id,
-    ),
+  return db
+    .prepare(
+      `SELECT file_no AS fileNo, msg_id AS msgId, event, step, minutes
+       FROM mission_events
+       WHERE mission_id = ? AND is_mission = 1 AND is_gm = 0
+       ORDER BY file_no, msg_id`,
+    )
+    .all(missionId) as MissionEventRow[];
+}
+
+interface OpDefRow {
+  kind: "C" | "A";
+  op: number;
+  name_zh: string | null;
+  args: string | null;
+  confidence: string;
+}
+
+interface TriggerOpRow {
+  msgId: number;
+  kind: "C" | "A";
+  op: number;
+  seq: number;
+  negated: number | null;
+  a0: number | null;
+  a1: number | null;
+  a2: number | null;
+  a3: number | null;
+  a4: number | null;
+}
+
+function formatTriggerOp(row: TriggerOpRow, def: OpDefRow | undefined): TriggerOpTranslation {
+  const args = [row.a0, row.a1, row.a2, row.a3, row.a4].filter(
+    (a): a is number => a !== null && a !== undefined,
   );
+  const name = def?.name_zh ?? `${row.kind}${row.op}`;
+  const negatedPrefix = row.negated ? "非" : "";
+  const label = args.length > 0 ? `${negatedPrefix}${name}(${args.join(", ")})` : `${negatedPrefix}${name}`;
+  return {
+    kind: row.kind,
+    op: row.op,
+    label,
+    likely: def?.confidence !== "confirmed",
+  };
+}
+
+function getTriggerOpsByMsg(
+  fileNo: number,
+  msgIds: number[],
+): Map<number, TriggerOpTranslation[]> {
+  const db = getDb();
+  const ph = msgIds.map(() => "?").join(",");
 
   const rows = db
     .prepare(
-      "SELECT file_no, msg_id, triggers FROM messages WHERE triggers IS NOT NULL",
+      `SELECT t.msg_id AS msgId, t.kind, t.op, t.seq, t.negated,
+              t.a0, t.a1, t.a2, t.a3, t.a4
+       FROM trigger_ops t
+       WHERE t.file_no = ? AND t.msg_id IN (${ph})
+       ORDER BY t.msg_id, t.trigger_idx, t.kind, t.seq`,
     )
-    .all() as Array<{ file_no: number; msg_id: number; triggers: string }>;
+    .all(fileNo, ...msgIds) as TriggerOpRow[];
 
-  const result = new Map<number, MissionMessageLink[]>();
-  // 同一 (mission, file_no, msg_id) 的多個 trigger 角色會合併
-  const dedupe = new Map<string, MissionMessageLink>();
+  if (rows.length === 0) return new Map();
 
+  const defRows = db
+    .prepare(`SELECT kind, op, name_zh, args, confidence FROM op_defs`)
+    .all() as OpDefRow[];
+  const defByKey = new Map(defRows.map((d) => [`${d.kind}${d.op}`, d]));
+
+  const result = new Map<number, TriggerOpTranslation[]>();
   for (const r of rows) {
-    let triggers: string[][];
-    try {
-      triggers = JSON.parse(r.triggers) as string[][];
-    } catch {
-      continue;
+    const def = defByKey.get(`${r.kind}${r.op}`);
+    let arr = result.get(r.msgId);
+    if (!arr) {
+      arr = [];
+      result.set(r.msgId, arr);
     }
-
-    for (const sub of triggers) {
-      const parsed = parseTrigger(sub);
-      if (!parsed) continue;
-
-      // 累積此單一 trigger 對各 mission 貢獻的 roles
-      const local = new Map<number, Set<MissionMessageRole>>();
-      const addRole = (mid: number, role: MissionMessageRole) => {
-        let s = local.get(mid);
-        if (!s) {
-          s = new Set();
-          local.set(mid, s);
-        }
-        s.add(role);
-      };
-
-      for (const c of parsed.conds) {
-        if (!MISSION_COND_OPS.has(c.op) || c.args.length === 0) continue;
-        const mid = parseInt(c.args[0], 10);
-        if (!Number.isFinite(mid) || !missionIds.has(mid)) continue;
-        addRole(mid, c.expect === "True" ? "check_progress" : "gated_off");
-      }
-      for (const a of parsed.acts) {
-        if (!MISSION_ACT_OPS.has(a.op) || a.args.length === 0) continue;
-        const mid = parseInt(a.args[0], 10);
-        if (!Number.isFinite(mid) || !missionIds.has(mid)) continue;
-        addRole(mid, actionRole(a.op));
-      }
-
-      for (const [mid, roles] of local) {
-        const key = `${mid}::${r.file_no}::${r.msg_id}`;
-        let link = dedupe.get(key);
-        if (!link) {
-          link = { fileNo: r.file_no, msgId: r.msg_id, roles: new Set() };
-          dedupe.set(key, link);
-          let arr = result.get(mid);
-          if (!arr) {
-            arr = [];
-            result.set(mid, arr);
-          }
-          arr.push(link);
-        }
-        for (const role of roles) link.roles.add(role);
-      }
-    }
+    arr.push(formatTriggerOp(r, def));
   }
-
-  globalCache._msgMissionLinkCache = result;
   return result;
 }
 
-// =========================================================================
-// Public queries
-// =========================================================================
-
 export function getMissionDialogue(missionId: number): MissionDialogueGroup[] {
-  const links = buildMissionLinkIndex().get(missionId);
-  if (!links || links.length === 0) return [];
+  const eventRows = getMissionEventRows(missionId);
+  if (eventRows.length === 0) return [];
 
   const db = getDb();
 
   // 依 file_no 分群，把同檔的 msg_id 一次撈
-  const byFile = new Map<number, MissionMessageLink[]>();
-  for (const l of links) {
-    let arr = byFile.get(l.fileNo);
+  const byFile = new Map<number, MissionEventRow[]>();
+  for (const r of eventRows) {
+    let arr = byFile.get(r.fileNo);
     if (!arr) {
       arr = [];
-      byFile.set(l.fileNo, arr);
+      byFile.set(r.fileNo, arr);
     }
-    arr.push(l);
+    arr.push(r);
   }
 
   const groups: MissionDialogueGroup[] = [];
 
-  for (const [fileNo, list] of [...byFile.entries()].sort(
-    ([a], [b]) => a - b,
-  )) {
-    const msgIds = list.map((l) => l.msgId);
+  for (const [fileNo, list] of [...byFile.entries()].sort(([a], [b]) => a - b)) {
+    const msgIds = [...new Set(list.map((r) => r.msgId))];
     const ph = msgIds.map(() => "?").join(",");
 
     const msgRows = db
@@ -243,17 +181,28 @@ export function getMissionDialogue(missionId: number): MissionDialogueGroup[] {
       arr.push({ index: o.idx, text: o.text, jumpTo: o.jumpTo, action: o.action });
     }
 
-    const rolesByMsg = new Map(list.map((l) => [l.msgId, l.roles]));
+    const eventsByMsg = new Map<number, MissionEvent[]>();
+    for (const r of list) {
+      let arr = eventsByMsg.get(r.msgId);
+      if (!arr) {
+        arr = [];
+        eventsByMsg.set(r.msgId, arr);
+      }
+      arr.push({ event: r.event, step: r.step, minutes: r.minutes });
+    }
+
+    const triggerOpsByMsg = getTriggerOpsByMsg(fileNo, msgIds);
 
     const entries: MissionDialogueGroup["entries"] = msgRows
-      .map((m): MessageNode & { roles: MissionMessageRole[] } => ({
+      .map((m) => ({
         fileNo,
         msgId: m.msgId,
         speaker: m.speaker,
         text: m.text,
         options: optsByMsg.get(m.msgId) ?? [],
         jumpTo: m.jumpTo,
-        roles: [...(rolesByMsg.get(m.msgId) ?? new Set<MissionMessageRole>())],
+        events: eventsByMsg.get(m.msgId) ?? [],
+        triggerOps: triggerOpsByMsg.get(m.msgId) ?? [],
       }))
       .sort((a, b) => a.msgId - b.msgId);
 

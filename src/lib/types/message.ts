@@ -1,8 +1,10 @@
 // messages / message_options / npc_strings (MSG{file_no}.INI + MSGNAME.INI)
 //
 // MSG 對話文本：每個 file_no 大致對應一張地圖（特例：file_no=1 是系統 + 成都）。
-// triggers 欄位是原始 DSL（純數字 token，沒有官方 opcode 表）— 解析方式
-// 與 opcode 對照見 `docs/msg-trigger-codes.md`。
+// 任務事件語意（接取/設定進度/完成/重置/計時器）與 trigger op 對照表已由上游
+// tthol_data repo 的 `scripts/trigger_op_investigation.md`（及其 CLAUDE.md 的
+// parser 對照表）解析、寫回 mission_events / trigger_ops / op_defs 三張表，
+// genbu 只需查表，不再自行解析 messages.triggers 原始 DSL。
 
 /** 對話節點上玩家可點的選項。 */
 export interface MessageOption {
@@ -28,24 +30,48 @@ export interface MessageNode {
   jumpTo: number | null;
 }
 
-/**
- * Trigger 推斷出來的「此訊息對該任務扮演的角色」。
- * 來源 opcode：
- *   - C27 expect=True   → "check_progress" （在某狀態才顯示這段）
- *   - C27/28 expect=False / inverse → "gated_off"
- *   - A34 → "accept"     （第一次接任務）
- *   - A33 → "set_state"  （改任務步驟）
- *   - A13/35/36 → "progress" （任務狀態變更）
+/** mission_events.event 的語意，對照 upstream 解析出的 opcode：
+ *  - accept     — A33 且 step=0：第一次接任務
+ *  - set_step   — A33 且 step>0：設定目前進度到 step
+ *  - step_done  — A13 且 step<15：完成第 step 步
+ *  - complete   — A13 且 step=15：整個任務完成
+ *  - reset      — A34：重置任務
+ *  - timer35    — A35：設定計時器 35（minutes，-1 = 無）
+ *  - timer36    — A36：設定計時器 36（minutes，-1 = 無）
  */
-export type MissionMessageRole =
+export type MissionEventKind =
   | "accept"
-  | "progress"
-  | "set_state"
-  | "check_progress"
-  | "gated_off";
+  | "set_step"
+  | "step_done"
+  | "complete"
+  | "reset"
+  | "timer35"
+  | "timer36";
+
+/** 單一 mission_events 列（已過濾 is_gm=1、is_mission=1）。 */
+export interface MissionEvent {
+  event: MissionEventKind;
+  step: number | null;
+  minutes: number | null;
+}
+
+/** trigger_ops 的人類可讀翻譯：op_defs.name_zh + 參數。 */
+export interface TriggerOpTranslation {
+  kind: "C" | "A";
+  op: number;
+  /** 例如「等級(>=, 25)」；op_defs 無 name_zh 時退回 "C4(>=, 25)" 形式。 */
+  label: string;
+  /** op_defs.confidence !== "confirmed" 時為 true，UI 需標示為推測語意。 */
+  likely: boolean;
+}
 
 /** 某任務的全部相關對話，依 file_no 分組。 */
 export interface MissionDialogueGroup {
   fileNo: number;
-  entries: Array<MessageNode & { roles: MissionMessageRole[] }>;
+  entries: Array<
+    MessageNode & {
+      events: MissionEvent[];
+      triggerOps: TriggerOpTranslation[];
+    }
+  >;
 }
