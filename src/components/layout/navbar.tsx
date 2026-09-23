@@ -12,6 +12,7 @@ import { AccountMenu, AccountMenuCompact } from "@/components/auth/account-menu"
 import { AccountUser, IdentityBlock, IdentityTag, loginHref } from "@/components/auth/account";
 import { WelcomeBanner } from "@/components/auth/welcome-banner";
 import { track } from "@/lib/analytics/track";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 type NavLink = { href: string; label: string; exact?: boolean };
 type NavGroup = { label: string; items: NavLink[] };
@@ -80,10 +81,12 @@ export function Navbar({ user }: { user: AccountUser | null }) {
 
         <div className="ml-auto hidden items-center gap-2 md:flex">
           <DesktopLink href="/about" label="關於" pathname={pathname} muted />
+          <ThemeToggle />
           <AccountMenu user={user} />
         </div>
 
         <div className="ml-auto flex items-center gap-1 md:hidden">
+          <ThemeToggle />
           <AccountMenuCompact user={user} />
 
           <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
