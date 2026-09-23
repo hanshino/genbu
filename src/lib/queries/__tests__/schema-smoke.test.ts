@@ -52,6 +52,14 @@ import {
 } from "../images";
 import { getMissionDialogue, getMessageNode } from "../messages";
 import {
+  getBoxesContainingItem,
+  getHeroTokenSources,
+  getItemBoxRewards,
+  getMissionLogic,
+  getMissionsRewardingItem,
+  getMissionsTakingItem,
+} from "../mission-logic";
+import {
   getAllMissionGroupStats,
   getAllMissionListItems,
   getMissionDetail,
@@ -107,6 +115,14 @@ const REAL_MISSION_ID = 1; // mission_refs 同時有 item / map(npc>0) 兩種 re
 const REAL_MISSION_ITEM_ID = 20007; // 被某任務 ref 到的 item id
 const STAGE_ID_WITH_GROUP = 1; // stages.group 非 null，且有 monster_spawns / mission_refs 命中
 const STAGE_ID_WITH_APPEAR = 25; // appear_map1 / appear_map2 非 0
+
+// mission-logic
+const MISSION_WITH_LOGIC_ID = 801; // 如假似真：有 accept/complete/requirements/rewards/deliveries
+const BOX_ITEM_ID = 24221; // 魂回禮盒：item_box_rewards 有一組開箱
+const ITEM_IN_BOX_ID = 28154; // 賞善輕功丹：出現在 24221 開箱結果裡
+const ITEM_REWARDED_BY_MISSION_ID = 24221; // 出現在 mission 801 的 rewards
+const ITEM_TAKEN_BY_MISSION_ID = 24220; // 出現在 mission 801 的 deliveries（take_item）
+const HERO_WITH_TOKEN_ID = 1; // hero_codes.hero_id=1 有對應禮盒 hero_token 來源
 
 // compound
 const COMPOUND_GROUP_ID = 70; // compound_groups 真實存在且底下有 ITEM_COMPOUND_EQUIPMENT 配方
@@ -442,6 +458,32 @@ describe("messages.ts", () => {
 
   it("getMessageNode", () => {
     expect(() => getMessageNode(REAL_FILE_NO, REAL_MSG_ID)).not.toThrow();
+  });
+});
+
+describe("mission-logic.ts", () => {
+  it("getMissionLogic（有 accept/complete/requirements/rewards/deliveries）", () => {
+    expect(() => getMissionLogic(MISSION_WITH_LOGIC_ID)).not.toThrow();
+  });
+
+  it("getItemBoxRewards（有開箱結果）", () => {
+    expect(() => getItemBoxRewards(BOX_ITEM_ID)).not.toThrow();
+  });
+
+  it("getBoxesContainingItem（反查含此道具的禮盒）", () => {
+    expect(() => getBoxesContainingItem(ITEM_IN_BOX_ID)).not.toThrow();
+  });
+
+  it("getMissionsRewardingItem（反查獎勵此道具的任務）", () => {
+    expect(() => getMissionsRewardingItem(ITEM_REWARDED_BY_MISSION_ID)).not.toThrow();
+  });
+
+  it("getMissionsTakingItem（反查會收走此道具的任務）", () => {
+    expect(() => getMissionsTakingItem(ITEM_TAKEN_BY_MISSION_ID)).not.toThrow();
+  });
+
+  it("getHeroTokenSources（有禮盒符令來源）", () => {
+    expect(() => getHeroTokenSources(HERO_WITH_TOKEN_ID)).not.toThrow();
   });
 });
 

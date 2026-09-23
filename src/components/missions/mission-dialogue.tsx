@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { GameText } from "@/components/common/game-text";
 import { getMissionDialogue } from "@/lib/queries/messages";
 import type { MissionEvent, MissionEventKind } from "@/lib/types/message";
 
@@ -95,8 +96,8 @@ export function MissionDialogueSection({ missionId }: { missionId: number }) {
                     </div>
                   </div>
                   {e.text ? (
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {e.text}
+                    <p className="text-sm leading-relaxed">
+                      <GameText text={e.text} />
                     </p>
                   ) : (
                     <p className="text-sm italic text-muted-foreground">（無台詞）</p>

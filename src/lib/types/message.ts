@@ -24,6 +24,7 @@ export interface MessageNode {
   msgId: number;
   /** 來自 messages.name_id → npc_strings.name；null 代表系統訊息（無說話者）。 */
   speaker: string | null;
+  /** messages.msg 原文：含 `<FONT COLOR=…>` 標記與字面 `\n`，用 <GameText> 顯示。 */
   text: string | null;
   options: MessageOption[];
   /** Msg.Jump — 顯示後自動跳到的下一個 msg_id（無選項時用）。 */
