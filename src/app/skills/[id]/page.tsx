@@ -39,7 +39,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const anchor = resolveAnchor(skillId, level);
   if (!anchor) return { title: "技能不存在 · 玄武" };
   return {
-    title: `${anchor.name} · 技能 · 玄武`,
+    title: `${anchor.name} · 武林同萌傳技能 · 玄武`,
     description: `${anchor.name} 的全等級數值與同門派技能`,
     alternates: { canonical: `/skills/${skillId}` },
   };

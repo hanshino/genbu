@@ -22,8 +22,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const mission = getMissionDetail(missionId);
   if (!mission) return { title: "任務不存在 · 玄武" };
   return {
-    title: `${mission.name ?? `任務 ${mission.id}`} · 任務 · 玄武`,
-    description: mission.help ?? `${mission.name} 的步驟與所需物品`,
+    title: `${mission.name ?? `任務 ${mission.id}`} · 武林同萌傳任務 · 玄武`,
+    description: (mission.help ?? `${mission.name} 的步驟與所需物品`).replace(/\\n/g, " "),
     alternates: { canonical: `/missions/${mission.id}` },
   };
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ChevronRightIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +7,8 @@ import { getDb } from "@/lib/db";
 import { getItemsByIds } from "@/lib/queries/items";
 import { getRecentReports } from "@/lib/queries/market-prices";
 import { SERVERS, formatAmount, relativeTime } from "@/lib/market-price";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 interface Feature {
   title: string;

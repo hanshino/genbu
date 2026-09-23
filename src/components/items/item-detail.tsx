@@ -57,7 +57,7 @@ export function ItemDetail({ item, maxValues, cover, fallbackIcon }: ItemDetailP
           )}
           {item.summary && (
             <p className="whitespace-pre-line text-sm leading-relaxed">
-              {item.summary.replace(/\\n/g, "\n")}
+              {item.summary.replace(/[\\/]n/g, "\n")}
             </p>
           )}
         </header>

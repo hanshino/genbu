@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const hero = getHeroById(heroId);
   if (!hero) return { title: "英雄不存在 · 玄武" };
   return {
-    title: `${hero.name} · 英雄 · 玄武`,
+    title: `${hero.name} · 武林同萌傳英雄 · 玄武`,
     description: `${hero.name} 的基本數值與參與的英雄組合`,
     alternates: { canonical: `/heroes/${hero.id}` },
   };

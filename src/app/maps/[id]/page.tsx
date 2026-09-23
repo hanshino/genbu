@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const stage = getStageDetail(stageId);
   if (!stage) return { title: "地圖不存在 · 玄武" };
   return {
-    title: `${stage.name ?? `地圖 ${stage.id}`} · 地圖 · 玄武`,
+    title: `${stage.name ?? `地圖 ${stage.id}`} · 武林同萌傳地圖 · 玄武`,
     description: `${stage.name} 的屬性、入口、相關任務`,
     alternates: { canonical: `/maps/${stage.id}` },
   };

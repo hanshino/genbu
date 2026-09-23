@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const guide = findPublished(slug);
   if (!guide) return { title: "攻略不存在 · 玄武" };
   return {
-    title: `${guide.title} · 攻略 · 玄武`,
+    title: `${guide.title} · 武林同萌傳攻略 · 玄武`,
     description: guide.summary,
     alternates: { canonical: `/guides/${guide.slug}` },
   };

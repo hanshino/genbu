@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const group = getCompoundGroupById(groupId);
   if (!group) return { title: "煉化群組不存在 · 玄武" };
   return {
-    title: `${group.name ?? `#${group.id}`} · 煉化配方 · 玄武`,
+    title: `${group.name ?? `#${group.id}`} · 武林同萌傳煉化配方 · 玄武`,
     description: `${group.name} 群組的全部煉化配方`,
     alternates: { canonical: `/compounds/${group.id}` },
   };

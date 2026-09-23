@@ -51,8 +51,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const item = getItemById(Number(id));
   if (!item) return { title: "道具不存在 · 玄武" };
   return {
-    title: `${item.name} · 道具 · 玄武`,
-    description: item.summary ?? item.note ?? `${item.name} 的詳細屬性與掉落來源`,
+    title: `${item.name} · 武林同萌傳道具 · 玄武`,
+    // 遊戲資料用字面 `\n`（少數打成 `/n`）當換行，meta 裡換成空白
+    description: (item.summary ?? item.note ?? `${item.name} 的詳細屬性與掉落來源`).replace(/[\\/]n/g, " "),
     alternates: { canonical: `/items/${item.id}` },
   };
 }

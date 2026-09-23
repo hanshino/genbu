@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const shop = getShopDetail(shopId);
   if (!shop) return { title: "商店不存在 · 玄武" };
   return {
-    title: `${shopLabel(shop)} · 商店 · 玄武`,
+    title: `${shopLabel(shop)} · 武林同萌傳商店 · 玄武`,
     description: `${shopLabel(shop)}(${shopTitle(shop.id)})的販售與收購清單`,
     alternates: { canonical: `/shops/${shop.id}` },
   };

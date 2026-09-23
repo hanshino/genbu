@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const monster = getMonsterById(Number(id));
   if (!monster) return { title: "怪物不存在 · 玄武" };
   return {
-    title: `${monster.name} · 怪物 · 玄武`,
+    title: `${monster.name} · 武林同萌傳怪物 · 玄武`,
     description: `${monster.name} 的屬性、掉落與出現資訊`,
     alternates: { canonical: `/monsters/${monster.id}` },
   };
