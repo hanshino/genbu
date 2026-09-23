@@ -32,9 +32,24 @@ export const metadata: Metadata = {
   description: "武林同萌傳 (TTHOL) 道具查詢、裝備比較、副本解謎工具",
 };
 
-// 在畫面繪製前套上主題，避免閃白；並在「跟隨系統」時即時跟著 OS 切換、同步其他分頁。
-// localStorage "theme"：light | dark | 不存在 = 跟隨系統。寫入端在 components/layout/theme-toggle.tsx。
-const themeScript = `(function(){try{var m=matchMedia("(prefers-color-scheme: dark)");function a(){var t=null;try{t=localStorage.getItem("theme")}catch(e){}var d=t==="dark"||(t!=="light"&&m.matches);var r=document.documentElement;r.classList.toggle("dark",d);r.style.colorScheme=d?"dark":"light"}a();m.addEventListener("change",a);addEventListener("storage",function(e){if(e.key==="theme")a()})}catch(e){}})()`;
+// 主題判斷的唯一來源：繪製前套上主題避免閃白，「跟隨系統」時即時跟 OS 切換、同步其他分頁。
+// localStorage "theme"：light | dark | 不存在 = 跟隨系統。
+// 對外提供 window.__applyTheme()，theme-toggle.tsx 寫完 localStorage 後呼叫它。
+// 首次套用之後的切換會暫停全頁 transition，避免 transition-colors 元件漸變閃爍。
+const themeScript = `(function(){try{
+var m=matchMedia("(prefers-color-scheme: dark)"),r=document.documentElement,first=true;
+function apply(){
+  var t=null;try{t=localStorage.getItem("theme")}catch(e){}
+  var d=t==="dark"||(t!=="light"&&m.matches),s=null;
+  if(!first){s=document.createElement("style");s.textContent="*,*::before,*::after{transition:none!important}";document.head.appendChild(s)}
+  first=false;
+  r.classList.toggle("dark",d);r.style.colorScheme=d?"dark":"light";
+  if(s){getComputedStyle(r).color;setTimeout(function(){s.remove()},1)}
+}
+window.__applyTheme=apply;apply();
+m.addEventListener("change",apply);
+addEventListener("storage",function(e){if(e.key==="theme")apply()});
+}catch(e){}})()`;
 
 export default async function RootLayout({
   children,

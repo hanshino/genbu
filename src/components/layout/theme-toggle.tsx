@@ -16,8 +16,14 @@ const options = [
   { value: "system", label: "跟隨系統", Icon: MonitorIcon },
 ] as const;
 
-// 首次上色與「跟隨系統」的即時切換都由 layout.tsx 的 inline script 負責；
-// 這裡只管使用者手動選擇後的寫入與同步。
+// 判斷與套用主題只在 layout.tsx 的 inline script（window.__applyTheme）；
+// 這裡只管使用者手動選擇後的寫入與通知。
+declare global {
+  interface Window {
+    __applyTheme?: () => void;
+  }
+}
+
 const listeners = new Set<() => void>();
 
 function getTheme(): Theme {
@@ -45,12 +51,7 @@ function setTheme(theme: Theme) {
   } catch {
     // 無痕模式等情況存不了，至少這次瀏覽有效
   }
-  const dark =
-    theme === "dark" ||
-    (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-  const root = document.documentElement;
-  root.classList.toggle("dark", dark);
-  root.style.colorScheme = dark ? "dark" : "light";
+  window.__applyTheme?.();
   listeners.forEach((l) => l());
 }
 
