@@ -4,7 +4,9 @@ import { BackLink } from "@/components/common/back-link";
 import { Badge } from "@/components/ui/badge";
 import { HeroStats } from "@/components/heroes/hero-stats";
 import { HeroCombinationList } from "@/components/heroes/hero-combination-list";
+import { HeroTokenSources } from "@/components/heroes/hero-token-sources";
 import { getHeroById, getHeroCombinationsForHero } from "@/lib/queries/heroes";
+import { getHeroTokenSources } from "@/lib/queries/mission-logic";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -32,6 +34,7 @@ export default async function HeroDetailPage({ params }: PageProps) {
   if (!hero) notFound();
 
   const combinations = getHeroCombinationsForHero(hero.id);
+  const tokenSources = getHeroTokenSources(hero.id);
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
@@ -59,9 +62,11 @@ export default async function HeroDetailPage({ params }: PageProps) {
 
       <HeroCombinationList combinations={combinations} currentHeroId={hero.id} />
 
+      <HeroTokenSources sources={tokenSources} />
+
       <p className="text-xs leading-relaxed text-muted-foreground">
         資料來自 hero 與 hero_connect 兩張表的原始欄位。分組與 star_up 的語意未解碼，不做換算；
-        取得方式、培養與升星路徑不在資料中，本頁不提供。
+        培養與升星路徑不在資料中，本頁不提供。
       </p>
     </div>
   );
