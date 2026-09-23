@@ -1,91 +1,87 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { CalendarCheckIcon, ChevronRightIcon } from "lucide-react";
+import { ArrowRightIcon, BookmarkIcon, BookOpenIcon, RouteIcon } from "lucide-react";
+import { getGuides } from "@/lib/guides";
+import { AuthorCard } from "@/components/guides/author-card";
+import { RoadTimeline } from "@/components/guides/road-timeline";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { getPublishedGuides, type Guide, type GuideCategory } from "@/data/guides";
+
+// DB 是 runtime mount，build 時拿不到，一律請求時渲染
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "攻略 · 玄武",
-  description: "以資料庫與已核對來源整理的武林同萌傳攻略，每篇標示來源與核對日期。",
+  description:
+    "照等級走的武林同萌傳修行路線：從剛創角、轉副門派、進階任務到轉生，每一站寫清楚該做什麼、會開放哪些系統。",
   alternates: { canonical: "/guides" },
 };
 
-const CATEGORY_LABELS: Record<GuideCategory, string> = {
-  items: "道具",
-  equipment: "裝備",
-  skills: "技能",
-  monsters: "怪物",
-  missions: "任務",
-  heroes: "英雄",
-  tools: "工具",
-};
-
-/** 取最舊的 lastVerified：一篇攻略的可信度以最陳舊的來源為準，不用最新日期蓋過去。 */
-function oldestVerified(guide: Guide): string | null {
-  // ISO yyyy-mm-dd 可直接字串比較
-  return guide.sources.reduce<string | null>(
-    (oldest, source) =>
-      oldest === null || source.lastVerified < oldest ? source.lastVerified : oldest,
-    null,
-  );
-}
-
 export default function GuidesPage() {
-  const guides = getPublishedGuides();
+  const guides = getGuides();
+  const stops = guides
+    .filter((g) => g.stage !== "topic")
+    .sort((a, b) => (a.levelMin ?? 0) - (b.levelMin ?? 0) || a.order - b.order);
+  const topics = guides.filter((g) => g.stage === "topic");
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:py-14">
-      <header className="mb-8">
-        <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">攻略</h1>
-        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-          每篇攻略的每個段落都標出依據的來源與核對日期。列表上的日期取該篇最舊的一筆，
-          不以最近核對過的來源蓋過還沒重新確認的部分。
-        </p>
-      </header>
-
-      {guides.length === 0 ? (
-        <p className="text-muted-foreground text-sm">尚未發布攻略。</p>
-      ) : (
-        <div className="space-y-4">
-          {guides.map((guide) => {
-            const verified = oldestVerified(guide);
-            return (
-              <Link key={guide.slug} href={`/guides/${guide.slug}`} className="group block">
-                <Card className="transition-colors group-hover:bg-muted/40">
-                  <CardHeader>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" className="font-normal">
-                        {CATEGORY_LABELS[guide.category]}
-                      </Badge>
-                    </div>
-                    <CardTitle className="mt-1 text-lg">{guide.title}</CardTitle>
-                    <CardDescription className="mt-2 leading-relaxed">
-                      {guide.summary}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground inline-flex items-center gap-1 text-xs">
-                      閱讀攻略
-                      <ChevronRightIcon className="size-3" aria-hidden />
-                    </p>
-                  </CardContent>
-                  <CardFooter className="text-muted-foreground gap-1.5 text-xs">
-                    <CalendarCheckIcon className="size-3.5 shrink-0" aria-hidden />
-                    來源最早核對日期 {verified ?? "未記錄"}
-                  </CardFooter>
-                </Card>
-              </Link>
-            );
-          })}
+    <div className="mx-auto max-w-[1040px] px-[18px] pb-16 sm:px-10 sm:pb-20">
+      <section className="grid items-start gap-6 pt-9 pb-5 md:grid-cols-[minmax(0,1fr)_300px] md:items-end md:gap-10 md:pt-16 md:pb-7">
+        <div>
+          <span className="text-muted-foreground inline-flex items-center gap-2 text-[12.5px] tracking-[0.16em]">
+            <RouteIcon className="size-3.5" aria-hidden />
+            修行路線
+          </span>
+          <h1 className="mt-4 mb-3.5 text-[33px] font-semibold tracking-[0.06em] sm:text-[50px]">
+            一個角色的一生
+          </h1>
+          <p className="text-muted-foreground max-w-[32em] text-[15.5px] leading-relaxed text-pretty sm:text-[17px]">
+            不管剛創角還是回鍋，找到你的等級，照著走就對了。每一站我都寫清楚該做什麼、會開什麼系統、那系統怎麼玩。
+          </p>
         </div>
+        <AuthorCard />
+      </section>
+
+      {stops.length > 0 ? (
+        <RoadTimeline stops={stops} />
+      ) : (
+        <p className="text-muted-foreground mt-8 text-sm">路線還在整理中，很快就會補上。</p>
+      )}
+
+      {topics.length > 0 && (
+        <section aria-labelledby="topics-heading">
+          <h2
+            id="topics-heading"
+            className="font-heading text-muted-foreground mt-12 mb-4 flex items-center gap-2.5 text-[15px] font-normal tracking-[0.08em] after:h-px after:flex-1 after:bg-border"
+          >
+            <BookmarkIcon className="size-4" aria-hidden />
+            不分等級都用得到
+          </h2>
+          <div className="grid gap-[18px] sm:grid-cols-2">
+            {topics.map((g) => (
+              <Link
+                key={g.slug}
+                href={`/guides/${g.slug}`}
+                className="group bg-card hover:bg-muted/60 hover:border-foreground/20 focus-visible:ring-ring flex flex-col gap-2.5 rounded-xl border px-[22px] py-5 outline-none focus-visible:ring-2 motion-safe:transition-[background-color,border-color,transform] motion-safe:duration-200 motion-safe:hover:-translate-y-0.5"
+              >
+                <Badge variant="secondary" className="h-6 gap-1.5 px-2.5 font-normal">
+                  <BookOpenIcon aria-hidden />
+                  通用
+                </Badge>
+                <h3 className="text-[17.5px] font-semibold text-balance">{g.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
+                  {g.summary}
+                </p>
+                <span className="text-primary mt-auto inline-flex items-center gap-1.5 pt-0.5 text-[13.5px]">
+                  讀這篇
+                  <ArrowRightIcon
+                    className="size-3.5 motion-safe:transition-transform motion-safe:group-hover:translate-x-0.5"
+                    aria-hidden
+                  />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

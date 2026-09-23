@@ -7,7 +7,7 @@ import { getAllShopIds } from "@/lib/queries/shops";
 import { getAllMissionIds } from "@/lib/queries/missions";
 import { getAllCompoundGroupIds } from "@/lib/queries/compound";
 import { getAllHeroIds } from "@/lib/queries/heroes";
-import { getPublishedGuides } from "@/data/guides";
+import { getGuides } from "@/lib/guides";
 
 // tthol.sqlite 是執行期掛載、不在 image 裡：這個路由一定要保持 force-dynamic，
 // 不能用 revalidate 或讓它在 build time 靜態產生（build 時查不到 DB 會直接炸）。
@@ -62,7 +62,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: r.priority,
   }));
 
-  const guideEntries: MetadataRoute.Sitemap = getPublishedGuides().map((g) => ({
+  const guideEntries: MetadataRoute.Sitemap = getGuides().map((g) => ({
     url: `${BASE_URL}/guides/${g.slug}`,
     changeFrequency: "monthly",
     priority: 0.5,
