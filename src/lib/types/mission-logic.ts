@@ -143,6 +143,20 @@ export interface ItemBoxGrant {
   rewards: Reward[];
 }
 
+/** 禮盒內容樹的一筆獎勵；本身也是禮盒時帶 contents（超過深度或循環時為 null）。 */
+export interface BoxRewardNode extends Reward {
+  contents: ItemBoxOption[] | null;
+}
+
+/**
+ * 道具頁用的開箱選項：同 choicePath 的 grant 已合併、同 grant 內相同道具已加總數量。
+ * choicePath 為 null 表示無選單（多組時代表依條件而定的不同結果）。
+ */
+export interface ItemBoxOption {
+  choicePath: string | null;
+  rewards: BoxRewardNode[];
+}
+
 /** 某任務獎勵此道具的精簡列（給道具頁反查用）。 */
 export interface MissionRewardingItem {
   missionId: number;
@@ -162,6 +176,7 @@ export interface MissionTakingItem {
 export interface BoxContainingItem {
   boxItemId: number;
   boxItemName: string | null;
+  boxIcon: EntityImage | null;
   qty: number | null;
   durationMin: number | null;
   choicePath: string | null;

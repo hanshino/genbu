@@ -5,24 +5,21 @@ import {
   ChevronsUpIcon,
   CircleDotIcon,
   CoinsIcon,
-  CrownIcon,
   DumbbellIcon,
   FlagIcon,
-  FlameIcon,
   HeartIcon,
   HourglassIcon,
   LogInIcon,
   ScrollTextIcon,
   SparklesIcon,
-  StarIcon,
   UserIcon,
   type LucideIcon,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ItemIcon } from "@/components/common/item-icon";
 import { GameText } from "@/components/common/game-text";
+import { IconFrame, RewardLine, linkClass, num, trim } from "@/components/common/reward-view";
 import type { MissionStep } from "@/lib/types/mission";
 import type {
   ConditionKind,
@@ -38,23 +35,6 @@ const MISSING = "客戶端資料未記載";
 function Missing() {
   return <span className="text-xs text-muted-foreground">{MISSING}</span>;
 }
-
-/** 與 ItemIcon 同尺寸、同外框的 lucide 圖示框，讓道具列與非道具列對齊。 */
-function IconFrame({ icon: Icon }: { icon: LucideIcon }) {
-  return (
-    <span
-      className="inline-flex size-6 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/30 text-muted-foreground"
-      aria-hidden
-    >
-      <Icon className="size-3.5" />
-    </span>
-  );
-}
-
-const linkClass = "font-medium underline-offset-2 hover:underline";
-const num = (n: number) => n.toLocaleString("zh-TW");
-/** 小數最多留一位，整數不帶 .0。 */
-const trim = (n: number) => String(Number(n.toFixed(1)));
 
 // =========================================================================
 // 接取與交付
@@ -297,104 +277,6 @@ export function MissionRequirementSection({ groups: raw }: { groups: MissionRequ
 // 完成獎勵 / 需交付
 // =========================================================================
 
-function formatDuration(min: number): string {
-  if (min >= 1440) return `${trim(min / 1440)} 天`;
-  if (min >= 60) return `${trim(min / 60)} 小時`;
-  return `${min} 分`;
-}
-
-interface RewardView {
-  lead: ReactNode;
-  label: ReactNode;
-  value: string | null;
-  extra?: ReactNode;
-}
-
-function rewardView(r: Reward): RewardView {
-  const qty = r.qty ?? null;
-  const icon = (i: LucideIcon) => <IconFrame icon={i} />;
-  const plain = (i: LucideIcon, label: string, value: string | null): RewardView => ({
-    lead: icon(i),
-    label: <span className="text-muted-foreground">{label}</span>,
-    value,
-  });
-
-  switch (r.type) {
-    case "item":
-    case "timed_item":
-    case "take_item": {
-      const name = r.resolved.itemName ?? `道具 #${r.refId}`;
-      return {
-        lead: <ItemIcon image={r.resolved.itemIcon} alt={name} className="size-6" />,
-        label:
-          r.refId != null ? (
-            <Link href={`/items/${r.refId}`} className={linkClass}>
-              {name}
-            </Link>
-          ) : (
-            <span className="font-medium">{name}</span>
-          ),
-        value: qty != null ? `×${qty}` : null,
-        extra:
-          r.type === "timed_item" && r.durationMin != null ? (
-            <Badge variant="outline" className="font-normal">
-              <HourglassIcon aria-hidden />
-              限時 {formatDuration(r.durationMin)}
-            </Badge>
-          ) : null,
-      };
-    }
-    case "exp":
-      return plain(StarIcon, "經驗值", qty != null ? num(qty) : null);
-    case "exp_pct":
-      return plain(StarIcon, "經驗值（依等級比例）", qty != null ? `${qty}%` : null);
-    case "gold":
-    case "pay_gold":
-      return plain(CoinsIcon, "銀兩", qty != null ? num(qty) : null);
-    case "charisma":
-    case "pay_charisma":
-      return plain(SparklesIcon, "魅力", qty != null ? num(qty) : null);
-    case "intimacy":
-      return plain(HeartIcon, "親密度", qty != null ? `${trim(qty / 100)} 點` : null);
-    case "aura":
-      return plain(FlameIcon, "靈氣", qty != null ? num(qty) : null);
-    case "hero_token": {
-      const name = r.resolved.heroName ?? "英雄";
-      return {
-        lead: icon(CrownIcon),
-        label: (
-          <span className="inline-flex flex-wrap items-baseline gap-x-1.5">
-            {r.resolved.heroId != null ? (
-              <Link href={`/heroes/${r.resolved.heroId}`} className={linkClass}>
-                {name}
-              </Link>
-            ) : (
-              <span className="font-medium">{name}</span>
-            )}
-            <span className="text-muted-foreground">英雄符令</span>
-          </span>
-        ),
-        value: qty != null ? `×${qty}` : null,
-      };
-    }
-    case "skill": {
-      const name = r.resolved.magicName ?? `技能 #${r.resolved.magicId}`;
-      return {
-        lead: icon(BookOpenIcon),
-        label:
-          r.resolved.magicId != null ? (
-            <Link href={`/skills/${r.resolved.magicId}?level=${r.resolved.level}`} className={linkClass}>
-              {name}
-            </Link>
-          ) : (
-            <span className="font-medium">{name}</span>
-          ),
-        value: r.resolved.level != null ? `Lv${r.resolved.level}` : null,
-      };
-    }
-  }
-}
-
 function RewardBlock({ title, rewards }: { title: string; rewards: Reward[] }) {
   return (
     <div className="space-y-2">
@@ -405,19 +287,11 @@ function RewardBlock({ title, rewards }: { title: string; rewards: Reward[] }) {
         </p>
       ) : (
         <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
-          {rewards.map((r, i) => {
-            const v = rewardView(r);
-            return (
-              <li key={i} className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 text-sm">
-                {v.lead}
-                {v.label}
-                {v.extra}
-                {v.value && (
-                  <span className="ml-auto font-mono text-xs text-muted-foreground">{v.value}</span>
-                )}
-              </li>
-            );
-          })}
+          {rewards.map((r, i) => (
+            <li key={i} className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 text-sm">
+              <RewardLine reward={r} />
+            </li>
+          ))}
         </ul>
       )}
     </div>

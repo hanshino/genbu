@@ -83,10 +83,14 @@ export function summarizeSourceRoutes(counts: {
   drops: number;
   shops: number;
   compounds: number;
+  missions?: number;
+  boxes?: number;
 }): string | null {
   const parts: string[] = [];
   if (counts.drops > 0) parts.push(`怪物掉落（${counts.drops} 隻）`);
   if (counts.shops > 0) parts.push(`商店販售（${counts.shops} 家）`);
   if (counts.compounds > 0) parts.push(`煉化配方（${counts.compounds} 條）`);
+  if (counts.missions) parts.push(`任務獎勵（${counts.missions} 個）`);
+  if (counts.boxes) parts.push(`禮盒（${counts.boxes} 種）`);
   return parts.length > 0 ? parts.join(" · ") : null;
 }

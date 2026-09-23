@@ -1,10 +1,11 @@
 import { getDb } from "@/lib/db";
-import { getItemIcon } from "@/lib/queries/images";
+import { getItemIcon, getItemIconMap } from "@/lib/queries/images";
 import type {
   BoxContainingItem,
   ConditionKind,
   HeroTokenSource,
   ItemBoxGrant,
+  ItemBoxOption,
   MissionCondition,
   MissionFlowStep,
   MissionLogic,
@@ -418,20 +419,75 @@ export function getItemBoxRewards(itemId: number): ItemBoxGrant[] {
   return [...groups.values()];
 }
 
-/** 反查：哪些禮盒含此道具（item/timed_item 類獎勵）？（道具頁用） */
+/** 在 ids 中，哪些本身是可開啟的禮盒（item_box_rewards 有其內容）。一次查詢。 */
+export function getBoxItemIds(ids: number[]): Set<number> {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return new Set();
+  const db = getDb();
+  const ph = unique.map(() => "?").join(",");
+  const rows = db
+    .prepare(`SELECT DISTINCT box_item_id AS id FROM item_box_rewards WHERE is_gm = 0 AND box_item_id IN (${ph})`)
+    .all(...unique) as Array<{ id: number }>;
+  return new Set(rows.map((r) => r.id));
+}
+
+const isItemReward = (r: Reward) => (r.type === "item" || r.type === "timed_item") && r.refId != null;
+
+/**
+ * 道具頁「使用後可獲得」：getItemBoxRewards 再整理成選項，並展開巢狀禮盒。
+ * - 同 choicePath 的 grant 合併（上游同一選項常拆成多個 trigger）；null choicePath 各自一組。
+ * - 同一選項內相同獎勵（type/ref/duration）數量加總（上游常以多次 ×1 給同一道具）。
+ * - 巢狀：maxDepth 層（含本層）＋祖先集合防循環；超出或循環時 contents = null。
+ */
+export function getItemBoxContents(itemId: number, maxDepth = 3): ItemBoxOption[] {
+  return buildBoxOptions(itemId, 1, maxDepth, new Set([itemId]));
+}
+
+function buildBoxOptions(itemId: number, depth: number, maxDepth: number, ancestors: Set<number>): ItemBoxOption[] {
+  const options: ItemBoxOption[] = [];
+  const byPath = new Map<string, ItemBoxOption>();
+  for (const g of getItemBoxRewards(itemId)) {
+    let opt = g.choicePath != null ? byPath.get(g.choicePath) : undefined;
+    if (!opt) {
+      opt = { choicePath: g.choicePath, rewards: [] };
+      options.push(opt);
+      if (g.choicePath != null) byPath.set(g.choicePath, opt);
+    }
+    for (const r of g.rewards) {
+      const same = opt.rewards.find(
+        (x) => x.type === r.type && x.refId === r.refId && x.durationMin === r.durationMin && r.refId != null,
+      );
+      if (same && same.qty != null && r.qty != null) same.qty += r.qty;
+      else opt.rewards.push({ ...r, contents: null });
+    }
+  }
+
+  if (depth >= maxDepth) return options;
+  const all = options.flatMap((o) => o.rewards).filter(isItemReward);
+  const boxes = getBoxItemIds(all.map((r) => r.refId as number));
+  for (const r of all) {
+    const id = r.refId as number;
+    if (!boxes.has(id) || ancestors.has(id)) continue;
+    r.contents = buildBoxOptions(id, depth + 1, maxDepth, new Set([...ancestors, id]));
+  }
+  return options;
+}
+
+/** 反查：哪些禮盒含此道具（item/timed_item 類獎勵）？（道具頁用；同禮盒多個選項各一列） */
 export function getBoxesContainingItem(itemId: number): BoxContainingItem[] {
   const db = getDb();
   const rows = db
     .prepare(
-      `SELECT box.id AS boxItemId, box.name AS boxItemName,
+      `SELECT DISTINCT box.id AS boxItemId, box.name AS boxItemName,
               ibr.qty, ibr.duration_min AS durationMin, ibr.choice_path AS choicePath
        FROM item_box_rewards ibr
        JOIN items box ON box.id = ibr.box_item_id
        WHERE ibr.is_gm = 0 AND ibr.reward_type IN ('item', 'timed_item') AND ibr.ref_id = ?
        ORDER BY box.id`,
     )
-    .all(itemId) as BoxContainingItem[];
-  return rows;
+    .all(itemId) as Omit<BoxContainingItem, "boxIcon">[];
+  const icons = getItemIconMap(rows.map((r) => r.boxItemId));
+  return rows.map((r) => ({ ...r, boxIcon: icons.get(r.boxItemId) ?? null }));
 }
 
 /** 反查：哪些任務把此道具當獎勵（item/timed_item）？（道具頁用） */
@@ -439,7 +495,7 @@ export function getMissionsRewardingItem(itemId: number): MissionRewardingItem[]
   const db = getDb();
   return db
     .prepare(
-      `SELECT mr.mission_id AS missionId, m.name AS missionName,
+      `SELECT DISTINCT mr.mission_id AS missionId, m.name AS missionName,
               mr.qty, mr.duration_min AS durationMin
        FROM mission_rewards mr
        JOIN missions m ON m.id = mr.mission_id
@@ -455,7 +511,7 @@ export function getMissionsTakingItem(itemId: number): MissionTakingItem[] {
   const db = getDb();
   return db
     .prepare(
-      `SELECT mr.mission_id AS missionId, m.name AS missionName, mr.qty
+      `SELECT DISTINCT mr.mission_id AS missionId, m.name AS missionName, mr.qty
        FROM mission_rewards mr
        JOIN missions m ON m.id = mr.mission_id
        WHERE mr.is_mission = 1 AND mr.is_gm = 0
