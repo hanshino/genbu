@@ -27,20 +27,104 @@ export function getAllMissionGroupStats(): MissionGroupStats[] {
   return rows;
 }
 
+type MissionListRow = Omit<MissionListItem, "acceptNpcs" | "minLevel" | "factions" | "hasReward" | "timed"> & {
+  acceptNpcs: string | null;
+  minLevel: number | null;
+  factions: string | null;
+  hasReward: number;
+  timed: number;
+};
+
+/**
+ * 列表頁：一條 SQL，客戶端邏輯表都先 GROUP BY 成每任務一列再 LEFT JOIN（不做 N+1）。
+ * 一律只看 is_gm = 0 AND is_mission = 1。
+ */
 export function getAllMissionListItems(): MissionListItem[] {
   const db = getDb();
   const rows = db
     .prepare(
-      `SELECT m.id,
+      `WITH
+       -- 同 v_mission_overview.accept_npcs，但多濾 is_mission = 1
+       accept AS (
+         SELECT mission_id, group_concat(name, '、') AS npcs
+         FROM (SELECT DISTINCT e.mission_id, s.name
+               FROM mission_events e JOIN npc_strings s ON s.id = e.npc_name_id
+               WHERE e.event = 'accept' AND e.is_gm = 0 AND e.is_mission = 1 AND s.name IS NOT NULL)
+         GROUP BY mission_id
+       ),
+       -- 每個條件組 (file_no, msg_id, trigger_idx) 的等級下限。
+       -- op=4 a0: 1 '<'、2 '>'、3 '<='、4 '>='；negated 反轉。上限類條件不算下限 → NULL。
+       req_group AS (
+         SELECT mission_id,
+                MAX(CASE WHEN op = 4 THEN
+                      CASE WHEN negated = 0 AND a0 = 4 THEN a1
+                           WHEN negated = 0 AND a0 = 2 THEN a1 + 1
+                           WHEN negated = 1 AND a0 = 1 THEN a1
+                           WHEN negated = 1 AND a0 = 3 THEN a1 + 1
+                      END
+                    END) AS lv
+         FROM mission_requirements
+         WHERE is_gm = 0 AND is_mission = 1
+         GROUP BY mission_id, file_no, msg_id, trigger_idx
+       ),
+       -- 各組是替代關係：任一組無等級下限 → 整個任務無等級需求
+       req AS (
+         SELECT mission_id, CASE WHEN COUNT(*) = COUNT(lv) THEN MIN(lv) END AS minLevel
+         FROM req_group GROUP BY mission_id
+       ),
+       -- summary 形如「門派(0, 移花宮)」
+       faction AS (
+         SELECT mission_id, group_concat(name, '、') AS names
+         FROM (SELECT DISTINCT mission_id,
+                      substr(summary, instr(summary, ', ') + 2,
+                             length(summary) - instr(summary, ', ') - 2) AS name
+               FROM mission_requirements
+               WHERE op = 2 AND negated = 0 AND is_gm = 0 AND is_mission = 1
+                 AND summary LIKE '門派(%, %)')
+         GROUP BY mission_id
+       ),
+       reward AS (
+         SELECT DISTINCT mission_id FROM mission_rewards
+         WHERE is_gm = 0 AND is_mission = 1
+           AND reward_type NOT IN ('take_item', 'pay_gold', 'pay_charisma')
+       ),
+       timer AS (
+         SELECT DISTINCT mission_id FROM mission_events
+         WHERE is_gm = 0 AND is_mission = 1 AND event IN ('timer35', 'timer36') AND minutes > 0
+       ),
+       steps AS (
+         SELECT mission_id, COUNT(*) AS n FROM mission_steps GROUP BY mission_id
+       )
+       SELECT m.id,
               m.name,
               m.group_id   AS groupId,
               m.cycle_time AS cycleTime,
-              (SELECT COUNT(*) FROM mission_steps s WHERE s.mission_id = m.id) AS stepCount
+              coalesce(steps.n, 0) AS stepCount,
+              accept.npcs  AS acceptNpcs,
+              req.minLevel AS minLevel,
+              faction.names AS factions,
+              reward.mission_id IS NOT NULL AS hasReward,
+              timer.mission_id IS NOT NULL AS timed
        FROM missions m
+       LEFT JOIN steps   ON steps.mission_id = m.id
+       LEFT JOIN accept  ON accept.mission_id = m.id
+       LEFT JOIN req     ON req.mission_id = m.id
+       LEFT JOIN faction ON faction.mission_id = m.id
+       LEFT JOIN reward  ON reward.mission_id = m.id
+       LEFT JOIN timer   ON timer.mission_id = m.id
        ORDER BY (m.group_id IS NULL), m.group_id, m.id`,
     )
-    .all() as MissionListItem[];
-  return rows;
+    .all() as MissionListRow[];
+  // 空值欄位直接省略：多數任務沒有客戶端邏輯資料，省下 RSC payload 裡上千個重複 key
+  return rows.map(({ acceptNpcs, minLevel, factions, hasReward, timed, ...base }) => {
+    const item: MissionListItem = base;
+    if (acceptNpcs) item.acceptNpcs = acceptNpcs.split("、");
+    if (minLevel != null) item.minLevel = minLevel;
+    if (factions) item.factions = factions.split("、");
+    if (hasReward) item.hasReward = true;
+    if (timed) item.timed = true;
+    return item;
+  });
 }
 
 /** 全部任務 id（sitemap 用的輕量查詢）。 */
