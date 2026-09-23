@@ -117,15 +117,16 @@ describe("getAdjacentGuides", () => {
   });
 });
 
-// 掃 content/guides/*.mdx 裡所有 <Item id={n}>/<Map id={n}>/<Monster id={n}>/<Skill id={n}> 標籤，
+// 掃 content/guides/*.mdx 裡所有 <Item id={n}>/<Map id={n}>/<Monster id={n}>/<Skill id={n}>/<Mission id={n}> 標籤，
 // 確認每一個都能在 DB 中查到對應資料（guide-refs 回傳非 null）。
 function scanRefTags(): { kind: GuideRefKind; id: number; file: string }[] {
-  const tagRe = /<(Item|Map|Monster|Skill)\s+id=\{(\d+)\}>/g;
+  const tagRe = /<(Item|Map|Monster|Skill|Mission)\s+id=\{(\d+)\}>/g;
   const kindMap: Record<string, GuideRefKind> = {
     Item: "item",
     Map: "map",
     Monster: "monster",
     Skill: "skill",
+    Mission: "mission",
   };
   const refs: { kind: GuideRefKind; id: number; file: string }[] = [];
   for (const file of fs.readdirSync(CONTENT_DIR).filter((f) => f.endsWith(".mdx"))) {
@@ -161,11 +162,52 @@ describe("getGuideRef — unknown ids", () => {
     expect(getGuideRef("map", 999999999)).toBeNull();
     expect(getGuideRef("monster", 999999999)).toBeNull();
     expect(getGuideRef("skill", 999999999)).toBeNull();
+    expect(getGuideRef("mission", 999999999)).toBeNull();
   });
 
   it("returns null for invalid ids", () => {
     expect(getGuideRef("item", 0)).toBeNull();
     expect(getGuideRef("item", -1)).toBeNull();
     expect(getGuideRef("item", 1.5)).toBeNull();
+  });
+});
+
+describe("getGuideRef — icon structure", () => {
+  // item 24222「新手禮盒」在 tthol.sqlite 的 item_images 有一筆 kind='icon' 記錄
+  // （url: https://img.hanshino.dev/zedgr1.png），以此為準斷言非 null。
+  it("item 24222 (新手禮盒) has a non-null icon with a non-empty url", () => {
+    const ref = getGuideRef("item", 24222);
+    expect(ref).not.toBeNull();
+    expect(ref!.icon).not.toBeNull();
+    expect(ref!.icon!.url.length).toBeGreaterThan(0);
+    expect(ref!.icon!.width).toEqual(expect.any(Number));
+    expect(ref!.icon!.height).toEqual(expect.any(Number));
+  });
+
+  // map/skill/mission 目前 guide-refs 未接圖片查詢，icon 恆為 null。
+  it("map/skill/mission refs have null icon (no image query wired up yet)", () => {
+    expect(getGuideRef("map", 45)?.icon).toBeNull();
+    expect(getGuideRef("skill", 111)?.icon).toBeNull();
+    expect(getGuideRef("mission", 801)?.icon).toBeNull();
+  });
+
+  // monster 8126（●李大嘴，練功窟怪物）在 npc_images 有圖，驗證 monster kind 也能帶圖。
+  it("monster 8126 (●李大嘴) has a non-null icon", () => {
+    const ref = getGuideRef("monster", 8126);
+    expect(ref).not.toBeNull();
+    expect(ref!.icon).not.toBeNull();
+    expect(ref!.icon!.url.length).toBeGreaterThan(0);
+  });
+});
+
+describe("getGuideRef — mission kind", () => {
+  it("mission 801 (新手教學／如假似真) resolves with correct href", () => {
+    const ref = getGuideRef("mission", 801);
+    expect(ref).not.toBeNull();
+    expect(ref!.kind).toBe("mission");
+    expect(ref!.id).toBe(801);
+    expect(ref!.name).toBe("如假似真");
+    expect(ref!.href).toBe("/missions/801");
+    expect(ref!.facts.length).toBeGreaterThan(0);
   });
 });

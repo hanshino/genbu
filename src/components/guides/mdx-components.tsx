@@ -45,6 +45,7 @@ const Item = (p: RefProps) => <RefInline kind="item" {...p} />;
 const MapRef = (p: RefProps) => <RefInline kind="map" {...p} />;
 const Monster = (p: RefProps) => <RefInline kind="monster" {...p} />;
 const Skill = (p: RefProps) => <RefInline kind="skill" {...p} />;
+const Mission = (p: RefProps) => <RefInline kind="mission" {...p} />;
 
 /* ── 提醒框 ── */
 
@@ -228,6 +229,7 @@ export const guideMdxComponents: MDXComponents = {
   Map: MapRef,
   Monster,
   Skill,
+  Mission,
   Tip,
   Warning,
   Verify,
