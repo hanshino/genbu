@@ -1,30 +1,52 @@
 import { Badge } from "@/components/ui/badge";
+import { MessageSquareIcon } from "lucide-react";
+import { GameText } from "@/components/common/game-text";
+import { NpcPortrait } from "@/components/missions/npc-portrait";
 import { getMissionDialogue } from "@/lib/queries/messages";
-import type { MissionMessageRole } from "@/lib/types/message";
+import type { MissionEvent, MissionEventKind } from "@/lib/types/message";
 
-const ROLE_LABELS: Record<MissionMessageRole, string> = {
-  accept: "接取",
-  progress: "進度變更",
-  set_state: "設定步驟",
-  check_progress: "進度檢查",
-  gated_off: "未達條件",
-};
-
-const ROLE_PRIORITY: Record<MissionMessageRole, number> = {
+const EVENT_PRIORITY: Record<MissionEventKind, number> = {
   accept: 0,
-  set_state: 1,
-  progress: 2,
-  check_progress: 3,
-  gated_off: 4,
+  set_step: 1,
+  step_done: 2,
+  complete: 3,
+  reset: 4,
+  timer35: 5,
+  timer36: 5,
 };
 
-function sortRoles(roles: MissionMessageRole[]): MissionMessageRole[] {
-  return [...roles].sort((a, b) => ROLE_PRIORITY[a] - ROLE_PRIORITY[b]);
+function sortEvents(events: MissionEvent[]): MissionEvent[] {
+  return [...events].sort((a, b) => EVENT_PRIORITY[a.event] - EVENT_PRIORITY[b.event]);
+}
+
+/** 1 時辰 = 10 分鐘（見 op_defs A35/A36 note）。 */
+function formatMinutes(minutes: number): string {
+  if (minutes === -1) return "無限時";
+  const shichen = minutes / 10;
+  return `限時 ${minutes} 分（${shichen} 時辰）`;
+}
+
+function eventLabel(e: MissionEvent): string {
+  switch (e.event) {
+    case "accept":
+      return "接取";
+    case "set_step":
+      return `設定進度 step ${e.step}`;
+    case "step_done":
+      return `完成步驟 ${e.step}`;
+    case "complete":
+      return "任務完成";
+    case "reset":
+      return "重置";
+    case "timer35":
+    case "timer36":
+      return formatMinutes(e.minutes ?? -1);
+  }
 }
 
 /**
- * 從 trigger DSL 反查出來的對話清單。Opcode 推斷的命中率約 88–93%（見
- * docs/msg-trigger-codes.md），餘下因擴充 opcode 未解碼可能漏連。
+ * 從 mission_events（上游已解析的任務語意事件）反查出來的對話清單。
+ * 完整 opcode 對照表見 docs/msg-trigger-codes.md。
  */
 export function MissionDialogueSection({ missionId }: { missionId: number }) {
   const groups = getMissionDialogue(missionId);
@@ -48,60 +70,81 @@ export function MissionDialogueSection({ missionId }: { missionId: number }) {
               <Badge variant="outline" className="font-mono">
                 MSG{g.fileNo}
               </Badge>
-              <span className="text-xs text-muted-foreground">
-                {g.entries.length} 段
-              </span>
+              <span className="text-xs text-muted-foreground">{g.entries.length} 段</span>
             </div>
 
             <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
               {g.entries.map((e) => (
-                <li key={`${e.fileNo}-${e.msgId}`} className="space-y-2 p-3">
-                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs">
-                    <span className="font-mono text-muted-foreground">
-                      #{e.msgId}
-                    </span>
-                    {e.speaker && (
-                      <span className="font-medium">{e.speaker}</span>
-                    )}
-                    <div className="ml-auto flex flex-wrap gap-1">
-                      {sortRoles(e.roles).map((r) => (
-                        <Badge
-                          key={r}
-                          variant="outline"
-                          className="font-normal"
-                        >
-                          {ROLE_LABELS[r]}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  {e.text ? (
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {e.text}
-                    </p>
+                <li key={`${e.fileNo}-${e.msgId}`} className="flex gap-3 p-3">
+                  {e.speaker ? (
+                    <NpcPortrait
+                      image={e.speakerImage}
+                      name={e.speaker}
+                      className="size-8 sm:size-9"
+                    />
                   ) : (
-                    <p className="text-sm italic text-muted-foreground">（無台詞）</p>
+                    <span
+                      aria-hidden
+                      className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-muted/40 text-muted-foreground/70 sm:size-9"
+                    >
+                      <MessageSquareIcon className="size-1/2" />
+                    </span>
                   )}
-                  {e.options.length > 0 && (
-                    <ul className="space-y-0.5 border-l-2 border-border/60 pl-3 text-sm">
-                      {e.options.map((o) => (
-                        <li key={o.index} className="flex items-baseline gap-2">
-                          <span className="text-muted-foreground">→</span>
-                          <span>{o.text ?? "（空白選項）"}</span>
-                          {o.jumpTo != null && (
-                            <span className="font-mono text-xs text-muted-foreground">
-                              jump #{o.jumpTo}
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {e.options.length === 0 && e.jumpTo != null && (
-                    <p className="text-xs text-muted-foreground">
-                      自動接續 → #{e.jumpTo}
-                    </p>
-                  )}
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs">
+                      <span className="font-mono text-muted-foreground">#{e.msgId}</span>
+                      {e.speaker && <span className="font-medium">{e.speaker}</span>}
+                      <div className="ml-auto flex flex-wrap gap-1">
+                        {sortEvents(e.events).map((ev, i) => (
+                          <Badge
+                            key={`${ev.event}-${ev.step}-${ev.minutes}-${i}`}
+                            variant="outline"
+                            className="font-normal"
+                          >
+                            {eventLabel(ev)}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    {e.text ? (
+                      <p className="text-sm leading-relaxed">
+                        <GameText text={e.text} />
+                      </p>
+                    ) : (
+                      <p className="text-sm italic text-muted-foreground">（無台詞）</p>
+                    )}
+                    {e.options.length > 0 && (
+                      <ul className="space-y-0.5 border-l-2 border-border/60 pl-3 text-sm">
+                        {e.options.map((o) => (
+                          <li key={o.index} className="flex items-baseline gap-2">
+                            <span className="text-muted-foreground">→</span>
+                            <span>{o.text ?? "（空白選項）"}</span>
+                            {o.jumpTo != null && (
+                              <span className="font-mono text-xs text-muted-foreground">
+                                jump #{o.jumpTo}
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {e.options.length === 0 && e.jumpTo != null && (
+                      <p className="text-xs text-muted-foreground">自動接續 → #{e.jumpTo}</p>
+                    )}
+                    {e.triggerOps.length > 0 && (
+                      <ul className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                        {e.triggerOps.map((op, i) => (
+                          <li
+                            key={`${op.kind}${op.op}-${i}`}
+                            className={op.likely ? "italic text-muted-foreground/70" : undefined}
+                            title={op.likely ? "語意為推測" : undefined}
+                          >
+                            {op.label}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -110,8 +153,8 @@ export function MissionDialogueSection({ missionId }: { missionId: number }) {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        從 trigger DSL 推斷（opcode 27/28/13/33/34/35/36），約 90% 任務語意命中率；
-        罕用 opcode 尚未解碼，可能有少數對話漏連。
+        任務事件語意（接取/進度/完成/重置/計時器）與逐條 trigger 釋義由上游解析 寫入 mission_events
+        / trigger_ops / op_defs；斜體標示為推測語意 （op_defs.confidence ≠ confirmed）。
       </p>
     </section>
   );

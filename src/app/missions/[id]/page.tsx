@@ -6,10 +6,21 @@ import { Badge } from "@/components/ui/badge";
 import { EntityPortrait } from "@/components/common/entity-portrait";
 import { MissionStepText } from "@/components/missions/mission-step-text";
 import { MissionDialogueSection } from "@/components/missions/mission-dialogue";
+import { NpcList } from "@/components/missions/npc-portrait";
 import { getMissionDetail } from "@/lib/queries/missions";
 import { getItemIconMap, getNpcImageMap, type EntityImage } from "@/lib/queries/images";
 import { ItemIcon } from "@/components/common/item-icon";
+import { GameText } from "@/components/common/game-text";
+import {
+  buildFlowRows,
+  MissionAcceptSection,
+  MissionRequirementSection,
+  MissionRewardSection,
+} from "@/components/missions/mission-logic";
+import { getMissionLogic } from "@/lib/queries/mission-logic";
 import type { MissionItemRef, MissionMapRef } from "@/lib/types/mission";
+import type { MissionFlowStep } from "@/lib/types/mission-logic";
+import { CircleCheckIcon, MessageSquareIcon } from "lucide-react";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -169,6 +180,47 @@ function ItemSummary({
   );
 }
 
+function FlowDialogue({
+  flow,
+  divided,
+  npcImages,
+  hideText = false,
+}: {
+  flow: MissionFlowStep;
+  divided: boolean;
+  npcImages: Record<string, EntityImage | null>;
+  /** 任務完成那句常與最後一步是同一段對話，重複時只留 NPC 名。 */
+  hideText?: boolean;
+}) {
+  return (
+    <div
+      className={
+        divided
+          ? "space-y-1 border-t border-border/60 pt-3 md:border-t-0 md:border-l md:pt-0 md:pl-4"
+          : "space-y-1"
+      }
+    >
+      {flow.npcs.length > 0 ? (
+        <div className="text-xs font-medium">
+          <NpcList names={flow.npcs} images={npcImages} portraitClassName="size-7" />
+        </div>
+      ) : (
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <MessageSquareIcon className="size-3.5" aria-hidden />
+          <span>系統</span>
+        </div>
+      )}
+      {hideText ? null : flow.dialogue ? (
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          「<GameText text={flow.dialogue} maxChars={60} />」
+        </p>
+      ) : (
+        <p className="text-xs text-muted-foreground">（無台詞）</p>
+      )}
+    </div>
+  );
+}
+
 export default async function MissionDetailPage({ params }: PageProps) {
   const { id } = await params;
   const missionId = Number(id);
@@ -187,6 +239,16 @@ export default async function MissionDetailPage({ params }: PageProps) {
     .map((m) => m.npcId);
   const npcImageMap = getNpcImageMap(npcIds);
   const itemIconMap = getItemIconMap(mission.allItems.map((it) => it.itemId));
+
+  const logic = getMissionLogic(mission.id);
+  const hasLogic =
+    logic.acceptNpcs.length > 0 ||
+    logic.completeNpcs.length > 0 ||
+    logic.timers.length > 0 ||
+    logic.requirementGroups.length > 0 ||
+    logic.rewards.length > 0 ||
+    logic.deliveries.length > 0;
+  const flowRows = buildFlowRows(mission.steps, logic.flow);
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
@@ -235,6 +297,18 @@ export default async function MissionDetailPage({ params }: PageProps) {
         </section>
       )}
 
+      {hasLogic ? (
+        <>
+          <MissionAcceptSection logic={logic} />
+          <MissionRequirementSection groups={logic.requirementGroups} />
+          <MissionRewardSection logic={logic} />
+        </>
+      ) : (
+        <p className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+          客戶端資料未記載此任務的接取 NPC、接取條件與獎勵。
+        </p>
+      )}
+
       {mission.allItems.length > 0 && (
         <section className="space-y-2">
           <h2 className="text-lg font-medium">所需物品</h2>
@@ -245,29 +319,77 @@ export default async function MissionDetailPage({ params }: PageProps) {
         </section>
       )}
 
-      {mission.steps.length > 0 && (
+      {flowRows.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-lg font-medium">步驟</h2>
-          <ol className="space-y-3">
-            {mission.steps.map((s) => (
-              <li
-                key={s.index}
-                className="space-y-2 rounded-lg border border-border/60 bg-card p-4"
-              >
-                <div className="flex items-baseline gap-2">
-                  <Badge variant="secondary" className="font-mono">
-                    Step {s.index}
-                  </Badge>
+          <h2 className="text-lg font-medium">任務流程</h2>
+          <ol className="relative space-y-3 before:absolute before:top-3 before:bottom-3 before:left-[5px] before:w-px before:bg-border">
+            {flowRows.map((row, i) => (
+              <li key={row.key} className="relative pl-6">
+                <span
+                  aria-hidden
+                  className={
+                    row.kind === "complete"
+                      ? "absolute top-[1.3rem] left-0 size-[11px] rounded-full bg-primary"
+                      : "absolute top-[1.3rem] left-0 size-[11px] rounded-full border-2 border-primary/70 bg-background"
+                  }
+                />
+                <div className="space-y-2 rounded-lg border border-border/60 bg-card p-4">
+                  <div className="flex items-baseline gap-2">
+                    {row.kind === "complete" ? (
+                      <Badge variant="secondary">
+                        <CircleCheckIcon aria-hidden />
+                        任務完成
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="font-mono">
+                        Step {row.index}
+                      </Badge>
+                    )}
+                    {row.kind === "accept" && (
+                      <Badge variant="outline" className="font-normal">
+                        接取
+                      </Badge>
+                    )}
+                  </div>
+                  <div
+                    className={
+                      row.step && row.flow
+                        ? "grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,15rem)] md:gap-4"
+                        : undefined
+                    }
+                  >
+                    {row.step && (
+                      <div className="space-y-2">
+                        <p className="text-sm leading-relaxed">
+                          <MissionStepText rawText={row.step.rawText} itemsLookup={itemsLookup} />
+                        </p>
+                        {row.step.maps.length > 0 && (
+                          <MapChips maps={row.step.maps} npcImageMap={npcImageMap} />
+                        )}
+                      </div>
+                    )}
+                    {row.flow && (
+                      <FlowDialogue
+                        flow={row.flow}
+                        divided={row.step != null}
+                        npcImages={logic.npcImages}
+                        hideText={
+                          row.kind === "complete" &&
+                          row.flow.dialogue != null &&
+                          row.flow.dialogue === flowRows[i - 1]?.flow?.dialogue
+                        }
+                      />
+                    )}
+                  </div>
                 </div>
-                <p className="text-sm leading-relaxed">
-                  <MissionStepText rawText={s.rawText} itemsLookup={itemsLookup} />
-                </p>
-                {s.maps.length > 0 && (
-                  <MapChips maps={s.maps} npcImageMap={npcImageMap} />
-                )}
               </li>
             ))}
           </ol>
+          {logic.flow.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              每步附的對話是完成該步時觸發的 NPC 台詞節錄（Step 1 為接取時的台詞）；對話與步驟是依序號推算對齊，少數任務可能差一步。
+            </p>
+          )}
         </section>
       )}
 

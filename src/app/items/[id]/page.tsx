@@ -15,6 +15,13 @@ import {
 import { getMissionsUsingItem } from "@/lib/queries/missions";
 import { getAwakeningPath } from "@/lib/queries/awakening";
 import {
+  getBoxesContainingItem,
+  getItemBoxContents,
+  getMissionsRewardingItem,
+  getMissionsTakingItem,
+} from "@/lib/queries/mission-logic";
+import { getMysteryContents, getMysterySources } from "@/lib/queries/mystery";
+import {
   presets,
   scoreItemAcrossPresets,
   groupRandsByItemId,
@@ -32,6 +39,12 @@ import { CompoundUsesSection } from "@/components/items/compound-uses-section";
 import { EquipmentEnhancementsSection } from "@/components/items/equipment-enhancements-section";
 import { ShopBuybackSection, ShopSalesSection } from "@/components/items/shop-availability-section";
 import { MissionUsesSection } from "@/components/items/mission-uses-section";
+import {
+  BoxContentsSection,
+  BoxSourcesSection,
+  MissionRewardSourcesSection,
+} from "@/components/items/box-sections";
+import { MysteryContentsSection, MysterySourcesSection } from "@/components/items/mystery-sections";
 import { ItemSectionGroup, summarizeSourceRoutes } from "@/components/items/item-section-group";
 import { MarketPriceSection } from "@/components/items/market-price-section";
 import { CompareButton } from "@/components/items/compare-button";
@@ -84,6 +97,14 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
   const compoundSources = getCompoundSourcesForItem(item.id);
   const compoundUses = getCompoundUsesForItem(item.id);
   const missionUses = getMissionsUsingItem(item.id);
+  const missionRewards = getMissionsRewardingItem(item.id);
+  const missionTakes = getMissionsTakingItem(item.id);
+  const boxSources = getBoxesContainingItem(item.id);
+  const boxContents = getItemBoxContents(item.id);
+  const mysteryContents = getMysteryContents(item.id);
+  const mysterySources = getMysterySources(item.id);
+  // 已列在「任務獎勵」的任務，不再出現在用途區的 mission_refs 清單
+  const rewardMissionIds = missionRewards.map((m) => m.missionId);
   const awakeningPath = getAwakeningPath(item);
   const enhancements = getEquipmentEnhancementsForItemType(item.type);
 
@@ -91,8 +112,15 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
     drops: sources.length,
     shops: shopSales.length,
     compounds: compoundSources.length,
+    missions: new Set(rewardMissionIds).size,
+    boxes: new Set(boxSources.map((b) => b.boxItemId)).size,
+    mysteryBoxes: new Set(mysterySources.map((m) => m.boxItemId)).size,
   });
-  const hasUses = compoundUses.length > 0 || missionUses.length > 0 || shopBuys.length > 0;
+  const hasMissionUses =
+    missionTakes.length > 0 || missionUses.some((u) => !rewardMissionIds.includes(u.missionId));
+  const hasUses =
+    mysteryContents != null ||
+    boxContents.length > 0 || compoundUses.length > 0 || hasMissionUses || shopBuys.length > 0;
   const hasProgression = awakeningPath != null || enhancements.length > 0;
 
   const phase2 = isPhase2Type(item.type);
@@ -183,6 +211,12 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
             <ShopSalesSection sales={shopSales} />
 
             <CompoundSourcesSection itemId={item.id} sources={compoundSources} />
+
+            <MissionRewardSourcesSection missions={missionRewards} />
+
+            <BoxSourcesSection boxes={boxSources} />
+
+            <MysterySourcesSection sources={mysterySources} />
           </>
         ) : (
           <p className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-sm leading-relaxed text-muted-foreground">
@@ -198,9 +232,13 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
           icon={<HammerIcon />}
           description="以下為此道具的消耗與出清方式，不是取得來源。"
         >
+          <BoxContentsSection options={boxContents} />
+
+          <MysteryContentsSection contents={mysteryContents} />
+
           <CompoundUsesSection uses={compoundUses} />
 
-          <MissionUsesSection uses={missionUses} />
+          <MissionUsesSection uses={missionUses} takes={missionTakes} excludeIds={rewardMissionIds} />
 
           <ShopBuybackSection buys={shopBuys} />
         </ItemSectionGroup>

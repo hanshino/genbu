@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { getDb } from "@/lib/db";
 import {
   getAchievementCategories,
   getAchievementsByCategory,
@@ -51,11 +52,27 @@ import {
 } from "../images";
 import { getMissionDialogue, getMessageNode } from "../messages";
 import {
+  getBoxItemIds,
+  getBoxesContainingItem,
+  getHeroTokenSources,
+  getItemBoxContents,
+  getItemBoxRewards,
+  getMissionLogic,
+  getMissionsRewardingItem,
+  getMissionsTakingItem,
+} from "../mission-logic";
+import {
   getAllMissionGroupStats,
   getAllMissionListItems,
   getMissionDetail,
   getMissionsUsingItem,
 } from "../missions";
+import {
+  getMysteryBoxInfo,
+  getMysteryBoxInfoMap,
+  getMysteryContents,
+  getMysterySources,
+} from "../mystery";
 import { getStagesForMonster, getStagesForMonsters, getMonstersAtStage } from "../monster-spawns";
 import {
   parseDropItem,
@@ -91,6 +108,11 @@ import type { CompoundRow } from "@/lib/types/compound";
  * return 而跳過 db.prepare()，起不到守住 schema 的作用）。
  */
 
+// mystery（隨機寶箱）
+const MYSTERY_BOX_ITEM_ID = 31014; // 雲夢湖底寶箱：use_case=10，表 901 有資料
+const MYSTERY_HIDDEN_ITEM_ID = 32862; // 夢影迷境寶箱：has_data = 0
+const ITEM_IN_MYSTERY_ID = 24004; // 大活絡藥：表 901 會開出
+
 // items
 const REAL_ITEM_ID = 20001; // 有對應 item_rand、shop_sells、shop_buys
 const REAL_ITEM_TYPE = "HORSE"; // items.type_name 真實存在的值（>0 筆）
@@ -106,6 +128,14 @@ const REAL_MISSION_ID = 1; // mission_refs 同時有 item / map(npc>0) 兩種 re
 const REAL_MISSION_ITEM_ID = 20007; // 被某任務 ref 到的 item id
 const STAGE_ID_WITH_GROUP = 1; // stages.group 非 null，且有 monster_spawns / mission_refs 命中
 const STAGE_ID_WITH_APPEAR = 25; // appear_map1 / appear_map2 非 0
+
+// mission-logic
+const MISSION_WITH_LOGIC_ID = 801; // 如假似真：有 accept/complete/requirements/rewards/deliveries
+const BOX_ITEM_ID = 24221; // 魂回禮盒：item_box_rewards 有一組開箱
+const ITEM_IN_BOX_ID = 28154; // 賞善輕功丹：出現在 24221 開箱結果裡
+const ITEM_REWARDED_BY_MISSION_ID = 24221; // 出現在 mission 801 的 rewards
+const ITEM_TAKEN_BY_MISSION_ID = 24220; // 出現在 mission 801 的 deliveries（take_item）
+const HERO_WITH_TOKEN_ID = 1; // hero_codes.hero_id=1 有對應禮盒 hero_token 來源
 
 // compound
 const COMPOUND_GROUP_ID = 70; // compound_groups 真實存在且底下有 ITEM_COMPOUND_EQUIPMENT 配方
@@ -444,6 +474,53 @@ describe("messages.ts", () => {
   });
 });
 
+describe("mission-logic.ts", () => {
+  it("getMissionLogic（有 accept/complete/requirements/rewards/deliveries）", () => {
+    expect(() => getMissionLogic(MISSION_WITH_LOGIC_ID)).not.toThrow();
+  });
+
+  it("getItemBoxRewards（有開箱結果）", () => {
+    expect(() => getItemBoxRewards(BOX_ITEM_ID)).not.toThrow();
+  });
+
+  it("getBoxItemIds / getItemBoxContents（巢狀開箱）", () => {
+    expect(() => getBoxItemIds([BOX_ITEM_ID, ITEM_IN_BOX_ID])).not.toThrow();
+    expect(() => getItemBoxContents(BOX_ITEM_ID)).not.toThrow();
+  });
+
+  it("getBoxesContainingItem（反查含此道具的禮盒）", () => {
+    expect(() => getBoxesContainingItem(ITEM_IN_BOX_ID)).not.toThrow();
+  });
+
+  it("getMissionsRewardingItem（反查獎勵此道具的任務）", () => {
+    expect(() => getMissionsRewardingItem(ITEM_REWARDED_BY_MISSION_ID)).not.toThrow();
+  });
+
+  it("getMissionsTakingItem（反查會收走此道具的任務）", () => {
+    expect(() => getMissionsTakingItem(ITEM_TAKEN_BY_MISSION_ID)).not.toThrow();
+  });
+
+  it("getHeroTokenSources（有禮盒符令來源）", () => {
+    expect(() => getHeroTokenSources(HERO_WITH_TOKEN_ID)).not.toThrow();
+  });
+});
+
+describe("mystery.ts", () => {
+  it("getMysteryBoxInfo / getMysteryBoxInfoMap", () => {
+    expect(() => getMysteryBoxInfo(MYSTERY_BOX_ITEM_ID)).not.toThrow();
+    expect(() => getMysteryBoxInfoMap([MYSTERY_BOX_ITEM_ID, MYSTERY_HIDDEN_ITEM_ID])).not.toThrow();
+  });
+
+  it("getMysteryContents（有資料 / has_data=0）", () => {
+    expect(() => getMysteryContents(MYSTERY_BOX_ITEM_ID)).not.toThrow();
+    expect(() => getMysteryContents(MYSTERY_HIDDEN_ITEM_ID)).not.toThrow();
+  });
+
+  it("getMysterySources", () => {
+    expect(() => getMysterySources(ITEM_IN_MYSTERY_ID)).not.toThrow();
+  });
+});
+
 describe("missions.ts", () => {
   it("getAllMissionGroupStats", () => {
     expect(() => getAllMissionGroupStats()).not.toThrow();
@@ -583,5 +660,34 @@ describe("stages.ts", () => {
 describe("status.ts", () => {
   it("getStatusById", () => {
     expect(() => getStatusById(REAL_STATUS_ID)).not.toThrow();
+  });
+});
+
+describe("schema smoke — 任務對話上游解析表", () => {
+  const TABLES = [
+    "trigger_ops",
+    "dialogue_edges",
+    "op_defs",
+    "item_box_rewards",
+    "hero_codes",
+    "mission_events",
+    "mission_requirements",
+    "mission_rewards",
+    "mystery_boxes",
+    "mystery_box_items",
+  ];
+
+  it.each(TABLES)("表 %s 存在", (table) => {
+    const db = getDb();
+    const row = db
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?")
+      .get(table);
+    expect(row).toBeDefined();
+  });
+
+  it.each(["v_mission_overview", "v_item_mystery"])("view %s 存在", (view) => {
+    const db = getDb();
+    const row = db.prepare("SELECT name FROM sqlite_master WHERE type = 'view' AND name = ?").get(view);
+    expect(row).toBeDefined();
   });
 });

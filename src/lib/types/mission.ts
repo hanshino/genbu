@@ -90,6 +90,20 @@ export interface MissionListItem {
   groupId: number | null;
   cycleTime: number | null;
   stepCount: number;
+  // 以下欄位沒資料時省略（壓 payload）。
+  /** 接取 NPC 名稱（去重）。 */
+  acceptNpcs?: string[];
+  /**
+   * 最低接取等級。接取條件的各組是「任一組成立即可」，所以取各組等級下限的最小值；
+   * 只要有一組沒有等級下限（或完全沒有條件資料）就省略 = 無等級需求。
+   */
+  minLevel?: number;
+  /** 接取條件中出現的門派（任一組）。 */
+  factions?: string[];
+  /** 有非交付類獎勵（排除 take_item / pay_gold / pay_charisma）。 */
+  hasReward?: true;
+  /** 有 timer35/timer36 限時（minutes > 0）。 */
+  timed?: true;
 }
 
 /** 群組統計（hub 用）。 */
