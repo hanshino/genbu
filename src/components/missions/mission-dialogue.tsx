@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge";
+import { MessageSquareIcon } from "lucide-react";
 import { GameText } from "@/components/common/game-text";
+import { NpcPortrait } from "@/components/missions/npc-portrait";
 import { getMissionDialogue } from "@/lib/queries/messages";
 import type { MissionEvent, MissionEventKind } from "@/lib/types/message";
 
@@ -68,73 +70,81 @@ export function MissionDialogueSection({ missionId }: { missionId: number }) {
               <Badge variant="outline" className="font-mono">
                 MSG{g.fileNo}
               </Badge>
-              <span className="text-xs text-muted-foreground">
-                {g.entries.length} 段
-              </span>
+              <span className="text-xs text-muted-foreground">{g.entries.length} 段</span>
             </div>
 
             <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
               {g.entries.map((e) => (
-                <li key={`${e.fileNo}-${e.msgId}`} className="space-y-2 p-3">
-                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs">
-                    <span className="font-mono text-muted-foreground">
-                      #{e.msgId}
-                    </span>
-                    {e.speaker && (
-                      <span className="font-medium">{e.speaker}</span>
-                    )}
-                    <div className="ml-auto flex flex-wrap gap-1">
-                      {sortEvents(e.events).map((ev, i) => (
-                        <Badge
-                          key={`${ev.event}-${ev.step}-${ev.minutes}-${i}`}
-                          variant="outline"
-                          className="font-normal"
-                        >
-                          {eventLabel(ev)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  {e.text ? (
-                    <p className="text-sm leading-relaxed">
-                      <GameText text={e.text} />
-                    </p>
+                <li key={`${e.fileNo}-${e.msgId}`} className="flex gap-3 p-3">
+                  {e.speaker ? (
+                    <NpcPortrait
+                      image={e.speakerImage}
+                      name={e.speaker}
+                      className="size-8 sm:size-9"
+                    />
                   ) : (
-                    <p className="text-sm italic text-muted-foreground">（無台詞）</p>
+                    <span
+                      aria-hidden
+                      className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-muted/40 text-muted-foreground/70 sm:size-9"
+                    >
+                      <MessageSquareIcon className="size-1/2" />
+                    </span>
                   )}
-                  {e.options.length > 0 && (
-                    <ul className="space-y-0.5 border-l-2 border-border/60 pl-3 text-sm">
-                      {e.options.map((o) => (
-                        <li key={o.index} className="flex items-baseline gap-2">
-                          <span className="text-muted-foreground">→</span>
-                          <span>{o.text ?? "（空白選項）"}</span>
-                          {o.jumpTo != null && (
-                            <span className="font-mono text-xs text-muted-foreground">
-                              jump #{o.jumpTo}
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {e.options.length === 0 && e.jumpTo != null && (
-                    <p className="text-xs text-muted-foreground">
-                      自動接續 → #{e.jumpTo}
-                    </p>
-                  )}
-                  {e.triggerOps.length > 0 && (
-                    <ul className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                      {e.triggerOps.map((op, i) => (
-                        <li
-                          key={`${op.kind}${op.op}-${i}`}
-                          className={op.likely ? "italic text-muted-foreground/70" : undefined}
-                          title={op.likely ? "語意為推測" : undefined}
-                        >
-                          {op.label}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs">
+                      <span className="font-mono text-muted-foreground">#{e.msgId}</span>
+                      {e.speaker && <span className="font-medium">{e.speaker}</span>}
+                      <div className="ml-auto flex flex-wrap gap-1">
+                        {sortEvents(e.events).map((ev, i) => (
+                          <Badge
+                            key={`${ev.event}-${ev.step}-${ev.minutes}-${i}`}
+                            variant="outline"
+                            className="font-normal"
+                          >
+                            {eventLabel(ev)}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    {e.text ? (
+                      <p className="text-sm leading-relaxed">
+                        <GameText text={e.text} />
+                      </p>
+                    ) : (
+                      <p className="text-sm italic text-muted-foreground">（無台詞）</p>
+                    )}
+                    {e.options.length > 0 && (
+                      <ul className="space-y-0.5 border-l-2 border-border/60 pl-3 text-sm">
+                        {e.options.map((o) => (
+                          <li key={o.index} className="flex items-baseline gap-2">
+                            <span className="text-muted-foreground">→</span>
+                            <span>{o.text ?? "（空白選項）"}</span>
+                            {o.jumpTo != null && (
+                              <span className="font-mono text-xs text-muted-foreground">
+                                jump #{o.jumpTo}
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {e.options.length === 0 && e.jumpTo != null && (
+                      <p className="text-xs text-muted-foreground">自動接續 → #{e.jumpTo}</p>
+                    )}
+                    {e.triggerOps.length > 0 && (
+                      <ul className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                        {e.triggerOps.map((op, i) => (
+                          <li
+                            key={`${op.kind}${op.op}-${i}`}
+                            className={op.likely ? "italic text-muted-foreground/70" : undefined}
+                            title={op.likely ? "語意為推測" : undefined}
+                          >
+                            {op.label}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -143,9 +153,8 @@ export function MissionDialogueSection({ missionId }: { missionId: number }) {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        任務事件語意（接取/進度/完成/重置/計時器）與逐條 trigger 釋義由上游解析
-        寫入 mission_events / trigger_ops / op_defs；斜體標示為推測語意
-        （op_defs.confidence ≠ confirmed）。
+        任務事件語意（接取/進度/完成/重置/計時器）與逐條 trigger 釋義由上游解析 寫入 mission_events
+        / trigger_ops / op_defs；斜體標示為推測語意 （op_defs.confidence ≠ confirmed）。
       </p>
     </section>
   );

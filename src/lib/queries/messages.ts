@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { getNpcImagesByName } from "@/lib/queries/mission-logic";
 import type {
   MessageNode,
   MessageOption,
@@ -198,6 +199,7 @@ export function getMissionDialogue(missionId: number): MissionDialogueGroup[] {
         fileNo,
         msgId: m.msgId,
         speaker: m.speaker,
+        speakerImage: null,
         text: m.text,
         options: optsByMsg.get(m.msgId) ?? [],
         jumpTo: m.jumpTo,
@@ -208,6 +210,11 @@ export function getMissionDialogue(missionId: number): MissionDialogueGroup[] {
 
     groups.push({ fileNo, entries });
   }
+
+  // 說話者立繪：跨檔一次查
+  const entries = groups.flatMap((g) => g.entries);
+  const images = getNpcImagesByName(entries.flatMap((e) => (e.speaker ? [e.speaker] : [])));
+  for (const e of entries) if (e.speaker) e.speakerImage = images.get(e.speaker) ?? null;
 
   return groups;
 }

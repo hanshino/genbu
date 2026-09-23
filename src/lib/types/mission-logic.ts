@@ -135,6 +135,8 @@ export interface MissionLogic {
   flow: MissionFlowStep[];
   rewards: Reward[];
   deliveries: Reward[];
+  /** 上面出現的所有 NPC 名 → 立繪（依名字對 npc；查無為 null）。 */
+  npcImages: Record<string, EntityImage | null>;
 }
 
 /** item_box_rewards 依 (grant_msg_id, grant_trigger_idx) 分組的一次開箱結果。 */

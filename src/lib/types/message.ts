@@ -6,6 +6,8 @@
 // parser 對照表）解析、寫回 mission_events / trigger_ops / op_defs 三張表，
 // genbu 只需查表，不再自行解析 messages.triggers 原始 DSL。
 
+import type { EntityImage } from "@/lib/queries/images";
+
 /** 對話節點上玩家可點的選項。 */
 export interface MessageOption {
   /** 1..8 */
@@ -71,6 +73,8 @@ export interface MissionDialogueGroup {
   fileNo: number;
   entries: Array<
     MessageNode & {
+      /** 說話者立繪（依名字對 npc；系統訊息或查無為 null）。 */
+      speakerImage: EntityImage | null;
       events: MissionEvent[];
       triggerOps: TriggerOpTranslation[];
     }

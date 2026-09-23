@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { getItemIcon, getItemIconMap } from "@/lib/queries/images";
+import { getItemIcon, getItemIconMap, type EntityImage } from "@/lib/queries/images";
 import type {
   BoxContainingItem,
   ConditionKind,
@@ -301,7 +301,35 @@ export function getMissionLogic(missionId: number): MissionLogic {
     else rewards.push(reward);
   }
 
-  return { acceptNpcs, completeNpcs, timers, requirementGroups, flow, rewards, deliveries };
+  const npcImages = Object.fromEntries(
+    getNpcImagesByName([...acceptNpcs, ...completeNpcs, ...flow.flatMap((f) => f.npcs)]),
+  );
+
+  return { acceptNpcs, completeNpcs, timers, requirementGroups, flow, rewards, deliveries, npcImages };
+}
+
+/**
+ * NPC 名稱 → 立繪。npc_strings 與 npc 沒有 FK，只能用名字對；同名多筆 npc 時取有圖、id 最小的一筆。
+ * 回傳的 Map 對每個傳入名字都有 key，查無圖為 null。一次查詢。
+ * ponytail: 名字 < 數十個，不分塊；若拿來撈全表再改用 images.ts 的 chunk。
+ */
+export function getNpcImagesByName(names: string[]): Map<string, EntityImage | null> {
+  const unique = [...new Set(names)];
+  const map = new Map<string, EntityImage | null>(unique.map((n) => [n, null]));
+  if (unique.length === 0) return map;
+  const ph = unique.map(() => "?").join(",");
+  const rows = getDb()
+    .prepare(
+      `SELECT n.name, i.url, i.width, i.height
+       FROM npc n JOIN npc_images i ON i.npc_id = n.id
+       WHERE n.name IN (${ph})
+       ORDER BY n.id`,
+    )
+    .all(...unique) as Array<{ name: string } & EntityImage>;
+  for (const r of rows) {
+    if (map.get(r.name) == null) map.set(r.name, { url: r.url, width: r.width, height: r.height });
+  }
+  return map;
 }
 
 function getMessageTexts(msgIds: number[]): Map<number, string> {

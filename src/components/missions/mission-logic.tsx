@@ -20,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ItemIcon } from "@/components/common/item-icon";
 import { GameText } from "@/components/common/game-text";
 import { IconFrame, RewardLine, linkClass, num, trim } from "@/components/common/reward-view";
+import { NpcList } from "@/components/missions/npc-portrait";
 import type { MissionStep } from "@/lib/types/mission";
 import type {
   ConditionKind,
@@ -59,7 +60,8 @@ function InfoCell({ icon: Icon, label, children }: { icon: LucideIcon; label: st
 }
 
 export function MissionAcceptSection({ logic }: { logic: MissionLogic }) {
-  const join = (xs: string[]) => (xs.length > 0 ? xs.join("、") : <Missing />);
+  const join = (xs: string[]) =>
+    xs.length > 0 ? <NpcList names={xs} images={logic.npcImages} /> : <Missing />;
   return (
     <section className="space-y-2">
       <h2 className="text-lg font-medium">接取與交付</h2>

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { EntityPortrait } from "@/components/common/entity-portrait";
 import { MissionStepText } from "@/components/missions/mission-step-text";
 import { MissionDialogueSection } from "@/components/missions/mission-dialogue";
+import { NpcList } from "@/components/missions/npc-portrait";
 import { getMissionDetail } from "@/lib/queries/missions";
 import { getItemIconMap, getNpcImageMap, type EntityImage } from "@/lib/queries/images";
 import { ItemIcon } from "@/components/common/item-icon";
@@ -182,10 +183,12 @@ function ItemSummary({
 function FlowDialogue({
   flow,
   divided,
+  npcImages,
   hideText = false,
 }: {
   flow: MissionFlowStep;
   divided: boolean;
+  npcImages: Record<string, EntityImage | null>;
   /** 任務完成那句常與最後一步是同一段對話，重複時只留 NPC 名。 */
   hideText?: boolean;
 }) {
@@ -197,14 +200,16 @@ function FlowDialogue({
           : "space-y-1"
       }
     >
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <MessageSquareIcon className="size-3.5" aria-hidden />
-        {flow.npcs.length > 0 ? (
-          <span className="font-medium text-foreground">{flow.npcs.join("、")}</span>
-        ) : (
+      {flow.npcs.length > 0 ? (
+        <div className="text-xs font-medium">
+          <NpcList names={flow.npcs} images={npcImages} portraitClassName="size-7" />
+        </div>
+      ) : (
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <MessageSquareIcon className="size-3.5" aria-hidden />
           <span>系統</span>
-        )}
-      </div>
+        </div>
+      )}
       {hideText ? null : flow.dialogue ? (
         <p className="text-sm leading-relaxed text-muted-foreground">
           「<GameText text={flow.dialogue} maxChars={60} />」
@@ -367,6 +372,7 @@ export default async function MissionDetailPage({ params }: PageProps) {
                       <FlowDialogue
                         flow={row.flow}
                         divided={row.step != null}
+                        npcImages={logic.npcImages}
                         hideText={
                           row.kind === "complete" &&
                           row.flow.dialogue != null &&
