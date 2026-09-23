@@ -49,8 +49,13 @@ export function ItemFilters({
     if (next.type && next.type !== ALL_TYPES) params.set("type", next.type);
     else params.delete("type");
     params.delete("page");
+    const nextQs = params.toString();
+    // 掛載時 debounce effect 也會跑一次；條件沒變就不要 push，否則會把 page 洗掉（返回列表跳回第一頁）。
+    const currentQs = new URLSearchParams(searchParams.toString());
+    currentQs.delete("page");
+    if (currentQs.toString() === nextQs) return;
     startTransition(() => {
-      router.push(`/items${params.size > 0 ? `?${params.toString()}` : ""}`);
+      router.push(`/items${nextQs ? `?${nextQs}` : ""}`);
     });
   }
 
