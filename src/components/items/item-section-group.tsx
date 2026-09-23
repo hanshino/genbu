@@ -85,6 +85,7 @@ export function summarizeSourceRoutes(counts: {
   compounds: number;
   missions?: number;
   boxes?: number;
+  mysteryBoxes?: number;
 }): string | null {
   const parts: string[] = [];
   if (counts.drops > 0) parts.push(`怪物掉落（${counts.drops} 隻）`);
@@ -92,5 +93,6 @@ export function summarizeSourceRoutes(counts: {
   if (counts.compounds > 0) parts.push(`煉化配方（${counts.compounds} 條）`);
   if (counts.missions) parts.push(`任務獎勵（${counts.missions} 個）`);
   if (counts.boxes) parts.push(`禮盒（${counts.boxes} 種）`);
+  if (counts.mysteryBoxes) parts.push(`隨機寶箱（${counts.mysteryBoxes} 種）`);
   return parts.length > 0 ? parts.join(" · ") : null;
 }

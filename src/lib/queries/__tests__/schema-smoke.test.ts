@@ -52,8 +52,10 @@ import {
 } from "../images";
 import { getMissionDialogue, getMessageNode } from "../messages";
 import {
+  getBoxItemIds,
   getBoxesContainingItem,
   getHeroTokenSources,
+  getItemBoxContents,
   getItemBoxRewards,
   getMissionLogic,
   getMissionsRewardingItem,
@@ -65,6 +67,12 @@ import {
   getMissionDetail,
   getMissionsUsingItem,
 } from "../missions";
+import {
+  getMysteryBoxInfo,
+  getMysteryBoxInfoMap,
+  getMysteryContents,
+  getMysterySources,
+} from "../mystery";
 import { getStagesForMonster, getStagesForMonsters, getMonstersAtStage } from "../monster-spawns";
 import {
   parseDropItem,
@@ -99,6 +107,11 @@ import type { CompoundRow } from "@/lib/types/compound";
  * 真的被 prepare 到（例如 IN (...) 或 JOIN 的查詢，空陣列/找不到的 id 會提早
  * return 而跳過 db.prepare()，起不到守住 schema 的作用）。
  */
+
+// mystery（隨機寶箱）
+const MYSTERY_BOX_ITEM_ID = 31014; // 雲夢湖底寶箱：use_case=10，表 901 有資料
+const MYSTERY_HIDDEN_ITEM_ID = 32862; // 夢影迷境寶箱：has_data = 0
+const ITEM_IN_MYSTERY_ID = 24004; // 大活絡藥：表 901 會開出
 
 // items
 const REAL_ITEM_ID = 20001; // 有對應 item_rand、shop_sells、shop_buys
@@ -470,6 +483,11 @@ describe("mission-logic.ts", () => {
     expect(() => getItemBoxRewards(BOX_ITEM_ID)).not.toThrow();
   });
 
+  it("getBoxItemIds / getItemBoxContents（巢狀開箱）", () => {
+    expect(() => getBoxItemIds([BOX_ITEM_ID, ITEM_IN_BOX_ID])).not.toThrow();
+    expect(() => getItemBoxContents(BOX_ITEM_ID)).not.toThrow();
+  });
+
   it("getBoxesContainingItem（反查含此道具的禮盒）", () => {
     expect(() => getBoxesContainingItem(ITEM_IN_BOX_ID)).not.toThrow();
   });
@@ -484,6 +502,22 @@ describe("mission-logic.ts", () => {
 
   it("getHeroTokenSources（有禮盒符令來源）", () => {
     expect(() => getHeroTokenSources(HERO_WITH_TOKEN_ID)).not.toThrow();
+  });
+});
+
+describe("mystery.ts", () => {
+  it("getMysteryBoxInfo / getMysteryBoxInfoMap", () => {
+    expect(() => getMysteryBoxInfo(MYSTERY_BOX_ITEM_ID)).not.toThrow();
+    expect(() => getMysteryBoxInfoMap([MYSTERY_BOX_ITEM_ID, MYSTERY_HIDDEN_ITEM_ID])).not.toThrow();
+  });
+
+  it("getMysteryContents（有資料 / has_data=0）", () => {
+    expect(() => getMysteryContents(MYSTERY_BOX_ITEM_ID)).not.toThrow();
+    expect(() => getMysteryContents(MYSTERY_HIDDEN_ITEM_ID)).not.toThrow();
+  });
+
+  it("getMysterySources", () => {
+    expect(() => getMysterySources(ITEM_IN_MYSTERY_ID)).not.toThrow();
   });
 });
 
@@ -639,6 +673,8 @@ describe("schema smoke — 任務對話上游解析表", () => {
     "mission_events",
     "mission_requirements",
     "mission_rewards",
+    "mystery_boxes",
+    "mystery_box_items",
   ];
 
   it.each(TABLES)("表 %s 存在", (table) => {
@@ -649,11 +685,9 @@ describe("schema smoke — 任務對話上游解析表", () => {
     expect(row).toBeDefined();
   });
 
-  it("view v_mission_overview 存在", () => {
+  it.each(["v_mission_overview", "v_item_mystery"])("view %s 存在", (view) => {
     const db = getDb();
-    const row = db
-      .prepare("SELECT name FROM sqlite_master WHERE type = 'view' AND name = 'v_mission_overview'")
-      .get();
+    const row = db.prepare("SELECT name FROM sqlite_master WHERE type = 'view' AND name = ?").get(view);
     expect(row).toBeDefined();
   });
 });
