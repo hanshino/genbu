@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { StageMapViewer } from "../stage-map-viewer";
-import type { StageMapImage, NpcPlacement, StageMonsterMarker } from "@/lib/queries/maps";
+import { StageMapViewer, clusterPoints, letterTag, type MapMonster } from "../stage-map-viewer";
+import type { StageMapImage, NpcPlacement } from "@/lib/queries/maps";
 
 const image: StageMapImage = {
   url: "https://img.hanshino.dev/test.webp",
@@ -18,10 +18,10 @@ const placements: NpcPlacement[] = [
 ];
 
 // 仿 208 極之淵：一隻高血量單點 + 一般怪 + 一隻無座標。
-const monsters: StageMonsterMarker[] = [
+const monsters: MapMonster[] = [
   {
     npcId: 5901,
-    name: "餓鬼",
+    name: "▲餓鬼",
     level: 76,
     hp: 9829,
     spawnPoints: 3,
@@ -39,7 +39,7 @@ const monsters: StageMonsterMarker[] = [
     name: "羅剎",
     level: 79,
     hp: 10594,
-    spawnPoints: 2,
+    spawnPoints: 1,
     highHp: false,
     hpRatio: 1.1,
     points: [{ left: 50, top: 50 }],
@@ -56,7 +56,7 @@ const monsters: StageMonsterMarker[] = [
   },
   {
     npcId: 5970,
-    name: "影修羅",
+    name: "●影修羅",
     level: 81,
     hp: 1182004,
     spawnPoints: 1,
@@ -68,154 +68,194 @@ const monsters: StageMonsterMarker[] = [
 
 const figureOf = () => screen.getByRole("img", { name: /地圖/ }).closest("figure")!;
 const markers = () => within(figureOf()).queryAllByRole("button");
+const markerLabels = () => markers().map((b) => b.getAttribute("aria-label"));
 
-function renderFull() {
+function renderFull(aside?: React.ReactNode) {
   return render(
-    <StageMapViewer stageName="極之淵" image={image} placements={placements} monsters={monsters} />,
+    <StageMapViewer
+      stageName="極之淵"
+      image={image}
+      placements={placements}
+      monsters={monsters}
+      aside={aside}
+    />,
   );
 }
 
+describe("clusterPoints", () => {
+  it("距離小於門檻的點合成一群，質心取平均；遠的點各自成群", () => {
+    const groups = clusterPoints(
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+        { x: 100, y: 100 },
+      ],
+      24,
+    );
+    expect(groups).toHaveLength(2);
+    expect(groups[0]).toMatchObject({ x: 5, y: 0 });
+    expect(groups[0].members).toHaveLength(2);
+    expect(groups[1].members).toHaveLength(1);
+  });
+
+  it("門檻 <= 0 時完全不分群（含同座標）", () => {
+    const pts = [
+      { x: 5, y: 5 },
+      { x: 5, y: 5 },
+    ];
+    expect(clusterPoints(pts, 0)).toHaveLength(2);
+  });
+});
+
+describe("letterTag", () => {
+  it("A..Z 之後接 AA、AB", () => {
+    expect([0, 1, 25, 26, 27, 51, 52].map(letterTag)).toEqual([
+      "A",
+      "B",
+      "Z",
+      "AA",
+      "AB",
+      "AZ",
+      "BA",
+    ]);
+  });
+});
+
 describe("<StageMapViewer>", () => {
-  it("無圖無 NPC 無怪物時不渲染", () => {
+  it("無圖、無 NPC、無怪物、無右欄時不渲染", () => {
     const { container } = render(
       <StageMapViewer stageName="空地圖" image={null} placements={[]} />,
     );
     expect(container.firstChild).toBeNull();
   });
 
-  it("有圖時渲染地圖圖與每個 NPC placement 的點", () => {
-    render(<StageMapViewer stageName="莫愁谷村莊" image={image} placements={placements} />);
-    expect(screen.getByRole("img", { name: /莫愁谷村莊/ })).toHaveAttribute("src", image.url);
-    expect(screen.getByRole("button", { name: "打鐵舖伙計" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "珍品商人" })).toBeInTheDocument();
+  it("無圖無清單時仍渲染右欄內容", () => {
+    render(
+      <StageMapViewer stageName="空地圖" image={null} placements={[]} aside={<p>相關任務</p>} />,
+    );
+    expect(screen.getByText("相關任務")).toBeInTheDocument();
   });
 
-  it("預設只顯示 NPC 與高血量怪物", () => {
+  it("預設全部圖層可見：怪物編號標記 + NPC 字母標記，名稱保留 ●／▲ 前綴", () => {
     renderFull();
-    const names = markers().map((b) => b.getAttribute("aria-label"));
-    expect(names).toEqual(["打鐵舖伙計", "珍品商人", "影修羅"]);
-    expect(screen.getByText(/不是怪物當下的即時位置/)).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: "NPC" })).toBeChecked();
-    expect(screen.getByRole("checkbox", { name: "影修羅" })).toBeChecked();
-    expect(screen.getByRole("checkbox", { name: "餓鬼" })).not.toBeChecked();
+    expect(markerLabels()).toEqual([
+      "▲餓鬼 Lv 76（刷怪點 1/3）",
+      "▲餓鬼 Lv 76（刷怪點 2/3）",
+      "▲餓鬼 Lv 76（刷怪點 3/3）",
+      "羅剎 Lv 79",
+      "●影修羅 Lv 81",
+      "打鐵舖伙計",
+      "珍品商人",
+    ]);
+    const labelled = (name: string) => within(figureOf()).getByRole("button", { name });
+    expect(labelled("●影修羅 Lv 81")).toHaveTextContent("4");
+    expect(labelled("打鐵舖伙計")).toHaveTextContent("A");
+    expect(labelled("珍品商人")).toHaveTextContent("B");
+    // 說明只有一段。
+    expect(screen.getAllByText(/不是怪物當下在哪/)).toHaveLength(1);
   });
 
-  it("可個別開關怪物，包含把高血量隱藏", async () => {
+  it("同座標不同種類的點（未量到寬度時不分群）仍各自可被點到", () => {
+    renderFull();
+    const same = markers().filter((b) => b.style.left === "50%" && b.style.top === "50%");
+    expect(same.map((b) => b.getAttribute("aria-label"))).toEqual([
+      "▲餓鬼 Lv 76（刷怪點 3/3）",
+      "羅剎 Lv 79",
+    ]);
+  });
+
+  it("眼睛按鈕隱藏該種；地圖上方提示已隱藏數量並可一鍵全部顯示", async () => {
     const user = userEvent.setup();
     renderFull();
-    await user.click(screen.getByRole("checkbox", { name: "餓鬼" }));
-    expect(within(figureOf()).getAllByRole("button", { name: /^餓鬼/ })).toHaveLength(3);
+    const eye = screen.getByRole("button", { name: "在地圖上顯示 ▲餓鬼 Lv 76" });
+    expect(eye).toHaveAttribute("aria-pressed", "true");
+    await user.click(eye);
+    expect(eye).toHaveAttribute("aria-pressed", "false");
+    expect(markerLabels().some((l) => l?.startsWith("▲餓鬼"))).toBe(false);
+    expect(screen.getByText(/已隱藏 1 項/)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("checkbox", { name: "影修羅" }));
-    expect(within(figureOf()).queryByRole("button", { name: "影修羅" })).toBeNull();
-    // 高血量標籤仍留在清單，只是不畫在地圖上。
-    expect(screen.getAllByText("高血量").length).toBeGreaterThan(0);
-
-    await user.click(screen.getByRole("checkbox", { name: "NPC" }));
-    expect(within(figureOf()).queryByRole("button", { name: "打鐵舖伙計" })).toBeNull();
-    // NPC 清單不受開關影響。
-    expect(screen.getByText("打鐵舖伙計")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "全部顯示" }));
+    expect(markers()).toHaveLength(7);
+    expect(screen.queryByText(/已隱藏/)).toBeNull();
   });
 
-  it("點名稱文字也能切換該怪物", async () => {
+  it("NPC 區塊的全部隱藏只影響 NPC", async () => {
+    const user = userEvent.setup();
+    renderFull();
+    const [, npcToggle] = screen.getAllByRole("button", { name: "全部隱藏" });
+    await user.click(npcToggle);
+    expect(markerLabels()).not.toContain("打鐵舖伙計");
+    expect(markerLabels()).toContain("羅剎 Lv 79");
+    expect(screen.getByText(/已隱藏 2 項/)).toBeInTheDocument();
+  });
+
+  it("點清單列會標亮該種、其餘變淡，上方出現可取消的標籤", async () => {
     const user = userEvent.setup();
     renderFull();
     await user.click(screen.getByText("羅剎"));
-    expect(screen.getByRole("checkbox", { name: "羅剎" })).toBeChecked();
-  });
-
-  it("全部顯示／全部隱藏同時影響 NPC 與怪物", async () => {
-    const user = userEvent.setup();
-    renderFull();
-    await user.click(screen.getByRole("button", { name: "全部顯示" }));
-    // 2 NPC + 餓鬼 3 + 羅剎 1 + 影修羅 1；千年狐妖無座標不算。
-    expect(markers()).toHaveLength(7);
-    expect(screen.getByRole("button", { name: "全部顯示" })).toBeDisabled();
-
-    await user.click(screen.getByRole("button", { name: "全部隱藏" }));
-    expect(markers()).toHaveLength(0);
-    for (const cb of screen.getAllByRole("checkbox")) expect(cb).not.toBeChecked();
-  });
-
-  it("同座標不同種類的點仍各自可被鍵盤選到", async () => {
-    const user = userEvent.setup();
-    renderFull();
-    await user.click(screen.getByRole("button", { name: "全部顯示" }));
-    const same = markers().filter((b) => b.style.left === "50%" && b.style.top === "50%");
-    expect(same.map((b) => b.getAttribute("aria-label"))).toEqual(["餓鬼（刷怪點 3/3）", "羅剎"]);
-  });
-
-  it("無座標的怪物停用開關並說明原因，部分缺座標時顯示可標數量", () => {
-    render(
-      <StageMapViewer
-        stageName="極之淵"
-        image={image}
-        placements={placements}
-        monsters={monsters.map((m) => (m.npcId === 5902 ? { ...m, spawnPoints: 5 } : m))}
-      />,
-    );
-    expect(screen.getByRole("checkbox", { name: "千年狐妖" })).toHaveAttribute(
-      "aria-disabled",
+    expect(screen.getByRole("button", { name: "在地圖上標亮 羅剎 Lv 79" })).toHaveAttribute(
+      "aria-pressed",
       "true",
     );
-    expect(screen.getByText("共 4 點，無可用座標，無法標在地圖上")).toBeInTheDocument();
-    expect(screen.getByText("地圖可標 1 / 共 5 點")).toBeInTheDocument();
+    const fig = within(figureOf());
+    expect(fig.getByRole("button", { name: "羅剎 Lv 79" })).not.toHaveAttribute("data-dimmed");
+    expect(fig.getByRole("button", { name: "打鐵舖伙計" })).toHaveAttribute("data-dimmed");
+
+    await user.click(screen.getByRole("button", { name: "取消標亮" }));
+    expect(fig.getByRole("button", { name: "打鐵舖伙計" })).not.toHaveAttribute("data-dimmed");
   });
 
-  it("怪物詳情連結與開關分開，沒有互相包住", () => {
-    renderFull();
-    const link = screen.getByRole("link", { name: "影修羅 怪物資料" });
-    expect(link).toHaveAttribute("href", "/monsters/5970");
-    const checkbox = screen.getByRole("checkbox", { name: "影修羅" });
-    expect(link.contains(checkbox)).toBe(false);
-    expect(checkbox.contains(link)).toBe(false);
-    expect(link.querySelector("button, a, [role=checkbox]")).toBeNull();
-  });
-
-  it("點擊地圖上的怪物點會開啟資訊，含高血量倍數說明與詳情連結", async () => {
+  it("隱藏被標亮的種類後，其他點不會維持變淡", async () => {
     const user = userEvent.setup();
     renderFull();
-    await user.click(within(figureOf()).getByRole("button", { name: "影修羅" }));
-    const detail = await screen.findByRole("link", { name: /查看怪物資料/ });
+    await user.click(screen.getByText("羅剎"));
+    await user.click(screen.getByRole("button", { name: "在地圖上顯示 羅剎 Lv 79" }));
+    expect(within(figureOf()).getByRole("button", { name: "打鐵舖伙計" })).not.toHaveAttribute(
+      "data-dimmed",
+    );
+    expect(screen.queryByRole("button", { name: "取消標亮" })).toBeNull();
+  });
+
+  it("點眼睛或資料連結不會觸發列的標亮", async () => {
+    const user = userEvent.setup();
+    renderFull();
+    await user.click(screen.getByRole("button", { name: "在地圖上顯示 羅剎 Lv 79" }));
+    expect(screen.queryByRole("button", { name: "取消標亮" })).toBeNull();
+    const link = screen.getByRole("link", { name: "●影修羅 Lv 81 怪物資料" });
+    expect(link).toHaveAttribute("href", "/monsters/5970");
+  });
+
+  it("無座標的怪物不能標亮、眼睛停用，刷怪點顯示可標數量", () => {
+    renderFull();
+    expect(screen.getByRole("button", { name: "在地圖上顯示 千年狐妖 Lv 80" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "在地圖上標亮 千年狐妖 Lv 80" })).toBeNull();
+    expect(screen.getByText("0/4 點")).toBeInTheDocument();
+  });
+
+  it("點地圖上的怪物點會開啟資訊，含 Lv、HP、高血量倍數與詳情連結", async () => {
+    const user = userEvent.setup();
+    renderFull();
+    await user.click(within(figureOf()).getByRole("button", { name: "●影修羅 Lv 81" }));
+    const detail = await screen.findByRole("link", { name: /^怪物資料/ });
     expect(detail).toHaveAttribute("href", "/monsters/5970");
-    expect(
-      screen.getByText("HP 約為本圖其他怪物 HP 中位數的 120 倍（10 倍以上標為高血量）"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("高血量：HP 約為本圖其他怪物中位數的 120 倍")).toBeInTheDocument();
+    expect(screen.getByText("HP 1,182,004")).toBeInTheDocument();
   });
 
   it("鍵盤可聚焦並用 Enter 開啟怪物點", async () => {
     const user = userEvent.setup();
     renderFull();
-    const marker = within(figureOf()).getByRole("button", { name: "影修羅" });
-    marker.focus();
+    within(figureOf()).getByRole("button", { name: "●影修羅 Lv 81" }).focus();
     await user.keyboard("{Enter}");
-    expect(await screen.findByRole("link", { name: /查看怪物資料/ })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: /^怪物資料/ })).toBeInTheDocument();
   });
 
-  it("標亮按鈕只在該種已顯示時可用，並讓其他點變淡", async () => {
-    const user = userEvent.setup();
-    renderFull();
-    expect(screen.getByRole("button", { name: "在地圖上標亮 餓鬼" })).toBeDisabled();
-    const locate = screen.getByRole("button", { name: "在地圖上標亮 影修羅" });
-    await user.click(locate);
-    expect(locate).toHaveAttribute("aria-pressed", "true");
-    // 變淡的點同時不吃點擊，重疊時才點得到被標亮那一種。
-    expect(within(figureOf()).getByRole("button", { name: "打鐵舖伙計" })).toHaveClass(
-      "opacity-30",
-      "pointer-events-none",
-    );
-    expect(within(figureOf()).getByRole("button", { name: "影修羅" })).not.toHaveClass(
-      "opacity-30",
-    );
-
-    // 隱藏被標亮的種類後，其他點不能維持變淡。
-    await user.click(screen.getByRole("checkbox", { name: "影修羅" }));
-    expect(within(figureOf()).getByRole("button", { name: "打鐵舖伙計" })).not.toHaveClass(
-      "opacity-30",
-    );
+  it("有右欄時與清單並排渲染", () => {
+    renderFull(<p>同區域地圖</p>);
+    expect(screen.getByRole("complementary")).toHaveTextContent("同區域地圖");
   });
 
-  it("無地圖圖片時保留怪物資訊與連結，不出現開關", () => {
+  it("無地圖圖片時只有清單與連結，沒有眼睛或標亮", () => {
     render(
       <StageMapViewer
         stageName="某地圖"
@@ -225,15 +265,14 @@ describe("<StageMapViewer>", () => {
       />,
     );
     expect(screen.queryByRole("img")).toBeNull();
-    expect(screen.queryByRole("checkbox")).toBeNull();
-    expect(screen.queryByRole("button", { name: "全部顯示" })).toBeNull();
-    expect(screen.getByText("影修羅")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "千年狐妖 怪物資料" })).toHaveAttribute(
+    expect(screen.queryByRole("button", { name: /在地圖上/ })).toBeNull();
+    expect(screen.getByText("●影修羅")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "千年狐妖 Lv 80 怪物資料" })).toHaveAttribute(
       "href",
       "/monsters/5903",
     );
-    // 無圖時不提「無座標」，只顯示刷怪點數。
-    expect(screen.getByText("×4")).toBeInTheDocument();
+    // 無圖時不提座標，只顯示刷怪點數。
+    expect(screen.getByText("4 點")).toBeInTheDocument();
     expect(screen.getByText("打鐵舖伙計")).toBeInTheDocument();
   });
 });
