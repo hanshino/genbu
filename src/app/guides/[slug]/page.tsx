@@ -1,180 +1,188 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ArrowRightIcon, ExternalLinkIcon } from "lucide-react";
-import { BackLink } from "@/components/common/back-link";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
-  getGuideBySlug,
-  getPublishedGuides,
-  type Guide,
-  type GuideCategory,
-  type GuideSource,
-  type GuideSourceTier,
-} from "@/data/guides";
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CalendarIcon,
+  ChevronRightIcon,
+  ClockIcon,
+  PenLineIcon,
+  RouteIcon,
+} from "lucide-react";
+import { getAdjacentGuides, getGuide, renderGuideBody, type GuideMeta } from "@/lib/guides";
+import { AuthorCard } from "@/components/guides/author-card";
+import { GuideTocDesktop, GuideTocMobile } from "@/components/guides/guide-toc";
+import { guideMdxComponents } from "@/components/guides/mdx-components";
+import { STAGE_LABEL, levelRange, stageStyle, stopBadgeClass } from "@/components/guides/stages";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
-const CATEGORY_LABELS: Record<GuideCategory, string> = {
-  items: "道具",
-  equipment: "裝備",
-  skills: "技能",
-  monsters: "怪物",
-  missions: "任務",
-  heroes: "英雄",
-  tools: "工具",
-};
-
-const TIER_LABELS: Record<GuideSourceTier, string> = {
-  database: "資料庫",
-  official: "官方",
-  "field-test": "實測",
-  community: "社群",
-};
+// DB 是 runtime mount，build 時拿不到，一律請求時渲染
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-export function generateStaticParams() {
-  return getPublishedGuides().map((guide) => ({ slug: guide.slug }));
-}
-
-/** draft 與不存在的 slug 一律當作沒有這篇，不讓草稿從直連流出。 */
-function findPublished(slug: string): Guide | undefined {
-  const guide = getGuideBySlug(slug);
-  return guide?.status === "published" ? guide : undefined;
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const guide = findPublished(slug);
+  const guide = getGuide(slug);
   if (!guide) return { title: "攻略不存在 · 玄武" };
   return {
-    title: `${guide.title} · 武林同萌傳攻略 · 玄武`,
-    description: guide.summary,
-    alternates: { canonical: `/guides/${guide.slug}` },
+    title: `${guide.meta.title} · 武林同萌傳攻略 · 玄武`,
+    description: guide.meta.summary,
+    alternates: { canonical: `/guides/${guide.meta.slug}` },
   };
 }
 
-export default async function GuideDetailPage({ params }: PageProps) {
+function stageText(meta: GuideMeta) {
+  const range = levelRange(meta);
+  return range ? `Lv ${range}` : STAGE_LABEL[meta.stage];
+}
+
+function sourceLabel(url: string) {
+  try {
+    const host = new URL(url).hostname;
+    return host.endsWith("gamer.com.tw") ? "巴哈姆特" : host;
+  } catch {
+    return url;
+  }
+}
+
+function PrevNextCard({ meta, dir }: { meta: GuideMeta; dir: "prev" | "next" }) {
+  const onRoad = meta.stage !== "topic";
+  const word = dir === "prev" ? (onRoad ? "上一站" : "上一篇") : onRoad ? "下一站" : "下一篇";
+  const label = onRoad ? `${word} · ${stageText(meta)}` : word;
+  return (
+    <Link
+      href={`/guides/${meta.slug}`}
+      style={stageStyle(meta.stage)}
+      className={cn(
+        "bg-card hover:bg-muted/60 hover:border-(--stop)/45 focus-visible:ring-ring flex flex-col gap-1.5 rounded-xl border px-[18px] py-4 outline-none focus-visible:ring-2 motion-safe:transition-[background-color,border-color,transform] motion-safe:hover:-translate-y-0.5",
+        dir === "next" && "sm:col-start-2 sm:text-right",
+      )}
+    >
+      <span
+        className={cn(
+          "text-muted-foreground inline-flex items-center gap-1.5 text-xs",
+          dir === "next" && "sm:justify-end",
+        )}
+      >
+        {dir === "prev" && <ArrowLeftIcon className="size-3.5" aria-hidden />}
+        <span className="font-mono">{label}</span>
+        {dir === "next" && <ArrowRightIcon className="size-3.5" aria-hidden />}
+      </span>
+      <span className="font-heading text-[15.5px] text-balance">{meta.title}</span>
+    </Link>
+  );
+}
+
+export default async function GuideArticlePage({ params }: PageProps) {
   const { slug } = await params;
-  const guide = findPublished(slug);
+  const guide = getGuide(slug);
   if (!guide) notFound();
 
-  const sourceById = new Map(guide.sources.map((source) => [source.id, source]));
+  const { meta, source, headings } = guide;
+  const { prev, next } = getAdjacentGuides(slug);
+  const body = await renderGuideBody(source, guideMdxComponents);
+  const range = levelRange(meta);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
-      <nav className="text-muted-foreground text-sm">
-        <BackLink href="/guides">返回攻略列表</BackLink>
+    <div
+      style={stageStyle(meta.stage)}
+      className="mx-auto max-w-[1040px] px-[18px] pb-16 sm:px-10 sm:pb-20"
+    >
+      <nav
+        aria-label="麵包屑"
+        className="text-muted-foreground mt-7 mb-5 flex flex-wrap items-center gap-1.5 text-[13px]"
+      >
+        <Link
+          href="/guides"
+          className="hover:bg-muted/60 hover:text-foreground focus-visible:ring-ring -ml-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 outline-none focus-visible:ring-2 motion-safe:transition-colors"
+        >
+          <RouteIcon className="size-3.5" aria-hidden />
+          修行路線
+        </Link>
+        <ChevronRightIcon className="size-3.5 opacity-50" aria-hidden />
+        <span aria-current="page">
+          {range && <span className="font-mono">Lv {range} </span>}
+          {STAGE_LABEL[meta.stage]}
+        </span>
       </nav>
 
-      <header className="mt-6 space-y-3">
-        <Badge variant="outline" className="font-normal">
-          {CATEGORY_LABELS[guide.category]}
-        </Badge>
-        <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
-          {guide.title}
-        </h1>
-        <p className="text-muted-foreground text-sm leading-relaxed">{guide.summary}</p>
-      </header>
+      <div className="grid items-start justify-center gap-0 pt-2 lg:grid-cols-[minmax(0,680px)_210px] lg:gap-14">
+        <article className="min-w-0">
+          <h1 className="mt-3.5 mb-4 text-[28px] font-semibold tracking-[0.01em] text-balance sm:text-[40px]">
+            {meta.title}
+          </h1>
+          <div className="text-muted-foreground mt-4 mb-5 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-b pb-5 text-[13px]">
+            <span className="inline-flex items-center gap-1.5">
+              <PenLineIcon className="size-3.5" aria-hidden />
+              {meta.author}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarIcon className="size-3.5" aria-hidden />
+              更新於
+              <time dateTime={meta.updated} className="font-mono">
+                {meta.updated}
+              </time>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <ClockIcon className="size-3.5" aria-hidden />
+              閱讀 {meta.readingMinutes} 分鐘
+            </span>
+          </div>
 
-      <Separator className="my-8" />
+          <p className="text-muted-foreground border-l-[3px] border-(--stop)/55 pl-[18px] text-[15.5px] leading-[1.8] text-pretty sm:text-[17px]">
+            {meta.summary}
+          </p>
 
-      <div className="space-y-8">
-        {guide.sections.map((section, index) => {
-          const sectionSources = section.sourceIds
-            .map((id) => sourceById.get(id))
-            .filter((source): source is GuideSource => source !== undefined);
-
-          return (
-            <section key={`${index}-${section.title}`} className="space-y-3">
-              <h2 className="text-lg font-medium">{section.title}</h2>
-
-              {section.paragraphs.map((paragraph, pIndex) => (
-                <p key={pIndex} className="text-sm leading-relaxed">
-                  {paragraph}
-                </p>
-              ))}
-
-              {section.links && section.links.length > 0 && (
-                <ul className="flex flex-wrap gap-2 pt-1">
-                  {section.links.map((link) => (
-                    <li key={`${link.href}-${link.label}`}>
-                      <Link
-                        href={link.href}
-                        className="border-border/60 bg-card hover:bg-muted/50 inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors"
-                      >
-                        {link.label}
-                        <ArrowRightIcon className="size-3.5" aria-hidden />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {sectionSources.length > 0 && (
-                <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-                  <span>本段依據</span>
-                  {sectionSources.map((source) => (
-                    <Badge key={source.id} variant="secondary" className="font-normal">
-                      {TIER_LABELS[source.tier]}
-                      <span className="text-muted-foreground">·</span>
-                      <span className="font-mono">{source.lastVerified}</span>
-                    </Badge>
-                  ))}
-                  <span>核對</span>
-                </p>
-              )}
-            </section>
-          );
-        })}
-      </div>
-
-      <Separator className="my-8" />
-
-      <section className="space-y-4">
-        <h2 className="text-lg font-medium">來源</h2>
-        <ol className="space-y-3">
-          {guide.sources.map((source) => (
-            <li
-              key={source.id}
-              className="border-border/60 bg-card space-y-2 rounded-lg border p-4"
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline" className="font-normal">
-                  {TIER_LABELS[source.tier]}
+          {meta.unlocks.length > 0 && (
+            <div className="mt-5 mb-6 flex flex-wrap items-center gap-1.5">
+              <Badge variant="secondary" className="h-6 px-2.5 font-normal">
+                這階段開放
+              </Badge>
+              {meta.unlocks.map((u) => (
+                <Badge key={u} variant="outline" className={stopBadgeClass}>
+                  {u}
                 </Badge>
-                <span className="text-sm font-medium">{source.title}</span>
-                <span className="text-muted-foreground ml-auto font-mono text-xs">
-                  核對於 {source.lastVerified}
-                </span>
-              </div>
+              ))}
+            </div>
+          )}
 
-              {/* database 一定有 evidence；field-test 也靠它說明條件，沒 URL 時這是唯一佐證 */}
-              {source.evidence && (
-                <p className="text-muted-foreground text-xs leading-relaxed">{source.evidence}</p>
-              )}
+          <div className="mt-6">
+            <GuideTocMobile headings={headings} />
+          </div>
 
-              {(source.tier === "official" || source.tier === "community") && source.url && (
-                <Link
-                  href={source.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-primary inline-flex items-center gap-1.5 text-xs underline-offset-4 hover:underline"
-                >
-                  {source.url}
-                  <ExternalLinkIcon className="size-3.5" aria-hidden />
-                  <span className="sr-only">（於新視窗開啟外部連結）</span>
-                </Link>
-              )}
-            </li>
-          ))}
-        </ol>
-        <p className="text-muted-foreground text-xs leading-relaxed">
-          核對日期是最後一次比對來源的日期，不代表遊戲內容在那之後沒有變動。
-        </p>
-      </section>
+          <div>{body}</div>
+
+          {(prev || next) && (
+            <nav aria-label="上一站與下一站" className="mt-12 grid gap-3.5 sm:grid-cols-2">
+              {prev && <PrevNextCard meta={prev} dir="prev" />}
+              {next && <PrevNextCard meta={next} dir="next" />}
+            </nav>
+          )}
+
+          {meta.sourceUrl && (
+            <p className="text-muted-foreground mt-6 text-[12.5px]">
+              原文出處：
+              <a
+                href={meta.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary decoration-primary/40 hover:decoration-primary underline underline-offset-4"
+              >
+                {sourceLabel(meta.sourceUrl)}
+                <span className="sr-only">（於新視窗開啟）</span>
+              </a>
+            </p>
+          )}
+          <AuthorCard name={meta.author} className="mt-5" />
+        </article>
+
+        <GuideTocDesktop headings={headings} />
+      </div>
     </div>
   );
 }
