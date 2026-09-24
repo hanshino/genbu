@@ -4,12 +4,16 @@ import type { Metadata } from "next";
 import { BackLink } from "@/components/common/back-link";
 import { Badge } from "@/components/ui/badge";
 import { StageFlagBadge } from "@/components/maps/stage-flag-badge";
-import { StageMonsterSpawns } from "@/components/maps/stage-monster-spawns";
 import { LinkListRow, LinkListSection } from "@/components/common/link-list";
 import { sortStageFlags } from "@/lib/constants/stage-flags";
 import { getStageDetail } from "@/lib/queries/stages";
 import { getMonstersAtStage } from "@/lib/queries/monster-spawns";
-import { getStageMapImage, getNpcPlacementsForStage } from "@/lib/queries/maps";
+import {
+  buildMonsterMarkers,
+  getMonsterSpawnPositions,
+  getNpcPlacementsForStage,
+  getStageMapImage,
+} from "@/lib/queries/maps";
 import { StageMapViewer } from "@/components/maps/stage-map-viewer";
 import type { InboundLink, StageDetail, StageMissionRef } from "@/lib/types/stage";
 
@@ -130,9 +134,7 @@ function InboundList({ inbound }: { inbound: InboundLink[] }) {
             key={l.fromId}
             className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2 text-sm"
           >
-            <span className="font-mono text-xs text-muted-foreground">
-              #{l.fromId}
-            </span>
+            <span className="font-mono text-xs text-muted-foreground">#{l.fromId}</span>
             <Link
               href={`/maps/${l.fromId}`}
               className="font-medium underline-offset-2 hover:underline"
@@ -184,6 +186,12 @@ export default async function MapDetailPage({ params }: PageProps) {
   const monsters = getMonstersAtStage(stage.kind, stage.id);
   const mapImage = getStageMapImage(stage.kind, stage.id);
   const npcPlacements = getNpcPlacementsForStage(stage.kind, stage.id);
+  // 沒有地圖圖片就不必查座標；markers 仍要建，清單的高血量標示也靠它。
+  const monsterMarkers = buildMonsterMarkers(
+    monsters,
+    mapImage ? getMonsterSpawnPositions(stage.kind, stage.id) : [],
+    mapImage,
+  );
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
@@ -194,9 +202,7 @@ export default async function MapDetailPage({ params }: PageProps) {
       <header className="space-y-3">
         <div className="flex flex-wrap items-baseline gap-2">
           <span className="font-mono text-xs text-muted-foreground">#{stage.id}</span>
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-            {stage.name}
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{stage.name}</h1>
           {stage.kind === "sestage" && (
             <Badge variant="outline" className="font-normal">
               SE 地圖
@@ -215,7 +221,13 @@ export default async function MapDetailPage({ params }: PageProps) {
         </div>
       </header>
 
-      <StageMapViewer stageName={stage.name} image={mapImage} placements={npcPlacements} />
+      <StageMapViewer
+        key={`${stage.kind}:${stage.id}`}
+        stageName={stage.name}
+        image={mapImage}
+        placements={npcPlacements}
+        monsters={monsterMarkers}
+      />
 
       <PropertiesGrid stage={stage} />
 
@@ -241,14 +253,12 @@ export default async function MapDetailPage({ params }: PageProps) {
 
       <InboundList inbound={stage.inbound} />
 
-      <StageMonsterSpawns monsters={monsters} />
-
       <MissionsList missions={stage.missions} />
 
       <p className="text-xs text-muted-foreground">
-        資料來自 STAGE.INI / SESTAGE.INI 與 MAP/*.MPC；
-        appear_map / logout_map 記錄的是「預設出生／登出」目的地，並非完整的地圖傳送網。
-        怪物清單由 GENERATOR.OBD 解析，不含劇情觸發或關卡腳本生成的怪物。
+        資料來自 STAGE.INI / SESTAGE.INI 與 MAP/*.MPC； appear_map / logout_map
+        記錄的是「預設出生／登出」目的地，並非完整的地圖傳送網。 怪物清單與刷怪點由 GENERATOR.OBD
+        解析，不含劇情觸發或關卡腳本生成的怪物； ×N 為該怪物在此地圖的刷怪點數量。
       </p>
     </div>
   );
