@@ -21,8 +21,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { BoxContents } from "./box-contents";
 import { Check, ChecklistRoot } from "./checklist";
 import { GuideRefTag } from "./guide-ref-tag";
+import { MissionCard } from "./mission-card";
 
 function textOf(node: ReactNode): string {
   if (typeof node === "string" || typeof node === "number") return String(node);
@@ -237,4 +239,6 @@ export const guideMdxComponents: MDXComponents = {
   Check,
   Steps,
   Step,
+  BoxContents,
+  MissionCard,
 };

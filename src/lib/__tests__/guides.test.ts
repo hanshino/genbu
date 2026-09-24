@@ -3,6 +3,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { getAdjacentGuides, getGuide, getGuides, headingId, type GuideStage } from "../guides";
 import { getGuideRef, type GuideRefKind } from "../guide-refs";
+import { getItemBoxContents } from "../queries/mission-logic";
+import { getMissionDetail } from "../queries/missions";
 
 const CONTENT_DIR = path.join(process.cwd(), "content", "guides");
 
@@ -210,4 +212,42 @@ describe("getGuideRef — mission kind", () => {
     expect(ref!.href).toBe("/missions/801");
     expect(ref!.facts.length).toBeGreaterThan(0);
   });
+});
+
+// 掃 content/guides/*.mdx 裡所有 <BoxContents id={n}> / <MissionCard id={n}> 標籤，
+// 確認每個 id 背後的資料都存在（禮盒有內容物、任務查得到），避免 @designer 元件渲染出空殼。
+function scanBoxAndMissionCardTags(): { component: "BoxContents" | "MissionCard"; id: number; file: string }[] {
+  const tagRe = /<(BoxContents|MissionCard)\s+id=\{(\d+)\}/g;
+  const refs: { component: "BoxContents" | "MissionCard"; id: number; file: string }[] = [];
+  for (const file of fs.readdirSync(CONTENT_DIR).filter((f) => f.endsWith(".mdx"))) {
+    const content = fs.readFileSync(path.join(CONTENT_DIR, file), "utf8");
+    let m: RegExpExecArray | null;
+    while ((m = tagRe.exec(content)) !== null) {
+      refs.push({ component: m[1] as "BoxContents" | "MissionCard", id: Number(m[2]), file });
+    }
+  }
+  return refs;
+}
+
+describe("<BoxContents>/<MissionCard> tags in content/guides resolve to real data", () => {
+  const tags = scanBoxAndMissionCardTags();
+
+  it("found at least one BoxContents and one MissionCard tag", () => {
+    expect(tags.some((t) => t.component === "BoxContents")).toBe(true);
+    expect(tags.some((t) => t.component === "MissionCard")).toBe(true);
+  });
+
+  it.each(tags.filter((t) => t.component === "BoxContents"))(
+    "BoxContents id=$id (from $file): getItemBoxContents returns non-empty options",
+    ({ id }) => {
+      expect(getItemBoxContents(id).length).toBeGreaterThan(0);
+    },
+  );
+
+  it.each(tags.filter((t) => t.component === "MissionCard"))(
+    "MissionCard id=$id (from $file): getMissionDetail is non-null",
+    ({ id }) => {
+      expect(getMissionDetail(id)).not.toBeNull();
+    },
+  );
 });

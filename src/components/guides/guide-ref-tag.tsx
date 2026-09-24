@@ -68,7 +68,21 @@ function GameIcon({
  * - 鍵盤：focus 開預覽，Enter 跳頁
  * - 觸控：第一下 tap 開預覽（攔下導航），預覽開著時再 tap 才跳頁；卡內也有「查看完整資料」
  */
-export function GuideRefTag({ data, children }: { data: GuideRef; children?: ReactNode }) {
+const inlineClass =
+  "decoration-primary/60 hover:bg-primary/10 hover:decoration-primary data-popup-open:bg-primary/10 focus-visible:ring-ring rounded-sm px-px whitespace-nowrap underline decoration-dashed decoration-1 underline-offset-[5px] outline-none focus-visible:ring-2 motion-safe:transition-colors";
+/** chip：禮盒／獎勵格子用，icon 框 + 名稱，children 接在名稱後（數量等）。 */
+const chipClass =
+  "bg-card hover:bg-muted/60 hover:border-(--stop)/45 data-popup-open:border-(--stop)/45 data-popup-open:bg-muted/60 focus-visible:ring-ring inline-flex max-w-full min-w-0 items-center gap-2 rounded-lg border border-border/60 py-1 pr-2.5 pl-1 text-[13.5px] leading-tight outline-none focus-visible:ring-2 motion-safe:transition-colors";
+
+export function GuideRefTag({
+  data,
+  children,
+  variant = "inline",
+}: {
+  data: GuideRef;
+  children?: ReactNode;
+  variant?: "inline" | "chip";
+}) {
   const { label, Icon } = KIND[data.kind];
   const [open, setOpen] = useState(false);
   const pointerType = useRef<string>("");
@@ -89,16 +103,34 @@ export function GuideRefTag({ data, children }: { data: GuideRef; children?: Rea
           }
           pointerType.current = "";
         }}
-        className="decoration-primary/60 hover:bg-primary/10 hover:decoration-primary data-popup-open:bg-primary/10 focus-visible:ring-ring rounded-sm px-px whitespace-nowrap underline decoration-dashed decoration-1 underline-offset-[5px] outline-none focus-visible:ring-2 motion-safe:transition-colors"
+        className={variant === "chip" ? chipClass : inlineClass}
       >
-        <GameIcon
-          icon={data.icon}
-          kind={data.kind}
-          box={22}
-          className="mr-0.5 -my-[0.2em] inline-block size-[1.35em] align-middle"
-          fallbackClassName="text-primary mr-0.5 inline size-[0.78em] align-[-0.05em]"
-        />
-        {children ?? data.name}
+        {variant === "chip" ? (
+          <>
+            <span className="bg-muted/60 grid size-7 shrink-0 place-items-center overflow-hidden rounded-md">
+              <GameIcon
+                icon={data.icon}
+                kind={data.kind}
+                box={28}
+                className="size-full"
+                fallbackClassName="text-muted-foreground size-3.5"
+              />
+            </span>
+            <span className="min-w-0 [overflow-wrap:anywhere]">{data.name}</span>
+            {children}
+          </>
+        ) : (
+          <>
+            <GameIcon
+              icon={data.icon}
+              kind={data.kind}
+              box={22}
+              className="mr-0.5 -my-[0.2em] inline-block size-[1.35em] align-middle"
+              fallbackClassName="text-primary mr-0.5 inline size-[0.78em] align-[-0.05em]"
+            />
+            {children ?? data.name}
+          </>
+        )}
       </PreviewCard.Trigger>
       <PreviewCard.Portal>
         <PreviewCard.Positioner side="top" sideOffset={8} collisionPadding={12} className="z-50">
