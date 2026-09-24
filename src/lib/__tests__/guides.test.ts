@@ -1,7 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { getAdjacentGuides, getGuide, getGuides, headingId, type GuideStage } from "../guides";
+import {
+  getAdjacentGuides,
+  getGuide,
+  getGuides,
+  headingId,
+  renderGuideBody,
+  type GuideStage,
+} from "../guides";
 import { getGuideRef, type GuideRefKind } from "../guide-refs";
 import { getItemBoxContents } from "../queries/mission-logic";
 import { getMissionDetail } from "../queries/missions";
@@ -49,6 +56,16 @@ describe("headingId", () => {
   it("trims and collapses whitespace into hyphens", () => {
     expect(headingId("  這階段你要做什麼  ")).toBe("這階段你要做什麼");
     expect(headingId("foo   bar")).toBe("foo-bar");
+  });
+});
+
+describe("renderGuideBody", () => {
+  it("does not turn single tildes in level ranges into strikethrough", async () => {
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const el = await renderGuideBody("1~9 等、低自己 2~4 等；~~真刪除線~~", {});
+    const html = renderToStaticMarkup(el);
+    expect(html).toContain("1~9 等、低自己 2~4 等");
+    expect(html.match(/<del>/g)?.length ?? 0).toBe(1);
   });
 });
 

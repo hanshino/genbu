@@ -237,7 +237,8 @@ export async function renderGuideBody(
       // 若日後開放外部投稿，要改回 blockJS: true 並把 id 改成字串屬性。
       blockJS: false,
       mdxOptions: {
-        remarkPlugins: [remarkGfm],
+        // 等級區間常寫成「1~9」，單個 ~ 不能當刪除線；要刪除線請用 ~~文字~~
+        remarkPlugins: [[remarkGfm, { singleTilde: false }]],
       },
     },
   });
