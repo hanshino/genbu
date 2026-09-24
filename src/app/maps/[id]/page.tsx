@@ -1,13 +1,14 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { ChevronRightIcon } from "lucide-react";
 import { BackLink } from "@/components/common/back-link";
 import { Badge } from "@/components/ui/badge";
 import { StageFlagBadge } from "@/components/maps/stage-flag-badge";
-import { LinkListRow, LinkListSection } from "@/components/common/link-list";
 import { sortStageFlags } from "@/lib/constants/stage-flags";
 import { getStageDetail } from "@/lib/queries/stages";
 import { getMonstersAtStage } from "@/lib/queries/monster-spawns";
+import { getNpcImageMap } from "@/lib/queries/images";
 import {
   buildMonsterMarkers,
   getMonsterSpawnPositions,
@@ -37,62 +38,72 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 const VIA_LABEL: Record<InboundLink["via"][number], string> = {
   appear_map1: "預設入口 1",
   appear_map2: "預設入口 2",
-  logout_map: "登出回到此處",
+  logout_map: "登出點",
 };
 
-function MapLink({
-  id,
-  name,
-  fallback,
+function AsideCard({
+  title,
+  count,
+  children,
+  flush,
 }: {
-  id: number | null | undefined;
-  name: string | null;
-  fallback?: string;
+  title: string;
+  count?: number;
+  children: React.ReactNode;
+  /** 內容是整列清單時不留內距，讓列 hover 貼齊卡片邊。 */
+  flush?: boolean;
 }) {
-  if (!id || id === 0) return <span className="text-muted-foreground">{fallback ?? "—"}</span>;
+  return (
+    <section className="overflow-hidden rounded-lg border border-border/60 bg-card">
+      <h2 className="px-4 pt-4 pb-2 font-sans text-sm font-medium">
+        {title}
+        {count != null && (
+          <span className="ml-1.5 font-normal text-muted-foreground tabular-nums">{count}</span>
+        )}
+      </h2>
+      <div className={flush ? "border-t border-border/60" : "px-4 pb-4"}>{children}</div>
+    </section>
+  );
+}
+
+function MapLink({ id, name }: { id: number; name: string | null }) {
   return (
     <Link
       href={`/maps/${id}`}
-      className="font-medium underline decoration-dotted underline-offset-2 hover:decoration-solid"
+      className="font-medium underline decoration-dotted underline-offset-4 hover:decoration-solid"
     >
       {name ?? `#${id}`}
     </Link>
   );
 }
 
-function PropertiesGrid({ stage }: { stage: StageDetail }) {
-  const rows: Array<{ label: string; value: React.ReactNode }> = [];
+function Tag({ value }: { value: number | null | undefined }) {
+  if (value == null || value === 0) return null;
+  return <span className="ml-2 text-xs text-muted-foreground tabular-nums">tag {value}</span>;
+}
 
-  if (stage.appear_map1 || stage.appear_map2) {
-    if (stage.appear_map1)
-      rows.push({
-        label: "預設入口 1",
-        value: (
-          <>
-            <MapLink id={stage.appear_map1} name={stage.appearMap1Name} />
-            {stage.appear_tag1 != null && stage.appear_tag1 !== 0 && (
-              <span className="ml-2 font-mono text-xs text-muted-foreground">
-                tag {stage.appear_tag1}
-              </span>
-            )}
-          </>
-        ),
-      });
-    if (stage.appear_map2)
-      rows.push({
-        label: "預設入口 2",
-        value: (
-          <>
-            <MapLink id={stage.appear_map2} name={stage.appearMap2Name} />
-            {stage.appear_tag2 != null && stage.appear_tag2 !== 0 && (
-              <span className="ml-2 font-mono text-xs text-muted-foreground">
-                tag {stage.appear_tag2}
-              </span>
-            )}
-          </>
-        ),
-      });
-  }
+function entranceRows(stage: StageDetail) {
+  const rows: Array<{ label: string; value: React.ReactNode }> = [];
+  if (stage.appear_map1)
+    rows.push({
+      label: "預設入口 1",
+      value: (
+        <>
+          <MapLink id={stage.appear_map1} name={stage.appearMap1Name} />
+          <Tag value={stage.appear_tag1} />
+        </>
+      ),
+    });
+  if (stage.appear_map2)
+    rows.push({
+      label: "預設入口 2",
+      value: (
+        <>
+          <MapLink id={stage.appear_map2} name={stage.appearMap2Name} />
+          <Tag value={stage.appear_tag2} />
+        </>
+      ),
+    });
   if (stage.logout_map)
     rows.push({
       label: "登出回到",
@@ -101,77 +112,70 @@ function PropertiesGrid({ stage }: { stage: StageDetail }) {
   if (stage.safe_tag != null && stage.safe_tag !== 0)
     rows.push({
       label: "復活點 tag",
-      value: <span className="font-mono text-sm">{stage.safe_tag}</span>,
+      value: <span className="tabular-nums">{stage.safe_tag}</span>,
     });
   if (stage.cave_tag != null && stage.cave_tag !== 0)
-    rows.push({
-      label: "洞穴 tag",
-      value: <span className="font-mono text-sm">{stage.cave_tag}</span>,
-    });
+    rows.push({ label: "洞穴 tag", value: <span className="tabular-nums">{stage.cave_tag}</span> });
+  return rows;
+}
 
-  if (rows.length === 0) return null;
-
+function Entrances({ rows }: { rows: ReturnType<typeof entranceRows> }) {
   return (
-    <dl className="grid grid-cols-1 gap-x-6 gap-y-2 rounded-lg border border-border/60 bg-card p-4 text-sm sm:grid-cols-[max-content_1fr]">
-      {rows.map((r, i) => (
-        <div key={i} className="contents">
-          <dt className="text-xs text-muted-foreground sm:py-0.5">{r.label}</dt>
-          <dd className="sm:py-0.5">{r.value}</dd>
-        </div>
-      ))}
-    </dl>
+    <AsideCard title="出入口">
+      <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-sm">
+        {rows.map((r) => (
+          <div key={r.label} className="contents">
+            <dt className="text-muted-foreground">{r.label}</dt>
+            <dd>{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </AsideCard>
   );
 }
 
+const rowLink =
+  "flex items-center gap-2 px-4 py-2 text-sm transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none";
+
 function InboundList({ inbound }: { inbound: InboundLink[] }) {
-  if (inbound.length === 0) return null;
   return (
-    <section className="space-y-2">
-      <h2 className="text-lg font-medium">指向此處的地圖</h2>
-      <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
+    <AsideCard title="指向此處的地圖" count={inbound.length} flush>
+      <ul className="divide-y divide-border/60">
         {inbound.map((l) => (
-          <li
-            key={l.fromId}
-            className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2 text-sm"
-          >
-            <span className="font-mono text-xs text-muted-foreground">#{l.fromId}</span>
-            <Link
-              href={`/maps/${l.fromId}`}
-              className="font-medium underline-offset-2 hover:underline"
-            >
-              {l.fromName}
+          <li key={l.fromId}>
+            <Link href={`/maps/${l.fromId}`} className={rowLink}>
+              <span className="min-w-0 flex-1 truncate">{l.fromName}</span>
+              <span className="text-xs text-muted-foreground">
+                {l.via.map((v) => VIA_LABEL[v]).join("、")}
+              </span>
+              <ChevronRightIcon className="size-3.5 text-muted-foreground/70" aria-hidden />
             </Link>
-            <div className="ml-auto flex flex-wrap gap-1">
-              {l.via.map((v) => (
-                <Badge key={v} variant="outline" className="font-normal">
-                  {VIA_LABEL[v]}
-                </Badge>
-              ))}
-            </div>
           </li>
         ))}
       </ul>
-    </section>
+    </AsideCard>
   );
 }
 
 function MissionsList({ missions }: { missions: StageMissionRef[] }) {
-  if (missions.length === 0) return null;
   return (
-    <LinkListSection title="相關任務">
-      {missions.map((m) => (
-        <LinkListRow key={m.missionId} href={`/missions/${m.missionId}`}>
-          <span className="font-mono text-xs text-muted-foreground">#{m.missionId}</span>
-          <span className="font-medium">{m.missionName ?? `任務 ${m.missionId}`}</span>
-          {m.groupId != null && (
-            <Badge variant="outline" className="font-normal">
-              分組 #{m.groupId}
-            </Badge>
-          )}
-          <span className="ml-auto font-mono text-xs text-muted-foreground">×{m.refCount}</span>
-        </LinkListRow>
-      ))}
-    </LinkListSection>
+    <AsideCard title="相關任務" count={missions.length} flush>
+      <ul className="divide-y divide-border/60">
+        {missions.map((m) => (
+          <li key={m.missionId}>
+            <Link href={`/missions/${m.missionId}`} className={rowLink}>
+              <span className="min-w-0 flex-1 truncate">
+                {m.missionName ?? `任務 ${m.missionId}`}
+              </span>
+              {m.groupId != null && (
+                <span className="text-xs text-muted-foreground tabular-nums">分組 {m.groupId}</span>
+              )}
+              <ChevronRightIcon className="size-3.5 text-muted-foreground/70" aria-hidden />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </AsideCard>
   );
 }
 
@@ -186,39 +190,91 @@ export default async function MapDetailPage({ params }: PageProps) {
   const monsters = getMonstersAtStage(stage.kind, stage.id);
   const mapImage = getStageMapImage(stage.kind, stage.id);
   const npcPlacements = getNpcPlacementsForStage(stage.kind, stage.id);
+  const monsterImages = getNpcImageMap(monsters.map((m) => m.npcId));
   // 沒有地圖圖片就不必查座標；markers 仍要建，清單的高血量標示也靠它。
   const monsterMarkers = buildMonsterMarkers(
     monsters,
     mapImage ? getMonsterSpawnPositions(stage.kind, stage.id) : [],
     mapImage,
-  );
+  ).map((m) => ({ ...m, image: monsterImages.get(m.npcId) ?? null }));
+
+  const npcCount = new Set(npcPlacements.map((p) => p.npcId)).size;
+  const levels = monsters.map((m) => m.level).filter((l) => l > 0);
+  const stats = [
+    monsters.length > 0 && { label: "怪物", value: `${monsters.length} 種` },
+    levels.length > 0 && {
+      label: "等級",
+      value:
+        Math.min(...levels) === Math.max(...levels)
+          ? `${levels[0]}`
+          : `${Math.min(...levels)}–${Math.max(...levels)}`,
+    },
+    npcCount > 0 && { label: "NPC", value: `${npcCount} 位` },
+  ].filter((s): s is { label: string; value: string } => Boolean(s));
+
+  const entrances = entranceRows(stage);
+  // 只放有內容的卡片；全空時不留右欄，清單吃滿寬。
+  const aside = [
+    entrances.length > 0 && <Entrances key="entrances" rows={entrances} />,
+    stage.groupSiblings.length > 0 && (
+      <AsideCard key="siblings" title="同區域地圖">
+        <div className="flex flex-wrap gap-1.5">
+          {stage.groupSiblings.map((s) => (
+            <Link
+              key={s.id}
+              href={`/maps/${s.id}`}
+              className="rounded-md border border-border/60 bg-background px-2.5 py-1 text-xs transition-colors hover:bg-muted/60"
+            >
+              {s.name}
+            </Link>
+          ))}
+        </div>
+      </AsideCard>
+    ),
+    stage.inbound.length > 0 && <InboundList key="inbound" inbound={stage.inbound} />,
+    stage.missions.length > 0 && <MissionsList key="missions" missions={stage.missions} />,
+  ].filter(Boolean);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
       <nav className="text-sm text-muted-foreground">
         <BackLink href="/maps">返回地圖列表</BackLink>
       </nav>
 
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-baseline gap-2">
-          <span className="font-mono text-xs text-muted-foreground">#{stage.id}</span>
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{stage.name}</h1>
-          {stage.kind === "sestage" && (
-            <Badge variant="outline" className="font-normal">
-              SE 地圖
-            </Badge>
-          )}
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="space-y-2">
+          <h1 className="flex flex-wrap items-baseline gap-x-2.5 text-2xl font-semibold md:text-3xl">
+            {stage.name}
+            <span className="font-sans text-sm font-normal text-muted-foreground tabular-nums">
+              #{stage.id}
+            </span>
+          </h1>
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+            {stage.kind === "sestage" && (
+              <Badge variant="outline" className="font-normal">
+                SE 地圖
+              </Badge>
+            )}
+            {stage.group != null && (
+              <Badge variant="outline" className="rounded-md font-normal text-muted-foreground">
+                區域 #{stage.group}
+              </Badge>
+            )}
+            {sortStageFlags(stage.flags).map((f) => (
+              <StageFlagBadge key={f} flag={f} />
+            ))}
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          {stage.group != null && (
-            <Badge variant="outline" className="font-normal">
-              區域 #{stage.group}
-            </Badge>
-          )}
-          {sortStageFlags(stage.flags).map((f) => (
-            <StageFlagBadge key={f} flag={f} />
-          ))}
-        </div>
+        {stats.length > 0 && (
+          <dl className="flex gap-6 text-sm">
+            {stats.map((s) => (
+              <div key={s.label}>
+                <dt className="text-xs text-muted-foreground">{s.label}</dt>
+                <dd className="font-medium tabular-nums">{s.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </header>
 
       <StageMapViewer
@@ -227,39 +283,8 @@ export default async function MapDetailPage({ params }: PageProps) {
         image={mapImage}
         placements={npcPlacements}
         monsters={monsterMarkers}
+        aside={aside.length > 0 ? aside : null}
       />
-
-      <PropertiesGrid stage={stage} />
-
-      {stage.groupSiblings.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-lg font-medium">同區域地圖</h2>
-          <div className="flex flex-wrap gap-1.5">
-            {stage.groupSiblings.map((s) => (
-              <Link
-                key={s.id}
-                href={`/maps/${s.id}`}
-                className="rounded-md border border-border/60 bg-card px-2.5 py-1 text-xs transition-colors hover:bg-muted/50"
-              >
-                {s.name}
-                <span className="ml-1.5 font-mono text-[0.65rem] text-muted-foreground">
-                  #{s.id}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <InboundList inbound={stage.inbound} />
-
-      <MissionsList missions={stage.missions} />
-
-      <p className="text-xs text-muted-foreground">
-        資料來自 STAGE.INI / SESTAGE.INI 與 MAP/*.MPC； appear_map / logout_map
-        記錄的是「預設出生／登出」目的地，並非完整的地圖傳送網。 怪物清單與刷怪點由 GENERATOR.OBD
-        解析，不含劇情觸發或關卡腳本生成的怪物； ×N 為該怪物在此地圖的刷怪點數量。
-      </p>
     </div>
   );
 }
