@@ -5,6 +5,7 @@ import {
   getStageMapImage,
   getNpcPlacementsForStage,
   getMonsterSpawnPositions,
+  getNpcPositionsForStage,
   buildMonsterMarkers,
   type StageMapImage,
 } from "../maps";
@@ -87,6 +88,42 @@ describe("getMonsterSpawnPositions", () => {
 
   it("不存在的 stage 回空陣列", () => {
     expect(getMonsterSpawnPositions("stage", STAGE_UNKNOWN)).toEqual([]);
+  });
+});
+
+// 謎霧之森（sestage 1931–1933）：category='npc'（葵/機關）與 category='spawn'（怪物）
+// 兩種來源合併的 oracle。11034/11036 只在 map_placements category='spawn' 出現，
+// 但 monster_spawns 也有一份一樣的座標，兩者聯集去重後應該只剩一筆。
+describe("getNpcPositionsForStage", () => {
+  it("sestage 1932 id 11034（被汙染的機關）回傳 (480,480)，聯集去重（placements + monster_spawns 同座標）", () => {
+    const result = getNpcPositionsForStage("sestage", 1932, [11034]);
+    expect(result.get(11034)).toEqual([{ x: 480, y: 480 }]);
+  });
+
+  it("sestage 1932 id 7712（葵，category='npc'）回傳 (240,1160)", () => {
+    const result = getNpcPositionsForStage("sestage", 1932, [7712]);
+    expect(result.get(7712)).toEqual([{ x: 240, y: 1160 }]);
+  });
+
+  it("同一 npc 在多個 stage 出現時，只查詢的那個 stage 才會回傳座標（7709 在 1933，不在 1932）", () => {
+    expect(getNpcPositionsForStage("sestage", 1932, [7709]).has(7709)).toBe(false);
+    expect(getNpcPositionsForStage("sestage", 1933, [7709]).get(7709)).toEqual([
+      { x: 3400, y: 1431 },
+    ]);
+  });
+
+  it("查無座標的 id 不會出現在回傳的 Map 裡（has() 為 false，而非空陣列）", () => {
+    const result = getNpcPositionsForStage("sestage", 1932, [999999999]);
+    expect(result.has(999999999)).toBe(false);
+  });
+
+  it("多筆座標的 npc（11060 在 sestage 1933 有多個 spawn 點）保留全部座標", () => {
+    const result = getNpcPositionsForStage("sestage", 1933, [11060]);
+    expect(result.get(11060)!.length).toBeGreaterThan(1);
+  });
+
+  it("空 ids 陣列回空 Map，不打 DB", () => {
+    expect(getNpcPositionsForStage("sestage", 1932, []).size).toBe(0);
   });
 });
 

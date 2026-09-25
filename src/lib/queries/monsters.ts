@@ -1,6 +1,8 @@
 import { getDb } from "@/lib/db";
 import { buildOrderBy, type SortDir } from "@/lib/sort";
 import { MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL } from "@/lib/constants/monster-level";
+import { getNpcImageMap } from "./images";
+import type { StepStatInput } from "@/lib/guide-steps";
 import type {
   MonsterDetail,
   MonsterDropItem,
@@ -311,6 +313,56 @@ export function getAllMonsterIds(): number[] {
   return (
     db.prepare(`SELECT id FROM npc WHERE type > 0`).all() as { id: number }[]
   ).map((r) => r.id);
+}
+
+/**
+ * 給迷宮攻略步驟用：一批 npc id 的戰鬥數值（不限 type>0，機關/葵這類 npc 也要能查）。
+ * extra_def→def、magic_def→mdef、base_dodge→dodge；查無 npc 記錄的 id 不會出現在
+ * 回傳的 Map 裡（呼叫端可用 has() 判斷缺漏）。頭像用批次 getNpcImageMap 補（無 N+1）。
+ */
+export function getNpcCombatStats(ids: number[]): Map<number, StepStatInput> {
+  const result = new Map<number, StepStatInput>();
+  if (ids.length === 0) return result;
+
+  const db = getDb();
+  const uniqueIds = [...new Set(ids)];
+  const placeholders = uniqueIds.map(() => "?").join(",");
+  const rows = db
+    .prepare(
+      `SELECT id,
+              name,
+              level,
+              hp,
+              extra_def  AS def,
+              magic_def  AS mdef,
+              base_dodge AS dodge
+       FROM npc
+       WHERE id IN (${placeholders})`,
+    )
+    .all(...uniqueIds) as Array<{
+    id: number;
+    name: string;
+    level: number;
+    hp: number | null;
+    def: number | null;
+    mdef: number | null;
+    dodge: number | null;
+  }>;
+
+  const imageMap = getNpcImageMap(rows.map((r) => r.id));
+  for (const r of rows) {
+    result.set(r.id, {
+      id: r.id,
+      name: r.name,
+      level: r.level,
+      hp: r.hp ?? 0,
+      def: r.def ?? 0,
+      mdef: r.mdef ?? 0,
+      dodge: r.dodge,
+      image: imageMap.get(r.id) ?? null,
+    });
+  }
+  return result;
 }
 
 // npc.type 有出現的值（facet 用）
