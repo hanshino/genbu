@@ -19,9 +19,9 @@ import type { StepGroupInput, StepMarkInput } from "../guide-steps";
 const CONTENT_DIR = path.join(process.cwd(), "content", "guides");
 
 describe("getGuides", () => {
-  it("returns all 7 drafted guides sorted by order", () => {
+  it("returns all 8 drafted guides sorted by order", () => {
     const guides = getGuides();
-    expect(guides.length).toBe(7);
+    expect(guides.length).toBe(8);
     for (let i = 1; i < guides.length; i++) {
       expect(guides[i].order).toBeGreaterThan(guides[i - 1].order);
     }
@@ -54,16 +54,17 @@ describe("getGuides", () => {
     expect(bySlug.get("stats-and-market")?.stage).toBe("topic");
   });
 
-  it("only dungeon-mistforest has category set to dungeon", () => {
+  it("only dungeon guides have category set to dungeon", () => {
     const bySlug = new Map(getGuides().map((g) => [g.slug, g]));
     for (const g of getGuides()) {
-      if (g.slug === "dungeon-mistforest") {
+      if (DUNGEON_SLUGS.includes(g.slug)) {
         expect(g.category).toBe("dungeon");
       } else {
         expect(g.category).toBeUndefined();
       }
     }
     expect(bySlug.get("dungeon-mistforest")?.order).toBe(7);
+    expect(bySlug.get("dungeon-deepforest")?.order).toBe(8);
   });
 });
 
@@ -330,7 +331,7 @@ describe("<BoxContents>/<MissionCard> tags in content/guides resolve to real dat
   );
 });
 
-// ── dungeon-mistforest guards ──────────────────────────────────────────────
+// ── dungeon guide guards ──────────────────────────────────────────────────
 //
 // D2/D3 hard rules（見 /tmp/opencode/mistforest/plan.md、Lane C 任務說明）：
 // prose 不能用數字 id 敘事（同名怪物改用特徵標籤區分）、不能出現「內功」字樣。
@@ -339,15 +340,15 @@ describe("<BoxContents>/<MissionCard> tags in content/guides resolve to real dat
 // 的順序，避免把 DungeonStep 的 crop/id props、或 <details> 裡合法的外形 ID
 // 表格／年份 URL 誤判成違規。
 
-const DUNGEON_SLUG = "dungeon-mistforest";
+const DUNGEON_SLUGS = ["dungeon-mistforest", "dungeon-deepforest"];
 
-function readDungeonBody(): string {
-  const raw = fs.readFileSync(path.join(CONTENT_DIR, `${DUNGEON_SLUG}.mdx`), "utf8");
+function readDungeonBody(slug: string): string {
+  const raw = fs.readFileSync(path.join(CONTENT_DIR, `${slug}.mdx`), "utf8");
   return raw.replace(/^---\n[\s\S]*?\n---\n?/, "");
 }
 
-describe("dungeon-mistforest — prose guards (no numeric-id narration, no 內功)", () => {
-  const body = readDungeonBody();
+describe.each(DUNGEON_SLUGS)("%s — prose guards (no numeric-id narration, no 內功)", (slug) => {
+  const body = readDungeonBody(slug);
   // 1) 先整段砍 <details>…</details>（外形 ID 表格、社群原文年份/URL 允許出現數字）
   // 2) 砍剩下所有標籤（DungeonStep/StepMap 等 props 裡的 id/crop 數字一併清掉）
   // 3) 砍 URL（sourceUrl、社群原文連結裡的 bsn/parent/sn 數字）
@@ -367,7 +368,7 @@ describe("dungeon-mistforest — prose guards (no numeric-id narration, no 內�
     expect(prose).not.toContain("內功");
   });
 
-  it("does use 內力 to distinguish the two 機關 traits (step 02 tip)", () => {
+  it("does use 內力 and 外功 to explain defensive traits", () => {
     expect(prose).toContain("內力");
     expect(prose).toContain("外功");
   });
@@ -441,8 +442,8 @@ function parseDungeonSteps(body: string): ParsedDungeonStep[] {
   return steps;
 }
 
-describe("dungeon-mistforest — DungeonStep props resolve via getStepData", () => {
-  const steps = parseDungeonSteps(readDungeonBody());
+describe.each(DUNGEON_SLUGS)("%s — DungeonStep props resolve via getStepData", (slug) => {
+  const steps = parseDungeonSteps(readDungeonBody(slug));
 
   it("finds exactly 7 DungeonStep tags, numbered 1–7 in order", () => {
     expect(steps.map((s) => s.n)).toEqual([1, 2, 3, 4, 5, 6, 7]);

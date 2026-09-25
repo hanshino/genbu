@@ -90,7 +90,7 @@ frontmatter（category: dungeon, stage: topic）
 新增文章時：
 
 - 更新文章數量的斷言。
-- 目前「內文不能有數字 ID、不能有『內功』」和「每個 DungeonStep 都能從 DB 取到資料」這兩條守門只針對謎霧之森。寫新的迷宮攻略時，把新 slug 加進同一組檢查。
+- 目前「內文不能有數字 ID、不能有『內功』」和「每個 DungeonStep 都能從 DB 取到資料」這兩條守門涵蓋謎霧之森與深森秘徑。寫新的迷宮攻略時，把新 slug 加進同一組 `DUNGEON_SLUGS` 檢查。
 - 會驗證的項目：
   - 內文去掉 JSX 和 `<details>` 後，不能有 4 到 5 位數的數字，年份 20xx 例外。
   - 每個 `DungeonStep` 都要能取到地圖圖片。
