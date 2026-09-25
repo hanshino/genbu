@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import type { StageKind } from "@/lib/types/stage";
 import type { StageMonsterSpawn } from "@/lib/types/monster-spawn";
+import type { Point } from "@/lib/guide-steps";
 import { getNpcImageMap, type EntityImage } from "./images";
 
 export interface StageMapImage {
@@ -123,6 +124,78 @@ export function getMonsterSpawnPositions(kind: StageKind, id: number): MonsterSp
        ORDER BY id`,
     )
     .all(kind, id) as MonsterSpawnPosition[];
+}
+
+/**
+ * 給迷宮攻略步驟用：某 stage 內指定 npc id 們的合成圖像素座標，
+ * 合併 monster_spawns(x,y) 與 map_placements(raw_x,raw_y, category IN ('npc','spawn'), in_bounds=1)
+ * 兩個來源（同一隻 npc 常常兩邊都有紀錄，取聯集後依 (x,y) 去重）。
+ *
+ * 注意：這裡跟 getNpcPlacementsForStage 一樣，只用 raw_x/raw_y，絕不用 tile_y
+ * （tile_y 帶了一次 Y 翻轉，會把室內房間上下鏡像到錯位，見 commit 0329979）。
+ *
+ * 回傳 Map<npcId, Point[]>；查無座標的 id 不會出現在 Map 裡（呼叫端可用 has() 判斷）。
+ */
+export function getNpcPositionsForStage(
+  kind: StageKind,
+  stageId: number,
+  ids: number[],
+): Map<number, Point[]> {
+  const result = new Map<number, Point[]>();
+  if (ids.length === 0) return result;
+
+  const db = getDb();
+  const uniqueIds = [...new Set(ids)];
+  const placeholders = uniqueIds.map(() => "?").join(",");
+
+  const push = (npcId: number, x: unknown, y: unknown) => {
+    if (typeof x !== "number" || typeof y !== "number") return;
+    const list = result.get(npcId);
+    if (list) list.push({ x, y });
+    else result.set(npcId, [{ x, y }]);
+  };
+
+  const placementRows = db
+    .prepare(
+      `SELECT npc_id AS npcId, raw_x AS x, raw_y AS y
+       FROM map_placements
+       WHERE stage_kind = ?
+         AND stage_id = ?
+         AND category IN ('npc', 'spawn')
+         AND in_bounds = 1
+         AND npc_id IN (${placeholders})`,
+    )
+    .all(kind, stageId, ...uniqueIds) as Array<{ npcId: number; x: number; y: number }>;
+  for (const r of placementRows) push(r.npcId, r.x, r.y);
+
+  if (hasSpawnXYSupport(db)) {
+    const spawnRows = db
+      .prepare(
+        `SELECT npc_id AS npcId, x, y
+         FROM monster_spawns
+         WHERE stage_kind = ? AND stage_id = ? AND npc_id IN (${placeholders})`,
+      )
+      .all(kind, stageId, ...uniqueIds) as Array<{
+      npcId: number;
+      x: number | null;
+      y: number | null;
+    }>;
+    for (const r of spawnRows) push(r.npcId, r.x, r.y);
+  }
+
+  for (const [npcId, pts] of result) {
+    const seen = new Set<string>();
+    const deduped: Point[] = [];
+    for (const p of pts) {
+      const key = `${p.x}:${p.y}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(p);
+    }
+    result.set(npcId, deduped);
+  }
+
+  return result;
 }
 
 export interface StageMonsterMarker extends StageMonsterSpawn {

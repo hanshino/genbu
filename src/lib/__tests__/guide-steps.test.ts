@@ -1,0 +1,298 @@
+import { describe, it, expect } from "vitest";
+import {
+  buildStepData,
+  cropFrame,
+  fullFrameBox,
+  inCrop,
+  toPercent,
+  type BuildStepDataInput,
+  type Crop,
+  type StepStatInput,
+} from "../guide-steps";
+import type { StageMapImage } from "@/lib/queries/maps";
+
+// oracle from plan.md: img 6040×2800, crop [150,380,1400,1380]
+const IMG: StageMapImage = {
+  url: "https://img.hanshino.dev/ioocuj.webp",
+  imgWidth: 6040,
+  imgHeight: 2800,
+  tilesW: 151,
+  tilesH: 70,
+  tilePx: 40,
+};
+const CROP: Crop = [150, 380, 1400, 1380];
+
+describe("cropFrame", () => {
+  it("matches the plan.md oracle for stage 1932 crop", () => {
+    const f = cropFrame(IMG, CROP);
+    expect(f.aspect).toBeCloseTo(1250 / 1000, 6);
+    expect(f.width).toBeCloseTo(483.2, 5);
+    expect(f.left).toBeCloseTo(-12, 5);
+    expect(f.top).toBeCloseTo(-38, 5);
+  });
+});
+
+describe("toPercent", () => {
+  it("relative to crop: (480,480) → 26.4% / 10%", () => {
+    const p = toPercent({ x: 480, y: 480 }, IMG, CROP);
+    expect(p.left).toBeCloseTo(26.4, 5);
+    expect(p.top).toBeCloseTo(10, 5);
+  });
+
+  it("relative to full image when crop=null", () => {
+    const p = toPercent({ x: 480, y: 480 }, IMG, null);
+    expect(p.left).toBeCloseTo((480 / 6040) * 100, 6);
+    expect(p.top).toBeCloseTo((480 / 2800) * 100, 6);
+  });
+});
+
+describe("fullFrameBox", () => {
+  it("matches the plan.md oracle: left 2.483%, top 13.571%, width 20.695%, height 35.714%", () => {
+    const b = fullFrameBox(IMG, CROP);
+    expect(b.left).toBeCloseTo(2.483, 2);
+    expect(b.top).toBeCloseTo(13.571, 2);
+    expect(b.width).toBeCloseTo(20.695, 2);
+    expect(b.height).toBeCloseTo(35.714, 2);
+  });
+});
+
+describe("inCrop", () => {
+  it("crop=null always true", () => {
+    expect(inCrop({ x: -999, y: 999999 }, null)).toBe(true);
+  });
+
+  it("points inside the box are true, including edges", () => {
+    expect(inCrop({ x: 150, y: 380 }, CROP)).toBe(true); // top-left corner
+    expect(inCrop({ x: 1400, y: 1380 }, CROP)).toBe(true); // bottom-right corner
+    expect(inCrop({ x: 480, y: 480 }, CROP)).toBe(true);
+  });
+
+  it("points outside the box (any axis) are false", () => {
+    expect(inCrop({ x: 149, y: 480 }, CROP)).toBe(false);
+    expect(inCrop({ x: 1401, y: 480 }, CROP)).toBe(false);
+    expect(inCrop({ x: 480, y: 379 }, CROP)).toBe(false);
+    expect(inCrop({ x: 480, y: 1381 }, CROP)).toBe(false);
+  });
+});
+
+/* ── buildStepData ── */
+
+function stat(overrides: Partial<StepStatInput> & { id: number }): StepStatInput {
+  return {
+    name: "被汙染的機關",
+    level: 165,
+    hp: 2296154,
+    def: 4800,
+    mdef: 280,
+    dodge: 520,
+    image: null,
+    ...overrides,
+  };
+}
+
+function baseInput(overrides: Partial<BuildStepDataInput> = {}): BuildStepDataInput {
+  return {
+    stageId: 1932,
+    stageName: "謎霧之森",
+    image: IMG,
+    crop: CROP,
+    groups: [],
+    marks: [],
+    stats: new Map(),
+    points: new Map(),
+    ...overrides,
+  };
+}
+
+describe("buildStepData — crop filtering", () => {
+  it("drops points outside crop, keeps in-crop points; out-of-crop-only id becomes missing", () => {
+    const stats = new Map([
+      [11034, stat({ id: 11034 })],
+      [7712, stat({ id: 7712, name: "葵" })],
+    ]);
+    const points = new Map([
+      [11034, [{ x: 480, y: 480 }]], // inside CROP
+      [7712, [{ x: 0, y: 0 }]], // outside CROP
+    ]);
+    const data = buildStepData(
+      baseInput({
+        groups: [{ ids: [11034, 7712] }],
+        stats,
+        points,
+      }),
+    );
+    expect(data.groups[0].points).toEqual([{ x: 480, y: 480 }]);
+    expect(data.missing).toContain(7712);
+    expect(data.missing).not.toContain(11034);
+  });
+
+  it("full view (crop=null passed at call site) draws only points still tied to the group; buildStepData itself only filters by the crop given in input", () => {
+    const stats = new Map([[11034, stat({ id: 11034 })]]);
+    const points = new Map([[11034, [{ x: 480, y: 480 }]]]);
+    const data = buildStepData(baseInput({ crop: null, groups: [{ ids: [11034] }], stats, points }));
+    expect(data.groups[0].points).toEqual([{ x: 480, y: 480 }]);
+    expect(data.missing).toEqual([]);
+  });
+});
+
+describe("buildStepData — dedupe", () => {
+  it("dedupes identical (x,y) points within a group", () => {
+    const stats = new Map([[11034, stat({ id: 11034 })]]);
+    const points = new Map([
+      [11034, [{ x: 480, y: 480 }, { x: 480, y: 480 }, { x: 500, y: 500 }]],
+    ]);
+    const data = buildStepData(baseInput({ groups: [{ ids: [11034] }], stats, points }));
+    expect(data.groups[0].points).toEqual([{ x: 480, y: 480 }, { x: 500, y: 500 }]);
+  });
+});
+
+describe("buildStepData — grouping / merge / elite sub-rows", () => {
+  it("merges ids with identical stats into one row with count", () => {
+    const stats = new Map([
+      [11034, stat({ id: 11034 })],
+      [11035, stat({ id: 11035 })], // same stats as 11034
+    ]);
+    const points = new Map([
+      [11034, [{ x: 480, y: 480 }]],
+      [11035, [{ x: 500, y: 500 }]],
+    ]);
+    const data = buildStepData(baseInput({ groups: [{ ids: [11034, 11035] }], stats, points }));
+    expect(data.groups[0].rows).toHaveLength(1);
+    expect(data.groups[0].rows[0].count).toBe(2);
+    expect(data.groups[0].rows[0].id).toBe(11034); // first-seen id wins
+  });
+
+  it("different stats (elite ▲ vs normal) become separate sub-rows", () => {
+    const stats = new Map([
+      [11039, stat({ id: 11039, name: "▲黑化貝", hp: 164670, def: 1000, mdef: 616, dodge: 440 })],
+      [11040, stat({ id: 11040, name: "黑化貝", hp: 173622, def: 880, mdef: 700, dodge: 440 })],
+    ]);
+    const points = new Map([
+      [11039, [{ x: 700, y: 700 }]],
+      [11040, [{ x: 750, y: 750 }]],
+    ]);
+    const data = buildStepData(baseInput({ groups: [{ ids: [11039, 11040] }], stats, points }));
+    expect(data.groups[0].rows).toHaveLength(2);
+    expect(data.groups[0].rows.map((r) => r.name)).toEqual(["▲黑化貝", "黑化貝"]);
+    expect(data.groups[0].rows.every((r) => r.count === 1)).toBe(true);
+  });
+});
+
+describe("buildStepData — hit (max dodge, null ignored)", () => {
+  it("hit.dodge is the max dodge across all group rows; hit.names lists tied-max names", () => {
+    const stats = new Map([
+      [11034, stat({ id: 11034, name: "被汙染的機關", dodge: 520 })],
+      [11036, stat({ id: 11036, name: "水源淨化機關", dodge: 447 })],
+      [11038, stat({ id: 11038, name: "淨化水晶", dodge: null })], // ignored
+    ]);
+    const points = new Map([
+      [11034, [{ x: 480, y: 480 }]],
+      [11036, [{ x: 500, y: 500 }]],
+      [11038, [{ x: 600, y: 600 }]],
+    ]);
+    const data = buildStepData(
+      baseInput({
+        groups: [{ ids: [11034] }, { ids: [11036] }, { ids: [11038] }],
+        stats,
+        points,
+      }),
+    );
+    expect(data.hit).toEqual({ dodge: 520, names: ["被汙染的機關"] });
+  });
+
+  it("all-null dodge across every row → hit is null", () => {
+    const stats = new Map([[11038, stat({ id: 11038, dodge: null })]]);
+    const points = new Map([[11038, [{ x: 600, y: 600 }]]]);
+    const data = buildStepData(baseInput({ groups: [{ ids: [11038] }], stats, points }));
+    expect(data.hit).toBeNull();
+  });
+
+  it("ties on max dodge list every distinct tied name once", () => {
+    const stats = new Map([
+      [11039, stat({ id: 11039, name: "▲黑化貝", dodge: 500 })],
+      [11041, stat({ id: 11041, name: "▲黑化電龜", dodge: 500 })],
+      [11036, stat({ id: 11036, name: "水源淨化機關", dodge: 447 })],
+    ]);
+    const points = new Map([
+      [11039, [{ x: 700, y: 700 }]],
+      [11041, [{ x: 710, y: 710 }]],
+      [11036, [{ x: 500, y: 500 }]],
+    ]);
+    const data = buildStepData(
+      baseInput({ groups: [{ ids: [11039, 11041, 11036] }], stats, points }),
+    );
+    expect(data.hit?.dodge).toBe(500);
+    expect(data.hit?.names.sort()).toEqual(["▲黑化貝", "▲黑化電龜"].sort());
+  });
+});
+
+describe("buildStepData — color order", () => {
+  it("group.color is 1-based index into the input groups array", () => {
+    const stats = new Map([
+      [11034, stat({ id: 11034 })],
+      [11036, stat({ id: 11036, name: "水源淨化機關" })],
+      [11038, stat({ id: 11038, name: "淨化水晶" })],
+    ]);
+    const points = new Map([
+      [11034, [{ x: 480, y: 480 }]],
+      [11036, [{ x: 500, y: 500 }]],
+      [11038, [{ x: 600, y: 600 }]],
+    ]);
+    const data = buildStepData(
+      baseInput({
+        groups: [{ ids: [11034] }, { ids: [11036] }, { ids: [11038] }],
+        stats,
+        points,
+      }),
+    );
+    expect(data.groups.map((g) => g.color)).toEqual([1, 2, 3]);
+  });
+});
+
+describe("buildStepData — missing", () => {
+  it("group id with no DB record is missing", () => {
+    const data = buildStepData(
+      baseInput({ groups: [{ ids: [99999999] }], stats: new Map(), points: new Map() }),
+    );
+    expect(data.missing).toEqual([99999999]);
+    expect(data.groups[0].rows).toEqual([]);
+  });
+
+  it("group id with a DB record but no in-crop point is missing when map is enabled (default)", () => {
+    const stats = new Map([[11034, stat({ id: 11034 })]]);
+    const data = buildStepData(
+      baseInput({ groups: [{ ids: [11034] }], stats, points: new Map() }),
+    );
+    expect(data.missing).toEqual([11034]);
+  });
+
+  it("map: false skips the missing-point check even with no coordinates", () => {
+    const stats = new Map([[11034, stat({ id: 11034 })]]);
+    const data = buildStepData(
+      baseInput({ groups: [{ ids: [11034], map: false }], stats, points: new Map() }),
+    );
+    expect(data.missing).toEqual([]);
+    expect(data.groups[0].map).toBe(false);
+  });
+
+  it("mark with tbd:true skips the missing-point check", () => {
+    const stats = new Map([[5738, stat({ id: 5738, name: "●丹爐童子" })]]);
+    const data = buildStepData(
+      baseInput({
+        groups: [],
+        marks: [{ id: 5738, as: "npc", tbd: true }],
+        stats,
+        points: new Map(),
+      }),
+    );
+    expect(data.missing).toEqual([]);
+    expect(data.marks[0].tbd).toBe(true);
+  });
+
+  it("mark without tbd and with no DB record is missing", () => {
+    const data = buildStepData(
+      baseInput({ groups: [], marks: [{ id: 99999999, as: "npc" }], stats: new Map(), points: new Map() }),
+    );
+    expect(data.missing).toEqual([99999999]);
+  });
+});

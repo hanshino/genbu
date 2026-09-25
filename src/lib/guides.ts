@@ -25,6 +25,8 @@ export interface GuideMeta {
   updated: string;
   /** 由內文字數估算，中文約 400 字/分鐘，最少 1。 */
   readingMinutes: number;
+  /** 迷宮攻略分類；未指定時視為一般路線文章（不進「迷宮攻略」區塊）。 */
+  category?: "dungeon";
 }
 
 export interface GuideHeading {
@@ -59,6 +61,7 @@ interface RawFrontmatter {
   author?: unknown;
   sourceUrl?: unknown;
   updated?: unknown;
+  category?: unknown;
 }
 
 function requireField<T>(
@@ -137,6 +140,10 @@ function toGuideMeta(fm: RawFrontmatter, body: string, filename: string): GuideM
   if (sourceUrl !== undefined && !isNonEmptyString(sourceUrl)) {
     throw new Error(`content/guides/${filename}: frontmatter "sourceUrl" 型別錯誤`);
   }
+  if (fm.category !== undefined && fm.category !== "dungeon") {
+    throw new Error(`content/guides/${filename}: frontmatter "category" 只能是 "dungeon" 或省略`);
+  }
+  const category = fm.category === "dungeon" ? ("dungeon" as const) : undefined;
 
   return {
     slug,
@@ -151,18 +158,45 @@ function toGuideMeta(fm: RawFrontmatter, body: string, filename: string): GuideM
     ...(sourceUrl ? { sourceUrl } : {}),
     updated,
     readingMinutes: estimateReadingMinutes(body),
+    ...(category ? { category } : {}),
   };
 }
 
-function extractHeadings(body: string): GuideHeading[] {
-  const headings: GuideHeading[] = [];
-  const re = /^##\s+(.+)$/gm;
+/**
+ * 掃 body 找 h2（`## ` 開頭）與 `<DungeonStep n={N} ... title="…">` 開場標籤，
+ * 依文件中出現順序合併成目錄。DungeonStep 的 TOC 文字＝`{n 補零 2 位} · {title}`，
+ * anchor id 跟 dungeon-step.tsx 的 h2 id 對齊（同用 headingId(title)）。
+ * export 給測試直接呼叫（避免透過 fixture .mdx 檔間接測，content/guides 現有 6 篇
+ * 不想為了這個測試多長一篇）；非公開契約，@designer 不需要引用它。
+ */
+export function extractHeadings(body: string): GuideHeading[] {
+  type Hit = { index: number; heading: GuideHeading };
+  const hits: Hit[] = [];
+
+  const h2Re = /^##\s+(.+)$/gm;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(body)) !== null) {
+  while ((m = h2Re.exec(body)) !== null) {
     const text = m[1].trim();
-    headings.push({ id: headingId(text), text });
+    hits.push({ index: m.index, heading: { id: headingId(text), text } });
   }
-  return headings;
+
+  // <DungeonStep n={2} title="外圍" stage={1932} ... > — props 可能跨行、順序不定，
+  // 只掃到第一個 attrs 內未出現 "/>" 的 ">"（DungeonStep 一定有 children，非自閉合標籤，
+  // 且 props 值本身不含裸的 ">"）。TOC 文字＝零填 2 位的 n ＋ "· " ＋ title；
+  // anchor id 與 dungeon-step.tsx 的 h2 id 對齊（同用 headingId(title)）。
+  const stepRe = /<DungeonStep\b([\s\S]*?)>/g;
+  while ((m = stepRe.exec(body)) !== null) {
+    const attrs = m[1];
+    const nMatch = attrs.match(/\bn=\{?\s*["']?(\d+)["']?\s*\}?/);
+    const titleMatch = attrs.match(/\btitle=(?:"([^"]*)"|\{`([^`]*)`\}|\{'([^']*)'\})/);
+    if (!nMatch || !titleMatch) continue;
+    const title = (titleMatch[1] ?? titleMatch[2] ?? titleMatch[3] ?? "").trim();
+    const seal = nMatch[1].padStart(2, "0");
+    hits.push({ index: m.index, heading: { id: headingId(title), text: `${seal} · ${title}` } });
+  }
+
+  hits.sort((a, b) => a.index - b.index);
+  return hits.map((h) => h.heading);
 }
 
 function listContentFiles(): string[] {

@@ -7,6 +7,7 @@ import {
   CalendarIcon,
   ChevronRightIcon,
   ClockIcon,
+  MapIcon,
   PenLineIcon,
   RouteIcon,
 } from "lucide-react";
@@ -87,6 +88,7 @@ export default async function GuideArticlePage({ params }: PageProps) {
   const { prev, next } = getAdjacentGuides(slug);
   const body = await renderGuideBody(source, guideMdxComponents);
   const range = levelRange(meta);
+  const isDungeon = meta.category === "dungeon";
 
   return (
     <div
@@ -101,8 +103,12 @@ export default async function GuideArticlePage({ params }: PageProps) {
           href="/guides"
           className="hover:bg-muted/60 hover:text-foreground focus-visible:ring-ring -ml-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 outline-none focus-visible:ring-2 motion-safe:transition-colors"
         >
-          <RouteIcon className="size-3.5" aria-hidden />
-          修行路線
+          {isDungeon ? (
+            <MapIcon className="size-3.5" aria-hidden />
+          ) : (
+            <RouteIcon className="size-3.5" aria-hidden />
+          )}
+          {isDungeon ? "迷宮攻略" : "修行路線"}
         </Link>
         <ChevronRightIcon className="size-3.5 opacity-50" aria-hidden />
         <span aria-current="page">
@@ -138,7 +144,7 @@ export default async function GuideArticlePage({ params }: PageProps) {
             {meta.summary}
           </p>
 
-          {meta.unlocks.length > 0 && (
+          {!isDungeon && meta.unlocks.length > 0 && (
             <div className="mt-5 mb-6 flex flex-wrap items-center gap-1.5">
               <Badge variant="secondary" className="h-6 px-2.5 font-normal">
                 這階段開放

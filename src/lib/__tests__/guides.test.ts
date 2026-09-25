@@ -5,6 +5,7 @@ import {
   getAdjacentGuides,
   getGuide,
   getGuides,
+  extractHeadings,
   headingId,
   renderGuideBody,
   type GuideStage,
@@ -12,13 +13,15 @@ import {
 import { getGuideRef, type GuideRefKind } from "../guide-refs";
 import { getItemBoxContents } from "../queries/mission-logic";
 import { getMissionDetail } from "../queries/missions";
+import { getStepData } from "../guide-steps.server";
+import type { StepGroupInput, StepMarkInput } from "../guide-steps";
 
 const CONTENT_DIR = path.join(process.cwd(), "content", "guides");
 
 describe("getGuides", () => {
-  it("returns all 6 drafted guides sorted by order", () => {
+  it("returns all 7 drafted guides sorted by order", () => {
     const guides = getGuides();
-    expect(guides.length).toBe(6);
+    expect(guides.length).toBe(7);
     for (let i = 1; i < guides.length; i++) {
       expect(guides[i].order).toBeGreaterThan(guides[i - 1].order);
     }
@@ -50,12 +53,70 @@ describe("getGuides", () => {
     expect(bySlug.get("party-exp")?.stage).toBe("topic");
     expect(bySlug.get("stats-and-market")?.stage).toBe("topic");
   });
+
+  it("only dungeon-mistforest has category set to dungeon", () => {
+    const bySlug = new Map(getGuides().map((g) => [g.slug, g]));
+    for (const g of getGuides()) {
+      if (g.slug === "dungeon-mistforest") {
+        expect(g.category).toBe("dungeon");
+      } else {
+        expect(g.category).toBeUndefined();
+      }
+    }
+    expect(bySlug.get("dungeon-mistforest")?.order).toBe(7);
+  });
 });
 
 describe("headingId", () => {
   it("trims and collapses whitespace into hyphens", () => {
     expect(headingId("  這階段你要做什麼  ")).toBe("這階段你要做什麼");
     expect(headingId("foo   bar")).toBe("foo-bar");
+  });
+});
+
+describe("extractHeadings — merges ## headings with <DungeonStep> tags", () => {
+  it("merges h2 and DungeonStep in document order; TOC text is zero-padded n · title", () => {
+    const body = `
+## 前言
+
+<DungeonStep n={1} title="外圍" stage={1932}>
+內文
+</DungeonStep>
+
+## 中場休息
+
+<DungeonStep
+  n={2}
+  title="水源"
+  stage={1932}
+  crop={[150, 380, 1400, 1380]}
+>
+內文
+</DungeonStep>
+`;
+    const headings = extractHeadings(body);
+    expect(headings.map((h) => h.text)).toEqual(["前言", "01 · 外圍", "中場休息", "02 · 水源"]);
+  });
+
+  it("anchor id matches headingId(title), not headingId of the TOC text", () => {
+    const body = `<DungeonStep n={3} title="核心之間" stage={1933}>x</DungeonStep>`;
+    const headings = extractHeadings(body);
+    expect(headings).toEqual([{ id: headingId("核心之間"), text: "03 · 核心之間" }]);
+  });
+
+  it("n is zero-padded to 2 digits", () => {
+    const body = `<DungeonStep n={9} title="單位數" stage={1}>x</DungeonStep>`;
+    expect(extractHeadings(body)[0].text).toBe("09 · 單位數");
+  });
+
+  it("props in any order (title before n) still parse", () => {
+    const body = `<DungeonStep title="順序反過來" n={5} stage={1}>x</DungeonStep>`;
+    expect(extractHeadings(body)[0].text).toBe("05 · 順序反過來");
+  });
+
+  it("no DungeonStep tags falls back to plain ## headings (existing behaviour)", () => {
+    const body = "## 只有標題\n\n內文";
+    expect(extractHeadings(body)).toEqual([{ id: headingId("只有標題"), text: "只有標題" }]);
   });
 });
 
@@ -265,6 +326,153 @@ describe("<BoxContents>/<MissionCard> tags in content/guides resolve to real dat
     "MissionCard id=$id (from $file): getMissionDetail is non-null",
     ({ id }) => {
       expect(getMissionDetail(id)).not.toBeNull();
+    },
+  );
+});
+
+// ── dungeon-mistforest guards ──────────────────────────────────────────────
+//
+// D2/D3 hard rules（見 /tmp/opencode/mistforest/plan.md、Lane C 任務說明）：
+// prose 不能用數字 id 敘事（同名怪物改用特徵標籤區分）、不能出現「內功」字樣。
+// 用「先整段砍掉 <details>…</details>（外形 ID／來源年份合法出現數字的地方），
+// 再砍掉剩下所有 JSX/HTML 開合標籤與 URL，才對剩餘純敘事文字抓 4–5 位數字」
+// 的順序，避免把 DungeonStep 的 crop/id props、或 <details> 裡合法的外形 ID
+// 表格／年份 URL 誤判成違規。
+
+const DUNGEON_SLUG = "dungeon-mistforest";
+
+function readDungeonBody(): string {
+  const raw = fs.readFileSync(path.join(CONTENT_DIR, `${DUNGEON_SLUG}.mdx`), "utf8");
+  return raw.replace(/^---\n[\s\S]*?\n---\n?/, "");
+}
+
+describe("dungeon-mistforest — prose guards (no numeric-id narration, no 內功)", () => {
+  const body = readDungeonBody();
+  // 1) 先整段砍 <details>…</details>（外形 ID 表格、社群原文年份/URL 允許出現數字）
+  // 2) 砍剩下所有標籤（DungeonStep/StepMap 等 props 裡的 id/crop 數字一併清掉）
+  // 3) 砍 URL（sourceUrl、社群原文連結裡的 bsn/parent/sn 數字）
+  const prose = body
+    .replace(/<details>[\s\S]*?<\/details>/g, "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/https?:\/\/\S+/g, "");
+
+  it("prose never narrates with bare 4–5 digit numeric ids (years like 20xx are exempt)", () => {
+    const hits = [...prose.matchAll(/\b\d{4,5}\b/g)]
+      .map((m) => m[0])
+      .filter((n) => !/^20\d{2}$/.test(n));
+    expect(hits).toEqual([]);
+  });
+
+  it("never uses the word 內功 (use 內力 / 外功 instead)", () => {
+    expect(prose).not.toContain("內功");
+  });
+
+  it("does use 內力 to distinguish the two 機關 traits (step 02 tip)", () => {
+    expect(prose).toContain("內力");
+    expect(prose).toContain("外功");
+  });
+});
+
+// 掃 <DungeonStep n={N} title="…" stage={N} crop={[...]} groups={[...]} marks={[...]}>
+// 開場標籤，解出 props（含 JS 陣列/物件字面值），逐一呼叫 getStepData 驗證：
+// image 非 null、每個 map!==false 的 group／每個非 tbd 的 mark 至少有 1 個座標點，
+// missing 除了允許的 tbd id 之外必須是空陣列。
+interface ParsedDungeonStep {
+  n: number;
+  title: string;
+  stage: number;
+  crop?: [number, number, number, number];
+  groups: StepGroupInput[];
+  marks: StepMarkInput[];
+}
+
+function parseTagProps(attrsSrc: string): Record<string, unknown> {
+  const props: Record<string, unknown> = {};
+  const re = /([a-zA-Z][\w-]*)\s*=\s*/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(attrsSrc)) !== null) {
+    const name = m[1];
+    const idx = re.lastIndex;
+    const ch = attrsSrc[idx];
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      let end = idx + 1;
+      while (end < attrsSrc.length && attrsSrc[end] !== quote) end++;
+      props[name] = attrsSrc.slice(idx + 1, end);
+      re.lastIndex = end + 1;
+    } else if (ch === "{") {
+      let depth = 0;
+      let end = idx;
+      for (; end < attrsSrc.length; end++) {
+        if (attrsSrc[end] === "{") depth++;
+        else if (attrsSrc[end] === "}") {
+          depth--;
+          if (depth === 0) {
+            end++;
+            break;
+          }
+        }
+      }
+      const inner = attrsSrc.slice(idx + 1, end - 1);
+      // ponytail: 內容都是本檔自己寫的字面陣列/物件（id/tag/as/label/map/tbd），
+      // 不是外部輸入；用 Function 求值比手刻一個 mini-JSON parser 划算。
+      props[name] = new Function(`return (${inner});`)();
+      re.lastIndex = end;
+    }
+  }
+  return props;
+}
+
+function parseDungeonSteps(body: string): ParsedDungeonStep[] {
+  const steps: ParsedDungeonStep[] = [];
+  const re = /<DungeonStep\b([\s\S]*?)>/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(body)) !== null) {
+    const props = parseTagProps(m[1]);
+    steps.push({
+      n: Number(props.n),
+      title: String(props.title),
+      stage: Number(props.stage),
+      crop: props.crop as ParsedDungeonStep["crop"],
+      groups: (props.groups as StepGroupInput[] | undefined) ?? [],
+      marks: (props.marks as StepMarkInput[] | undefined) ?? [],
+    });
+  }
+  return steps;
+}
+
+describe("dungeon-mistforest — DungeonStep props resolve via getStepData", () => {
+  const steps = parseDungeonSteps(readDungeonBody());
+
+  it("finds exactly 7 DungeonStep tags, numbered 1–7 in order", () => {
+    expect(steps.map((s) => s.n)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it.each(steps)(
+    "step $n ($title): image non-null, every mapped group/non-tbd mark has ≥1 point, missing only contains allowed tbd ids",
+    (step) => {
+      const data = getStepData({
+        stage: step.stage,
+        crop: step.crop,
+        groups: step.groups,
+        marks: step.marks,
+      });
+
+      expect(data.image).not.toBeNull();
+
+      for (const g of data.groups) {
+        if (g.map === false) continue;
+        expect(g.points.length, `group ${g.key} (tag=${g.tag}) has no map point`).toBeGreaterThan(0);
+      }
+
+      const tbdIds = new Set(step.marks.filter((m) => m.tbd).map((m) => m.id));
+      for (const mk of data.marks) {
+        if (mk.tbd) continue;
+        expect(mk.points.length, `mark ${mk.key} (id=${mk.id}) has no map point`).toBeGreaterThan(0);
+      }
+
+      const unexpectedMissing = data.missing.filter((id) => !tbdIds.has(id));
+      expect(unexpectedMissing, `unexpected missing ids in step ${step.n}`).toEqual([]);
     },
   );
 });

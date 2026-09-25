@@ -23,8 +23,10 @@ import {
 import { cn } from "@/lib/utils";
 import { BoxContents } from "./box-contents";
 import { Check, ChecklistRoot } from "./checklist";
+import { DungeonStep, StepDone } from "./dungeon-step";
 import { GuideRefTag } from "./guide-ref-tag";
 import { MissionCard } from "./mission-card";
+import { NineRoomGrid, StepMap, StepTargets } from "./step-map";
 
 function textOf(node: ReactNode): string {
   if (typeof node === "string" || typeof node === "number") return String(node);
@@ -241,4 +243,9 @@ export const guideMdxComponents: MDXComponents = {
   Step,
   BoxContents,
   MissionCard,
+  DungeonStep,
+  StepDone,
+  StepMap,
+  StepTargets,
+  NineRoomGrid,
 };
