@@ -20,9 +20,9 @@ import type { StepGroupInput, StepMarkInput } from "../guide-steps";
 const CONTENT_DIR = path.join(process.cwd(), "content", "guides");
 
 describe("getGuides", () => {
-  it("returns all 11 drafted guides sorted by order", () => {
+  it("returns all 12 drafted guides sorted by order", () => {
     const guides = getGuides();
-    expect(guides.length).toBe(11);
+    expect(guides.length).toBe(12);
     for (let i = 1; i < guides.length; i++) {
       expect(guides[i].order).toBeGreaterThan(guides[i - 1].order);
     }
@@ -69,6 +69,7 @@ describe("getGuides", () => {
     expect(bySlug.get("dungeon-sevenstar")?.order).toBe(9);
     expect(bySlug.get("dungeon-shenwu")?.order).toBe(10);
     expect(bySlug.get("dungeon-mozu")?.order).toBe(11);
+    expect(bySlug.get("dungeon-liemo")?.order).toBe(12);
   });
 });
 
@@ -132,6 +133,41 @@ describe("extractHeadings — merges ## headings with <DungeonStep> tags", () =>
 });
 
 describe("renderGuideBody", () => {
+  it("烈漠禁地可編譯並渲染五張分區地圖", async () => {
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { guideMdxComponents } = await import("@/components/guides/mdx-components");
+    const guide = getGuide("dungeon-liemo")!;
+    const html = renderToStaticMarkup(await renderGuideBody(guide.source, guideMdxComponents));
+    expect(html.match(/alt="皇室禁地地圖（本區塊）"/g)).toHaveLength(5);
+    expect(html).not.toContain("待作者核對：這些 id 查無資料");
+    for (const floor of ["第一層", "第二層", "第三層", "第四層", "第五層"]) {
+      expect(guide.headings.some((heading) => heading.text.includes(floor))).toBe(true);
+    }
+    expect(html).not.toContain("層序待確認");
+    expect(html).toContain("看得到隊友，不代表走得到隊友身邊");
+    expect(html).toContain("銅甲通道");
+    expect(html).toContain("金甲通道");
+    expect(html).not.toContain("通道歸屬待確認");
+    expect(html).toContain("每殺一隻菁英就會冒出一顆汙染水晶");
+    expect(html).toContain("全二只在守護聖音提示時成立");
+    expect(html).toContain("還沒出來的波次就不會再出");
+    expect(html).toContain("剩餘小鬼數量");
+    expect(html.match(/data-testid="walk-layer"/g)).toHaveLength(1);
+    expect(html).toContain("兩條通道互不相通");
+    expect(html).not.toContain("這些通道或標記畫不出來");
+    // 四樓：總覽只標五島落點，走法在分頁裡（伺服器端只畫開著的第一頁）
+    expect(html).not.toContain("這些路線畫不出來");
+    const landings = [...html.matchAll(/data-route-landing="([^"]+)"/g)].map((m) => m[1]);
+    const tabs = [...html.matchAll(/role="tab"[^>]*>(?:<[^>]*>)*([^<]+)</g)].map((m) => m[1]);
+    const order = ["鬼爪島", "鬼馬島", "蛇魔島", "鬼偶島", "鬼煞島"];
+    expect(landings).toEqual(order);
+    expect(tabs).toEqual(order);
+    expect(html.match(/data-testid="route-layer"/g)).toHaveLength(1);
+    expect(html).toContain('data-route-map="鬼爪島"');
+    expect(html).toContain("（11，94）");
+    expect(html).not.toContain("（89，67）"); // 其他島的座標在各自分頁，沒打開就不渲染
+  });
+
   it("does not turn single tildes in level ranges into strikethrough", async () => {
     const { renderToStaticMarkup } = await import("react-dom/server");
     const el = await renderGuideBody("1~9 等、低自己 2~4 等；~~真刪除線~~", {});
@@ -356,6 +392,7 @@ const DUNGEON_SLUGS = [
   "dungeon-sevenstar",
   "dungeon-shenwu",
   "dungeon-mozu",
+  "dungeon-liemo",
 ];
 
 function readDungeonBody(slug: string): string {

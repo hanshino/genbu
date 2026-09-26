@@ -88,6 +88,16 @@
   --marker-10: oklch(0.33 0.03 260);
   --marker-11: oklch(0.6 0.13 75);
   --marker-12: oklch(0.48 0.12 200);
+  /* 可行走通道：地圖底圖兩種主題都是暗色，所以用亮色；金／天青在常見色盲下也分得開，另有條紋／圓點與實線／虛線區分 */
+  --walk-1: oklch(0.82 0.15 85); /* 鎏金 */
+  --walk-2: oklch(0.76 0.11 232); /* 天青 */
+  --walk-halo: oklch(0.16 0.02 260 / 0.7);
+  /* 路線：前兩色沿用通道色，後三色同樣是暗色底圖上讀得到的亮色（玫瑰／青草／藤紫） */
+  --route-1: var(--walk-1);
+  --route-2: var(--walk-2);
+  --route-3: oklch(0.76 0.14 355);
+  --route-4: oklch(0.8 0.15 145);
+  --route-5: oklch(0.74 0.12 300);
   --sidebar: oklch(0.965 0.01 85);
   --sidebar-foreground: oklch(0.22 0.015 260);
   --sidebar-primary: oklch(0.52 0.17 27);
@@ -135,6 +145,14 @@
   --marker-10: oklch(0.45 0.03 260);
   --marker-11: oklch(0.62 0.13 75);
   --marker-12: oklch(0.55 0.12 200);
+  --walk-1: oklch(0.84 0.14 85);
+  --walk-2: oklch(0.78 0.1 232);
+  --walk-halo: oklch(0.12 0.02 260 / 0.75);
+  --route-1: var(--walk-1);
+  --route-2: var(--walk-2);
+  --route-3: oklch(0.78 0.13 355);
+  --route-4: oklch(0.82 0.14 145);
+  --route-5: oklch(0.76 0.11 300);
   --sidebar: oklch(0.21 0.018 260);
   --sidebar-foreground: oklch(0.92 0.012 85);
   --sidebar-primary: oklch(0.65 0.18 28);

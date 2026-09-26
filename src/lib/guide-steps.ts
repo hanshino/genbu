@@ -34,11 +34,62 @@ export interface StepMarkInput {
   tbd?: boolean;
 }
 
+/**
+ * 可行走通道（合成圖像素 [x, y]）。
+ * at＝本通道的傳點，同時當作展開整條通道的起點；landing＝傳送進本通道時出現的落點，必須在同一條通道內。
+ */
+export interface StepWalkInput {
+  at: [x: number, y: number];
+  landing?: [x: number, y: number];
+  label: string;
+  note?: string;
+}
+
+/**
+ * 路線上的點：landing 落點（傳進來的位置）、portal 傳點（下一點就是傳送目的地）、
+ * walk 中途轉折、boss 終點。portal 之後那一段畫成傳送弧線，其他段畫成步行線。
+ */
+export type StepRoutePointKind = "landing" | "portal" | "walk" | "boss";
+
+/** 一條走法，例如一座島從落點到王。points 用 [種類, x, y]（合成圖像素）讓 MDX 保持簡短。 */
+export interface StepRouteInput {
+  label: string;
+  note?: string;
+  points: [as: StepRoutePointKind, x: number, y: number][];
+}
+
 export interface StepInput {
   stage: number;
   crop?: Crop;
   groups?: StepGroupInput[];
   marks?: StepMarkInput[];
+  walk?: StepWalkInput[];
+  routes?: StepRouteInput[];
+}
+
+export interface StepRoutePoint extends Point {
+  as: StepRoutePointKind;
+}
+
+export interface StepRoute {
+  label: string;
+  note: string | null;
+  points: StepRoutePoint[];
+  /** 分頁裡這條路線的放大框：包住所有點再加一圈邊、固定 ROUTE_ASPECT、不超出本區塊。 */
+  box: Crop;
+}
+
+export interface StepWalk {
+  label: string;
+  note: string | null;
+  /** 通道外框，合成圖像素座標的 SVG path（evenodd）。 */
+  path: string;
+  /** 地圖上名稱標籤的位置：本區塊內最上面那一列的中間格。 */
+  labelAt: Point;
+  /** 傳點；不在本區塊內時為 null。 */
+  portal: Point | null;
+  /** 落點；沒給、不在本區塊內或不在同一條通道時為 null。 */
+  landing: Point | null;
 }
 
 export interface StepRow {
@@ -88,6 +139,10 @@ export interface StepData {
   hit: { dodge: number; names: string[] } | null;
   /** Requested ids with no DB record / no in-crop point. */
   missing: number[];
+  /** 互不相通的可行走通道；查無遮罩或起點不可走的不會出現。 */
+  walk?: StepWalk[];
+  /** 路線；有點超出本區塊、或步行段在可行走資料上不相連的整條略過。 */
+  routes?: StepRoute[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -151,6 +206,32 @@ export function fullFrameBox(
     width: (w / img.imgWidth) * 100,
     height: (h / img.imgHeight) * 100,
   };
+}
+
+/** 路線分頁地圖的長寬比：每頁一樣，切分頁時地圖高度不跳；手機上也比寬扁的整層圖大。 */
+export const ROUTE_ASPECT = 4 / 3;
+
+/**
+ * 路線的放大框：點的外框加一圈邊，擴成 aspect 的長寬比，再推回 bounds 內。
+ * 比 bounds 還大時縮到放得進 bounds（仍維持 aspect）。
+ */
+export function routeBox(points: Point[], bounds: Crop, pad = 180, aspect = ROUTE_ASPECT): Crop {
+  const [bx0, by0, bx1, by1] = bounds;
+  const bw = bx1 - bx0;
+  const bh = by1 - by0;
+  const xs = points.map((p) => p.x);
+  const ys = points.map((p) => p.y);
+  let w = Math.max(...xs) - Math.min(...xs) + pad * 2;
+  let h = Math.max(...ys) - Math.min(...ys) + pad * 2;
+  if (w / h < aspect) w = h * aspect;
+  else h = w / aspect;
+  if (w > bw) [w, h] = [bw, bw / aspect];
+  if (h > bh) [w, h] = [bh * aspect, bh];
+  const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
+  const cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+  const x0 = Math.min(Math.max(cx - w / 2, bx0), bx1 - w);
+  const y0 = Math.min(Math.max(cy - h / 2, by0), by1 - h);
+  return [Math.round(x0), Math.round(y0), Math.round(x0 + w), Math.round(y0 + h)];
 }
 
 /** 點是否落在裁切框內（含邊界）。crop=null 視為不限制，一律回 true。 */
@@ -300,9 +381,7 @@ export function buildStepData(input: BuildStepDataInput): StepData {
   });
 
   const allRows = outGroups.flatMap((g) => g.rows);
-  const dodgeValues = allRows
-    .map((r) => r.dodge)
-    .filter((d): d is number => d != null);
+  const dodgeValues = allRows.map((r) => r.dodge).filter((d): d is number => d != null);
   const hit =
     dodgeValues.length > 0
       ? (() => {

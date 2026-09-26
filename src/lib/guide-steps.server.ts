@@ -1,8 +1,23 @@
 import { getDb } from "@/lib/db";
 import type { StageKind } from "@/lib/types/stage";
-import { getStageMapImage, getNpcPositionsForStage } from "@/lib/queries/maps";
+import {
+  getStageMapImage,
+  getNpcPositionsForStage,
+  getWalkRegion,
+  regionHas,
+} from "@/lib/queries/maps";
 import { getNpcCombatStats } from "@/lib/queries/monsters";
-import { buildStepData, type StepData, type StepInput } from "@/lib/guide-steps";
+import {
+  buildStepData,
+  inCrop,
+  routeBox,
+  type Crop,
+  type StepData,
+  type StepInput,
+  type StepRoute,
+  type StepWalk,
+} from "@/lib/guide-steps";
+import type { StageMapImage } from "@/lib/queries/maps";
 
 /**
  * stage / sestage 的 id 空間互斥（stage ∈ [1,999]、sestage ∈ [1001,5022]，
@@ -22,7 +37,7 @@ function stageKindOf(id: number): StageKind {
  * native module 而炸掉。只能在 Server Component / Route Handler 呼叫。
  */
 export function getStepData(input: StepInput): StepData {
-  const { stage, crop = null, groups = [], marks = [] } = input;
+  const { stage, crop = null, groups = [], marks = [], walk = [], routes = [] } = input;
   const kind = stageKindOf(stage);
 
   const db = getDb();
@@ -40,7 +55,7 @@ export function getStepData(input: StepInput): StepData {
   const stats = getNpcCombatStats(idList);
   const points = getNpcPositionsForStage(kind, stage, idList);
 
-  return buildStepData({
+  const data = buildStepData({
     stageId: stage,
     stageName: stageRow?.name ?? `場景 ${stage}`,
     image,
@@ -50,4 +65,73 @@ export function getStepData(input: StepInput): StepData {
     stats,
     points,
   });
+  return {
+    ...data,
+    walk: getWalks(stage, crop, walk),
+    routes: getRoutes(stage, crop, image, routes),
+  };
+}
+
+/**
+ * 路線整條驗證，任何一點出問題就整條略過（DungeonStep 在開發模式會提示）：
+ * 所有點都要在本區塊內；步行段（不是從傳點出發的那段）兩端要在同一個可行走區。
+ * 查不到可行走資料（舊版 DB、起點不可走）時不做連通檢查，只檢查區塊。
+ */
+function getRoutes(
+  stage: number,
+  crop: Crop | null,
+  image: StageMapImage | null,
+  input: NonNullable<StepInput["routes"]>,
+): StepRoute[] {
+  if (!image) return [];
+  const bounds: Crop = crop ?? [0, 0, image.imgWidth, image.imgHeight];
+  return input.flatMap((r) => {
+    const points = r.points.map(([as, x, y]) => ({ as, x, y }));
+    if (points.length < 2 || points[points.length - 1].as === "portal") return [];
+    if (!points.every((p) => inCrop(p, bounds))) return [];
+    for (let i = 1; i < points.length; i++) {
+      if (points[i - 1].as === "portal") continue;
+      const region = getWalkRegion(stageKindOf(stage), stage, points[i - 1]);
+      if (region && !regionHas(region, points[i])) return [];
+    }
+    return [{ label: r.label, note: r.note ?? null, points, box: routeBox(points, bounds) }];
+  });
+}
+
+/**
+ * 每個傳點（at）展開成一條通道；同一個連通區只留第一條（兩個起點其實相通時不會畫成兩條，
+ * 所以「通道互不相通」的說法才成立）。查無遮罩或起點不可走的直接略過。
+ * 傳點／落點不在本區塊內就不畫；落點不在同一條通道也不畫（DungeonStep 在開發模式會提示）。
+ */
+function getWalks(
+  stage: number,
+  crop: Crop | null,
+  input: NonNullable<StepInput["walk"]>,
+): StepWalk[] {
+  const out: StepWalk[] = [];
+  for (const w of input) {
+    const portal = { x: w.at[0], y: w.at[1] };
+    const region = getWalkRegion(stageKindOf(stage), stage, portal);
+    if (!region || out.some((o) => o.path === region.path)) continue;
+    const landing = w.landing ? { x: w.landing[0], y: w.landing[1] } : null;
+    out.push({
+      label: w.label,
+      note: w.note ?? null,
+      path: region.path,
+      labelAt: labelAt(region.cells, region.width, crop),
+      portal: inCrop(portal, crop) ? portal : null,
+      landing: landing && inCrop(landing, crop) && regionHas(region, landing) ? landing : null,
+    });
+  }
+  return out;
+}
+
+/** 本區塊內最上面一列可走格的中位數那格（一定是通道內的格子）；區塊外沒格子就退回整條通道。 */
+function labelAt(cells: number[], width: number, crop: Crop | null): { x: number; y: number } {
+  const center = (k: number) => ({ x: (k % width) * 40 + 20, y: Math.floor(k / width) * 40 + 20 });
+  const inside = cells.filter((k) => inCrop(center(k), crop));
+  const pool = inside.length > 0 ? inside : cells;
+  const top = Math.min(...pool.map((k) => Math.floor(k / width)));
+  const row = pool.filter((k) => Math.floor(k / width) === top).sort((a, b) => a - b);
+  return center(row[Math.floor(row.length / 2)]);
 }
