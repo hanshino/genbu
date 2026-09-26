@@ -35,6 +35,7 @@ const STATIC_ROUTES: Array<{
   { path: "/achievements", changeFrequency: "weekly", priority: 0.6 },
   { path: "/training-spots", changeFrequency: "weekly", priority: 0.6 },
   { path: "/guides", changeFrequency: "weekly", priority: 0.6 },
+  { path: "/guides/dungeons", changeFrequency: "weekly", priority: 0.6 },
   { path: "/tools", changeFrequency: "monthly", priority: 0.6 },
   { path: "/tools/160", changeFrequency: "monthly", priority: 0.5 },
   { path: "/tools/175", changeFrequency: "monthly", priority: 0.5 },
