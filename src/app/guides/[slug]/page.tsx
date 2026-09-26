@@ -100,7 +100,7 @@ export default async function GuideArticlePage({ params }: PageProps) {
         className="text-muted-foreground mt-7 mb-5 flex flex-wrap items-center gap-1.5 text-[13px]"
       >
         <Link
-          href="/guides"
+          href={isDungeon ? "/guides/dungeons" : "/guides"}
           className="hover:bg-muted/60 hover:text-foreground focus-visible:ring-ring -ml-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 outline-none focus-visible:ring-2 motion-safe:transition-colors"
         >
           {isDungeon ? (

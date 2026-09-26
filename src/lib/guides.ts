@@ -36,6 +36,8 @@ export interface GuideHeading {
 
 const CONTENT_DIR = path.join(process.cwd(), "content", "guides");
 const SLUG_RE = /^[a-z0-9-]+$/;
+// 跟 src/app/guides/ 底下的靜態路由撞名的 slug（靜態路由會蓋掉 [slug]，文章會永遠打不開）
+const RESERVED_SLUGS: readonly string[] = ["dungeons"];
 const VALID_STAGES: readonly GuideStage[] = [
   "beginner",
   "sub-clan",
@@ -122,10 +124,14 @@ function parseFrontmatter(raw: string, filename: string): { fm: RawFrontmatter; 
   return { fm, body };
 }
 
-function toGuideMeta(fm: RawFrontmatter, body: string, filename: string): GuideMeta {
+/** export 給測試直接呼叫（驗 frontmatter 規則，例如保留 slug）；非公開契約。 */
+export function toGuideMeta(fm: RawFrontmatter, body: string, filename: string): GuideMeta {
   const slug = requireField(fm, "slug", filename, isNonEmptyString);
   if (!SLUG_RE.test(slug)) {
     throw new Error(`content/guides/${filename}: slug "${slug}" 不符合 /^[a-z0-9-]+$/`);
+  }
+  if (RESERVED_SLUGS.includes(slug)) {
+    throw new Error(`content/guides/${filename}: slug "${slug}" 是保留字（已被 /guides/${slug} 頁面使用）`);
   }
   const title = requireField(fm, "title", filename, isNonEmptyString);
   const stage = requireField(fm, "stage", filename, isStage);

@@ -8,6 +8,7 @@ import {
   extractHeadings,
   headingId,
   renderGuideBody,
+  toGuideMeta,
   type GuideStage,
 } from "../guides";
 import { getGuideRef, type GuideRefKind } from "../guide-refs";
@@ -65,6 +66,12 @@ describe("getGuides", () => {
     }
     expect(bySlug.get("dungeon-mistforest")?.order).toBe(7);
     expect(bySlug.get("dungeon-deepforest")?.order).toBe(8);
+  });
+});
+
+describe("toGuideMeta — reserved slugs", () => {
+  it("throws when a guide uses a slug taken by a static /guides route", () => {
+    expect(() => toGuideMeta({ slug: "dungeons" }, "", "dungeons.mdx")).toThrow(/保留字/);
   });
 });
 

@@ -15,7 +15,8 @@ import { track } from "@/lib/analytics/track";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 type NavLink = { href: string; label: string; exact?: boolean };
-type NavGroup = { label: string; items: NavLink[] };
+// match：整組共用的路徑前綴，落在底下任何頁面（例如沒列在選單裡的文章頁）時整組亮起
+type NavGroup = { label: string; items: NavLink[]; match?: string };
 
 const navGroups: NavGroup[] = [
   {
@@ -45,6 +46,17 @@ const navGroups: NavGroup[] = [
     items: [
       { href: "/tools", label: "工具總覽", exact: true },
       { href: "/tools/enhance", label: "強化查詢" },
+      { href: "/tools/160", label: "160 迷霧九宮格" },
+      { href: "/tools/175", label: "175 北斗七星" },
+      { href: "/tools/180", label: "180 神武禁地" },
+    ],
+  },
+  {
+    label: "攻略",
+    match: "/guides",
+    items: [
+      { href: "/guides", label: "修行路線", exact: true },
+      { href: "/guides/dungeons", label: "迷宮攻略" },
     ],
   },
 ];
@@ -55,6 +67,7 @@ function isActive(pathname: string, href: string, exact = false) {
 }
 
 function isGroupActive(pathname: string, group: NavGroup) {
+  if (group.match && isActive(pathname, group.match)) return true;
   return group.items.some((i) => isActive(pathname, i.href, i.exact));
 }
 
@@ -75,7 +88,6 @@ export function Navbar({ user }: { user: AccountUser | null }) {
           {navGroups.map((group) => (
             <DesktopGroup key={group.label} group={group} pathname={pathname} />
           ))}
-          <DesktopLink href="/guides" label="攻略" pathname={pathname} />
           <DesktopLink href="/changelog" label="更新紀錄" pathname={pathname} />
         </nav>
 
@@ -142,13 +154,6 @@ export function Navbar({ user }: { user: AccountUser | null }) {
                       </div>
                     </div>
                   ))}
-
-                  <MobileLink
-                    href="/guides"
-                    label="攻略"
-                    pathname={pathname}
-                    onNavigate={() => setOpen(false)}
-                  />
 
                   <MobileLink
                     href="/changelog"
