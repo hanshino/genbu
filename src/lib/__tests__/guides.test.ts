@@ -145,6 +145,10 @@ describe("renderGuideBody", () => {
     }
     expect(html).not.toContain("層序待確認");
     expect(html).toContain("看得到隊友，不代表走得到隊友身邊");
+    expect(html).toContain("銅甲通道");
+    expect(html).toContain("金甲通道");
+    expect(html).not.toContain("通道歸屬待確認");
+    expect(html).toContain("map_walkability.walk_mask");
     expect(html).toContain("剩餘小鬼數量");
   });
 
