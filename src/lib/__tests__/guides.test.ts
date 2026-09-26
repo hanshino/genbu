@@ -20,9 +20,9 @@ import type { StepGroupInput, StepMarkInput } from "../guide-steps";
 const CONTENT_DIR = path.join(process.cwd(), "content", "guides");
 
 describe("getGuides", () => {
-  it("returns all 11 drafted guides sorted by order", () => {
+  it("returns all 12 drafted guides sorted by order", () => {
     const guides = getGuides();
-    expect(guides.length).toBe(11);
+    expect(guides.length).toBe(12);
     for (let i = 1; i < guides.length; i++) {
       expect(guides[i].order).toBeGreaterThan(guides[i - 1].order);
     }
@@ -69,6 +69,7 @@ describe("getGuides", () => {
     expect(bySlug.get("dungeon-sevenstar")?.order).toBe(9);
     expect(bySlug.get("dungeon-shenwu")?.order).toBe(10);
     expect(bySlug.get("dungeon-mozu")?.order).toBe(11);
+    expect(bySlug.get("dungeon-liemo")?.order).toBe(12);
   });
 });
 
@@ -132,6 +133,16 @@ describe("extractHeadings — merges ## headings with <DungeonStep> tags", () =>
 });
 
 describe("renderGuideBody", () => {
+  it("烈漠禁地可編譯並渲染五張分區地圖", async () => {
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { guideMdxComponents } = await import("@/components/guides/mdx-components");
+    const guide = getGuide("dungeon-liemo")!;
+    const html = renderToStaticMarkup(await renderGuideBody(guide.source, guideMdxComponents));
+    expect(html.match(/alt="皇室禁地地圖（本區塊）"/g)).toHaveLength(5);
+    expect(html).not.toContain("待作者核對：這些 id 查無資料");
+    expect(html).toContain("層序待確認");
+  });
+
   it("does not turn single tildes in level ranges into strikethrough", async () => {
     const { renderToStaticMarkup } = await import("react-dom/server");
     const el = await renderGuideBody("1~9 等、低自己 2~4 等；~~真刪除線~~", {});
@@ -356,6 +367,7 @@ const DUNGEON_SLUGS = [
   "dungeon-sevenstar",
   "dungeon-shenwu",
   "dungeon-mozu",
+  "dungeon-liemo",
 ];
 
 function readDungeonBody(slug: string): string {
