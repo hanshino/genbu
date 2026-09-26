@@ -20,9 +20,9 @@ import type { StepGroupInput, StepMarkInput } from "../guide-steps";
 const CONTENT_DIR = path.join(process.cwd(), "content", "guides");
 
 describe("getGuides", () => {
-  it("returns all 10 drafted guides sorted by order", () => {
+  it("returns all 11 drafted guides sorted by order", () => {
     const guides = getGuides();
-    expect(guides.length).toBe(10);
+    expect(guides.length).toBe(11);
     for (let i = 1; i < guides.length; i++) {
       expect(guides[i].order).toBeGreaterThan(guides[i - 1].order);
     }
@@ -68,6 +68,7 @@ describe("getGuides", () => {
     expect(bySlug.get("dungeon-deepforest")?.order).toBe(8);
     expect(bySlug.get("dungeon-sevenstar")?.order).toBe(9);
     expect(bySlug.get("dungeon-shenwu")?.order).toBe(10);
+    expect(bySlug.get("dungeon-mozu")?.order).toBe(11);
   });
 });
 
@@ -349,7 +350,13 @@ describe("<BoxContents>/<MissionCard> tags in content/guides resolve to real dat
 // 的順序，避免把 DungeonStep 的 crop/id props、或 <details> 裡合法的外形 ID
 // 表格／年份 URL 誤判成違規。
 
-const DUNGEON_SLUGS = ["dungeon-mistforest", "dungeon-deepforest", "dungeon-sevenstar", "dungeon-shenwu"];
+const DUNGEON_SLUGS = [
+  "dungeon-mistforest",
+  "dungeon-deepforest",
+  "dungeon-sevenstar",
+  "dungeon-shenwu",
+  "dungeon-mozu",
+];
 
 function readDungeonBody(slug: string): string {
   const raw = fs.readFileSync(path.join(CONTENT_DIR, `${slug}.mdx`), "utf8");
@@ -454,8 +461,9 @@ function parseDungeonSteps(body: string): ParsedDungeonStep[] {
 describe.each(DUNGEON_SLUGS)("%s — DungeonStep props resolve via getStepData", (slug) => {
   const steps = parseDungeonSteps(readDungeonBody(slug));
 
-  it("finds exactly 7 DungeonStep tags, numbered 1–7 in order", () => {
-    expect(steps.map((s) => s.n)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  it("finds a sequential 1..N run of DungeonStep tags in order", () => {
+    expect(steps.map((s) => s.n)).toEqual(steps.map((_, i) => i + 1));
+    expect(steps.length).toBeGreaterThan(0);
   });
 
   it.each(steps)(
