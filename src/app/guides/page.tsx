@@ -51,7 +51,9 @@ export default function GuidesPage() {
       </section>
 
       {stops.length > 0 ? (
-        <RoadTimeline stops={stops} />
+        <div id="road" className="scroll-mt-20">
+          <RoadTimeline stops={stops} />
+        </div>
       ) : (
         <p className="text-muted-foreground mt-8 text-sm">路線還在整理中，很快就會補上。</p>
       )}
@@ -94,7 +96,7 @@ export default function GuidesPage() {
       )}
 
       {dungeons.length > 0 && (
-        <section aria-labelledby="dungeons-heading">
+        <section id="dungeons" aria-labelledby="dungeons-heading" className="scroll-mt-20">
           <h2
             id="dungeons-heading"
             className="font-heading text-muted-foreground mt-12 mb-4 flex items-center gap-2.5 text-[15px] font-normal tracking-[0.08em] after:h-px after:flex-1 after:bg-border"

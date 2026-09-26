@@ -45,6 +45,18 @@ const navGroups: NavGroup[] = [
     items: [
       { href: "/tools", label: "工具總覽", exact: true },
       { href: "/tools/enhance", label: "強化查詢" },
+      { href: "/tools/160", label: "160 迷霧九宮格" },
+      { href: "/tools/175", label: "175 北斗七星" },
+      { href: "/tools/180", label: "180 神武禁地" },
+    ],
+  },
+  {
+    label: "攻略",
+    items: [
+      // 非 exact：在 /guides/xxx 文章頁時整個攻略分類也會亮
+      { href: "/guides", label: "攻略總覽" },
+      { href: "/guides#road", label: "修行路線" },
+      { href: "/guides#dungeons", label: "迷宮攻略" },
     ],
   },
 ];
@@ -75,7 +87,6 @@ export function Navbar({ user }: { user: AccountUser | null }) {
           {navGroups.map((group) => (
             <DesktopGroup key={group.label} group={group} pathname={pathname} />
           ))}
-          <DesktopLink href="/guides" label="攻略" pathname={pathname} />
           <DesktopLink href="/changelog" label="更新紀錄" pathname={pathname} />
         </nav>
 
@@ -142,13 +153,6 @@ export function Navbar({ user }: { user: AccountUser | null }) {
                       </div>
                     </div>
                   ))}
-
-                  <MobileLink
-                    href="/guides"
-                    label="攻略"
-                    pathname={pathname}
-                    onNavigate={() => setOpen(false)}
-                  />
 
                   <MobileLink
                     href="/changelog"
