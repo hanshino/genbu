@@ -3,6 +3,7 @@
 import {
   createContext,
   useContext,
+  useId,
   useState,
   type CSSProperties,
   type ReactNode,
@@ -13,9 +14,12 @@ import {
   CheckIcon,
   ChevronRightIcon,
   CrosshairIcon,
+  EyeOffIcon,
   InfoIcon,
   Maximize2Icon,
   Minimize2Icon,
+  RouteIcon,
+  SplitIcon,
 } from "lucide-react";
 import {
   cropFrame,
@@ -26,6 +30,7 @@ import {
   type StepData,
   type StepGroup,
   type StepMark,
+  type StepWalk,
 } from "@/lib/guide-steps";
 import { GRID_LAYOUT } from "@/lib/solvers/forest-matrix";
 import { EntityPortrait } from "@/components/common/entity-portrait";
@@ -211,7 +216,11 @@ function MarkPin({ mark, at }: { mark: StepMark; at: { left: number; top: number
         data-room={text}
         onClick={() => s.setRoom(toggle(s.room, text))}
         style={pos(at)}
-        className={cn(hit, "z-[3] cursor-pointer motion-safe:transition-[scale] hover:scale-110", on && "z-[5] scale-125")}
+        className={cn(
+          hit,
+          "z-[3] cursor-pointer motion-safe:transition-[scale] hover:scale-110",
+          on && "z-[5] scale-125",
+        )}
       >
         <span
           className={cn(
@@ -293,18 +302,199 @@ function Layer({ data, crop }: { data: StepData; crop: StepData["crop"] }) {
   );
 }
 
-function Legend({ data }: { data: StepData }) {
+/* ── 可行走通道 ── */
+
+interface WalkView {
+  show: boolean;
+  /** 圖例滑過／點選中的通道 index；其他通道變淡。 */
+  lit: number | null;
+}
+
+// ponytail: 只有兩組色／紋路，第三條起循環；真有三條以上再加 --walk-3。
+const walkColor = (i: number) => `var(--walk-${(i % 2) + 1})`;
+const dotted = (i: number) => i % 2 === 1;
+const svgId = (id: string) => id.replace(/[^\w-]/g, "");
+
+/** 單數通道斜條紋、雙數通道圓點；period 用 SVG 使用者座標（地圖上是原圖像素）。 */
+function WalkPattern({ id, i, period }: { id: string; i: number; period: number }) {
+  const fill = { fill: walkColor(i) };
+  return dotted(i) ? (
+    <pattern id={id} patternUnits="userSpaceOnUse" width={period} height={period}>
+      <rect width={period} height={period} style={fill} fillOpacity={0.13} />
+      <circle cx={period / 4} cy={period / 4} r={period * 0.15} style={fill} fillOpacity={0.7} />
+      <circle
+        cx={(period * 3) / 4}
+        cy={(period * 3) / 4}
+        r={period * 0.15}
+        style={fill}
+        fillOpacity={0.7}
+      />
+    </pattern>
+  ) : (
+    <pattern
+      id={id}
+      patternUnits="userSpaceOnUse"
+      width={period}
+      height={period}
+      patternTransform="rotate(45)"
+    >
+      <rect width={period} height={period} style={fill} fillOpacity={0.13} />
+      <rect width={period * 0.2} height={period} style={fill} fillOpacity={0.6} />
+    </pattern>
+  );
+}
+
+/** 通道圖層：viewBox 直接用裁切框（或整張圖）的原圖像素，path 不必換算百分比。 */
+function WalkLayer({ walk, box, view }: { walk: StepWalk[]; box: string; view: WalkView }) {
+  const uid = svgId(useId());
+  return (
+    <svg
+      aria-hidden
+      data-testid="walk-layer"
+      viewBox={box}
+      preserveAspectRatio="none"
+      className={cn(
+        "pointer-events-none absolute inset-0 size-full motion-safe:transition-opacity motion-safe:duration-200",
+        !view.show && "opacity-0",
+      )}
+    >
+      <defs>
+        {walk.map((_, i) => (
+          <WalkPattern key={i} id={`${uid}-${i}`} i={i} period={dotted(i) ? 28 : 30} />
+        ))}
+      </defs>
+      {walk.map((w, i) => {
+        const on = view.lit === i;
+        return (
+          <g
+            key={i}
+            className={cn(
+              "motion-safe:transition-opacity motion-safe:duration-200",
+              view.lit != null && !on && "opacity-20",
+            )}
+          >
+            <path d={w.path} fill={`url(#${uid}-${i})`} fillRule="evenodd" />
+            <path
+              d={w.path}
+              fill="none"
+              stroke="var(--walk-halo)"
+              strokeWidth={on ? 6 : 5}
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            />
+            <path
+              d={w.path}
+              fill="none"
+              style={{ stroke: walkColor(i) }}
+              strokeWidth={on ? 3.25 : 2.25}
+              strokeDasharray={dotted(i) ? "7 4" : undefined}
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function WalkLabels({ data, view }: { data: StepData; view: WalkView }) {
+  return (data.walk ?? []).map((w, i) => (
+    <span
+      key={i}
+      aria-hidden
+      style={{ ...pos(toPercent(w.labelAt, data.image!, data.crop)), background: walkColor(i) }}
+      className={cn(
+        "pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full px-2 py-px text-[11.5px] font-semibold whitespace-nowrap text-[oklch(0.2_0.02_260)] shadow-[0_0_0_1.5px_var(--walk-halo),0_1px_4px_rgb(0_0_0/0.4)] motion-safe:transition-opacity motion-safe:duration-200",
+        !view.show ? "opacity-0" : view.lit != null && view.lit !== i && "opacity-25",
+      )}
+    >
+      {w.label}
+    </span>
+  ));
+}
+
+/** 圖例色塊：小塊暗底＋同款紋路與邊線，淺色／深色主題看起來一樣。 */
+function WalkSwatch({ i }: { i: number }) {
+  const id = svgId(useId());
+  return (
+    <svg viewBox="0 0 18 12" className="h-3 w-[18px] shrink-0 overflow-visible" aria-hidden>
+      <defs>
+        <WalkPattern id={id} i={i} period={4} />
+      </defs>
+      <rect x=".75" y=".75" width="16.5" height="10.5" rx="2" fill="oklch(0.2 0.02 260)" />
+      <rect
+        x=".75"
+        y=".75"
+        width="16.5"
+        height="10.5"
+        rx="2"
+        fill={`url(#${id})`}
+        style={{ stroke: walkColor(i) }}
+        strokeWidth={1.5}
+        strokeDasharray={dotted(i) ? "3 2" : undefined}
+      />
+    </svg>
+  );
+}
+
+interface WalkLegendProps {
+  view: WalkView;
+  pin: number | null;
+  setPin: (i: number | null) => void;
+  setPeek: (i: number | null) => void;
+}
+
+function Legend({ data, walkProps }: { data: StepData; walkProps: WalkLegendProps }) {
   const marks = data.marks.filter((m) => m.as !== "room");
   const numbered = data.groups.some((g) => g.map && g.points.length > 0 && g.as !== "area");
-  if (marks.length === 0 && !numbered) return null;
+  const walk = data.walk ?? [];
+  const { view, pin, setPin, setPeek } = walkProps;
+  if (marks.length === 0 && !numbered && walk.length === 0) return null;
   return (
     <ul className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1.5 px-3 py-2.5 text-[12.5px] leading-relaxed">
+      {walk.map((w, i) => (
+        <li key={`walk-${i}`}>
+          <button
+            type="button"
+            aria-pressed={pin === i}
+            aria-label={`只看${w.label}`}
+            disabled={!view.show}
+            onClick={() => setPin(pin === i ? null : i)}
+            onMouseEnter={() => setPeek(i)}
+            onMouseLeave={() => setPeek(null)}
+            onFocus={() => setPeek(i)}
+            onBlur={() => setPeek(null)}
+            className="hover:bg-muted/50 aria-pressed:bg-muted focus-visible:ring-ring/60 -mx-1 inline-flex cursor-pointer items-center gap-1.5 rounded-md px-1 outline-hidden focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50"
+          >
+            <WalkSwatch i={i} />
+            <span className="text-foreground/85">{w.label}</span>
+            {w.note && <span>・{w.note}</span>}
+          </button>
+        </li>
+      ))}
+      {walk.length >= 2 && (
+        <li className="inline-flex basis-full items-center gap-1.5">
+          <SplitIcon className="size-3.5 shrink-0" aria-hidden />
+          <span>
+            {walk.length === 2 ? "兩" : walk.length}條通道互不相通：看得到對面的人，也走不過去。
+          </span>
+        </li>
+      )}
       {marks.map((m) => (
         <li key={m.key} className="inline-flex items-center gap-1.5">
-          {m.as === "npc" && <span className="size-2.5 rotate-45 rounded-[2px] bg-(--stop)" aria-hidden />}
-          {m.as === "device" && <span className="bg-foreground/85 h-2.5 w-3.5 rounded-[2px]" aria-hidden />}
-          {m.as === "ok" && <CheckIcon className="size-3.5 text-(--marker-3)" strokeWidth={3} aria-hidden />}
-          <span className="text-foreground/85">{m.label && m.as !== "ok" ? `${m.label}・${m.name}` : m.name}</span>
+          {m.as === "npc" && (
+            <span className="size-2.5 rotate-45 rounded-[2px] bg-(--stop)" aria-hidden />
+          )}
+          {m.as === "device" && (
+            <span className="bg-foreground/85 h-2.5 w-3.5 rounded-[2px]" aria-hidden />
+          )}
+          {m.as === "ok" && (
+            <CheckIcon className="size-3.5 text-(--marker-3)" strokeWidth={3} aria-hidden />
+          )}
+          <span className="text-foreground/85">
+            {m.label && m.as !== "ok" ? `${m.label}・${m.name}` : m.name}
+          </span>
           {m.as === "ok" && <span>＝已完成，不可攻擊</span>}
           {(m.tbd || m.points.length === 0) && <span>（位置待確認）</span>}
         </li>
@@ -319,8 +509,14 @@ export function StepMap({ alt }: { alt?: string }) {
   const s = useStep();
   const { data } = s;
   const [full, setFull] = useState(false);
+  const [showWalk, setShowWalk] = useState(true);
+  const [pin, setPin] = useState<number | null>(null);
+  const [peek, setPeek] = useState<number | null>(null);
   const img = data.image;
   if (!img) return null;
+
+  const walk = data.walk ?? [];
+  const view: WalkView = { show: showWalk, lit: peek ?? pin };
 
   const crop = data.crop;
   const showCrop = crop != null && !full;
@@ -329,7 +525,18 @@ export function StepMap({ alt }: { alt?: string }) {
   return (
     <figure className="bg-card my-5 overflow-hidden rounded-xl border">
       {showCrop ? (
-        <CropView data={data} alt={`${label}（本區塊）`} />
+        <CropView data={data} alt={`${label}（本區塊）`}>
+          {walk.length > 0 && (
+            <>
+              <WalkLayer
+                walk={walk}
+                box={`${crop![0]} ${crop![1]} ${crop![2] - crop![0]} ${crop![3] - crop![1]}`}
+                view={view}
+              />
+              <WalkLabels data={data} view={view} />
+            </>
+          )}
+        </CropView>
       ) : (
         <div className="bg-muted/40 overflow-x-auto">
           <div
@@ -346,12 +553,20 @@ export function StepMap({ alt }: { alt?: string }) {
               className="block h-auto w-full select-none"
               draggable={false}
             />
+            {walk.length > 0 && (
+              <WalkLayer walk={walk} box={`0 0 ${img.imgWidth} ${img.imgHeight}`} view={view} />
+            )}
             {crop && (
               <span
                 data-testid="step-frame"
                 style={(() => {
                   const b = fullFrameBox(img, crop);
-                  return { left: `${b.left}%`, top: `${b.top}%`, width: `${b.width}%`, height: `${b.height}%` };
+                  return {
+                    left: `${b.left}%`,
+                    top: `${b.top}%`,
+                    width: `${b.width}%`,
+                    height: `${b.height}%`,
+                  };
                 })()}
                 className="pointer-events-none absolute rounded-md border-2 border-dashed border-(--stop) bg-(--stop)/8 shadow-[0_0_0_9999px_rgb(0_0_0/0.18)]"
               >
@@ -366,23 +581,44 @@ export function StepMap({ alt }: { alt?: string }) {
       )}
 
       <figcaption className="border-t">
-        <Legend data={data} />
-        {crop && (
+        <Legend data={data} walkProps={{ view, pin, setPin, setPeek }} />
+        {(crop || walk.length > 0) && (
           <div className="flex items-center justify-between gap-3 border-t border-dashed px-3 py-2">
             <span className="text-muted-foreground text-[12px] sm:invisible">
               {full ? "地圖可左右滑動" : ""}
             </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              aria-pressed={full}
-              onClick={() => setFull((v) => !v)}
-              className="h-8 px-3"
-            >
-              {full ? <Minimize2Icon aria-hidden /> : <Maximize2Icon aria-hidden />}
-              {full ? "只看本區塊" : "查看完整地圖"}
-            </Button>
+            <div className="flex items-center gap-2">
+              {walk.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  aria-pressed={showWalk}
+                  onClick={() => {
+                    setShowWalk((v) => !v);
+                    setPin(null);
+                    setPeek(null);
+                  }}
+                  className="h-8 px-3"
+                >
+                  {showWalk ? <EyeOffIcon aria-hidden /> : <RouteIcon aria-hidden />}
+                  {showWalk ? "隱藏通道" : "顯示通道"}
+                </Button>
+              )}
+              {crop && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  aria-pressed={full}
+                  onClick={() => setFull((v) => !v)}
+                  className="h-8 px-3"
+                >
+                  {full ? <Minimize2Icon aria-hidden /> : <Maximize2Icon aria-hidden />}
+                  {full ? "只看本區塊" : "查看完整地圖"}
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </figcaption>
@@ -390,11 +626,14 @@ export function StepMap({ alt }: { alt?: string }) {
   );
 }
 
-function CropView({ data, alt }: { data: StepData; alt: string }) {
+function CropView({ data, alt, children }: { data: StepData; alt: string; children?: ReactNode }) {
   const img = data.image!;
   const f = cropFrame(img, data.crop!);
   return (
-    <div className="bg-muted/40 relative w-full overflow-hidden" style={{ aspectRatio: String(f.aspect) }}>
+    <div
+      className="bg-muted/40 relative w-full overflow-hidden"
+      style={{ aspectRatio: String(f.aspect) }}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element -- 與地圖頁一致，直連圖床 */}
       <img
         src={img.url}
@@ -404,6 +643,7 @@ function CropView({ data, alt }: { data: StepData; alt: string }) {
         style={{ width: `${f.width}%`, left: `${f.left}%`, top: `${f.top}%` }}
         className="absolute h-auto max-w-none select-none"
       />
+      {children}
       <Layer data={data} crop={data.crop} />
     </div>
   );
@@ -526,7 +766,9 @@ export function StepTargets() {
       </div>
       <p className="text-muted-foreground mt-2 flex items-center gap-1.5 text-[12.5px]">
         <InfoIcon className="size-3.5 shrink-0" aria-hidden />
-        <span>要求命中＝玩家命中需大於怪物閃躲。卸冑＝百針滲血、千瘡百孔；中毒＝百八蟲毒。依怪物抗性推算，待實機驗證。</span>
+        <span>
+          要求命中＝玩家命中需大於怪物閃躲。卸冑＝百針滲血、千瘡百孔；中毒＝百八蟲毒。依怪物抗性推算，待實機驗證。
+        </span>
       </p>
     </div>
   );
@@ -535,7 +777,13 @@ export function StepTargets() {
 /* ── 九宮格 ── */
 
 /** 九宮格房名對照（排列同解題工具）；點格子會在地圖上標出同名房間。children 放規則說明。 */
-export function NineRoomGrid({ tool = "/tools/160", children }: { tool?: string; children?: ReactNode }) {
+export function NineRoomGrid({
+  tool = "/tools/160",
+  children,
+}: {
+  tool?: string;
+  children?: ReactNode;
+}) {
   const s = useStep();
   return (
     <div className="my-6 grid items-start gap-x-8 gap-y-5 min-[600px]:grid-cols-[264px_minmax(0,1fr)]">
@@ -569,7 +817,10 @@ export function NineRoomGrid({ tool = "/tools/160", children }: { tool?: string;
         </p>
         <Link
           href={tool}
-          className={cn(buttonVariants({ variant: "outline" }), "mt-3 h-9 w-full text-(--stop-ink)")}
+          className={cn(
+            buttonVariants({ variant: "outline" }),
+            "mt-3 h-9 w-full text-(--stop-ink)",
+          )}
         >
           打開九宮格解題工具
           <ArrowRightIcon aria-hidden />

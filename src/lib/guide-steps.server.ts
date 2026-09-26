@@ -1,8 +1,15 @@
 import { getDb } from "@/lib/db";
 import type { StageKind } from "@/lib/types/stage";
-import { getStageMapImage, getNpcPositionsForStage } from "@/lib/queries/maps";
+import { getStageMapImage, getNpcPositionsForStage, getWalkRegion } from "@/lib/queries/maps";
 import { getNpcCombatStats } from "@/lib/queries/monsters";
-import { buildStepData, type StepData, type StepInput } from "@/lib/guide-steps";
+import {
+  buildStepData,
+  inCrop,
+  type Crop,
+  type StepData,
+  type StepInput,
+  type StepWalk,
+} from "@/lib/guide-steps";
 
 /**
  * stage / sestage 的 id 空間互斥（stage ∈ [1,999]、sestage ∈ [1001,5022]，
@@ -22,7 +29,7 @@ function stageKindOf(id: number): StageKind {
  * native module 而炸掉。只能在 Server Component / Route Handler 呼叫。
  */
 export function getStepData(input: StepInput): StepData {
-  const { stage, crop = null, groups = [], marks = [] } = input;
+  const { stage, crop = null, groups = [], marks = [], walk = [] } = input;
   const kind = stageKindOf(stage);
 
   const db = getDb();
@@ -40,7 +47,7 @@ export function getStepData(input: StepInput): StepData {
   const stats = getNpcCombatStats(idList);
   const points = getNpcPositionsForStage(kind, stage, idList);
 
-  return buildStepData({
+  const data = buildStepData({
     stageId: stage,
     stageName: stageRow?.name ?? `場景 ${stage}`,
     image,
@@ -50,4 +57,38 @@ export function getStepData(input: StepInput): StepData {
     stats,
     points,
   });
+  return { ...data, walk: getWalks(stage, crop, walk) };
+}
+
+/**
+ * 每個起點展開成一條通道；同一個連通區只留第一條（兩個起點其實相通時不會畫成兩條，
+ * 所以「通道互不相通」的說法才成立）。查無遮罩或起點不可走的直接略過。
+ */
+function getWalks(
+  stage: number,
+  crop: Crop | null,
+  input: NonNullable<StepInput["walk"]>,
+): StepWalk[] {
+  const out: StepWalk[] = [];
+  for (const w of input) {
+    const region = getWalkRegion(stageKindOf(stage), stage, { x: w.at[0], y: w.at[1] });
+    if (!region || out.some((o) => o.path === region.path)) continue;
+    out.push({
+      label: w.label,
+      note: w.note ?? null,
+      path: region.path,
+      labelAt: labelAt(region.cells, region.width, crop),
+    });
+  }
+  return out;
+}
+
+/** 本區塊內最上面一列可走格的中位數那格（一定是通道內的格子）；區塊外沒格子就退回整條通道。 */
+function labelAt(cells: number[], width: number, crop: Crop | null): { x: number; y: number } {
+  const center = (k: number) => ({ x: (k % width) * 40 + 20, y: Math.floor(k / width) * 40 + 20 });
+  const inside = cells.filter((k) => inCrop(center(k), crop));
+  const pool = inside.length > 0 ? inside : cells;
+  const top = Math.min(...pool.map((k) => Math.floor(k / width)));
+  const row = pool.filter((k) => Math.floor(k / width) === top).sort((a, b) => a - b);
+  return center(row[Math.floor(row.length / 2)]);
 }

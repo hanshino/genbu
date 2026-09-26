@@ -83,6 +83,30 @@ describe("StepMap", () => {
     expect(screen.getByRole("img", { name: /水源淨化機關：已完成/ })).toBeInTheDocument();
   });
 
+  it("通道圖層：圖例可只看一條，隱藏後圖例停用；兩條以上才說互不相通", () => {
+    const walk = [
+      { label: "甲通道", note: "外圈", path: "M200 400 600 400 600 800 200 800Z", labelAt: { x: 400, y: 420 } },
+      { label: "乙通道", note: null, path: "M800 400 1200 400 1200 800 800 800Z", labelAt: { x: 1000, y: 420 } },
+    ];
+    renderStep({ ...data, walk });
+    const layer = screen.getByTestId("walk-layer");
+    expect(layer).toHaveAttribute("viewBox", "150 380 1250 1000");
+    expect(screen.getByText("兩條通道互不相通：看得到對面的人，也走不過去。")).toBeInTheDocument();
+    const only = screen.getByRole("button", { name: "只看甲通道" });
+    fireEvent.click(only);
+    expect(only).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "隱藏通道" }));
+    expect(screen.getByTestId("walk-layer")).toHaveClass("opacity-0");
+    expect(only).toBeDisabled();
+    expect(only).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "顯示通道" })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("只有一條通道時不說互不相通", () => {
+    renderStep({ ...data, walk: [{ label: "甲通道", note: null, path: "M0 0 40 0 40 40 0 40Z", labelAt: { x: 20, y: 20 } }] });
+    expect(screen.queryByText(/互不相通/)).toBeNull();
+  });
+
   it("沒有地圖圖檔時仍顯示表格", () => {
     renderStep({ ...data, image: null });
     expect(screen.queryByRole("button", { name: "查看完整地圖" })).toBeNull();

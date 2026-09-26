@@ -10,7 +10,7 @@ import {
   type Crop,
   type StepStatInput,
 } from "../guide-steps";
-import type { StageMapImage } from "@/lib/queries/maps";
+import { regionPath, walkRegion, type StageMapImage } from "@/lib/queries/maps";
 
 // oracle from plan.md: img 6040×2800, crop [150,380,1400,1380]
 const IMG: StageMapImage = {
@@ -132,7 +132,9 @@ describe("buildStepData — crop filtering", () => {
   it("full view (crop=null passed at call site) draws only points still tied to the group; buildStepData itself only filters by the crop given in input", () => {
     const stats = new Map([[11034, stat({ id: 11034 })]]);
     const points = new Map([[11034, [{ x: 480, y: 480 }]]]);
-    const data = buildStepData(baseInput({ crop: null, groups: [{ ids: [11034] }], stats, points }));
+    const data = buildStepData(
+      baseInput({ crop: null, groups: [{ ids: [11034] }], stats, points }),
+    );
     expect(data.groups[0].points).toEqual([{ x: 480, y: 480 }]);
     expect(data.missing).toEqual([]);
   });
@@ -142,10 +144,20 @@ describe("buildStepData — dedupe", () => {
   it("dedupes identical (x,y) points within a group", () => {
     const stats = new Map([[11034, stat({ id: 11034 })]]);
     const points = new Map([
-      [11034, [{ x: 480, y: 480 }, { x: 480, y: 480 }, { x: 500, y: 500 }]],
+      [
+        11034,
+        [
+          { x: 480, y: 480 },
+          { x: 480, y: 480 },
+          { x: 500, y: 500 },
+        ],
+      ],
     ]);
     const data = buildStepData(baseInput({ groups: [{ ids: [11034] }], stats, points }));
-    expect(data.groups[0].points).toEqual([{ x: 480, y: 480 }, { x: 500, y: 500 }]);
+    expect(data.groups[0].points).toEqual([
+      { x: 480, y: 480 },
+      { x: 500, y: 500 },
+    ]);
   });
 });
 
@@ -157,8 +169,10 @@ describe("buildStepData — grouping / merge / elite sub-rows", () => {
       [3, stat({ id: 3, weakenRes: 100, bleedRes: 95 })],
     ]);
     const data = buildStepData(baseInput({ groups: [{ ids: [1, 2, 3], map: false }], stats }));
-    expect(data.groups[0].rows.map(r => [r.weakenRes, r.bleedRes])).toEqual([
-      [95, 100], [100, 100], [100, 95],
+    expect(data.groups[0].rows.map((r) => [r.weakenRes, r.bleedRes])).toEqual([
+      [95, 100],
+      [100, 100],
+      [100, 95],
     ]);
   });
 
@@ -194,9 +208,13 @@ describe("buildStepData — grouping / merge / elite sub-rows", () => {
 });
 
 describe("formatStatusResistance", () => {
-  it.each([[100, "不可"], [95, "可"], [0, "可"], [null, "待確認"], [101, "待確認"]] as const)(
-    "%s → %s", (value, expected) => expect(formatStatusResistance(value)).toBe(expected),
-  );
+  it.each([
+    [100, "不可"],
+    [95, "可"],
+    [0, "可"],
+    [null, "待確認"],
+    [101, "待確認"],
+  ] as const)("%s → %s", (value, expected) => expect(formatStatusResistance(value)).toBe(expected));
 });
 
 describe("buildStepData — hit (max dodge, null ignored)", () => {
@@ -281,9 +299,7 @@ describe("buildStepData — missing", () => {
 
   it("group id with a DB record but no in-crop point is missing when map is enabled (default)", () => {
     const stats = new Map([[11034, stat({ id: 11034 })]]);
-    const data = buildStepData(
-      baseInput({ groups: [{ ids: [11034] }], stats, points: new Map() }),
-    );
+    const data = buildStepData(baseInput({ groups: [{ ids: [11034] }], stats, points: new Map() }));
     expect(data.missing).toEqual([11034]);
   });
 
@@ -312,8 +328,45 @@ describe("buildStepData — missing", () => {
 
   it("mark without tbd and with no DB record is missing", () => {
     const data = buildStepData(
-      baseInput({ groups: [], marks: [{ id: 99999999, as: "npc" }], stats: new Map(), points: new Map() }),
+      baseInput({
+        groups: [],
+        marks: [{ id: 99999999, as: "npc" }],
+        stats: new Map(),
+        points: new Map(),
+      }),
     );
     expect(data.missing).toEqual([99999999]);
+  });
+});
+
+describe("可行走通道（map_walkability）", () => {
+  it("regionPath：斜角相接與中空環都畫成封閉外框", () => {
+    // 3×3 中空環 → 外框＋洞兩個環；兩格斜角相接 → 兩個方塊在共用頂點串成一個 8 字環
+    expect(regionPath([0, 1, 2, 3, 5, 6, 7, 8], 3)).toBe(
+      "M0 0 120 0 120 120 0 120ZM80 40 40 40 40 80 80 80Z",
+    );
+    expect(regionPath([0, 3], 2)).toBe("M0 0 40 0 40 40 80 40 80 80 40 80 40 40 0 40Z");
+    expect(walkRegion("1001", 2, 2, 10, 10)).toEqual([0, 3]); // 八鄰接：斜向算相連
+    expect(walkRegion("0000", 2, 2, 10, 10)).toBeNull();
+  });
+
+  it("烈漠禁地第二層：兩個起點各展開成一條通道，範圍不同；起點附近不可走就沒有通道", async () => {
+    const { getStepData } = await import("../guide-steps.server");
+    const crop: Crop = [300, 1050, 2500, 2900];
+    const data = getStepData({
+      stage: 1723,
+      crop,
+      walk: [
+        { at: [2044, 2604], label: "金甲通道" },
+        { at: [1774, 2108], label: "銅甲通道" },
+        { at: [20, 20], label: "空白處" },
+      ],
+    });
+    expect(data.walk?.map((w) => w.label)).toEqual(["金甲通道", "銅甲通道"]);
+    const [gold, bronze] = data.walk!;
+    expect(gold.path).toMatch(/^M[\d ]+Z/);
+    expect(bronze.path).toMatch(/^M[\d ]+Z/);
+    expect(gold.path).not.toBe(bronze.path);
+    for (const w of data.walk!) expect(inCrop(w.labelAt, crop)).toBe(true);
   });
 });

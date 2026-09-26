@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { FlagIcon } from "lucide-react";
 import { headingId } from "@/lib/guides";
-import type { Crop, StepGroupInput, StepMarkInput } from "@/lib/guide-steps";
+import type { Crop, StepGroupInput, StepMarkInput, StepWalkInput } from "@/lib/guide-steps";
 import { getStepData } from "@/lib/guide-steps.server";
 import { StepProvider } from "./step-map";
 
@@ -14,6 +14,8 @@ interface DungeonStepProps {
   crop?: Crop;
   groups?: StepGroupInput[];
   marks?: StepMarkInput[];
+  /** 可行走通道：每條給通道內一點，地圖會畫出整條通道範圍。 */
+  walk?: StepWalkInput[];
   children?: ReactNode;
 }
 
@@ -21,11 +23,24 @@ interface DungeonStepProps {
  * 迷宮攻略的一個步驟：印章編號、標題（進目錄）、地圖名／目標數／要求命中。
  * 內文可放 <StepMap/>、<StepTargets/>、<NineRoomGrid/>、<StepDone/>，它們共用同一份資料。
  */
-export function DungeonStep({ n, title, subtitle, stage, crop, groups, marks, children }: DungeonStepProps) {
-  const data = getStepData({ stage: Number(stage), crop, groups, marks });
+export function DungeonStep({
+  n,
+  title,
+  subtitle,
+  stage,
+  crop,
+  groups,
+  marks,
+  walk,
+  children,
+}: DungeonStepProps) {
+  const data = getStepData({ stage: Number(stage), crop, groups, marks, walk });
   const seal = String(n).padStart(2, "0");
   const kinds = data.groups.reduce((s, g) => s + g.rows.length, 0);
   const dev = process.env.NODE_ENV !== "production";
+  const lostWalk = (walk ?? [])
+    .filter((w) => !data.walk?.some((c) => c.label === w.label))
+    .map((w) => w.label);
 
   return (
     <section className="bg-card my-8 overflow-hidden rounded-xl border">
@@ -52,7 +67,10 @@ export function DungeonStep({ n, title, subtitle, stage, crop, groups, marks, ch
             {kinds > 0 && <span>目標 {kinds} 種</span>}
             {data.hit && (
               <span>
-                要求命中 <span className="font-mono text-(--stop-ink)">＞{data.hit.dodge.toLocaleString("zh-TW")}</span>
+                要求命中{" "}
+                <span className="font-mono text-(--stop-ink)">
+                  ＞{data.hit.dodge.toLocaleString("zh-TW")}
+                </span>
               </span>
             )}
           </p>
@@ -62,6 +80,11 @@ export function DungeonStep({ n, title, subtitle, stage, crop, groups, marks, ch
         {dev && data.missing.length > 0 && (
           <p className="text-muted-foreground mb-4 rounded-md border border-dashed px-3 py-2 text-[12px]">
             待作者核對：這些 id 查無資料或不在區塊內：{data.missing.join("、")}
+          </p>
+        )}
+        {dev && lostWalk.length > 0 && (
+          <p className="text-muted-foreground mb-4 rounded-md border border-dashed px-3 py-2 text-[12px]">
+            待作者核對：這些通道查無可行走資料、起點不可走，或和前一條相通：{lostWalk.join("、")}
           </p>
         )}
         <StepProvider data={data}>{children}</StepProvider>

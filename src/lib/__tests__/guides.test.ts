@@ -150,6 +150,9 @@ describe("renderGuideBody", () => {
     expect(html).not.toContain("通道歸屬待確認");
     expect(html).toContain("map_walkability.walk_mask");
     expect(html).toContain("剩餘小鬼數量");
+    expect(html.match(/data-testid="walk-layer"/g)).toHaveLength(1);
+    expect(html).toContain("兩條通道互不相通");
+    expect(html).not.toContain("這些通道查無可行走資料");
   });
 
   it("does not turn single tildes in level ranges into strikethrough", async () => {

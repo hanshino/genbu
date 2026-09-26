@@ -13,6 +13,141 @@ export interface StageMapImage {
   tilePx: number;
 }
 
+// ── 可行走遮罩（map_walkability）────────────────────────────────────────
+
+const WALK_TILE = 40;
+
+/**
+ * 遮罩中包含 (x,y) 像素的八鄰接連通區，回傳格 index（row*width+col）。
+ * 與 scripts/inspect-walkability.py 同規則：row 0 在圖上方、不翻轉 Y、斜向也算相連。
+ * 起點格擋住時改找周圍一格內的可走格；都沒有回 null。
+ */
+export function walkRegion(
+  mask: string,
+  width: number,
+  height: number,
+  x: number,
+  y: number,
+): number[] | null {
+  const col = Math.floor(x / WALK_TILE);
+  const row = Math.floor(y / WALK_TILE);
+  const open = (r: number, c: number) =>
+    r >= 0 && r < height && c >= 0 && c < width && mask[r * width + c] === "1";
+  let start = -1;
+  for (const [dr, dc] of [
+    [0, 0],
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
+  ]) {
+    if (open(row + dr, col + dc)) {
+      start = (row + dr) * width + col + dc;
+      break;
+    }
+  }
+  if (start < 0) return null;
+  const seen = new Set([start]);
+  const cells = [start];
+  for (let i = 0; i < cells.length; i++) {
+    const r = Math.floor(cells[i] / width);
+    const c = cells[i] % width;
+    for (let rr = r - 1; rr <= r + 1; rr++) {
+      for (let cc = c - 1; cc <= c + 1; cc++) {
+        const k = rr * width + cc;
+        if (open(rr, cc) && !seen.has(k)) {
+          seen.add(k);
+          cells.push(k);
+        }
+      }
+    }
+  }
+  return cells;
+}
+
+/**
+ * 格子聯集的外框 → SVG path（合成圖像素）。每格四邊中，鄰格不在集合裡的邊才是外框；
+ * 邊一律順時針，串成封閉環（洞會自然變成反向環），用 fill-rule="evenodd" 填色。
+ */
+export function regionPath(cells: number[], width: number): string {
+  const set = new Set(cells);
+  const W = width + 1; // 頂點格
+  const next = new Map<number, number[]>();
+  const edge = (a: number, b: number) => (next.get(a) ?? next.set(a, []).get(a)!).push(b);
+  for (const k of cells) {
+    const r = Math.floor(k / width);
+    const c = k % width;
+    const tl = r * W + c;
+    const tr = tl + 1;
+    const bl = tl + W;
+    const br = bl + 1;
+    if (r === 0 || !set.has(k - width)) edge(tl, tr);
+    if (c === width - 1 || !set.has(k + 1)) edge(tr, br);
+    if (!set.has(k + width)) edge(br, bl);
+    if (c === 0 || !set.has(k - 1)) edge(bl, tl);
+  }
+  const loops: string[] = [];
+  // 斜角相接的頂點有兩條出邊，所以同一起點要一直繞到出邊用完。
+  for (const [first, firstOut] of next)
+    while (firstOut.length) {
+      const pts = [first];
+      let p = first;
+      for (;;) {
+        const out = next.get(p)!;
+        const n = out.pop()!;
+        if (n === first) break;
+        pts.push(n);
+        p = n;
+      }
+      // 去掉直線中間點，路徑短一半以上
+      const xy = pts.map((v) => [(v % W) * WALK_TILE, Math.floor(v / W) * WALK_TILE]);
+      const keep = xy.filter((q, i) => {
+        const a = xy[(i - 1 + xy.length) % xy.length];
+        const b = xy[(i + 1) % xy.length];
+        return !((a[0] === q[0] && q[0] === b[0]) || (a[1] === q[1] && q[1] === b[1]));
+      });
+      loops.push(`M${keep.map((q) => q.join(" ")).join(" ")}Z`);
+    }
+  return loops.join("");
+}
+
+export interface WalkRegion {
+  path: string;
+  /** 格 index（row*width+col）。 */
+  cells: number[];
+  width: number;
+}
+
+// ponytail: 行程內永久快取；資料唯讀、key 只有攻略寫死的幾個起點，不會長大。
+const walkCache = new Map<string, WalkRegion | null>();
+
+/** 包含起點的可行走連通區；沒有 map_walkability 表／該場景列、或起點附近不可走時回 null。 */
+export function getWalkRegion(kind: StageKind, id: number, at: Point): WalkRegion | null {
+  const key = `${kind}:${id}:${Math.floor(at.x / WALK_TILE)}:${Math.floor(at.y / WALK_TILE)}`;
+  if (walkCache.has(key)) return walkCache.get(key)!;
+  let row: { width: number; height: number; mask: string } | undefined;
+  try {
+    row = getDb()
+      .prepare(
+        `SELECT width, height, walk_mask AS mask FROM map_walkability WHERE stage_kind = ? AND stage_id = ?`,
+      )
+      .get(kind, id) as typeof row;
+  } catch {
+    row = undefined; // 舊版 DB 沒有這張表
+  }
+  const cells =
+    row && row.mask.length === row.width * row.height
+      ? walkRegion(row.mask, row.width, row.height, at.x, at.y)
+      : null;
+  const out = cells && row ? { path: regionPath(cells, row.width), cells, width: row.width } : null;
+  walkCache.set(key, out);
+  return out;
+}
+
 /** 單張地圖背景圖；無圖回 null。 */
 export function getStageMapImage(kind: StageKind, id: number): StageMapImage | null {
   const db = getDb();

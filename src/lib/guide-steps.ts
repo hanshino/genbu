@@ -34,11 +34,28 @@ export interface StepMarkInput {
   tbd?: boolean;
 }
 
+/** 可行走通道：at 是通道內任一點的合成圖像素 [x, y]，伺服器從這點展開整條通道。 */
+export interface StepWalkInput {
+  at: [x: number, y: number];
+  label: string;
+  note?: string;
+}
+
 export interface StepInput {
   stage: number;
   crop?: Crop;
   groups?: StepGroupInput[];
   marks?: StepMarkInput[];
+  walk?: StepWalkInput[];
+}
+
+export interface StepWalk {
+  label: string;
+  note: string | null;
+  /** 通道外框，合成圖像素座標的 SVG path（evenodd）。 */
+  path: string;
+  /** 地圖上名稱標籤的位置：本區塊內最上面那一列的中間格。 */
+  labelAt: Point;
 }
 
 export interface StepRow {
@@ -88,6 +105,8 @@ export interface StepData {
   hit: { dodge: number; names: string[] } | null;
   /** Requested ids with no DB record / no in-crop point. */
   missing: number[];
+  /** 互不相通的可行走通道；查無遮罩或起點不可走的不會出現。 */
+  walk?: StepWalk[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -300,9 +319,7 @@ export function buildStepData(input: BuildStepDataInput): StepData {
   });
 
   const allRows = outGroups.flatMap((g) => g.rows);
-  const dodgeValues = allRows
-    .map((r) => r.dodge)
-    .filter((d): d is number => d != null);
+  const dodgeValues = allRows.map((r) => r.dodge).filter((d): d is number => d != null);
   const hit =
     dodgeValues.length > 0
       ? (() => {
