@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import * as yaml from "js-yaml";
 import remarkGfm from "remark-gfm";
+import remarkCjkFriendly from "remark-cjk-friendly";
 import { compileMDX } from "next-mdx-remote/rsc";
 import type { MDXComponents } from "mdx/types";
 import type { ReactElement } from "react";
@@ -278,7 +279,8 @@ export async function renderGuideBody(
       blockJS: false,
       mdxOptions: {
         // 等級區間常寫成「1~9」，單個 ~ 不能當刪除線；要刪除線請用 ~~文字~~
-        remarkPlugins: [[remarkGfm, { singleTilde: false }]],
+        // remark-cjk-friendly: 修正 `點**「X」**拿` 這類 CJK 標點旁的粗體不生效
+        remarkPlugins: [[remarkGfm, { singleTilde: false }], remarkCjkFriendly],
       },
     },
   });
