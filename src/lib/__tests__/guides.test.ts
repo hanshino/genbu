@@ -154,7 +154,7 @@ describe("renderGuideBody", () => {
     expect(html).toContain("剩餘小鬼數量");
     expect(html.match(/data-testid="walk-layer"/g)).toHaveLength(1);
     expect(html).toContain("兩條通道互不相通");
-    expect(html).not.toContain("這些通道查無可行走資料");
+    expect(html).not.toContain("這些通道或標記畫不出來");
   });
 
   it("does not turn single tildes in level ranges into strikethrough", async () => {

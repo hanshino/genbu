@@ -85,8 +85,8 @@ describe("StepMap", () => {
 
   it("通道圖層：圖例可只看一條，隱藏後圖例停用；兩條以上才說互不相通", () => {
     const walk = [
-      { label: "甲通道", note: "外圈", path: "M200 400 600 400 600 800 200 800Z", labelAt: { x: 400, y: 420 } },
-      { label: "乙通道", note: null, path: "M800 400 1200 400 1200 800 800 800Z", labelAt: { x: 1000, y: 420 } },
+      { label: "甲通道", note: "外圈", path: "M200 400 600 400 600 800 200 800Z", labelAt: { x: 400, y: 420 }, portal: { x: 560, y: 760 }, landing: { x: 240, y: 440 } },
+      { label: "乙通道", note: null, path: "M800 400 1200 400 1200 800 800 800Z", labelAt: { x: 1000, y: 420 }, portal: { x: 1160, y: 760 }, landing: null },
     ];
     renderStep({ ...data, walk });
     const layer = screen.getByTestId("walk-layer");
@@ -102,8 +102,34 @@ describe("StepMap", () => {
     expect(screen.getByRole("button", { name: "顯示通道" })).toHaveAttribute("aria-pressed", "false");
   });
 
+  it("傳點與落點：各通道畫出標記、圖例列出兩種；只看一條時另一條的標記一起藏起來", () => {
+    const walk = [
+      { label: "甲通道", note: null, path: "M200 400 600 400 600 800 200 800Z", labelAt: { x: 400, y: 420 }, portal: { x: 560, y: 760 }, landing: { x: 240, y: 440 } },
+      { label: "乙通道", note: null, path: "M800 400 1200 400 1200 800 800 800Z", labelAt: { x: 1000, y: 420 }, portal: { x: 1160, y: 760 }, landing: { x: 840, y: 440 } },
+    ];
+    const { container } = renderStep({ ...data, walk });
+    for (const name of ["甲通道傳點", "甲通道落點", "乙通道傳點", "乙通道落點"]) {
+      expect(screen.getByRole("img", { name })).toBeInTheDocument();
+    }
+    // 位置：(560,760) 在 crop [150,380,1400,1380] → 32.8% / 38%
+    const portal = screen.getByRole("img", { name: "甲通道傳點" });
+    expect(parseFloat(portal.style.left)).toBeCloseTo(32.8, 2);
+    expect(parseFloat(portal.style.top)).toBeCloseTo(38, 2);
+    expect(container.querySelector('[data-legend="portal"]')).toHaveTextContent("傳點・清完走上去傳送");
+    expect(container.querySelector('[data-legend="landing"]')).toHaveTextContent("落點・傳送過來時出現的位置");
+
+    fireEvent.click(screen.getByRole("button", { name: "只看甲通道" }));
+    expect(screen.getByRole("img", { name: "甲通道傳點" })).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "乙通道傳點" })).toBeNull();
+    expect(screen.queryByRole("img", { name: "乙通道落點" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "只看甲通道" }));
+    fireEvent.click(screen.getByRole("button", { name: "隱藏通道" }));
+    expect(screen.queryByRole("img", { name: /通道(傳點|落點)/ })).toBeNull();
+  });
+
   it("只有一條通道時不說互不相通", () => {
-    renderStep({ ...data, walk: [{ label: "甲通道", note: null, path: "M0 0 40 0 40 40 0 40Z", labelAt: { x: 20, y: 20 } }] });
+    renderStep({ ...data, walk: [{ label: "甲通道", note: null, path: "M0 0 40 0 40 40 0 40Z", labelAt: { x: 20, y: 20 }, portal: null, landing: null }] });
     expect(screen.queryByText(/互不相通/)).toBeNull();
   });
 

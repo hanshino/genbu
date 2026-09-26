@@ -10,12 +10,14 @@ import {
 } from "react";
 import Link from "next/link";
 import {
+  ArrowDownToDotIcon,
   ArrowRightIcon,
   CheckIcon,
   ChevronRightIcon,
   CrosshairIcon,
   EyeOffIcon,
   InfoIcon,
+  LoaderPinwheelIcon,
   Maximize2Icon,
   Minimize2Icon,
   RouteIcon,
@@ -414,6 +416,74 @@ function WalkLabels({ data, view }: { data: StepData; view: WalkView }) {
   ));
 }
 
+const WALK_POINT = {
+  portal: { Icon: LoaderPinwheelIcon, name: "傳點", shape: "rounded-full" },
+  landing: { Icon: ArrowDownToDotIcon, name: "落點", shape: "rounded-md" },
+} as const;
+const ink = "border-[oklch(0.2_0.02_260)] text-[oklch(0.2_0.02_260)]";
+
+/**
+ * 傳點（圓形＋漩渦）與落點（方角＋落地箭頭），填各自通道色、深色邊與圖示，
+ * 和怪物標記（白邊、白字）分得開。放在怪物標記下層；只看某條通道時，其他通道的點直接藏起來。
+ */
+function WalkPoints({
+  data,
+  crop,
+  view,
+}: {
+  data: StepData;
+  crop: StepData["crop"];
+  view: WalkView;
+}) {
+  const img = data.image!;
+  return (data.walk ?? []).flatMap((w, i) => {
+    const off = !view.show || (view.lit != null && view.lit !== i);
+    return (["portal", "landing"] as const).flatMap((kind) => {
+      const p = w[kind];
+      if (!p) return [];
+      const { Icon, name, shape } = WALK_POINT[kind];
+      return [
+        <span
+          key={`${i}-${kind}`}
+          role="img"
+          aria-label={`${w.label}${name}`}
+          aria-hidden={off || undefined}
+          title={`${w.label}${name}`}
+          data-walk-point={kind}
+          style={{ ...pos(toPercent(p, img, crop)), background: walkColor(i) }}
+          className={cn(
+            "absolute z-[1] grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center border-2 shadow-[0_0_0_1.5px_rgb(255_255_255/0.75),0_1px_4px_rgb(0_0_0/0.45)] motion-safe:transition-opacity motion-safe:duration-200",
+            ink,
+            shape,
+            off && "pointer-events-none opacity-0",
+          )}
+        >
+          <Icon className="size-3.5" strokeWidth={2.5} aria-hidden />
+        </span>,
+      ];
+    });
+  });
+}
+
+/** 圖例用的傳點／落點小圖：平常金藍各半，只看某條通道時換成該通道色。 */
+function WalkPointSwatch({ kind, lit }: { kind: keyof typeof WALK_POINT; lit: number | null }) {
+  const { Icon, shape } = WALK_POINT[kind];
+  return (
+    <span
+      aria-hidden
+      style={{
+        background:
+          lit != null
+            ? walkColor(lit)
+            : "linear-gradient(135deg, var(--walk-1) 50%, var(--walk-2) 50%)",
+      }}
+      className={cn("grid size-4 shrink-0 place-items-center border-[1.5px]", ink, shape)}
+    >
+      <Icon className="size-2.5" strokeWidth={2.75} />
+    </span>
+  );
+}
+
 /** 圖例色塊：小塊暗底＋同款紋路與邊線，淺色／深色主題看起來一樣。 */
 function WalkSwatch({ i }: { i: number }) {
   const id = svgId(useId());
@@ -473,6 +543,19 @@ function Legend({ data, walkProps }: { data: StepData; walkProps: WalkLegendProp
           </button>
         </li>
       ))}
+      {(["portal", "landing"] as const)
+        .filter((kind) => walk.some((w) => w[kind]))
+        .map((kind) => (
+          <li
+            key={kind}
+            data-legend={kind}
+            className={cn("inline-flex items-center gap-1.5", !view.show && "opacity-50")}
+          >
+            <WalkPointSwatch kind={kind} lit={view.lit} />
+            <span className="text-foreground/85">{WALK_POINT[kind].name}</span>
+            <span>・{kind === "portal" ? "清完走上去傳送" : "傳送過來時出現的位置"}</span>
+          </li>
+        ))}
       {walk.length >= 2 && (
         <li className="inline-flex basis-full items-center gap-1.5">
           <SplitIcon className="size-3.5 shrink-0" aria-hidden />
@@ -534,6 +617,7 @@ export function StepMap({ alt }: { alt?: string }) {
                 view={view}
               />
               <WalkLabels data={data} view={view} />
+              <WalkPoints data={data} crop={crop} view={view} />
             </>
           )}
         </CropView>
@@ -575,6 +659,7 @@ export function StepMap({ alt }: { alt?: string }) {
                 </b>
               </span>
             )}
+            <WalkPoints data={data} crop={null} view={view} />
             <Layer data={data} crop={null} />
           </div>
         </div>

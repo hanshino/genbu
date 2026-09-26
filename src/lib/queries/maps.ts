@@ -122,6 +122,20 @@ export interface WalkRegion {
   width: number;
 }
 
+/** 點所在的格（或周圍一格，同 walkRegion 起點的容錯）是否屬於這條通道。 */
+export function regionHas(region: WalkRegion, p: Point): boolean {
+  const col = Math.floor(p.x / WALK_TILE);
+  const row = Math.floor(p.y / WALK_TILE);
+  const cells = new Set(region.cells);
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      const c = col + dc;
+      if (c >= 0 && c < region.width && cells.has((row + dr) * region.width + c)) return true;
+    }
+  }
+  return false;
+}
+
 // ponytail: 行程內永久快取；資料唯讀、key 只有攻略寫死的幾個起點，不會長大。
 const walkCache = new Map<string, WalkRegion | null>();
 

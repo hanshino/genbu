@@ -1,6 +1,11 @@
 import { getDb } from "@/lib/db";
 import type { StageKind } from "@/lib/types/stage";
-import { getStageMapImage, getNpcPositionsForStage, getWalkRegion } from "@/lib/queries/maps";
+import {
+  getStageMapImage,
+  getNpcPositionsForStage,
+  getWalkRegion,
+  regionHas,
+} from "@/lib/queries/maps";
 import { getNpcCombatStats } from "@/lib/queries/monsters";
 import {
   buildStepData,
@@ -61,8 +66,9 @@ export function getStepData(input: StepInput): StepData {
 }
 
 /**
- * 每個起點展開成一條通道；同一個連通區只留第一條（兩個起點其實相通時不會畫成兩條，
+ * 每個傳點（at）展開成一條通道；同一個連通區只留第一條（兩個起點其實相通時不會畫成兩條，
  * 所以「通道互不相通」的說法才成立）。查無遮罩或起點不可走的直接略過。
+ * 傳點／落點不在本區塊內就不畫；落點不在同一條通道也不畫（DungeonStep 在開發模式會提示）。
  */
 function getWalks(
   stage: number,
@@ -71,13 +77,17 @@ function getWalks(
 ): StepWalk[] {
   const out: StepWalk[] = [];
   for (const w of input) {
-    const region = getWalkRegion(stageKindOf(stage), stage, { x: w.at[0], y: w.at[1] });
+    const portal = { x: w.at[0], y: w.at[1] };
+    const region = getWalkRegion(stageKindOf(stage), stage, portal);
     if (!region || out.some((o) => o.path === region.path)) continue;
+    const landing = w.landing ? { x: w.landing[0], y: w.landing[1] } : null;
     out.push({
       label: w.label,
       note: w.note ?? null,
       path: region.path,
       labelAt: labelAt(region.cells, region.width, crop),
+      portal: inCrop(portal, crop) ? portal : null,
+      landing: landing && inCrop(landing, crop) && regionHas(region, landing) ? landing : null,
     });
   }
   return out;

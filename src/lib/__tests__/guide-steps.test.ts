@@ -368,5 +368,32 @@ describe("可行走通道（map_walkability）", () => {
     expect(bronze.path).toMatch(/^M[\d ]+Z/);
     expect(gold.path).not.toBe(bronze.path);
     for (const w of data.walk!) expect(inCrop(w.labelAt, crop)).toBe(true);
+    expect(gold.portal).toEqual({ x: 2044, y: 2604 });
+    expect(gold.landing).toBeNull(); // 沒給落點
+  });
+
+  it("烈漠禁地第二層：落點要在同一條通道、也要在本區塊內，否則不畫；傳點在區塊外也不畫", async () => {
+    const { getStepData } = await import("../guide-steps.server");
+    const crop: Crop = [300, 1050, 2500, 2900];
+    const walk = (landing: [number, number], c: Crop = crop) =>
+      getStepData({
+        stage: 1723,
+        crop: c,
+        walk: [{ at: [2044, 2604], landing, label: "金甲通道" }],
+      }).walk![0];
+
+    // 金甲落點在金甲通道內
+    expect(walk([708, 1326]).landing).toEqual({ x: 708, y: 1326 });
+    // 銅甲落點不屬於金甲通道
+    expect(walk([505, 1170]).landing).toBeNull();
+    // 裁掉落點所在的上半部：落點與通道仍在，但落點不在區塊內
+    const lower: Crop = [300, 2000, 2500, 2900];
+    expect(walk([708, 1326], lower).landing).toBeNull();
+    expect(walk([708, 1326], lower).portal).toEqual({ x: 2044, y: 2604 });
+    // 只留上半部：傳點在區塊外
+    const upper: Crop = [300, 1050, 2500, 2000];
+    const top = walk([708, 1326], upper);
+    expect(top.portal).toBeNull();
+    expect(top.landing).toEqual({ x: 708, y: 1326 });
   });
 });

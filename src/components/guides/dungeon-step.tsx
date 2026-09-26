@@ -38,9 +38,14 @@ export function DungeonStep({
   const seal = String(n).padStart(2, "0");
   const kinds = data.groups.reduce((s, g) => s + g.rows.length, 0);
   const dev = process.env.NODE_ENV !== "production";
-  const lostWalk = (walk ?? [])
-    .filter((w) => !data.walk?.some((c) => c.label === w.label))
-    .map((w) => w.label);
+  const lostWalk = (walk ?? []).flatMap((w) => {
+    const c = data.walk?.find((o) => o.label === w.label);
+    if (!c) return [w.label];
+    return [
+      ...(c.portal ? [] : [`${w.label}傳點`]),
+      ...(w.landing && !c.landing ? [`${w.label}落點`] : []),
+    ];
+  });
 
   return (
     <section className="bg-card my-8 overflow-hidden rounded-xl border">
@@ -84,7 +89,8 @@ export function DungeonStep({
         )}
         {dev && lostWalk.length > 0 && (
           <p className="text-muted-foreground mb-4 rounded-md border border-dashed px-3 py-2 text-[12px]">
-            待作者核對：這些通道查無可行走資料、起點不可走，或和前一條相通：{lostWalk.join("、")}
+            待作者核對：這些通道或標記畫不出來（查無可行走資料、傳點不可走、和前一條相通、不在區塊內，或落點不在同一條通道）：
+            {lostWalk.join("、")}
           </p>
         )}
         <StepProvider data={data}>{children}</StepProvider>

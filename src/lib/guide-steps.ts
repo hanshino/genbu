@@ -34,9 +34,13 @@ export interface StepMarkInput {
   tbd?: boolean;
 }
 
-/** 可行走通道：at 是通道內任一點的合成圖像素 [x, y]，伺服器從這點展開整條通道。 */
+/**
+ * 可行走通道（合成圖像素 [x, y]）。
+ * at＝本通道的傳點，同時當作展開整條通道的起點；landing＝傳送進本通道時出現的落點，必須在同一條通道內。
+ */
 export interface StepWalkInput {
   at: [x: number, y: number];
+  landing?: [x: number, y: number];
   label: string;
   note?: string;
 }
@@ -56,6 +60,10 @@ export interface StepWalk {
   path: string;
   /** 地圖上名稱標籤的位置：本區塊內最上面那一列的中間格。 */
   labelAt: Point;
+  /** 傳點；不在本區塊內時為 null。 */
+  portal: Point | null;
+  /** 落點；沒給、不在本區塊內或不在同一條通道時為 null。 */
+  landing: Point | null;
 }
 
 export interface StepRow {
