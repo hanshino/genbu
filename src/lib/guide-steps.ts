@@ -75,7 +75,7 @@ export interface StepRoute {
   label: string;
   note: string | null;
   points: StepRoutePoint[];
-  /** 只看這條路線時的放大框：包住所有點、和本區塊同比例、不超出本區塊。 */
+  /** 分頁裡這條路線的放大框：包住所有點再加一圈邊、固定 ROUTE_ASPECT、不超出本區塊。 */
   box: Crop;
 }
 
@@ -208,11 +208,14 @@ export function fullFrameBox(
   };
 }
 
+/** 路線分頁地圖的長寬比：每頁一樣，切分頁時地圖高度不跳；手機上也比寬扁的整層圖大。 */
+export const ROUTE_ASPECT = 4 / 3;
+
 /**
- * 只看一條路線時的放大框：點的外框加一圈邊，擴成 bounds 的長寬比，再推回 bounds 內。
- * 比例和 bounds 一樣，所以切換放大時地圖容器不會跳動。
+ * 路線的放大框：點的外框加一圈邊，擴成 aspect 的長寬比，再推回 bounds 內。
+ * 比 bounds 還大時縮到放得進 bounds（仍維持 aspect）。
  */
-export function routeBox(points: Point[], bounds: Crop, pad = 240): Crop {
+export function routeBox(points: Point[], bounds: Crop, pad = 180, aspect = ROUTE_ASPECT): Crop {
   const [bx0, by0, bx1, by1] = bounds;
   const bw = bx1 - bx0;
   const bh = by1 - by0;
@@ -220,10 +223,10 @@ export function routeBox(points: Point[], bounds: Crop, pad = 240): Crop {
   const ys = points.map((p) => p.y);
   let w = Math.max(...xs) - Math.min(...xs) + pad * 2;
   let h = Math.max(...ys) - Math.min(...ys) + pad * 2;
-  if (w / h < bw / bh) w = (h * bw) / bh;
-  else h = (w * bh) / bw;
-  w = Math.min(w, bw);
-  h = Math.min(h, bh);
+  if (w / h < aspect) w = h * aspect;
+  else h = w / aspect;
+  if (w > bw) [w, h] = [bw, bw / aspect];
+  if (h > bh) [w, h] = [bh * aspect, bh];
   const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
   const cy = (Math.max(...ys) + Math.min(...ys)) / 2;
   const x0 = Math.min(Math.max(cx - w / 2, bx0), bx1 - w);

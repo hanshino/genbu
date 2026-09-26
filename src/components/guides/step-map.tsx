@@ -22,14 +22,13 @@ import {
   Minimize2Icon,
   RouteIcon,
   SplitIcon,
-  ZoomInIcon,
-  ZoomOutIcon,
 } from "lucide-react";
 import {
   cropFrame,
   formatStatusResistance,
   fullFrameBox,
   toPercent,
+  type Crop,
   type Point,
   type StepData,
   type StepGroup,
@@ -43,6 +42,7 @@ import { EntityPortrait } from "@/components/common/entity-portrait";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -65,6 +65,11 @@ interface StepState {
   setHover: (key: string | null) => void;
   room: string | null;
   setRoom: (room: string | null) => void;
+  /** 路線分頁目前打開的路線（label）；null＝第一條。 */
+  route: string | null;
+  setRoute: (label: string | null) => void;
+  /** 路線分頁的 DOM id，總覽圖點落點時捲過去。 */
+  tabsId: string;
 }
 
 const StepContext = createContext<StepState | null>(null);
@@ -79,8 +84,12 @@ export function StepProvider({ data, children }: { data: StepData; children?: Re
   const [active, setActive] = useState<string | null>(null);
   const [hover, setHover] = useState<string | null>(null);
   const [room, setRoom] = useState<string | null>(null);
+  const [route, setRoute] = useState<string | null>(null);
+  const tabsId = `route-tabs-${svgId(useId())}`;
   return (
-    <StepContext.Provider value={{ data, active, setActive, hover, setHover, room, setRoom }}>
+    <StepContext.Provider
+      value={{ data, active, setActive, hover, setHover, room, setRoom, route, setRoute, tabsId }}
+    >
       {children}
     </StepContext.Provider>
   );
@@ -592,183 +601,151 @@ function arc({ a, b, bend }: RouteSeg) {
 }
 
 /** 路線線條：步行是實線，傳送是點狀弧線；都墊一條深色底邊，壓在任何底圖上都讀得到。 */
-function RouteLayer({ data, box, view }: { data: StepData; box: string; view: WalkView }) {
-  const avoid = routeAvoid(data);
+function RouteLayer({ segs, color, box }: { segs: RouteSeg[]; color: string; box: string }) {
   return (
     <svg
       aria-hidden
       data-testid="route-layer"
       viewBox={box}
       preserveAspectRatio="none"
-      className={cn(
-        "pointer-events-none absolute inset-0 size-full motion-safe:transition-opacity motion-safe:duration-200",
-        !view.show && "opacity-0",
-      )}
+      style={{ stroke: color }}
+      className="pointer-events-none absolute inset-0 size-full"
     >
-      {(data.routes ?? []).map((r, i) => (
-        <g
-          key={i}
-          data-route={i}
-          style={{ stroke: routeColor(i) }}
-          className={cn(
-            "motion-safe:transition-opacity motion-safe:duration-200",
-            view.lit != null && view.lit !== i && "opacity-15",
-          )}
-        >
-          {routeSegs(r, avoid).map((seg, k) => {
-            const d = seg.jump ? arc(seg).d : `M${seg.a.x} ${seg.a.y}L${seg.b.x} ${seg.b.y}`;
-            return (
-              <g key={k} data-seg={seg.jump ? "jump" : "walk"}>
-                <path
-                  d={d}
-                  fill="none"
-                  stroke="var(--walk-halo)"
-                  strokeWidth={seg.jump ? 6 : 7}
-                  strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke"
-                />
-                <path
-                  d={d}
-                  fill="none"
-                  strokeWidth={seg.jump ? 3 : 3.5}
-                  strokeDasharray={seg.jump ? "0.5 7" : undefined}
-                  strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke"
-                />
-              </g>
-            );
-          })}
-        </g>
-      ))}
+      {segs.map((seg, k) => {
+        const d = seg.jump ? arc(seg).d : `M${seg.a.x} ${seg.a.y}L${seg.b.x} ${seg.b.y}`;
+        return (
+          <g key={k} data-seg={seg.jump ? "jump" : "walk"}>
+            <path
+              d={d}
+              fill="none"
+              stroke="var(--walk-halo)"
+              strokeWidth={seg.jump ? 6 : 7}
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+            />
+            <path
+              d={d}
+              fill="none"
+              strokeWidth={seg.jump ? 3 : 3.5}
+              strokeDasharray={seg.jump ? "0.5 7" : undefined}
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          </g>
+        );
+      })}
     </svg>
   );
 }
 
+const bossRing =
+  "rounded-full bg-[oklch(0.14_0.02_260/0.55)] shadow-[0_0_0_1.5px_var(--walk-halo),inset_0_0_0_1.5px_var(--walk-halo),0_1px_6px_rgb(0_0_0/0.5)]";
+
 /**
- * 路線上的標記（HTML，大小不隨地圖縮放）：起點落點＋島名、傳點＋踩的順序、傳送後的落點、
+ * 路線上的標記（HTML，大小不隨地圖縮放）：起點落點、傳點＋踩的順序、傳送後的落點、
  * 王的外圈（圈在怪物標記外面，怪物標記仍在上層）、線段中間的方向箭頭。
  */
 function RouteMarks({
-  data,
-  crop,
-  view,
-  labels,
+  route: r,
+  color,
+  segs,
+  at,
 }: {
-  data: StepData;
-  crop: StepData["crop"];
-  view: WalkView;
-  labels: boolean;
+  route: StepRoute;
+  color: string;
+  segs: RouteSeg[];
+  at: (p: Point) => { left: number; top: number };
 }) {
-  const img = data.image!;
-  const at = (p: Point) => pos(toPercent(p, img, crop));
-  const avoid = routeAvoid(data);
-  return (data.routes ?? []).flatMap((r, i) => {
-    const off = !view.show || (view.lit != null && view.lit !== i);
-    const hide = off && "pointer-events-none opacity-0";
-    const color = routeColor(i);
-    const fade = "motion-safe:transition-opacity motion-safe:duration-200";
-    let step = 0;
-    const marks = r.points.flatMap((p, k) => {
-      const key = `${i}-p${k}`;
-      if (p.as === "walk") return [];
-      if (p.as === "boss") {
-        return [
-          <span
-            key={key}
-            aria-hidden
-            data-route-point="boss"
-            style={{ ...at(p), borderColor: color }}
-            className={cn(
-              // z-[2]：壓過路線線條、箭頭和落點；怪物標記同層但排在後面，仍在最上面。
-              // 圈內墊半透明深色，穿過的線條淡下去，王一眼看得出來。
-              "pointer-events-none absolute z-[2] size-9 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] bg-[oklch(0.14_0.02_260/0.55)] shadow-[0_0_0_1.5px_var(--walk-halo),inset_0_0_0_1.5px_var(--walk-halo),0_1px_6px_rgb(0_0_0/0.5)]",
-              fade,
-              hide,
-            )}
-          />,
-        ];
-      }
-      const portal = p.as === "portal";
-      if (portal) step++;
-      const start = k === 0;
-      const { Icon, shape } = WALK_POINT[portal ? "portal" : "landing"];
-      const name = portal
-        ? `${r.label}第 ${step} 個傳點`
-        : start
-          ? `${r.label}起點`
-          : `${r.label}第 ${step} 跳落點`;
+  let step = 0;
+  const marks = r.points.flatMap((p, k) => {
+    const key = `p${k}`;
+    if (p.as === "walk") return [];
+    if (p.as === "boss") {
       return [
         <span
           key={key}
-          role="img"
-          aria-label={name}
-          aria-hidden={off || undefined}
-          title={name}
-          data-route-point={p.as}
-          style={{ ...at(p), background: color }}
-          className={cn(
-            "absolute z-[1] grid -translate-x-1/2 -translate-y-1/2 place-items-center border-2 shadow-[0_0_0_1.5px_rgb(255_255_255/0.75),0_1px_4px_rgb(0_0_0/0.45)]",
-            portal || start ? "size-6" : "size-5",
-            ink,
-            shape,
-            fade,
-            hide,
-          )}
-        >
-          <Icon className={portal || start ? "size-3.5" : "size-3"} strokeWidth={2.5} aria-hidden />
-          {portal && (
-            <b className="absolute -top-2 -right-2 grid size-4 place-items-center rounded-full bg-[oklch(0.2_0.02_260)] text-[10px] leading-none font-bold text-white tabular-nums shadow-[0_0_0_1.5px_rgb(255_255_255/0.85)]">
-              {step}
-            </b>
-          )}
-        </span>,
-        ...(start && labels
-          ? [
-              <span
-                key={`${key}-label`}
-                aria-hidden
-                style={{ ...at(p), background: color }}
-                className={cn(
-                  pill,
-                  "z-[1]",
-                  // 太靠近上緣時改放在標記下方，免得被裁掉
-                  toPercent(p, img, crop).top < 8
-                    ? "translate-y-4"
-                    : "-translate-y-[calc(100%+16px)]",
-                  hide,
-                )}
-              >
-                {r.label}
-              </span>,
-            ]
-          : []),
-      ];
-    });
-    const arrows = routeSegs(r, avoid).flatMap((seg, k) => {
-      const len = Math.hypot(seg.b.x - seg.a.x, seg.b.y - seg.a.y);
-      if (len < lineGap) return [];
-      const mid = seg.jump
-        ? arc(seg).mid
-        : { x: (seg.a.x + seg.b.x) / 2, y: (seg.a.y + seg.b.y) / 2 };
-      const deg = (Math.atan2(seg.b.y - seg.a.y, seg.b.x - seg.a.x) * 180) / Math.PI;
-      return [
-        <span
-          key={`${i}-a${k}`}
           aria-hidden
-          data-route-arrow
-          style={{ ...at(mid), color, rotate: `${deg}deg` }}
+          data-route-point="boss"
+          style={{ ...pos(at(p)), borderColor: color }}
           className={cn(
-            "pointer-events-none absolute z-[1] -translate-x-1/2 -translate-y-1/2 [filter:drop-shadow(0_0_1.5px_oklch(0.12_0.02_260))_drop-shadow(0_0_1px_oklch(0.12_0.02_260))]",
-            fade,
-            hide,
+            // z-[2]：壓過路線線條、箭頭和落點；怪物標記同層但排在後面，仍在最上面。
+            // 圈內墊半透明深色，穿過的線條淡下去，王一眼看得出來。
+            "pointer-events-none absolute z-[2] size-9 -translate-x-1/2 -translate-y-1/2 border-[3px]",
+            bossRing,
           )}
-        >
-          <ChevronRightIcon className="size-4" strokeWidth={3.5} />
-        </span>,
+        />,
       ];
-    });
-    return [...arrows, ...marks];
+    }
+    const portal = p.as === "portal";
+    if (portal) step++;
+    const start = k === 0;
+    const { Icon, shape } = WALK_POINT[portal ? "portal" : "landing"];
+    const name = portal
+      ? `${r.label}第 ${step} 個傳點`
+      : start
+        ? `${r.label}起點`
+        : `${r.label}第 ${step} 跳落點`;
+    return [
+      <span
+        key={key}
+        role="img"
+        aria-label={name}
+        title={name}
+        data-route-point={p.as}
+        style={{ ...pos(at(p)), background: color }}
+        className={cn(
+          "absolute z-[1] grid -translate-x-1/2 -translate-y-1/2 place-items-center border-2 shadow-[0_0_0_1.5px_rgb(255_255_255/0.75),0_1px_4px_rgb(0_0_0/0.45)]",
+          portal || start ? "size-6" : "size-5",
+          ink,
+          shape,
+        )}
+      >
+        <Icon className={portal || start ? "size-3.5" : "size-3"} strokeWidth={2.5} aria-hidden />
+        {portal && (
+          <b className="absolute -top-2 -right-2 grid size-4 place-items-center rounded-full bg-[oklch(0.2_0.02_260)] text-[10px] leading-none font-bold text-white tabular-nums shadow-[0_0_0_1.5px_rgb(255_255_255/0.85)]">
+            {step}
+          </b>
+        )}
+      </span>,
+      ...(start
+        ? [
+            <span
+              key={`${key}-label`}
+              aria-hidden
+              style={{ ...pos(at(p)), background: color }}
+              className={cn(
+                pill,
+                "z-[1]",
+                // 太靠近上緣時改放在標記下方，免得被裁掉
+                at(p).top < 8 ? "translate-y-4" : "-translate-y-[calc(100%+16px)]",
+              )}
+            >
+              起點
+            </span>,
+          ]
+        : []),
+    ];
   });
+  const arrows = segs.flatMap((seg, k) => {
+    const len = Math.hypot(seg.b.x - seg.a.x, seg.b.y - seg.a.y);
+    if (len < lineGap) return [];
+    const mid = seg.jump
+      ? arc(seg).mid
+      : { x: (seg.a.x + seg.b.x) / 2, y: (seg.a.y + seg.b.y) / 2 };
+    const deg = (Math.atan2(seg.b.y - seg.a.y, seg.b.x - seg.a.x) * 180) / Math.PI;
+    return [
+      <span
+        key={`a${k}`}
+        aria-hidden
+        data-route-arrow
+        style={{ ...pos(at(mid)), color, rotate: `${deg}deg` }}
+        className="pointer-events-none absolute z-[1] -translate-x-1/2 -translate-y-1/2 [filter:drop-shadow(0_0_1.5px_oklch(0.12_0.02_260))_drop-shadow(0_0_1px_oklch(0.12_0.02_260))]"
+      >
+        <ChevronRightIcon className="size-4" strokeWidth={3.5} />
+      </span>,
+    ];
+  });
+  return [...arrows, ...marks];
 }
 
 /** 圖例用的路線小圖：一小段實線接一段點狀弧線。 */
@@ -793,6 +770,75 @@ function RouteSwatch({ color }: { color: string }) {
   );
 }
 
+/** 打開某條路線的分頁，並把分頁捲進畫面。 */
+function openRoute(s: StepState, label: string) {
+  s.setRoute(label);
+  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  document
+    .getElementById(s.tabsId)
+    ?.scrollIntoView?.({ behavior: reduce ? "auto" : "smooth", block: "start" });
+}
+
+/**
+ * 總覽圖上的落點：只標每條路線的起點＋名稱，讓玩家對座標找出自己在哪一條。
+ * 點一下切到那條路線的分頁（RouteTabs）並捲過去。
+ */
+function RouteLandings({
+  data,
+  crop,
+  labels,
+}: {
+  data: StepData;
+  crop: StepData["crop"];
+  labels: boolean;
+}) {
+  const s = useStep();
+  const img = data.image!;
+  return (data.routes ?? []).map((r, i) => {
+    const at = toPercent(r.points[0], img, crop);
+    const color = routeColor(i);
+    return (
+      <button
+        key={r.label}
+        type="button"
+        data-route-landing={r.label}
+        aria-label={`${r.label}落點：看這裡的走法`}
+        title={`${r.label}落點`}
+        onClick={() => openRoute(s, r.label)}
+        style={pos(at)}
+        className={cn(
+          hit,
+          "group/landing z-[3] cursor-pointer motion-safe:transition-[scale] motion-safe:duration-150 hover:scale-110",
+        )}
+      >
+        <span
+          style={{ background: color }}
+          className={cn(
+            "grid size-6 place-items-center rounded-md border-2 shadow-[0_0_0_1.5px_rgb(255_255_255/0.75),0_1px_4px_rgb(0_0_0/0.45)]",
+            ink,
+          )}
+        >
+          <ArrowDownToDotIcon className="size-3.5" strokeWidth={2.5} aria-hidden />
+        </span>
+        {labels && (
+          <span
+            aria-hidden
+            style={{ background: color }}
+            className={cn(
+              pill,
+              // 放在標記旁邊而不是上方：手機上地圖很矮，貼近上緣的島名才不會被裁掉
+              "top-1/2 translate-x-0 -translate-y-1/2 group-hover/landing:underline",
+              at.left > 80 ? "right-full" : "left-full",
+            )}
+          >
+            {r.label}
+          </span>
+        )}
+      </button>
+    );
+  });
+}
+
 interface WalkLegendProps {
   view: WalkView;
   pin: number | null;
@@ -803,7 +849,7 @@ interface WalkLegendProps {
 const legendButton =
   "hover:bg-muted/50 aria-pressed:bg-muted focus-visible:ring-ring/60 -mx-1 inline-flex cursor-pointer items-center gap-1.5 rounded-md px-1 outline-hidden focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50";
 
-/** 圖例裡「只看這一條」的按鈕：滑過／聚焦時先預覽，點一下固定。 */
+/** 圖例裡「只看這一條通道」的按鈕：滑過／聚焦時先預覽，點一下固定。 */
 function SoloButton({
   i,
   label,
@@ -834,54 +880,21 @@ function SoloButton({
   );
 }
 
-function Legend({
-  data,
-  walkProps,
-  routeProps,
-}: {
-  data: StepData;
-  walkProps: WalkLegendProps;
-  routeProps: WalkLegendProps;
-}) {
+function Legend({ data, walkProps }: { data: StepData; walkProps: WalkLegendProps }) {
   const marks = data.marks.filter((m) => m.as !== "room");
   const numbered = data.groups.some((g) => g.map && g.points.length > 0 && g.as !== "area");
   const walk = data.walk ?? [];
   const routes = data.routes ?? [];
   const { view } = walkProps;
-  const rv = routeProps.view;
-  const rColor = rv.lit != null ? routeColor(rv.lit) : ROUTE_MIX;
   if (marks.length === 0 && !numbered && walk.length === 0 && routes.length === 0) return null;
   return (
     <ul className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1.5 px-3 py-2.5 text-[12.5px] leading-relaxed">
-      {routes.map((r, i) => (
-        <li key={`route-${i}`}>
-          <SoloButton i={i} label={r.label} props={routeProps}>
-            <RouteSwatch color={routeColor(i)} />
-            <span className="text-foreground/85">{r.label}</span>
-            {r.note && <span>・{r.note}</span>}
-          </SoloButton>
-        </li>
-      ))}
       {routes.length > 0 && (
-        <>
-          <li
-            data-legend="route-landing"
-            className={cn("inline-flex basis-full items-center gap-1.5", !rv.show && "opacity-50")}
-          >
-            <WalkPointSwatch kind="landing" color={rColor} />
-            <span className="text-foreground/85">落點</span>
-            <span className="mr-3">・傳進來站的位置</span>
-            <WalkPointSwatch kind="portal" color={rColor} />
-            <span className="text-foreground/85">傳點</span>
-            <span className="mr-3">・小數字是踩的順序</span>
-            <RouteSwatch color={rv.lit != null ? routeColor(rv.lit) : "var(--muted-foreground)"} />
-            <span>實線走過去，點狀弧線是傳送</span>
-          </li>
-          <li className="inline-flex basis-full items-center gap-1.5">
-            <ZoomInIcon className="size-3.5 shrink-0" aria-hidden />
-            <span>點上面的島名只看那一座並放大，再點一次回到全部。</span>
-          </li>
-        </>
+        <li data-legend="route-landing" className="inline-flex basis-full items-center gap-1.5">
+          <WalkPointSwatch kind="landing" color={ROUTE_MIX} />
+          <span className="text-foreground/85 shrink-0">落點</span>
+          <span>・找到自己站的那一個，點它，下方分頁會切到那裡的走法。</span>
+        </li>
       )}
       {walk.map((w, i) => (
         <li key={`walk-${i}`}>
@@ -943,7 +956,12 @@ function Legend({
   );
 }
 
-/** 地圖：預設只看本區塊，可切到完整地圖（會框出本區塊）。沒有地圖圖檔時不顯示。 */
+const viewBox = (c: Crop) => `${c[0]} ${c[1]} ${c[2] - c[0]} ${c[3] - c[1]}`;
+
+/**
+ * 地圖：預設只看本區塊，可切到完整地圖（會框出本區塊）。沒有地圖圖檔時不顯示。
+ * 有路線時這張是總覽：只標各路線的落點，完整走法放在 RouteTabs 的分頁裡。
+ */
 export function StepMap({ alt }: { alt?: string }) {
   const s = useStep();
   const { data } = s;
@@ -951,43 +969,27 @@ export function StepMap({ alt }: { alt?: string }) {
   const [showWalk, setShowWalk] = useState(true);
   const [pin, setPin] = useState<number | null>(null);
   const [peek, setPeek] = useState<number | null>(null);
-  const [routePin, setRoutePin] = useState<number | null>(null);
-  const [routePeek, setRoutePeek] = useState<number | null>(null);
   const img = data.image;
   if (!img) return null;
 
   const walk = data.walk ?? [];
-  const routes = data.routes ?? [];
-  const overlay = walk.length > 0 || routes.length > 0;
   const view: WalkView = { show: showWalk, lit: peek ?? pin };
-  const routeView: WalkView = { show: showWalk, lit: routePeek ?? routePin };
-
   const crop = data.crop;
   const showCrop = crop != null && !full;
-  // 圖例點選某條路線時放大到那條路線（框和本區塊同比例，容器不跳動）
-  const zoomed = showCrop && routePin != null ? routes[routePin] : undefined;
-  const viewCrop = zoomed?.box ?? crop;
-  const box = (c: NonNullable<StepData["crop"]>) => `${c[0]} ${c[1]} ${c[2] - c[0]} ${c[3] - c[1]}`;
   const label = alt ?? `${data.stageName}地圖`;
-  const noun = routes.length > 0 ? "路線" : "通道";
 
   return (
     <figure className="bg-card my-5 overflow-hidden rounded-xl border">
       {showCrop ? (
-        <CropView data={data} crop={viewCrop!} alt={`${label}（本區塊）`}>
+        <CropView data={data} crop={crop} alt={`${label}（本區塊）`}>
           {walk.length > 0 && (
             <>
-              <WalkLayer walk={walk} box={box(viewCrop!)} view={view} />
-              <WalkLabels data={data} crop={viewCrop} view={view} />
-              <WalkPoints data={data} crop={viewCrop} view={view} />
+              <WalkLayer walk={walk} box={viewBox(crop)} view={view} />
+              <WalkLabels data={data} crop={crop} view={view} />
+              <WalkPoints data={data} crop={crop} view={view} />
             </>
           )}
-          {routes.length > 0 && (
-            <>
-              <RouteLayer data={data} box={box(viewCrop!)} view={routeView} />
-              <RouteMarks data={data} crop={viewCrop} view={routeView} labels />
-            </>
-          )}
+          <RouteLandings data={data} crop={crop} labels />
         </CropView>
       ) : (
         <div className="bg-muted/40 overflow-x-auto">
@@ -1027,51 +1029,22 @@ export function StepMap({ alt }: { alt?: string }) {
                 </b>
               </span>
             )}
-            {routes.length > 0 && (
-              <RouteLayer
-                data={data}
-                box={`0 0 ${img.imgWidth} ${img.imgHeight}`}
-                view={routeView}
-              />
-            )}
             <WalkPoints data={data} crop={null} view={view} />
-            <RouteMarks data={data} crop={null} view={routeView} labels={false} />
+            <RouteLandings data={data} crop={null} labels={false} />
             <Layer data={data} crop={null} />
           </div>
         </div>
       )}
 
       <figcaption className="border-t">
-        <Legend
-          data={data}
-          walkProps={{ view, pin, setPin, setPeek }}
-          routeProps={{
-            view: routeView,
-            pin: routePin,
-            setPin: setRoutePin,
-            setPeek: setRoutePeek,
-          }}
-        />
-        {(crop || overlay) && (
+        <Legend data={data} walkProps={{ view, pin, setPin, setPeek }} />
+        {(crop || walk.length > 0) && (
           <div className="flex items-center justify-between gap-3 border-t border-dashed px-3 py-2">
-            {zoomed ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setRoutePin(null)}
-                className="text-muted-foreground h-8 px-2"
-              >
-                <ZoomOutIcon aria-hidden />
-                看全部{noun}
-              </Button>
-            ) : (
-              <span className="text-muted-foreground text-[12px] sm:invisible">
-                {full ? "地圖可左右滑動" : ""}
-              </span>
-            )}
+            <span className="text-muted-foreground text-[12px] sm:invisible">
+              {full ? "地圖可左右滑動" : ""}
+            </span>
             <div className="flex items-center gap-2">
-              {overlay && (
+              {walk.length > 0 && (
                 <Button
                   type="button"
                   variant="outline"
@@ -1081,13 +1054,11 @@ export function StepMap({ alt }: { alt?: string }) {
                     setShowWalk((v) => !v);
                     setPin(null);
                     setPeek(null);
-                    setRoutePin(null);
-                    setRoutePeek(null);
                   }}
                   className="h-8 px-3"
                 >
                   {showWalk ? <EyeOffIcon aria-hidden /> : <RouteIcon aria-hidden />}
-                  {showWalk ? `隱藏${noun}` : `顯示${noun}`}
+                  {showWalk ? "隱藏通道" : "顯示通道"}
                 </Button>
               )}
               {crop && (
@@ -1118,8 +1089,8 @@ function CropView({
   children,
 }: {
   data: StepData;
-  /** 目前顯示的框：本區塊，或路線放大框（同比例）。 */
-  crop: NonNullable<StepData["crop"]>;
+  /** 要顯示的框（本區塊，或路線的放大框）；容器比例跟著這個框。 */
+  crop: Crop;
   alt: string;
   children?: ReactNode;
 }) {
@@ -1128,7 +1099,7 @@ function CropView({
   return (
     <div
       className="bg-muted/40 relative w-full overflow-hidden"
-      style={{ aspectRatio: String(cropFrame(img, data.crop ?? crop).aspect) }}
+      style={{ aspectRatio: String(f.aspect) }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- 與地圖頁一致，直連圖床 */}
       <img
@@ -1142,6 +1113,104 @@ function CropView({
       {children}
       <Layer data={data} crop={crop} />
     </div>
+  );
+}
+
+/* ── 路線分頁 ── */
+
+/**
+ * 路線分頁：每條路線一頁，順序照 routes 資料。children 放 <RouteTab label="…">，
+ * 每頁的放大路線圖由路線資料自動畫，RouteTab 的 children（步驟、座標）接在圖下方。
+ */
+export function RouteTabs({ children }: { children?: ReactNode }) {
+  const s = useStep();
+  const routes = s.data.routes ?? [];
+  if (routes.length === 0 || !s.data.image) return null;
+  return (
+    <Tabs
+      id={s.tabsId}
+      value={s.route ?? routes[0].label}
+      onValueChange={(v) => s.setRoute(String(v))}
+      className="my-5 scroll-mt-20 gap-3"
+    >
+      {/* 手機放不下時可以左右滑 */}
+      <div className="-mx-1 overflow-x-auto px-1 py-0.5">
+        <TabsList aria-label="各路線走法" className="h-9 w-max min-w-full">
+          {routes.map((r, i) => (
+            <TabsTrigger
+              key={r.label}
+              value={r.label}
+              className="gap-1.5 px-2 sm:px-3"
+            >
+              <span
+                aria-hidden
+                style={{ background: routeColor(i) }}
+                className="hidden size-2.5 shrink-0 rounded-[2px] shadow-[0_0_0_1px_oklch(0.2_0.02_260/0.35)] sm:block"
+              />
+              {r.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
+      {children}
+    </Tabs>
+  );
+}
+
+/** 一條路線的分頁內容：放大路線圖＋children（步驟、座標對照）。 */
+export function RouteTab({ label, children }: { label: string; children?: ReactNode }) {
+  const { data } = useStep();
+  const routes = data.routes ?? [];
+  const i = routes.findIndex((r) => r.label === label);
+  return (
+    <TabsContent value={label} className="text-base [&_td]:whitespace-nowrap [&>:last-child]:mb-0">
+      {i >= 0 && <RouteMap data={data} route={routes[i]} i={i} />}
+      {children}
+    </TabsContent>
+  );
+}
+
+function RouteMap({ data, route, i }: { data: StepData; route: StepRoute; i: number }) {
+  const img = data.image!;
+  const color = routeColor(i);
+  const segs = routeSegs(route, routeAvoid(data));
+  const { box } = route;
+  return (
+    <figure data-route-map={route.label} className="bg-card mb-5 overflow-hidden rounded-xl border">
+      <CropView data={data} crop={box} alt={`${data.stageName}地圖（${route.label}走法）`}>
+        <RouteLayer segs={segs} color={color} box={viewBox(box)} />
+        <RouteMarks route={route} color={color} segs={segs} at={(p) => toPercent(p, img, box)} />
+      </CropView>
+      <figcaption className="border-t">
+        <ul className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1.5 px-3 py-2.5 text-[12.5px] leading-relaxed">
+          <li className="text-foreground font-medium">
+            {route.label}
+            {route.note && <span className="text-muted-foreground font-normal">・{route.note}</span>}
+          </li>
+          <li className="inline-flex items-center gap-1.5">
+            <WalkPointSwatch kind="landing" color={color} />
+            <span className="text-foreground/85">落點</span>
+          </li>
+          <li className="inline-flex items-center gap-1.5">
+            <WalkPointSwatch kind="portal" color={color} />
+            <span className="text-foreground/85">傳點</span>
+            <span>・小數字是踩的順序</span>
+          </li>
+          <li className="inline-flex items-center gap-1.5">
+            <RouteSwatch color={color} />
+            <span>實線走過去，點狀弧線是傳送</span>
+          </li>
+          <li className="inline-flex items-center gap-1.5">
+            <span
+              aria-hidden
+              style={{ borderColor: color }}
+              className={cn("size-3.5 shrink-0 border-2", bossRing)}
+            />
+            <span className="text-foreground/85">王</span>
+          </li>
+        </ul>
+      </figcaption>
+    </figure>
   );
 }
 

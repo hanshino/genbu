@@ -26,7 +26,7 @@ import { Check, ChecklistRoot } from "./checklist";
 import { DungeonStep, StepDone } from "./dungeon-step";
 import { GuideRefTag } from "./guide-ref-tag";
 import { MissionCard } from "./mission-card";
-import { NineRoomGrid, StepMap, StepTargets } from "./step-map";
+import { NineRoomGrid, RouteTab, RouteTabs, StepMap, StepTargets } from "./step-map";
 
 function textOf(node: ReactNode): string {
   if (typeof node === "string" || typeof node === "number") return String(node);
@@ -246,6 +246,8 @@ export const guideMdxComponents: MDXComponents = {
   DungeonStep,
   StepDone,
   StepMap,
+  RouteTabs,
+  RouteTab,
   StepTargets,
   NineRoomGrid,
 };

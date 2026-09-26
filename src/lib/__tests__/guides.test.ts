@@ -155,8 +155,17 @@ describe("renderGuideBody", () => {
     expect(html.match(/data-testid="walk-layer"/g)).toHaveLength(1);
     expect(html).toContain("兩條通道互不相通");
     expect(html).not.toContain("這些通道或標記畫不出來");
-    expect(html.match(/data-testid="route-layer"/g)).toHaveLength(1);
+    // 四樓：總覽只標五島落點，走法在分頁裡（伺服器端只畫開著的第一頁）
     expect(html).not.toContain("這些路線畫不出來");
+    const landings = [...html.matchAll(/data-route-landing="([^"]+)"/g)].map((m) => m[1]);
+    const tabs = [...html.matchAll(/role="tab"[^>]*>(?:<[^>]*>)*([^<]+)</g)].map((m) => m[1]);
+    const order = ["鬼爪島", "鬼馬島", "蛇魔島", "鬼偶島", "鬼煞島"];
+    expect(landings).toEqual(order);
+    expect(tabs).toEqual(order);
+    expect(html.match(/data-testid="route-layer"/g)).toHaveLength(1);
+    expect(html).toContain('data-route-map="鬼爪島"');
+    expect(html).toContain("（11，94）");
+    expect(html).not.toContain("（89，67）"); // 其他島的座標在各自分頁，沒打開就不渲染
   });
 
   it("does not turn single tildes in level ranges into strikethrough", async () => {

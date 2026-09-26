@@ -6,6 +6,7 @@ import {
   fullFrameBox,
   inCrop,
   routeBox,
+  ROUTE_ASPECT,
   toPercent,
   type BuildStepDataInput,
   type Crop,
@@ -400,7 +401,7 @@ describe("可行走通道（map_walkability）", () => {
 });
 
 describe("路線（routes）", () => {
-  it("routeBox：包住點、和本區塊同比例、推回本區塊內", () => {
+  it("routeBox：包住點再加一圈邊、固定 ROUTE_ASPECT、推回本區塊內；太大時縮進本區塊", () => {
     const bounds: Crop = [0, 0, 2800, 2550];
     const box = routeBox(
       [
@@ -410,20 +411,24 @@ describe("路線（routes）", () => {
       bounds,
     );
     const [x0, y0, x1, y1] = box;
-    expect((x1 - x0) / (y1 - y0)).toBeCloseTo(2800 / 2550, 2);
+    expect((x1 - x0) / (y1 - y0)).toBeCloseTo(ROUTE_ASPECT, 2);
     expect(x0).toBe(0); // 左上角放不下一圈邊，推回框內
     expect(y0).toBe(0);
-    expect(x1).toBeGreaterThanOrEqual(500 + 240);
-    // 比本區塊還大時就是本區塊
-    expect(
-      routeBox(
-        [
-          { x: 0, y: 0 },
-          { x: 2800, y: 2550 },
-        ],
-        bounds,
-      ),
-    ).toEqual(bounds);
+    expect(x1).toBeGreaterThanOrEqual(500 + 180);
+    expect(y1).toBeGreaterThanOrEqual(300 + 180);
+    // 比本區塊還大時縮到放得進去，比例不變
+    const big = routeBox(
+      [
+        { x: 0, y: 0 },
+        { x: 2800, y: 2550 },
+      ],
+      bounds,
+    );
+    expect(big[2] - big[0]).toBeLessThanOrEqual(2800);
+    expect(big[3] - big[1]).toBeLessThanOrEqual(2550);
+    expect((big[2] - big[0]) / (big[3] - big[1])).toBeCloseTo(ROUTE_ASPECT, 2);
+    expect(big[0]).toBeGreaterThanOrEqual(0);
+    expect(big[1]).toBeGreaterThanOrEqual(0);
   });
 
   it("烈漠禁地第四層：路線要全在區塊內、步行段要走得到，否則整條略過", async () => {
@@ -480,7 +485,7 @@ describe("路線（routes）", () => {
     expect(y0).toBeGreaterThanOrEqual(crop[1]);
     expect(x1).toBeLessThanOrEqual(crop[2]);
     expect(y1).toBeLessThanOrEqual(crop[3]);
-    expect((x1 - x0) / (y1 - y0)).toBeCloseTo(4800 / 2550, 2);
+    expect((x1 - x0) / (y1 - y0)).toBeCloseTo(ROUTE_ASPECT, 2);
     for (const p of r.points) expect(inCrop(p, r.box)).toBe(true);
   });
 });
