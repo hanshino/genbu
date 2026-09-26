@@ -12,6 +12,12 @@ export interface Point {
   y: number;
 }
 
+/** 抗性對應為推論；缺值或超出已知規則時不宣稱可施加。 */
+export function formatStatusResistance(value: number | null): string {
+  if (value == null || !Number.isFinite(value) || value > 100) return "待確認";
+  return value === 100 ? "不可" : "可";
+}
+
 export interface StepGroupInput {
   ids: number[];
   /** Short label used instead of an ID, e.g. "高防禦" / "西北". */
@@ -43,6 +49,8 @@ export interface StepRow {
   def: number;
   mdef: number;
   dodge: number | null;
+  weakenRes: number | null;
+  bleedRes: number | null;
   image: EntityImage | null;
   /** Number of identical-stat ids merged into this row. */
   count: number;
@@ -178,6 +186,8 @@ export interface StepStatInput {
   def: number;
   mdef: number;
   dodge: number | null;
+  weakenRes: number | null;
+  bleedRes: number | null;
   image: EntityImage | null;
 }
 
@@ -199,7 +209,7 @@ export interface BuildStepDataInput {
  * 組成 StepData。不打 DB，方便測試；getStepData（server）負責查資料後呼叫這裡。
  *
  * - 只保留落在 crop 內的座標（crop=null 時不限制）。
- * - 同一組內，name/level/hp/def/mdef/dodge 完全相同的 id 合併成一列（count 累加）；
+ * - 同一組內，name/level/hp/def/mdef/dodge/weakenRes/bleedRes 完全相同的 id 合併成一列（count 累加）；
  *   不同（例如 ▲精英 vs 一般）各自成列，依 ids 出現順序排列。
  * - color = 這個 group 在輸入陣列中的順序（1-based）。
  * - hit = 所有 group rows 中最大的 dodge（忽略 null），names 為並列最大值的怪物名（去重）。
@@ -234,6 +244,8 @@ export function buildStepData(input: BuildStepDataInput): StepData {
         stat.def,
         stat.mdef,
         stat.dodge,
+        stat.weakenRes,
+        stat.bleedRes,
       ]);
       const existing = buckets.get(bucketKey);
       if (existing) {
@@ -247,6 +259,8 @@ export function buildStepData(input: BuildStepDataInput): StepData {
           def: stat.def,
           mdef: stat.mdef,
           dodge: stat.dodge,
+          weakenRes: stat.weakenRes,
+          bleedRes: stat.bleedRes,
           image: stat.image,
           count: 1,
         });

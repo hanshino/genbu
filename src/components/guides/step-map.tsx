@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import {
   cropFrame,
+  formatStatusResistance,
   fullFrameBox,
   toPercent,
   type Point,
@@ -431,7 +432,7 @@ export function StepTargets() {
         </p>
       )}
       <div className="bg-card overflow-hidden rounded-xl border">
-        <Table className="min-w-[560px]">
+        <Table className="min-w-[700px]">
           <TableHeader className="bg-muted/60 [&_th]:font-heading">
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-14 pl-3">編號</TableHead>
@@ -441,6 +442,8 @@ export function StepTargets() {
               <TableHead className="text-right">防禦</TableHead>
               <TableHead className="text-right">護勁</TableHead>
               <TableHead className="pr-4 text-right">要求命中</TableHead>
+              <TableHead>卸冑</TableHead>
+              <TableHead className="pr-4">中毒</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -513,6 +516,8 @@ export function StepTargets() {
                   >
                     {r.dodge == null ? "—" : `＞${fmt(r.dodge)}`}
                   </TableCell>
+                  <TableCell>{formatStatusResistance(r.weakenRes)}</TableCell>
+                  <TableCell className="pr-4">{formatStatusResistance(r.bleedRes)}</TableCell>
                 </TableRow>
               ));
             })}
@@ -521,7 +526,7 @@ export function StepTargets() {
       </div>
       <p className="text-muted-foreground mt-2 flex items-center gap-1.5 text-[12.5px]">
         <InfoIcon className="size-3.5 shrink-0" aria-hidden />
-        要求命中＝玩家命中需大於怪物閃躲
+        <span>要求命中＝玩家命中需大於怪物閃躲。卸冑＝百針滲血、千瘡百孔；中毒＝百八蟲毒。依怪物抗性推算，待實機驗證。</span>
       </p>
     </div>
   );
