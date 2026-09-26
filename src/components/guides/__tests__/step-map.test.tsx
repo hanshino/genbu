@@ -200,7 +200,7 @@ describe("StepMap", () => {
     expect(layer.querySelectorAll('[data-seg="jump"]')).toHaveLength(1);
     expect(layer.querySelectorAll('[data-seg="walk"]')).toHaveLength(2);
     // 放大到 [150,380,775,880]：起點 (200,500) → 8% / 24%
-    const start = screen.getByRole("img", { name: "甲島起點" });
+    const start = screen.getByRole("img", { name: "甲島落點" });
     expect(parseFloat(start.style.left)).toBeCloseTo(8, 2);
     expect(parseFloat(start.style.top)).toBeCloseTo(24, 2);
     expect(screen.getByRole("img", { name: "甲島第 1 個傳點" })).toHaveTextContent("1");

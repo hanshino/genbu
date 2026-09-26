@@ -47,7 +47,7 @@ export interface StepWalkInput {
 
 /**
  * 路線上的點：landing 落點（傳進來的位置）、portal 傳點（下一點就是傳送目的地）、
- * walk 中途轉折、boss 終點。portal 之後那一段畫成傳送弧線，其他段畫成步行線。
+ * walk 中途轉折、boss 王。portal 有下一點才畫傳送弧線；末端 portal 只標傳點，單一 landing 只標落點。
  */
 export type StepRoutePointKind = "landing" | "portal" | "walk" | "boss";
 

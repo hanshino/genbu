@@ -15,14 +15,14 @@ import { getGuideRef, type GuideRefKind } from "../guide-refs";
 import { getItemBoxContents } from "../queries/mission-logic";
 import { getMissionDetail } from "../queries/missions";
 import { getStepData } from "../guide-steps.server";
-import type { StepGroupInput, StepMarkInput } from "../guide-steps";
+import type { StepGroupInput, StepMarkInput, StepInput } from "../guide-steps";
 
 const CONTENT_DIR = path.join(process.cwd(), "content", "guides");
 
 describe("getGuides", () => {
-  it("returns all 12 drafted guides sorted by order", () => {
+  it("returns all 13 drafted guides sorted by order", () => {
     const guides = getGuides();
-    expect(guides.length).toBe(12);
+    expect(guides.length).toBe(13);
     for (let i = 1; i < guides.length; i++) {
       expect(guides[i].order).toBeGreaterThan(guides[i - 1].order);
     }
@@ -70,6 +70,8 @@ describe("getGuides", () => {
     expect(bySlug.get("dungeon-shenwu")?.order).toBe(10);
     expect(bySlug.get("dungeon-mozu")?.order).toBe(11);
     expect(bySlug.get("dungeon-liemo")?.order).toBe(12);
+    expect(bySlug.get("dungeon-jiyuan")?.order).toBe(13);
+    expect(bySlug.get("dungeon-jiyuan")?.stage).toBe("topic");
   });
 });
 
@@ -133,6 +135,42 @@ describe("extractHeadings — merges ## headings with <DungeonStep> tags", () =>
 });
 
 describe("renderGuideBody", () => {
+  it("極淵寒獄渲染七步、十五個候選房分頁，寶箱示意只含五箱", async () => {
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { guideMdxComponents } = await import("@/components/guides/mdx-components");
+    const guide = getGuide("dungeon-jiyuan")!;
+    const html = renderToStaticMarkup(await renderGuideBody(guide.source, guideMdxComponents));
+    expect(html.match(/alt="極淵寒獄地圖（本區塊）"/g)).toHaveLength(4);
+    expect(html.match(/data-route-point="landing"/g)).toHaveLength(7);
+    expect(html.match(/data-route-point="portal"/g)).toHaveLength(6);
+    expect(html).not.toContain('data-seg="jump"');
+    expect(html.match(/role="tab"/g)).toHaveLength(15);
+    expect(html).not.toContain("待作者核對：");
+    for (const match of guide.source.matchAll(/<DungeonStep\b([\s\S]*?)>/g)) {
+      const props = parseTagProps(match[1]);
+      const data = getStepData({
+        stage: Number(props.stage),
+        crop: props.crop as StepInput["crop"],
+        groups: props.groups as StepInput["groups"],
+        marks: props.marks as StepInput["marks"],
+        routes: props.routes as StepInput["routes"],
+      });
+      if (Array.isArray(props.routes)) {
+        expect(data.routes?.map((r) => r.label)).toEqual(props.routes.map((r) => r.label));
+        // 每個分頁框只包含自己的王，不混入別房候選。
+        for (const route of data.routes ?? []) {
+          const [x0, y0, x1, y1] = route.box;
+          const visible = data.groups.flatMap((g) => g.points)
+            .filter((p) => p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1);
+          expect(visible).toHaveLength(props.n === 1 || props.n === 7 ? 0 : 1);
+          expect(route.points[0].as).toBe("landing");
+          if (props.n !== 7) expect(route.points.at(-1)?.as).toBe("portal");
+        }
+      }
+      if (props.n === 7) expect(data.marks[0].points).toHaveLength(5);
+    }
+  });
+
   it("烈漠禁地可編譯並渲染五張分區地圖", async () => {
     const { renderToStaticMarkup } = await import("react-dom/server");
     const { guideMdxComponents } = await import("@/components/guides/mdx-components");
@@ -393,6 +431,7 @@ const DUNGEON_SLUGS = [
   "dungeon-shenwu",
   "dungeon-mozu",
   "dungeon-liemo",
+  "dungeon-jiyuan",
 ];
 
 function readDungeonBody(slug: string): string {

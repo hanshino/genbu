@@ -431,6 +431,12 @@ describe("路線（routes）", () => {
     expect(big[1]).toBeGreaterThanOrEqual(0);
   });
 
+  it("出口傳點可作路線終點，裁切包含落點、王與傳點", () => {
+    const points = [{ x: 4797, y: 1453 }, { x: 4602, y: 1579 }, { x: 4615, y: 1782 }];
+    const box = routeBox(points, [4160, 1200, 5020, 2080]);
+    for (const point of points) expect(inCrop(point, box)).toBe(true);
+  });
+
   it("烈漠禁地第四層：路線要全在區塊內、步行段要走得到，否則整條略過", async () => {
     const { getStepData } = await import("../guide-steps.server");
     const crop: Crop = [250, 2700, 5050, 5250];
@@ -465,9 +471,9 @@ describe("路線（routes）", () => {
             ["boss", 2760, 3640],
           ],
         },
-        // 最後一點是傳點
+        // 最後一點是出口傳點，不需捏造傳送目的地
         {
-          label: "沒終點",
+          label: "出口",
           points: [
             ["landing", 440, 3296],
             ["portal", 632, 3177],
@@ -475,7 +481,7 @@ describe("路線（routes）", () => {
         },
       ],
     });
-    expect(data.routes?.map((r) => r.label)).toEqual(["鬼爪島"]);
+    expect(data.routes?.map((r) => r.label)).toEqual(["鬼爪島", "出口"]);
     const [r] = data.routes!;
     expect(r.note).toBe("跳三次");
     expect(r.points.map((p) => p.as)).toEqual(claw.map((p) => p[0]));

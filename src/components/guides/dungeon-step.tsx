@@ -107,7 +107,7 @@ export function DungeonStep({
         )}
         {dev && lostRoutes.length > 0 && (
           <p className="text-muted-foreground mb-4 rounded-md border border-dashed px-3 py-2 text-[12px]">
-            待作者核對：這些路線畫不出來（有點超出區塊、最後一點是傳點，或步行段走不到下一點）：
+            待作者核對：這些路線畫不出來（沒有點、有點超出區塊，或步行段走不到下一點）：
             {lostRoutes.join("、")}
           </p>
         )}
