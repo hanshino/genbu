@@ -45,12 +45,38 @@ export interface StepWalkInput {
   note?: string;
 }
 
+/**
+ * 路線上的點：landing 落點（傳進來的位置）、portal 傳點（下一點就是傳送目的地）、
+ * walk 中途轉折、boss 終點。portal 之後那一段畫成傳送弧線，其他段畫成步行線。
+ */
+export type StepRoutePointKind = "landing" | "portal" | "walk" | "boss";
+
+/** 一條走法，例如一座島從落點到王。points 用 [種類, x, y]（合成圖像素）讓 MDX 保持簡短。 */
+export interface StepRouteInput {
+  label: string;
+  note?: string;
+  points: [as: StepRoutePointKind, x: number, y: number][];
+}
+
 export interface StepInput {
   stage: number;
   crop?: Crop;
   groups?: StepGroupInput[];
   marks?: StepMarkInput[];
   walk?: StepWalkInput[];
+  routes?: StepRouteInput[];
+}
+
+export interface StepRoutePoint extends Point {
+  as: StepRoutePointKind;
+}
+
+export interface StepRoute {
+  label: string;
+  note: string | null;
+  points: StepRoutePoint[];
+  /** 只看這條路線時的放大框：包住所有點、和本區塊同比例、不超出本區塊。 */
+  box: Crop;
 }
 
 export interface StepWalk {
@@ -115,6 +141,8 @@ export interface StepData {
   missing: number[];
   /** 互不相通的可行走通道；查無遮罩或起點不可走的不會出現。 */
   walk?: StepWalk[];
+  /** 路線；有點超出本區塊、或步行段在可行走資料上不相連的整條略過。 */
+  routes?: StepRoute[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -178,6 +206,29 @@ export function fullFrameBox(
     width: (w / img.imgWidth) * 100,
     height: (h / img.imgHeight) * 100,
   };
+}
+
+/**
+ * 只看一條路線時的放大框：點的外框加一圈邊，擴成 bounds 的長寬比，再推回 bounds 內。
+ * 比例和 bounds 一樣，所以切換放大時地圖容器不會跳動。
+ */
+export function routeBox(points: Point[], bounds: Crop, pad = 240): Crop {
+  const [bx0, by0, bx1, by1] = bounds;
+  const bw = bx1 - bx0;
+  const bh = by1 - by0;
+  const xs = points.map((p) => p.x);
+  const ys = points.map((p) => p.y);
+  let w = Math.max(...xs) - Math.min(...xs) + pad * 2;
+  let h = Math.max(...ys) - Math.min(...ys) + pad * 2;
+  if (w / h < bw / bh) w = (h * bw) / bh;
+  else h = (w * bh) / bw;
+  w = Math.min(w, bw);
+  h = Math.min(h, bh);
+  const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
+  const cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+  const x0 = Math.min(Math.max(cx - w / 2, bx0), bx1 - w);
+  const y0 = Math.min(Math.max(cy - h / 2, by0), by1 - h);
+  return [Math.round(x0), Math.round(y0), Math.round(x0 + w), Math.round(y0 + h)];
 }
 
 /** 點是否落在裁切框內（含邊界）。crop=null 視為不限制，一律回 true。 */

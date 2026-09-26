@@ -10,11 +10,14 @@ import { getNpcCombatStats } from "@/lib/queries/monsters";
 import {
   buildStepData,
   inCrop,
+  routeBox,
   type Crop,
   type StepData,
   type StepInput,
+  type StepRoute,
   type StepWalk,
 } from "@/lib/guide-steps";
+import type { StageMapImage } from "@/lib/queries/maps";
 
 /**
  * stage / sestage 的 id 空間互斥（stage ∈ [1,999]、sestage ∈ [1001,5022]，
@@ -34,7 +37,7 @@ function stageKindOf(id: number): StageKind {
  * native module 而炸掉。只能在 Server Component / Route Handler 呼叫。
  */
 export function getStepData(input: StepInput): StepData {
-  const { stage, crop = null, groups = [], marks = [], walk = [] } = input;
+  const { stage, crop = null, groups = [], marks = [], walk = [], routes = [] } = input;
   const kind = stageKindOf(stage);
 
   const db = getDb();
@@ -62,7 +65,37 @@ export function getStepData(input: StepInput): StepData {
     stats,
     points,
   });
-  return { ...data, walk: getWalks(stage, crop, walk) };
+  return {
+    ...data,
+    walk: getWalks(stage, crop, walk),
+    routes: getRoutes(stage, crop, image, routes),
+  };
+}
+
+/**
+ * 路線整條驗證，任何一點出問題就整條略過（DungeonStep 在開發模式會提示）：
+ * 所有點都要在本區塊內；步行段（不是從傳點出發的那段）兩端要在同一個可行走區。
+ * 查不到可行走資料（舊版 DB、起點不可走）時不做連通檢查，只檢查區塊。
+ */
+function getRoutes(
+  stage: number,
+  crop: Crop | null,
+  image: StageMapImage | null,
+  input: NonNullable<StepInput["routes"]>,
+): StepRoute[] {
+  if (!image) return [];
+  const bounds: Crop = crop ?? [0, 0, image.imgWidth, image.imgHeight];
+  return input.flatMap((r) => {
+    const points = r.points.map(([as, x, y]) => ({ as, x, y }));
+    if (points.length < 2 || points[points.length - 1].as === "portal") return [];
+    if (!points.every((p) => inCrop(p, bounds))) return [];
+    for (let i = 1; i < points.length; i++) {
+      if (points[i - 1].as === "portal") continue;
+      const region = getWalkRegion(stageKindOf(stage), stage, points[i - 1]);
+      if (region && !regionHas(region, points[i])) return [];
+    }
+    return [{ label: r.label, note: r.note ?? null, points, box: routeBox(points, bounds) }];
+  });
 }
 
 /**

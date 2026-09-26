@@ -128,6 +128,82 @@ describe("StepMap", () => {
     expect(screen.queryByRole("img", { name: /通道(傳點|落點)/ })).toBeNull();
   });
 
+  it("路線：畫出落點、編號傳點與方向；只看一條時放大並藏起其他路線，可回到全部", () => {
+    const routes = [
+      {
+        label: "甲島",
+        note: "跳一次",
+        points: [
+          { as: "landing" as const, x: 200, y: 500 },
+          { as: "portal" as const, x: 300, y: 500 },
+          { as: "landing" as const, x: 700, y: 900 },
+          { as: "boss" as const, x: 1100, y: 900 },
+        ],
+        box: [150, 380, 775, 880] as [number, number, number, number],
+      },
+      {
+        label: "乙島",
+        note: "不用跳",
+        points: [
+          { as: "landing" as const, x: 900, y: 500 },
+          { as: "boss" as const, x: 1300, y: 600 },
+        ],
+        box: [150, 380, 1400, 1380] as [number, number, number, number],
+      },
+    ];
+    const { container } = renderStep({ ...data, routes });
+    const layer = screen.getByTestId("route-layer");
+    expect(layer.querySelectorAll('[data-seg="jump"]')).toHaveLength(1);
+    expect(layer.querySelectorAll('[data-seg="walk"]')).toHaveLength(3);
+    expect(screen.getByRole("img", { name: "甲島起點" })).toBeInTheDocument();
+    const portal = screen.getByRole("img", { name: "甲島第 1 個傳點" });
+    expect(portal).toHaveTextContent("1");
+    expect(screen.getByRole("img", { name: "甲島第 1 跳落點" })).toBeInTheDocument();
+    expect(container.querySelectorAll('[data-route-point="boss"]')).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "隱藏路線" })).toBeInTheDocument();
+    // (200,500) 在 crop [150,380,1400,1380] → 4% / 12%
+    const start = screen.getByRole("img", { name: "甲島起點" });
+    expect(parseFloat(start.style.left)).toBeCloseTo(4, 2);
+
+    fireEvent.click(screen.getByRole("button", { name: "只看甲島" }));
+    expect(screen.queryByRole("img", { name: "乙島起點" })).toBeNull();
+    // 放大到 [150,380,775,880]：同一點變成 8% / 24%
+    const zoomed = screen.getByRole("img", { name: "甲島起點" });
+    expect(parseFloat(zoomed.style.left)).toBeCloseTo(8, 2);
+    expect(parseFloat(zoomed.style.top)).toBeCloseTo(24, 2);
+    expect(screen.getByTestId("route-layer")).toHaveAttribute("viewBox", "150 380 625 500");
+
+    fireEvent.click(screen.getByRole("button", { name: "看全部路線" }));
+    expect(screen.getByRole("img", { name: "乙島起點" })).toBeInTheDocument();
+    expect(screen.getByTestId("route-layer")).toHaveAttribute("viewBox", "150 380 1250 1000");
+  });
+
+  it("路線：傳送弧線繞開王，太短的線段不畫箭頭", () => {
+    const box: [number, number, number, number] = [150, 380, 1400, 1380];
+    const routes = [
+      {
+        label: "甲島",
+        note: null,
+        points: [
+          { as: "portal" as const, x: 300, y: 500 },
+          { as: "landing" as const, x: 700, y: 500 },
+          { as: "portal" as const, x: 700, y: 700 },
+          { as: "boss" as const, x: 800, y: 800 },
+        ],
+        box,
+      },
+      // 乙島的王剛好在甲島第一段預設往上彎的弧線中間
+      { label: "乙島", note: null, points: [{ as: "landing" as const, x: 900, y: 1200 }, { as: "boss" as const, x: 500, y: 444 }], box },
+    ];
+    const { container } = renderStep({ ...data, routes });
+    const jumps = screen.getByTestId("route-layer").querySelectorAll('[data-seg="jump"] path');
+    // 預設會往上彎（控制點 y=388）壓到王，改往下彎
+    const ctrlY = Number(jumps[0].getAttribute("d")!.match(/Q\S+ (\S+)/)![1]);
+    expect(ctrlY).toBeGreaterThan(500);
+    // 400 長的弧線有箭頭；141 長的第二段傳送沒有
+    expect(container.querySelectorAll("[data-route-arrow]")).toHaveLength(2);
+  });
+
   it("只有一條通道時不說互不相通", () => {
     renderStep({ ...data, walk: [{ label: "甲通道", note: null, path: "M0 0 40 0 40 40 0 40Z", labelAt: { x: 20, y: 20 }, portal: null, landing: null }] });
     expect(screen.queryByText(/互不相通/)).toBeNull();

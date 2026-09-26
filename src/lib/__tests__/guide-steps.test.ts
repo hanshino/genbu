@@ -5,6 +5,7 @@ import {
   cropFrame,
   fullFrameBox,
   inCrop,
+  routeBox,
   toPercent,
   type BuildStepDataInput,
   type Crop,
@@ -395,5 +396,91 @@ describe("可行走通道（map_walkability）", () => {
     const top = walk([708, 1326], upper);
     expect(top.portal).toBeNull();
     expect(top.landing).toEqual({ x: 708, y: 1326 });
+  });
+});
+
+describe("路線（routes）", () => {
+  it("routeBox：包住點、和本區塊同比例、推回本區塊內", () => {
+    const bounds: Crop = [0, 0, 2800, 2550];
+    const box = routeBox(
+      [
+        { x: 100, y: 100 },
+        { x: 500, y: 300 },
+      ],
+      bounds,
+    );
+    const [x0, y0, x1, y1] = box;
+    expect((x1 - x0) / (y1 - y0)).toBeCloseTo(2800 / 2550, 2);
+    expect(x0).toBe(0); // 左上角放不下一圈邊，推回框內
+    expect(y0).toBe(0);
+    expect(x1).toBeGreaterThanOrEqual(500 + 240);
+    // 比本區塊還大時就是本區塊
+    expect(
+      routeBox(
+        [
+          { x: 0, y: 0 },
+          { x: 2800, y: 2550 },
+        ],
+        bounds,
+      ),
+    ).toEqual(bounds);
+  });
+
+  it("烈漠禁地第四層：路線要全在區塊內、步行段要走得到，否則整條略過", async () => {
+    const { getStepData } = await import("../guide-steps.server");
+    const crop: Crop = [250, 2700, 5050, 5250];
+    const claw: ["landing" | "portal" | "walk" | "boss", number, number][] = [
+      ["landing", 440, 3296],
+      ["portal", 632, 3177],
+      ["landing", 627, 3928],
+      ["portal", 804, 3884],
+      ["landing", 1428, 3256],
+      ["portal", 1285, 3339],
+      ["landing", 962, 3662],
+      ["boss", 1040, 3600],
+    ];
+    const data = getStepData({
+      stage: 1723,
+      crop,
+      routes: [
+        { label: "鬼爪島", note: "跳三次", points: claw },
+        // 起點在區塊外
+        {
+          label: "區塊外",
+          points: [
+            ["landing", 100, 100],
+            ["boss", 1040, 3600],
+          ],
+        },
+        // 鬼爪島落點直接「走」到鬼馬王：不同島，走不到
+        {
+          label: "走不到",
+          points: [
+            ["landing", 440, 3296],
+            ["boss", 2760, 3640],
+          ],
+        },
+        // 最後一點是傳點
+        {
+          label: "沒終點",
+          points: [
+            ["landing", 440, 3296],
+            ["portal", 632, 3177],
+          ],
+        },
+      ],
+    });
+    expect(data.routes?.map((r) => r.label)).toEqual(["鬼爪島"]);
+    const [r] = data.routes!;
+    expect(r.note).toBe("跳三次");
+    expect(r.points.map((p) => p.as)).toEqual(claw.map((p) => p[0]));
+    expect(r.points[0]).toEqual({ as: "landing", x: 440, y: 3296 });
+    const [x0, y0, x1, y1] = r.box;
+    expect(x0).toBeGreaterThanOrEqual(crop[0]);
+    expect(y0).toBeGreaterThanOrEqual(crop[1]);
+    expect(x1).toBeLessThanOrEqual(crop[2]);
+    expect(y1).toBeLessThanOrEqual(crop[3]);
+    expect((x1 - x0) / (y1 - y0)).toBeCloseTo(4800 / 2550, 2);
+    for (const p of r.points) expect(inCrop(p, r.box)).toBe(true);
   });
 });

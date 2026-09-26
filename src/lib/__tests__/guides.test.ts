@@ -155,6 +155,8 @@ describe("renderGuideBody", () => {
     expect(html.match(/data-testid="walk-layer"/g)).toHaveLength(1);
     expect(html).toContain("兩條通道互不相通");
     expect(html).not.toContain("這些通道或標記畫不出來");
+    expect(html.match(/data-testid="route-layer"/g)).toHaveLength(1);
+    expect(html).not.toContain("這些路線畫不出來");
   });
 
   it("does not turn single tildes in level ranges into strikethrough", async () => {
