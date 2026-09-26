@@ -87,7 +87,7 @@ function getRoutes(
   const bounds: Crop = crop ?? [0, 0, image.imgWidth, image.imgHeight];
   return input.flatMap((r) => {
     const points = r.points.map(([as, x, y]) => ({ as, x, y }));
-    if (points.length < 2 || points[points.length - 1].as === "portal") return [];
+    if (points.length === 0) return [];
     if (!points.every((p) => inCrop(p, bounds))) return [];
     for (let i = 1; i < points.length; i++) {
       if (points[i - 1].as === "portal") continue;

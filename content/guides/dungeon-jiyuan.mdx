@@ -84,26 +84,26 @@ sourceUrl: https://forum.gamer.com.tw/C.php?bsn=6960&snA=73142
 
 各王的防禦與護勁相同，**內力、外功都能分擔輸出**。表格的要求命中是大於閃躲；卸冑、中毒依抗性推算，可施加不代表一定成功。
 
-<DungeonStep n={1} title="入口：帶好玉牌再出發" stage={1724} crop={[4160,120,5020,1000]}>
+<DungeonStep n={1} title="入口：帶好玉牌再出發" stage={1724} crop={[4160,120,5020,1000]} routes={[{label:"入口",points:[["landing",4802,354],["portal",4616,674]]}]}>
 
-進場先確認全員到齊、玉牌有效，再走到房間下側的傳點。這次會扣一顆靈石，進入蟻獅所在的第一層。
+進場先在落點確認全員到齊、玉牌有效，再沿線往左下方的傳點走。方形落地箭頭是落點，圓形漩渦是傳點；這次會扣一顆靈石，進入蟻獅所在的第一層。
 
 <StepMap />
 <StepDone>全員準備好 → 走下側傳點進第一層。</StepDone>
 </DungeonStep>
 
-<DungeonStep n={2} title="第一層：寒獄蟻獅" stage={1724} crop={[4160,1200,5020,2080]} groups={[{ids:[11321],as:"pin"}]}>
+<DungeonStep n={2} title="第一層：寒獄蟻獅" stage={1724} crop={[4160,1200,5020,2080]} groups={[{ids:[11321],as:"pin"}]} routes={[{label:"蟻獅",points:[["landing",4797,1453],["boss",4602,1579],["portal",4615,1782]]}]}>
 
-本層只有<Monster id={11321}>寒獄蟻獅</Monster>。依抗性推算，可以卸冑、中毒。打倒後走到房間下側傳點：使用迅捷靈符走深處會遇到人偶，選一般則遇到吃人花。
+從落點沿線走到<Monster id={11321}>寒獄蟻獅</Monster>。依抗性推算，可以卸冑、中毒。打倒後走到房間下側漩渦標記的傳點：使用迅捷靈符走深處會遇到人偶，選一般則遇到吃人花。
 
 <StepMap />
 <StepTargets />
 <StepDone>蟻獅倒下 → 深處往人偶，一般往吃人花。</StepDone>
 </DungeonStep>
 
-<DungeonStep n={3} title="第二層：人偶或吃人花" stage={1724} crop={[4160,2320,5020,4360]} groups={[{ids:[11323],as:"pin"},{ids:[11322],as:"pin"}]} routes={[{label:"人偶",points:[["landing",4818,2571],["boss",4595,2732]]},{label:"吃人花",points:[["landing",4829,3727],["boss",4600,3841]]}]}>
+<DungeonStep n={3} title="第二層：人偶或吃人花" stage={1724} crop={[4160,2320,5020,4360]} groups={[{ids:[11323],as:"pin"},{ids:[11322],as:"pin"}]} routes={[{label:"人偶",points:[["landing",4818,2571],["boss",4595,2732],["portal",4625,2897]]},{label:"吃人花",points:[["landing",4829,3727],["boss",4600,3841],["portal",4617,4050]]}]}>
 
-選自己所在房間的分頁。房內可以直接走到王；圖上的線只帶你從落點走到王，**打完再往房間下側傳點選路**。
+選自己所在房間的分頁。從方形箭頭標記的落點沿線走到王，**打完再往下側漩渦標記的傳點選路**。
 
 <StepMap />
 <RouteTabs>
@@ -122,9 +122,9 @@ sourceUrl: https://forum.gamer.com.tw/C.php?bsn=6960&snA=73142
 <StepDone>打倒所在房間的王 → 下側傳點選擇第三層路線。</StepDone>
 </DungeonStep>
 
-<DungeonStep n={4} title="第三層：將軍、萬夫長或牛魔人" stage={1724} crop={[3200,120,4060,3240]} groups={[{ids:[11324],as:"pin"},{ids:[11325],as:"pin"},{ids:[11326],as:"pin"}]} routes={[{label:"將軍",points:[["landing",3843,359],["boss",3639,484]]},{label:"萬夫長",points:[["landing",3842,1454],["boss",3639,1570]]},{label:"牛魔人",points:[["landing",3857,2574],["boss",3637,2708]]}]}>
+<DungeonStep n={4} title="第三層：將軍、萬夫長或牛魔人" stage={1724} crop={[3200,120,4060,3240]} groups={[{ids:[11324],as:"pin"},{ids:[11325],as:"pin"},{ids:[11326],as:"pin"}]} routes={[{label:"將軍",points:[["landing",3843,359],["boss",3639,484],["portal",3647,675]]},{label:"萬夫長",points:[["landing",3842,1454],["boss",3639,1570],["portal",3645,1794]]},{label:"牛魔人",points:[["landing",3857,2574],["boss",3637,2708],["portal",3652,2919]]}]}>
 
-本層有三種候選房，不用跨房清怪。打倒自己房內的王後，再到下側傳點選下一層。
+本層有三種候選房，不用跨房清怪。從落點沿線走到王，打倒後再到下側漩渦標記的傳點選下一層。
 
 <StepMap />
 <RouteTabs>
@@ -148,9 +148,9 @@ sourceUrl: https://forum.gamer.com.tw/C.php?bsn=6960&snA=73142
 <StepDone>所在房間的王倒下 → 確認下一隻王與靈符，進第四層。</StepDone>
 </DungeonStep>
 
-<DungeonStep n={5} title="第四層：決定終王路線" stage={1724} crop={[2240,120,3100,4360]} groups={[{ids:[11327],as:"pin"},{ids:[11328],as:"pin"},{ids:[11329],as:"pin"},{ids:[11330],as:"pin"}]} routes={[{label:"牡丹精",points:[["landing",2908,343],["boss",2685,492]]},{label:"油鍋怪",points:[["landing",2912,1459],["boss",2678,1608]]},{label:"鐵將軍",points:[["landing",2914,2584],["boss",2695,2694]]},{label:"狂獅",points:[["landing",2904,3740],["boss",2700,3843]]}]}>
+<DungeonStep n={5} title="第四層：決定終王路線" stage={1724} crop={[2240,120,3100,4360]} groups={[{ids:[11327],as:"pin"},{ids:[11328],as:"pin"},{ids:[11329],as:"pin"},{ids:[11330],as:"pin"}]} routes={[{label:"牡丹精",points:[["landing",2908,343],["boss",2685,492],["portal",2694,679]]},{label:"油鍋怪",points:[["landing",2912,1459],["boss",2678,1608],["portal",2692,1788]]},{label:"鐵將軍",points:[["landing",2914,2584],["boss",2695,2694],["portal",2690,2919]]},{label:"狂獅",points:[["landing",2904,3740],["boss",2700,3843],["portal",2703,4036]]}]}>
 
-**這次選項會決定終王與寶箱品級。** 先確認目標，再走下側傳點，不要把一般探索與深處按反。
+**這次選項會決定終王與寶箱品級。** 從落點沿線走到王，打倒後確認目標，再走下側漩渦標記的傳點，不要把一般探索與深處按反。
 
 <StepMap />
 <RouteTabs>
@@ -179,9 +179,9 @@ sourceUrl: https://forum.gamer.com.tw/C.php?bsn=6960&snA=73142
 <StepDone>打倒本房王 → 依目標寶箱選路，前往第五層。</StepDone>
 </DungeonStep>
 
-<DungeonStep n={6} title="第五層：擊倒所選終王" stage={1724} crop={[1280,120,3100,5480]} groups={[{ids:[11333],as:"pin"},{ids:[11332],as:"pin"},{ids:[11331],as:"pin"},{ids:[11334],as:"pin"},{ids:[11335],as:"pin"},{ids:[11336],as:"pin"}]} routes={[{label:"魔女",points:[["landing",1945,340],["boss",1718,486]]},{label:"妖后",points:[["landing",1946,1448],["boss",1715,1573]]},{label:"魔蠍",points:[["landing",1945,2591],["boss",1740,2697]]},{label:"蜘蛛精",points:[["landing",2905,4859],["boss",2679,4968]]},{label:"修羅",points:[["landing",1938,3733],["boss",1717,3850]]},{label:"瘋馬",points:[["landing",1936,4848],["boss",1714,4975]]}]}>
+<DungeonStep n={6} title="第五層：擊倒所選終王" stage={1724} crop={[1280,120,3100,5480]} groups={[{ids:[11333],as:"pin"},{ids:[11332],as:"pin"},{ids:[11331],as:"pin"},{ids:[11334],as:"pin"},{ids:[11335],as:"pin"},{ids:[11336],as:"pin"}]} routes={[{label:"魔女",points:[["landing",1945,340],["boss",1718,486],["portal",1732,681]]},{label:"妖后",points:[["landing",1946,1448],["boss",1715,1573],["portal",1717,1756]]},{label:"魔蠍",points:[["landing",1945,2591],["boss",1740,2697],["portal",1744,2881]]},{label:"蜘蛛精",points:[["landing",2905,4859],["boss",2679,4968],["portal",2681,5159]]},{label:"修羅",points:[["landing",1938,3733],["boss",1717,3850],["portal",1729,4038]]},{label:"瘋馬",points:[["landing",1936,4848],["boss",1714,4975],["portal",1725,5159]]}]}>
 
-只要打倒選到的終王，不是六隻都打。**魔女、妖后、魔蠍、蜘蛛精不能卸冑、中毒；修羅、瘋馬可以。** 打倒後走本房下側傳點，再扣一顆靈石進寶箱房。
+從落點沿線走到所選終王，不是六隻都打。**魔女、妖后、魔蠍、蜘蛛精不能卸冑、中毒；修羅、瘋馬可以。** 打倒後走本房下側漩渦標記的傳點，再扣一顆靈石進寶箱房。
 
 <StepMap />
 <RouteTabs>
@@ -220,9 +220,9 @@ sourceUrl: https://forum.gamer.com.tw/C.php?bsn=6960&snA=73142
 <StepDone>終王倒下 → 走本房下側傳點，進入對應寶箱房。</StepDone>
 </DungeonStep>
 
-<DungeonStep n={7} title="寶箱房：分箱結算" subtitle="以超品寶箱房示意" stage={1724} crop={[320,120,1180,1000]} marks={[{id:11337,as:"device",label:"結算寶箱"}]}>
+<DungeonStep n={7} title="寶箱房：分箱結算" subtitle="以超品寶箱房示意" stage={1724} crop={[320,120,1180,1000]} marks={[{id:11337,as:"device",label:"結算寶箱"}]} routes={[{label:"寶箱房",points:[["landing",774,535]]}]}>
 
-各結局房都有五個極淵寶箱，**下圖只示意超品房，不是要你到其他房間找箱子**。進本前先講好分配；是否一人一箱、由誰打破結算，以現場為準。
+從房間中央方形箭頭標記的落點走向分配好的寶箱；這裡不用再找傳點，打破箱子就會結算傳出。各結局房都有五個極淵寶箱，**下圖只示意超品房，不是要你到其他房間找箱子**。進本前先講好分配；是否一人一箱、由誰打破結算，以現場為準。
 
 <StepMap />
 

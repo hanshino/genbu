@@ -683,7 +683,7 @@ function RouteMarks({
     const name = portal
       ? `${r.label}第 ${step} 個傳點`
       : start
-        ? `${r.label}起點`
+        ? `${r.label}落點`
         : `${r.label}第 ${step} 跳落點`;
     return [
       <span
@@ -720,7 +720,7 @@ function RouteMarks({
                 at(p).top < 8 ? "translate-y-4" : "-translate-y-[calc(100%+16px)]",
               )}
             >
-              起點
+              落點
             </span>,
           ]
         : []),
@@ -971,6 +971,11 @@ export function StepMap({ alt }: { alt?: string }) {
   const [peek, setPeek] = useState<number | null>(null);
   const img = data.image;
   if (!img) return null;
+  // 單房不需要總覽與分頁；直接顯示落點、王與出口，沿用本步驟裁切。
+  if (data.routes?.length === 1) {
+    const route = data.routes[0];
+    return <RouteMap data={data} route={{ ...route, box: data.crop ?? route.box }} i={0} />;
+  }
 
   const walk = data.walk ?? [];
   const view: WalkView = { show: showWalk, lit: peek ?? pin };
@@ -1191,23 +1196,23 @@ function RouteMap({ data, route, i }: { data: StepData; route: StepRoute; i: num
             <WalkPointSwatch kind="landing" color={color} />
             <span className="text-foreground/85">落點</span>
           </li>
-          <li className="inline-flex items-center gap-1.5">
+          {route.points.some((p) => p.as === "portal") && <li className="inline-flex items-center gap-1.5">
             <WalkPointSwatch kind="portal" color={color} />
             <span className="text-foreground/85">傳點</span>
             <span>・小數字是踩的順序</span>
-          </li>
-          <li className="inline-flex items-center gap-1.5">
+          </li>}
+          {segs.length > 0 && <li className="inline-flex items-center gap-1.5">
             <RouteSwatch color={color} />
-            <span>實線走過去，點狀弧線是傳送</span>
-          </li>
-          <li className="inline-flex items-center gap-1.5">
+            <span>{segs.some((s) => s.jump) ? "實線走過去，點狀弧線是傳送" : "實線走過去"}</span>
+          </li>}
+          {route.points.some((p) => p.as === "boss") && <li className="inline-flex items-center gap-1.5">
             <span
               aria-hidden
               style={{ borderColor: color }}
               className={cn("size-3.5 shrink-0 border-2", bossRing)}
             />
             <span className="text-foreground/85">王</span>
-          </li>
+          </li>}
         </ul>
       </figcaption>
     </figure>

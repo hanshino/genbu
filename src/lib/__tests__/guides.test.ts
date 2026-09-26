@@ -140,7 +140,10 @@ describe("renderGuideBody", () => {
     const { guideMdxComponents } = await import("@/components/guides/mdx-components");
     const guide = getGuide("dungeon-jiyuan")!;
     const html = renderToStaticMarkup(await renderGuideBody(guide.source, guideMdxComponents));
-    expect(html.match(/alt="極淵寒獄地圖（本區塊）"/g)).toHaveLength(7);
+    expect(html.match(/alt="極淵寒獄地圖（本區塊）"/g)).toHaveLength(4);
+    expect(html.match(/data-route-point="landing"/g)).toHaveLength(7);
+    expect(html.match(/data-route-point="portal"/g)).toHaveLength(6);
+    expect(html).not.toContain('data-seg="jump"');
     expect(html.match(/role="tab"/g)).toHaveLength(15);
     expect(html).not.toContain("待作者核對：");
     for (const match of guide.source.matchAll(/<DungeonStep\b([\s\S]*?)>/g)) {
@@ -159,7 +162,9 @@ describe("renderGuideBody", () => {
           const [x0, y0, x1, y1] = route.box;
           const visible = data.groups.flatMap((g) => g.points)
             .filter((p) => p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1);
-          expect(visible).toHaveLength(1);
+          expect(visible).toHaveLength(props.n === 1 || props.n === 7 ? 0 : 1);
+          expect(route.points[0].as).toBe("landing");
+          if (props.n !== 7) expect(route.points.at(-1)?.as).toBe("portal");
         }
       }
       if (props.n === 7) expect(data.marks[0].points).toHaveLength(5);
