@@ -1,12 +1,18 @@
 import { getDb } from "@/lib/db";
+import type { StageKind } from "@/lib/types/stage";
 import { getStageMapImage, getNpcPositionsForStage } from "@/lib/queries/maps";
 import { getNpcCombatStats } from "@/lib/queries/monsters";
 import { buildStepData, type StepData, type StepInput } from "@/lib/guide-steps";
 
-// ponytail: 迷宮攻略目前只有 sestage 地圖（謎霧之森等新副本都是 sestage），
-// StepInput 是凍結型別、沒有 kind 欄位；要支援一般 stage 副本時再擴充 StepInput
-// 加上可選的 kind 欄位，這裡跟著改成依輸入決定。
-const STAGE_KIND = "sestage" as const;
+/**
+ * stage / sestage 的 id 空間互斥（stage ∈ [1,999]、sestage ∈ [1001,5022]，
+ * 見 src/lib/types/stage.ts 開頭註解），因此可以直接從 id 反推 kind，
+ * 不需要在 StepInput 加欄位。魔族禁地（379–384）是本站第一個用一般 stage
+ * 地圖的迷宮攻略，之前的謎霧之森等新副本全部是 sestage。
+ */
+function stageKindOf(id: number): StageKind {
+  return id < 1000 ? "stage" : "sestage";
+}
 
 /**
  * getStepData 是唯一會打 DB 的部分，刻意獨立成這個檔案（而非放進
@@ -17,13 +23,14 @@ const STAGE_KIND = "sestage" as const;
  */
 export function getStepData(input: StepInput): StepData {
   const { stage, crop = null, groups = [], marks = [] } = input;
+  const kind = stageKindOf(stage);
 
   const db = getDb();
   const stageRow = db
     .prepare(`SELECT name FROM stages WHERE kind = ? AND id = ?`)
-    .get(STAGE_KIND, stage) as { name: string | null } | undefined;
+    .get(kind, stage) as { name: string | null } | undefined;
 
-  const image = getStageMapImage(STAGE_KIND, stage);
+  const image = getStageMapImage(kind, stage);
 
   const ids = new Set<number>();
   for (const g of groups) for (const id of g.ids) ids.add(id);
@@ -31,7 +38,7 @@ export function getStepData(input: StepInput): StepData {
   const idList = [...ids];
 
   const stats = getNpcCombatStats(idList);
-  const points = getNpcPositionsForStage(STAGE_KIND, stage, idList);
+  const points = getNpcPositionsForStage(kind, stage, idList);
 
   return buildStepData({
     stageId: stage,
