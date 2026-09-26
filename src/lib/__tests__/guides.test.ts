@@ -19,9 +19,9 @@ import type { StepGroupInput, StepMarkInput } from "../guide-steps";
 const CONTENT_DIR = path.join(process.cwd(), "content", "guides");
 
 describe("getGuides", () => {
-  it("returns all 8 drafted guides sorted by order", () => {
+  it("returns all 9 drafted guides sorted by order", () => {
     const guides = getGuides();
-    expect(guides.length).toBe(8);
+    expect(guides.length).toBe(9);
     for (let i = 1; i < guides.length; i++) {
       expect(guides[i].order).toBeGreaterThan(guides[i - 1].order);
     }
@@ -65,6 +65,7 @@ describe("getGuides", () => {
     }
     expect(bySlug.get("dungeon-mistforest")?.order).toBe(7);
     expect(bySlug.get("dungeon-deepforest")?.order).toBe(8);
+    expect(bySlug.get("dungeon-sevenstar")?.order).toBe(9);
   });
 });
 
@@ -340,7 +341,7 @@ describe("<BoxContents>/<MissionCard> tags in content/guides resolve to real dat
 // 的順序，避免把 DungeonStep 的 crop/id props、或 <details> 裡合法的外形 ID
 // 表格／年份 URL 誤判成違規。
 
-const DUNGEON_SLUGS = ["dungeon-mistforest", "dungeon-deepforest"];
+const DUNGEON_SLUGS = ["dungeon-mistforest", "dungeon-deepforest", "dungeon-sevenstar"];
 
 function readDungeonBody(slug: string): string {
   const raw = fs.readFileSync(path.join(CONTENT_DIR, `${slug}.mdx`), "utf8");
