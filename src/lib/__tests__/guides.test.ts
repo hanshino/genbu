@@ -148,7 +148,9 @@ describe("renderGuideBody", () => {
     expect(html).toContain("銅甲通道");
     expect(html).toContain("金甲通道");
     expect(html).not.toContain("通道歸屬待確認");
-    expect(html).toContain("map_walkability.walk_mask");
+    expect(html).toContain("每殺一隻菁英就會冒出一顆汙染水晶");
+    expect(html).toContain("全二只在守護聖音提示時成立");
+    expect(html).toContain("還沒出來的波次就不會再出");
     expect(html).toContain("剩餘小鬼數量");
     expect(html.match(/data-testid="walk-layer"/g)).toHaveLength(1);
     expect(html).toContain("兩條通道互不相通");
