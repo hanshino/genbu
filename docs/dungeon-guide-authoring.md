@@ -20,8 +20,10 @@ frontmatter（category: dungeon, stage: topic）
 ## 進本前先確認       ← 入口、人數、次數、時限、Checklist
 <DungeonStep n={1}> … </DungeonStep>   ← 每次換區一步
 …
-## 資料來源與待核對   ← 待核對清單、社群原文出處（放 <details>）
+## 參考來源           ← 只放官方公告、社群攻略連結，一行一條，不加評語
 ```
+
+- frontmatter 加 `sourceUrl`，指向主要參考的社群攻略。
 
 - `category: dungeon` 會讓文章出現在 `/guides` 的「迷宮攻略」區塊，麵包屑也會顯示迷宮攻略。`stage: topic` 讓它不會被串進修行路線的上一篇、下一篇。
 - 開頭要先講通關能拿到什麼。寶箱只挑重點，完整機率連到道具頁的「開啟可能獲得」。兌換店用連結 `[名稱](/shops/{id})`，目前沒有 `<Shop>` 元件。
@@ -59,6 +61,13 @@ frontmatter（category: dungeon, stage: topic）
     - `"ok"`：勾號，不能點，表示完成指示
     - `"room"`：房名標籤
   - `tbd:true`：角色還沒確認，會畫成虛線，而且不算進缺漏。
+- `walk`：畫出互不相通的通道，適合「看得到隊友卻走不過去」的樓層（例：烈漠禁地二樓）。
+  - 每項 `{ at:[x,y], landing?:[x,y], label, note }`，raw 像素座標。`at` 是**傳點**，同時當作展開整條通道的起點；`landing` 是落點，必須在同一條通道內，否則會被排除。
+  - 地圖上傳點是圓形漩渦、落點是方形落地箭頭，顏色跟通道一致，圖例可以只看一條。
+- `routes`：多段傳送路線，每條 `{ label, note, points:[[kind,x,y],…] }`，`kind` 是 `landing`／`portal`／`boss`，依走的順序排。
+  - 有 `routes` 時，`<StepMap />` 變成**總覽圖**，只標各路線的起點落點；點落點會切到下方分頁。
+  - 下方用 `<RouteTabs><RouteTab label="…">步驟文字與座標</RouteTab>…</RouteTabs>`，每頁自動放大成該路線的 4:3 路線圖（傳點編號、傳送弧線會自動繞開王）。`label` 要跟 routes 的 label 一致。
+  - **多條路線不要疊在同一張圖**，會擠到看不懂；一律用總覽加分頁。
 - `<StepMap />`：預設只顯示裁切的區塊，可以切換成整張地圖，整張圖上會用框標出本區塊。
 - `<StepTargets />`：表格欄位有頭像、名稱、等級、血量、防禦、護勁、要求命中。表格上方會自動產生「本步驟要求命中：＞最大閃躲」。
 - `<NineRoomGrid tool="/tools/160">規則清單</NineRoomGrid>`：九宮格類的關卡才用。
@@ -69,7 +78,15 @@ frontmatter（category: dungeon, stage: topic）
 
 - **座標**：`getNpcPositionsForStage`（`src/lib/queries/maps.ts`），來源是 `monster_spawns.x/y` 和 `map_placements.raw_x/raw_y`。**不要用 `tile_y`**，它已經翻轉過一次，詳見 commit `0329979`。
 - **區塊邊界**：先用 DB 座標框出範圍，再看地圖圖片目視確認島嶼的邊界，加一點邊距。圖太大的話，先縮圖交給 observer 看。
-- **傳送落點**：通常在 NPC 附近。有的 stage 有 `arrival` placement 可以參考，沒有的話就以 NPC 位置為準。
+- **傳點與落點**：`map_placements.category` 的名稱是反的。`arrival`（type 101）其實是**傳點／觸發區**，走上去執行事件；`trigger`（type 102）才是**落點**，也就是 A9 傳送的目的地。沒有這兩種 placement 時，以 NPC 位置為準。
+- **可走區域**：用 `map_walkability`（`python3 scripts/inspect-walkability.py sestage <id>` 列出八鄰接連通分量），不要從地圖美術的地毯、柵欄顏色猜哪裡相通。格子換算 `col=floor(raw_x/40)`、`row=floor(raw_y/40)`，row 0 在北；用 tile 座標時 `row=175−tile_y` 這類換算要依地圖高度。
+- **機關與出怪流程**：
+  - 地圖事件在 `map_events`／`map_event_ops`（op 編碼同 `op_defs`、`docs/msg-trigger-codes.md`），`v_map_event_bindings` 把事件接回 placement。事件由「走上傳點」或「怪物死亡」觸發。
+  - `map_placements.spawn_group` 就是腳本裡 A48（生成）、A47（延遲生成，count 0 = 取消）、C37（群組剩餘數）引用的群組編號。先列出本圖每個群組是哪隻怪、幾隻，再讀事件，就能還原「誰死了會出什麼、清完哪幾組會傳去哪」。
+  - 對話腳本在 `messages`／`trigger_ops`，換層扣道具、稱號對應、結算條件多半在這裡。
+  - 常見可直接寫進攻略的結論：隨機分邊（`C33` 機率）、每次換層扣幾顆道具（`A37`）、波次延遲與取消（A47）。
+- **跳島／多段傳送路線**：不要照抄社群的方向描述。用「連通分量＝節點、傳點→落點所在分量＝邊」做 BFS，從落點算到王所在分量；方向描述成「走到目前這塊平台哪一側邊緣的傳點」。本來就走得到王的島直接寫「不用跳」。
+- **DB 解不出來時**：把缺的欄位、要的表結構和可驗收的已知事實寫成一份 prompt 給上游匯出程式（例子見 PR hanshino/genbu#65 的對話），不要在攻略裡寫一大段「解碼缺口」。
 - **戰鬥數值**：`npc.base_dodge`（閃躲）、`extra_def`（防禦）、`magic_def`（護勁）。
 - **頭像**：`npc_images`，由 `getNpcImageMap` 查詢。沒有圖的會顯示幽靈圖示，這是正常的。
 - **任務獎勵**：`mission_rewards`。同一個道具有兩筆時，要看 `msg_id` 和 `mission_events` 是不是不同的結束對話，**不要直接加總**。
@@ -82,8 +99,10 @@ frontmatter（category: dungeon, stage: topic）
 - 同名的怪用特性區分，例如「高防禦的機關」「高護勁的機關」，不要用「1 號、2 號」。
 - 遊戲裡沒有「內功」這個說法。防禦高的怪用**內力**角色打，護勁高的怪用**外功**角色打。
 - 要求命中寫成 `＞閃躲值`，意思是玩家命中要大於怪物閃躲。不要用社群的概略值取代逐隻列出的數字。
-- 社群或解碼資料要標明「社群」或「待驗證」，確定的語氣只留給 DB 查得到的事實。
-- 還沒確認的寫「待確認」，不要自己捏造數字或 ID。
+- **寫成攻略，不是調查報告。** 正文直接告訴玩家做什麼，已知事實寫成事實；不要出現「資料庫確認」「社群說」「官方公告說」「交叉佐證」「可行走遮罩」這類查證字眼，也不要放查核證據、解碼參數的 `<details>`。查證過程留在 PR 與 git 歷史。
+- 社群的準備建議（血量、命中、職業搭配、拉王位置）直接寫成建議，不必標來源。
+- 真的不確定、而且會影響操作的，只留一句短提醒，例如「哪一角算哪一方，以現場提示為準」；不影響操作的不確定項不寫。
+- 不要自己捏造數字或 ID；查不到就不寫，或用上面那種一句提醒帶過。
 
 ## 卸冑與中毒
 
@@ -110,4 +129,9 @@ frontmatter（category: dungeon, stage: topic）
 
 `npx vitest run`、`npm run typecheck`、`npm run lint`、`npm run build` 都要通過，而且 `package-lock.json` 不能有變動（lockfile 不同步會讓正式站 build 失敗，整站掛掉）。之後開 dev server，用 headless Chrome 截 1440 和 390 兩種寬度的整頁截圖，交給 observer 檢查地圖、標記和版面。
 
-注意：正式站的 DB 是 runtime mount，上線前要確認裡面有這篇用到的 stage 地圖圖片和座標，缺資料時頁面只會顯示表格。
+注意：正式站的 DB 是 runtime mount，上線前要確認裡面有這篇用到的 stage 地圖圖片和座標，缺資料時頁面只會顯示表格。`tthol.sqlite` 雖然有進 git（更新 DB 要跟攻略一起 commit），但 merge 不會更新線上的 DB，要手動換掉。檔案已超過 50 MB，GitHub 會警告；再變大要考慮 Git LFS 或移出 git。
+
+## 查證紀律
+
+- 子代理、上游匯出程式的結論都要自己用一兩條 SQL 抽驗再寫進攻略。烈漠禁地就遇過兩次結論錯誤：一次說「不能推成每層扣一顆靈珠」，實際四次換層都有扣；一次說蛇魔島社群走法不吻合，其實是把方向誤讀成落點出發的直線方向。
+- 路線、通道這類畫在地圖上的東西，改完要截圖交給 observer 看，重點檢查王和怪物標記有沒有被路線蓋住。
