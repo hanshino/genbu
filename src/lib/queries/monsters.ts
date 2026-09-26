@@ -335,7 +335,9 @@ export function getNpcCombatStats(ids: number[]): Map<number, StepStatInput> {
               hp,
               extra_def  AS def,
               magic_def  AS mdef,
-              base_dodge AS dodge
+              base_dodge AS dodge,
+              weaken_res AS weakenRes,
+              bleed_res  AS bleedRes
        FROM npc
        WHERE id IN (${placeholders})`,
     )
@@ -347,6 +349,8 @@ export function getNpcCombatStats(ids: number[]): Map<number, StepStatInput> {
     def: number | null;
     mdef: number | null;
     dodge: number | null;
+    weakenRes: number | null;
+    bleedRes: number | null;
   }>;
 
   const imageMap = getNpcImageMap(rows.map((r) => r.id));
@@ -359,6 +363,8 @@ export function getNpcCombatStats(ids: number[]): Map<number, StepStatInput> {
       def: r.def ?? 0,
       mdef: r.mdef ?? 0,
       dodge: r.dodge,
+      weakenRes: r.weakenRes,
+      bleedRes: r.bleedRes,
       image: imageMap.get(r.id) ?? null,
     });
   }

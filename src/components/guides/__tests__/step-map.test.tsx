@@ -23,6 +23,8 @@ const row = (id: number, def: number, mdef: number, withImage = true) => ({
   def,
   mdef,
   dodge: 520,
+  weakenRes: 95,
+  bleedRes: 100,
   image: withImage ? { url: `https://img.hanshino.dev/${id}.webp`, width: 80, height: 80 } : null,
   count: 1,
 });
@@ -92,8 +94,13 @@ describe("StepTargets", () => {
   it("命中摘要、說明與特徵標籤，不顯示 ID", () => {
     renderStep(data);
     expect(screen.getByText(/本步驟要求命中：/)).toHaveTextContent("本步驟要求命中：＞520（被汙染的機關）");
-    expect(screen.getByText("要求命中＝玩家命中需大於怪物閃躲")).toBeInTheDocument();
+    expect(screen.getByText(/要求命中＝玩家命中需大於怪物閃躲/)).toHaveTextContent("依怪物抗性推算，待實機驗證");
     const table = screen.getByRole("table");
+    expect(within(table).getByRole("columnheader", { name: "卸冑" })).toBeInTheDocument();
+    expect(within(table).getByRole("columnheader", { name: "中毒" })).toBeInTheDocument();
+    for (const row of within(table).getAllByRole("row").slice(1)) {
+      expect(within(row).getAllByRole("cell").slice(-2).map(cell => cell.textContent)).toEqual(["可", "不可"]);
+    }
     expect(within(table).getByText("高防禦")).toBeInTheDocument();
     expect(within(table).getByText("高護勁")).toBeInTheDocument();
     expect(within(table).queryByText(/11034/)).toBeNull();

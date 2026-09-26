@@ -16,7 +16,7 @@ updated: 2026-09-25
 
 每完成一座平台的探索、走出口回中央，就能拿到一顆<Item id={31755}>魔性結晶</Item>。五座平台全部完成，**每天最多五顆**，可向深森校尉兌換<Item id={31756}>宮廷御賜</Item>與蒼龍裝備圖紙。
 
-每座平台都有王與五個寶箱，但資料庫的王與寶箱掉落欄位皆空，**寶箱內容待確認**，不要把寶箱當成已確認的額外結晶來源。一張圖紙要 30 顆結晶，每天拿滿也至少要 6 天。
+每座平台都有王與五個寶箱，**寶箱內容待確認**。一張圖紙要 30 顆結晶，每天拿滿也至少要 6 天。
 
 ## 進本前先確認
 
@@ -27,7 +27,7 @@ updated: 2026-09-25
 五位王的防禦都比護勁高，輸出以內力角色為主，外功角色打起來比較吃力。
 
 <Checklist storageKey="dungeon-deepforest-prep">
-  <Check label="等級已達 Lv170，隊伍已組好">單人無法進場，所需隊伍人數待確認。</Check>
+  <Check label="等級已達 Lv170，隊伍已組好">單人無法進場。</Check>
   <Check label="今天還沒完成深森秘徑">當天完成過會被告知「明日再來探索吧」。</Check>
   <Check label="先和隊友說好要探索幾座平台">不必五座全打完也能結束，但每少完成一座就少一顆魔性結晶。</Check>
 </Checklist>
@@ -49,53 +49,51 @@ updated: 2026-09-25
 
 <DungeonStep n={2} title="平台一：喵咪妖祖" subtitle="地圖左上" stage={1720} crop={[600,200,1500,950]} groups={[{ids:[8975]}]} marks={[{id:8974,as:"device",label:"寶箱"}]}>
 
-從對應機關傳入平台，迎戰<Monster id={8975}>喵咪妖祖</Monster>。方形標記是這座平台的五個寶箱，內容待確認。
+清掉<Monster id={8975}>喵咪妖祖</Monster>；依抗性推算，可以卸冑，不能中毒。方形標記是寶箱。
 
 <StepMap />
 <StepTargets />
 
 平台出口由地圖變數控制，推測打倒王後才會開，**確切條件待確認**。五座平台都一樣。
 
-<StepDone>完成探索並等出口可用（啟用條件待確認）→ 走平台出口，取得一顆魔性結晶並傳回中央。</StepDone>
+<StepDone>走平台出口 → 取得一顆魔性結晶並傳回中央。</StepDone>
 </DungeonStep>
 
 <DungeonStep n={3} title="平台二：魑魅魔女琊" subtitle="地圖左下" stage={1720} crop={[550,1500,1450,2250]} groups={[{ids:[8976]}]} marks={[{id:8974,as:"device",label:"寶箱"}]}>
 
-回中央後，透過對應機關傳入平台，迎戰<Monster id={8976}>魑魅魔女琊</Monster>。
+清掉<Monster id={8976}>魑魅魔女琊</Monster>；依抗性推算，可以卸冑，不能中毒。
 
 <StepMap />
 <StepTargets />
-<StepDone>完成探索並等出口可用（啟用條件待確認）→ 走平台出口，取得一顆魔性結晶並傳回中央。</StepDone>
+<StepDone>走平台出口 → 取得一顆魔性結晶並傳回中央。</StepDone>
 </DungeonStep>
 
 <DungeonStep n={4} title="平台三：噗蜀妖鳥" subtitle="地圖中上" stage={1720} crop={[2350,180,3200,850]} groups={[{ids:[8977]}]} marks={[{id:8974,as:"device",label:"寶箱"}]}>
 
-從中央的對應機關傳入平台，迎戰<Monster id={8977}>噗蜀妖鳥</Monster>。
+清掉<Monster id={8977}>噗蜀妖鳥</Monster>；依抗性推算，不能卸冑，也不能中毒，直接集中輸出。
 
 <StepMap />
 <StepTargets />
-<StepDone>完成探索並等出口可用（啟用條件待確認）→ 走平台出口，取得一顆魔性結晶並傳回中央。</StepDone>
+<StepDone>走平台出口 → 取得一顆魔性結晶並傳回中央。</StepDone>
 </DungeonStep>
 
 <DungeonStep n={5} title="平台四：原罪暗魔閻達" subtitle="地圖中下" stage={1720} crop={[2350,1420,3200,2070]} groups={[{ids:[8978]}]} marks={[{id:8974,as:"device",label:"寶箱"}]}>
 
-從中央的對應機關傳入平台，迎戰<Monster id={8978}>原罪暗魔閻達</Monster>。
+清掉<Monster id={8978}>原罪暗魔閻達</Monster>；依抗性推算，不能卸冑，也不能中毒，直接集中輸出。
 
 <StepMap />
 <StepTargets />
-<StepDone>完成探索並等出口可用（啟用條件待確認）→ 走平台出口，取得一顆魔性結晶並傳回中央。</StepDone>
+<StepDone>走平台出口 → 取得一顆魔性結晶並傳回中央。</StepDone>
 </DungeonStep>
 
 <DungeonStep n={6} title="平台五：災禍曼陀羅" subtitle="地圖右側" stage={1720} crop={[3650,420,5100,1280]} groups={[{ids:[8979]}]} marks={[{id:8974,as:"device",label:"寶箱"}]}>
 
-從中央的對應機關傳入平台，迎戰<Monster id={8979}>災禍曼陀羅</Monster>。這位王是木屬性，其他四位王沒有屬性。
+清掉木屬性的<Monster id={8979}>災禍曼陀羅</Monster>（其他四位王沒有屬性）。依抗性推算，不能卸冑，也不能中毒，直接集中輸出。
 
 <StepMap />
 <StepTargets />
 
-災禍曼陀羅的防禦與護勁都是五位王中最高，血量也最多，建議留到隊伍狀態最好時打。
-
-<StepDone>完成探索並等出口可用（啟用條件待確認）→ 走平台出口，取得一顆魔性結晶並傳回中央。</StepDone>
+<StepDone>走平台出口 → 取得一顆魔性結晶並傳回中央。</StepDone>
 </DungeonStep>
 
 <DungeonStep n={7} title="完成今日探索" subtitle="中央區" stage={1720}>
@@ -133,7 +131,7 @@ updated: 2026-09-25
 - **機關位置**：場內五個特殊機關查無可用座標，位置待確認，地圖不自行補點。
 - **平台順序**：腳本看起來可任選，實際順序限制待確認。
 - **寶箱內容**：王與寶箱掉落欄位皆空，寶箱內容待確認，不等於實機一定沒有掉落。
-- **出口條件**：以地圖變數控制，推測需擊倒平台王，實際啟用條件待確認。
+- **出口條件**：見平台一的共通說明。
 - **同名圖紙差異**：蒼龍甲圖紙、蒼龍靴圖紙各有兩筆，差異待確認。
 
 </details>

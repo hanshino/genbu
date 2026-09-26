@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildStepData,
+  formatStatusResistance,
   cropFrame,
   fullFrameBox,
   inCrop,
@@ -85,6 +86,8 @@ function stat(overrides: Partial<StepStatInput> & { id: number }): StepStatInput
     def: 4800,
     mdef: 280,
     dodge: 520,
+    weakenRes: 100,
+    bleedRes: 100,
     image: null,
     ...overrides,
   };
@@ -147,6 +150,18 @@ describe("buildStepData — dedupe", () => {
 });
 
 describe("buildStepData — grouping / merge / elite sub-rows", () => {
+  it("preserves resistance fields and does not merge different resistances", () => {
+    const stats = new Map([
+      [1, stat({ id: 1, weakenRes: 95, bleedRes: 100 })],
+      [2, stat({ id: 2, weakenRes: 100, bleedRes: 100 })],
+      [3, stat({ id: 3, weakenRes: 100, bleedRes: 95 })],
+    ]);
+    const data = buildStepData(baseInput({ groups: [{ ids: [1, 2, 3], map: false }], stats }));
+    expect(data.groups[0].rows.map(r => [r.weakenRes, r.bleedRes])).toEqual([
+      [95, 100], [100, 100], [100, 95],
+    ]);
+  });
+
   it("merges ids with identical stats into one row with count", () => {
     const stats = new Map([
       [11034, stat({ id: 11034 })],
@@ -176,6 +191,12 @@ describe("buildStepData — grouping / merge / elite sub-rows", () => {
     expect(data.groups[0].rows.map((r) => r.name)).toEqual(["▲黑化貝", "黑化貝"]);
     expect(data.groups[0].rows.every((r) => r.count === 1)).toBe(true);
   });
+});
+
+describe("formatStatusResistance", () => {
+  it.each([[100, "不可"], [95, "可"], [0, "可"], [null, "待確認"], [101, "待確認"]] as const)(
+    "%s → %s", (value, expected) => expect(formatStatusResistance(value)).toBe(expected),
+  );
 });
 
 describe("buildStepData — hit (max dodge, null ignored)", () => {
