@@ -140,7 +140,12 @@ describe("renderGuideBody", () => {
     const html = renderToStaticMarkup(await renderGuideBody(guide.source, guideMdxComponents));
     expect(html.match(/alt="皇室禁地地圖（本區塊）"/g)).toHaveLength(5);
     expect(html).not.toContain("待作者核對：這些 id 查無資料");
-    expect(html).toContain("層序待確認");
+    for (const floor of ["第一層", "第二層", "第三層", "第四層", "第五層"]) {
+      expect(guide.headings.some((heading) => heading.text.includes(floor))).toBe(true);
+    }
+    expect(html).not.toContain("層序待確認");
+    expect(html).toContain("看得到隊友，不代表走得到隊友身邊");
+    expect(html).toContain("剩餘小鬼數量");
   });
 
   it("does not turn single tildes in level ranges into strikethrough", async () => {
