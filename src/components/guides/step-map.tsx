@@ -542,6 +542,11 @@ interface RouteSeg {
   jump: boolean;
   /** 弧線彎曲量：正值往行進方向左側、負值往右側，單位是弦長。 */
   bend: number;
+  /**
+   * 步行段的可行走折線（含頭尾，合成圖像素座標）；查無可行走資料或不連通時
+   * 退回 [a, b] 直線。傳送段（jump）恆為 null，畫弧線不用這個欄位。
+   */
+  path: Point[] | null;
 }
 
 /** 弧線控制點：從弦的中點往側邊推出 bend 倍弦長。 */
@@ -571,16 +576,20 @@ function clearance(a: Point, b: Point, bend: number, avoid: Point[]) {
 /**
  * 路線拆成線段。傳送弧線會避開 avoid 裡的點（王、怪物、其他路線標記）：
  * 預設彎法夠空就照用，不然改用離標記最遠的彎法，免得弧線和箭頭壓在王身上。
+ * 步行段用伺服器算好的 segPaths（可行走折線）；查無資料時退回直線 [a, b]。
  */
 function routeSegs(r: StepRoute, avoid: Point[]): RouteSeg[] {
   return r.points.slice(1).map((b, k) => {
     const a = r.points[k];
     const jump = a.as === "portal";
-    if (!jump) return { a, b, jump, bend: 0 };
+    if (!jump) {
+      const path = r.segPaths[k] ?? [a, b];
+      return { a, b, jump, bend: 0, path };
+    }
     const room = BENDS.map((bend) => ({ bend, room: clearance(a, b, bend, avoid) }));
     const best =
       room[0].room >= arcRoom ? room[0] : room.reduce((m, o) => (o.room > m.room ? o : m));
-    return { a, b, jump, bend: best.bend };
+    return { a, b, jump, bend: best.bend, path: null };
   });
 }
 
@@ -600,7 +609,47 @@ function arc({ a, b, bend }: RouteSeg) {
   };
 }
 
-/** 路線線條：步行是實線，傳送是點狀弧線；都墊一條深色底邊，壓在任何底圖上都讀得到。 */
+/** 步行折線的 SVG path（M...L...L...），至少兩點。 */
+function polyline(points: Point[]): string {
+  return `M${points.map((p) => `${p.x} ${p.y}`).join("L")}`;
+}
+
+/** 折線總長度的中點座標＋切線角度（度），給箭頭定位與旋轉用。 */
+function pathMidWithAngle(points: Point[]): { mid: Point; deg: number } {
+  if (points.length === 1) return { mid: points[0], deg: 0 };
+  const segLens: number[] = [];
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    const len = Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y);
+    segLens.push(len);
+    total += len;
+  }
+  let target = total / 2;
+  for (let i = 0; i < segLens.length; i++) {
+    const a = points[i];
+    const b = points[i + 1];
+    if (target <= segLens[i] || i === segLens.length - 1) {
+      const t = segLens[i] === 0 ? 0 : target / segLens[i];
+      const mid = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+      const deg = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+      return { mid, deg };
+    }
+    target -= segLens[i];
+  }
+  const mid = points[Math.floor(points.length / 2)];
+  return { mid, deg: 0 };
+}
+
+/** 折線總長度（沿線距離，非端點連線）。 */
+function pathLength(points: Point[]): number {
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    total += Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y);
+  }
+  return total;
+}
+
+/** 路線線條：步行沿可行走折線（圓角轉彎），傳送是點狀弧線；都墊一條深色底邊，壓在任何底圖上都讀得到。 */
 function RouteLayer({ segs, color, box }: { segs: RouteSeg[]; color: string; box: string }) {
   return (
     <svg
@@ -612,7 +661,7 @@ function RouteLayer({ segs, color, box }: { segs: RouteSeg[]; color: string; box
       className="pointer-events-none absolute inset-0 size-full"
     >
       {segs.map((seg, k) => {
-        const d = seg.jump ? arc(seg).d : `M${seg.a.x} ${seg.a.y}L${seg.b.x} ${seg.b.y}`;
+        const d = seg.jump ? arc(seg).d : polyline(seg.path ?? [seg.a, seg.b]);
         return (
           <g key={k} data-seg={seg.jump ? "jump" : "walk"}>
             <path
@@ -621,6 +670,7 @@ function RouteLayer({ segs, color, box }: { segs: RouteSeg[]; color: string; box
               stroke="var(--walk-halo)"
               strokeWidth={seg.jump ? 6 : 7}
               strokeLinecap="round"
+              strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
             />
             <path
@@ -629,6 +679,7 @@ function RouteLayer({ segs, color, box }: { segs: RouteSeg[]; color: string; box
               strokeWidth={seg.jump ? 3 : 3.5}
               strokeDasharray={seg.jump ? "0.5 7" : undefined}
               strokeLinecap="round"
+              strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
             />
           </g>
@@ -727,12 +778,12 @@ function RouteMarks({
     ];
   });
   const arrows = segs.flatMap((seg, k) => {
-    const len = Math.hypot(seg.b.x - seg.a.x, seg.b.y - seg.a.y);
+    const path = seg.jump ? null : (seg.path ?? [seg.a, seg.b]);
+    const len = seg.jump ? Math.hypot(seg.b.x - seg.a.x, seg.b.y - seg.a.y) : pathLength(path!);
     if (len < lineGap) return [];
-    const mid = seg.jump
-      ? arc(seg).mid
-      : { x: (seg.a.x + seg.b.x) / 2, y: (seg.a.y + seg.b.y) / 2 };
-    const deg = (Math.atan2(seg.b.y - seg.a.y, seg.b.x - seg.a.x) * 180) / Math.PI;
+    const { mid, deg } = seg.jump
+      ? { mid: arc(seg).mid, deg: (Math.atan2(seg.b.y - seg.a.y, seg.b.x - seg.a.x) * 180) / Math.PI }
+      : pathMidWithAngle(path!);
     return [
       <span
         key={`a${k}`}

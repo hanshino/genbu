@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import Database from "better-sqlite3";
 import * as dbModule from "@/lib/db";
+import type { Point } from "@/lib/guide-steps";
 import {
   getStageMapImage,
   getNpcPlacementsForStage,
   getMonsterSpawnPositions,
   getNpcPositionsForStage,
   buildMonsterMarkers,
+  walkPath,
   type StageMapImage,
 } from "../maps";
 import type { StageMonsterSpawn } from "@/lib/types/monster-spawn";
@@ -454,5 +456,96 @@ describe("getMonsterSpawnPositions — 舊 schema 容錯", () => {
     // 不小心蓋住其他 SQL 錯誤（capability check 只針對 monster_spawns 一張表）。
     expect(() => getNpcPlacementsForStage("stage", 1)).toThrow(/no such table: map_placements/);
     mem.close();
+  });
+});
+
+describe("walkPath — 純函式最短可行走路徑", () => {
+  // 5×3 格陣（tile=40px，寬 200×高 120），row1/col2 是牆，逼路徑繞道 row0 或 row2。
+  const width = 5;
+  const height = 3;
+  const wall = new Set([1 * width + 2]);
+  const cells: number[] = [];
+  for (let r = 0; r < height; r++) {
+    for (let c = 0; c < width; c++) {
+      const idx = r * width + c;
+      if (!wall.has(idx)) cells.push(idx);
+    }
+  }
+
+  it("直線被牆擋住時繞道，頭尾固定是輸入的像素座標", () => {
+    const a = { x: 20, y: 60 }; // row1,col0 格中心
+    const b = { x: 180, y: 60 }; // row1,col4 格中心
+    const path = walkPath(cells, width, a, b)!;
+    expect(path).not.toBeNull();
+    expect(path[0]).toEqual(a);
+    expect(path.at(-1)).toEqual(b);
+    // 中間至少有一個轉折點的 y 偏離 60（繞開 row1,col2 那面牆）
+    expect(path.some((p) => p.y !== 60)).toBe(true);
+    // 折線化簡：不該是每格一個頂點的鋸齒（stage 每邊只有 5 格，頂點數遠少於格數）
+    expect(path.length).toBeLessThan(cells.length);
+  });
+
+  it("兩點間視野暢通（無牆）時化簡成頭尾兩點，不畫多餘轉折", () => {
+    const a = { x: 20, y: 20 }; // row0,col0
+    const b = { x: 100, y: 20 }; // row0,col2（同一列，沒有牆）
+    const path = walkPath(cells, width, a, b)!;
+    expect(path).toEqual([a, b]);
+  });
+
+  it("起訖點不連通（各自獨立小區塊）時回 null", () => {
+    const isolated = [0, 1]; // 只有 row0 的 col0/col1，其餘不可走
+    const a = { x: 20, y: 20 };
+    const b = { x: 180, y: 100 }; // 不在 isolated 內附近
+    expect(walkPath(isolated, width, a, b)).toBeNull();
+  });
+
+  it("起點或終點附近完全沒有開放格時回 null", () => {
+    const a = { x: 20, y: 20 };
+    const b = { x: 900, y: 900 }; // 遠在格陣外，附近找不到開放格
+    expect(walkPath(cells, width, a, b)).toBeNull();
+  });
+});
+
+describe("walkPath — 貼牆懲罰：走廊正中央，不貼牆走", () => {
+  // 5 格寬直角轉彎走廊：橫段 row0-4（col0-24 全寬），直段 col15-19（row0-39 全高），
+  // 內角在 col15,row4 附近。起點在橫段中線（col2,row2），終點在直段中線（col17,row30），
+  // 貼著內角走是幾何最短路徑，但內角格 clearance 只有 1（緊貼兩面牆），會被強烈懲罰。
+  const width = 25;
+  const height = 40;
+  const cells: number[] = [];
+  for (let r = 0; r < height; r++) {
+    for (let c = 0; c < width; c++) {
+      const inHoriz = r <= 4;
+      const inVert = c >= 15 && c <= 19;
+      if (inHoriz || inVert) cells.push(r * width + c);
+    }
+  }
+  const a = { x: 100, y: 100 }; // col2,row2：橫段中線
+  const b = { x: 700, y: 1220 }; // col17,row30：直段中線
+  const innerCorner = { x: 15 * 40 + 20, y: 4 * 40 + 20 }; // col15,row4 格中心，即內角
+
+  /** 折線上每小段等距取樣，回傳到 target 的最短距離；用來量路徑貼內角貼多近。 */
+  function minDistanceAlongPath(path: Point[], target: Point): number {
+    let min = Infinity;
+    for (let k = 1; k < path.length; k++) {
+      const p = path[k - 1];
+      const q = path[k];
+      for (let t = 0; t <= 20; t++) {
+        const x = p.x + ((q.x - p.x) * t) / 20;
+        const y = p.y + ((q.y - p.y) * t) / 20;
+        min = Math.min(min, Math.hypot(x - target.x, y - target.y));
+      }
+    }
+    return min;
+  }
+
+  it("轉彎時繞開內角（貼牆處），留在走廊中線一帶，不貼著內角切最短路徑", () => {
+    const path = walkPath(cells, width, a, b)!;
+    expect(path).not.toBeNull();
+    expect(path[0]).toEqual(a);
+    expect(path.at(-1)).toEqual(b);
+    // 貼著內角走的幾何最短路徑會讓折線與內角距離趨近 0（同一份輸入跑舊版純 BFS
+    // 演算法就是 0，見 PR 說明的迴歸比較）；clearance-aware 版本應該離內角有段距離。
+    expect(minDistanceAlongPath(path, innerCorner)).toBeGreaterThan(40);
   });
 });

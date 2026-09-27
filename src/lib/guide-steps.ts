@@ -77,6 +77,13 @@ export interface StepRoute {
   points: StepRoutePoint[];
   /** 分頁裡這條路線的放大框：包住所有點再加一圈邊、固定 ROUTE_ASPECT、不超出本區塊。 */
   box: Crop;
+  /**
+   * 每個相鄰點之間的可行走路徑（合成圖像素座標折線，含頭尾）；index 對齊
+   * points（segPaths[k] 是 points[k]→points[k+1]），長度 = points.length − 1。
+   * 傳送段（下一點是從 portal 出發）恆為 null（前端畫弧線，不使用這裡的路徑）；
+   * 步行段查無可行走資料或不連通時也是 null（前端退回直線）。
+   */
+  segPaths: (Point[] | null)[];
 }
 
 export interface StepWalk {

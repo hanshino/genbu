@@ -64,6 +64,7 @@ const twoRoutes: NonNullable<StepData["routes"]> = [
       { as: "boss", x: 740, y: 780 },
     ],
     box: [150, 380, 775, 880],
+    segPaths: [null, null, null],
   },
   {
     label: "乙島",
@@ -73,6 +74,7 @@ const twoRoutes: NonNullable<StepData["routes"]> = [
       { as: "boss", x: 1300, y: 600 },
     ],
     box: [750, 380, 1350, 830],
+    segPaths: [null],
   },
 ];
 
@@ -240,9 +242,10 @@ describe("StepMap", () => {
           { as: "boss" as const, x: 800, y: 800 },
         ],
         box,
+        segPaths: [null, null, null],
       },
       // 乙島的王剛好在甲島第一段預設往上彎的弧線中間
-      { label: "乙島", note: null, points: [{ as: "landing" as const, x: 900, y: 1200 }, { as: "boss" as const, x: 500, y: 444 }], box },
+      { label: "乙島", note: null, points: [{ as: "landing" as const, x: 900, y: 1200 }, { as: "boss" as const, x: 500, y: 444 }], box, segPaths: [null] },
     ];
     const { container } = renderRoutes({ ...data, routes });
     const jumps = screen.getByTestId("route-layer").querySelectorAll('[data-seg="jump"] path');

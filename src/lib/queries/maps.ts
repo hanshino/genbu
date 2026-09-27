@@ -136,6 +136,346 @@ export function regionHas(region: WalkRegion, p: Point): boolean {
   return false;
 }
 
+const PATH_DIRS: Array<[number, number]> = [
+  [-1, 0],
+  [1, 0],
+  [0, -1],
+  [0, 1],
+  [-1, -1],
+  [-1, 1],
+  [1, -1],
+  [1, 1],
+];
+
+const NEAREST_ORDER: Array<[number, number]> = [
+  [0, 0],
+  [-1, 0],
+  [1, 0],
+  [0, -1],
+  [0, 1],
+  [-1, -1],
+  [-1, 1],
+  [1, -1],
+  [1, 1],
+];
+
+/** 點附近（含自己所在格，同 walkRegion 起點的容錯順序）最近的一個開放格；查無回 null。 */
+function nearestCell(cells: Set<number>, width: number, p: Point): number | null {
+  const col = Math.floor(p.x / WALK_TILE);
+  const row = Math.floor(p.y / WALK_TILE);
+  for (const [dr, dc] of NEAREST_ORDER) {
+    const c = col + dc;
+    if (c < 0 || c >= width) continue;
+    const idx = (row + dr) * width + c;
+    if (cells.has(idx)) return idx;
+  }
+  return null;
+}
+
+/**
+ * 每個開放格到最近阻擋格（含網格邊界，邊界一律視同阻擋）的 8 鄰接（chebyshev）
+ * 距離，用多源 BFS 做距離轉換：blocked／邊界格當種子（距離 0），往內展開。
+ * 高度用 cells 裡出現過的最大 row + 1 推算（不需要額外傳入 grid 實際高度——
+ * 真正的格陣如果更高，多出來的列本來就不在 cells 裡，等同也是阻擋）。
+ * 給 Dijkstra 當「貼牆懲罰」依據，避免路徑貼著牆角走（視覺上穿過牆邊裝飾物）。
+ */
+function computeClearance(cells: Set<number>, width: number): Map<number, number> {
+  let maxRow = 0;
+  for (const idx of cells) {
+    const r = Math.floor(idx / width);
+    if (r > maxRow) maxRow = r;
+  }
+  const height = maxRow + 1;
+  const PW = width + 2; // 四周各墊一層當邊界種子
+  const PH = height + 2;
+  const dist = new Int32Array(PW * PH).fill(-1);
+  const queue: number[] = [];
+  for (let pr = 0; pr < PH; pr++) {
+    for (let pc = 0; pc < PW; pc++) {
+      const r = pr - 1;
+      const c = pc - 1;
+      const isPadding = r < 0 || r >= height || c < 0 || c >= width;
+      if (isPadding || !cells.has(r * width + c)) {
+        const pidx = pr * PW + pc;
+        dist[pidx] = 0;
+        queue.push(pidx);
+      }
+    }
+  }
+  for (let qi = 0; qi < queue.length; qi++) {
+    const cur = queue[qi];
+    const pr = Math.floor(cur / PW);
+    const pc = cur % PW;
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = pr + dr;
+        const nc = pc + dc;
+        if (nr < 0 || nr >= PH || nc < 0 || nc >= PW) continue;
+        const nidx = nr * PW + nc;
+        if (dist[nidx] !== -1) continue;
+        dist[nidx] = dist[cur] + 1;
+        queue.push(nidx);
+      }
+    }
+  }
+  const clearance = new Map<number, number>();
+  for (const idx of cells) {
+    const r = Math.floor(idx / width);
+    const c = idx % width;
+    clearance.set(idx, dist[(r + 1) * PW + (c + 1)]);
+  }
+  return clearance;
+}
+
+// ponytail: clearance>=3（5 格寬走廊的正中央）不罰；1～2 格（貼牆）強烈懲罰，
+// 逼 Dijkstra 寧可繞路也要離牆遠一點。純數字調過，沒有理論依據，視覺觀察不夠
+// 再調整這三個常數即可，不用動演算法本身。
+function clearancePenalty(clearance: number): number {
+  if (clearance >= 3) return 0;
+  if (clearance === 2) return 2;
+  return 6; // clearance <= 1
+}
+
+type HeapItem = [cost: number, cellIdx: number];
+
+/** 標準二元 min-heap：push/pop 皆 O(log n)，只在 dijkstraCellPath 內部用。 */
+function heapPush(heap: HeapItem[], item: HeapItem): void {
+  heap.push(item);
+  let i = heap.length - 1;
+  while (i > 0) {
+    const parent = (i - 1) >> 1;
+    if (heap[parent][0] <= heap[i][0]) break;
+    [heap[parent], heap[i]] = [heap[i], heap[parent]];
+    i = parent;
+  }
+}
+
+function heapPop(heap: HeapItem[]): HeapItem | undefined {
+  if (heap.length === 0) return undefined;
+  const top = heap[0];
+  const last = heap.pop()!;
+  if (heap.length > 0) {
+    heap[0] = last;
+    let i = 0;
+    const n = heap.length;
+    for (;;) {
+      const l = 2 * i + 1;
+      const r = 2 * i + 2;
+      let smallest = i;
+      if (l < n && heap[l][0] < heap[smallest][0]) smallest = l;
+      if (r < n && heap[r][0] < heap[smallest][0]) smallest = r;
+      if (smallest === i) break;
+      [heap[i], heap[smallest]] = [heap[smallest], heap[i]];
+      i = smallest;
+    }
+  }
+  return top;
+}
+
+/**
+ * Dijkstra 最短路徑（格 index 陣列）：邊成本＝幾何長度（正交 1／斜向 √2）
+ * ×(1+貼牆懲罰)，懲罰取兩端格 clearance 較小值（見 clearancePenalty）。
+ * 斜向移動時兩個正交鄰格都要開放才准走，不切牆角（同舊版 BFS 規則）。
+ */
+function dijkstraCellPath(
+  cells: Set<number>,
+  width: number,
+  clearance: Map<number, number>,
+  start: number,
+  goal: number,
+): number[] | null {
+  if (start === goal) return [start];
+  const dist = new Map<number, number>([[start, 0]]);
+  const prev = new Map<number, number>();
+  const visited = new Set<number>();
+  const heap: HeapItem[] = [];
+  heapPush(heap, [0, start]);
+  for (let item = heapPop(heap); item; item = heapPop(heap)) {
+    const [cost, cur] = item;
+    if (visited.has(cur)) continue;
+    visited.add(cur);
+    if (cur === goal) break;
+    if (cost > (dist.get(cur) ?? Infinity)) continue;
+    const r = Math.floor(cur / width);
+    const c = cur % width;
+    for (const [dr, dc] of PATH_DIRS) {
+      const cc = c + dc;
+      if (cc < 0 || cc >= width) continue;
+      const rr = r + dr;
+      const k = rr * width + cc;
+      if (!cells.has(k) || visited.has(k)) continue;
+      if (dr !== 0 && dc !== 0 && (!cells.has(r * width + cc) || !cells.has(rr * width + c))) continue;
+      const stepLen = dr !== 0 && dc !== 0 ? Math.SQRT2 : 1;
+      const penalty = clearancePenalty(Math.min(clearance.get(cur) ?? 0, clearance.get(k) ?? 0));
+      const next = cost + stepLen * (1 + penalty);
+      if (next < (dist.get(k) ?? Infinity)) {
+        dist.set(k, next);
+        prev.set(k, cur);
+        heapPush(heap, [next, k]);
+      }
+    }
+  }
+  if (!dist.has(goal)) return null;
+  const path = [goal];
+  for (let cur = goal; cur !== start; ) {
+    const p = prev.get(cur);
+    if (p === undefined) return null; // 理論上不會發生（dist 有值就一定有 prev），防禦性 guard
+    cur = p;
+    path.push(cur);
+  }
+  return path.reverse();
+}
+
+function cellCenter(idx: number, width: number): Point {
+  return {
+    x: (idx % width) * WALK_TILE + WALK_TILE / 2,
+    y: Math.floor(idx / width) * WALK_TILE + WALK_TILE / 2,
+  };
+}
+
+/**
+ * 走訪 a→b 幾何上實際經過的每一格（正確版 supercover：用精確的網格交點，
+ * 不是固定步數取樣——取樣法對長線段會跳過夾在兩個取樣點之間的薄牆角，見
+ * commit 說明的迴歸案例）。恰好穿過格線交點（四格共用的角）時，視同對角
+ * corner-cut：連帶檢查兩個相鄰格，和 dijkstraCellPath 的「斜向移動兩個
+ * 正交鄰格都要開放」規則一致。visit 回 false 時立刻停止並回傳 false。
+ */
+function traverseCells(a: Point, b: Point, visit: (col: number, row: number) => boolean): boolean {
+  let col = Math.floor(a.x / WALK_TILE);
+  let row = Math.floor(a.y / WALK_TILE);
+  const endCol = Math.floor(b.x / WALK_TILE);
+  const endRow = Math.floor(b.y / WALK_TILE);
+  if (!visit(col, row)) return false;
+  if (col === endCol && row === endRow) return true;
+
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const stepCol = dx > 0 ? 1 : dx < 0 ? -1 : 0;
+  const stepRow = dy > 0 ? 1 : dy < 0 ? -1 : 0;
+  const tDeltaX = dx !== 0 ? Math.abs(WALK_TILE / dx) : Infinity;
+  const tDeltaY = dy !== 0 ? Math.abs(WALK_TILE / dy) : Infinity;
+  let tMaxX = dx !== 0 ? ((stepCol > 0 ? col + 1 : col) * WALK_TILE - a.x) / dx : Infinity;
+  let tMaxY = dy !== 0 ? ((stepRow > 0 ? row + 1 : row) * WALK_TILE - a.y) / dy : Infinity;
+
+  const EPS = 1e-9;
+  // 安全上限：正常路徑跨越的格線數遠低於此，只防浮點誤差造成的無窮迴圈。
+  for (let guard = 0; guard < 100_000; guard++) {
+    if (Math.abs(tMaxX - tMaxY) < EPS) {
+      // 恰好同時跨兩條格線＝穿過四格共用的角，比照斜向移動不切角規則。
+      if (!visit(col + stepCol, row)) return false;
+      if (!visit(col, row + stepRow)) return false;
+      col += stepCol;
+      row += stepRow;
+      tMaxX += tDeltaX;
+      tMaxY += tDeltaY;
+    } else if (tMaxX < tMaxY) {
+      col += stepCol;
+      tMaxX += tDeltaX;
+    } else {
+      row += stepRow;
+      tMaxY += tDeltaY;
+    }
+    if (!visit(col, row)) return false;
+    if (col === endCol && row === endRow) return true;
+  }
+  return true; // 理論上到不了這裡；guard 只是防禦性上限
+}
+
+/**
+ * a→b 是否全程在可行走格內，且每一格的 clearance 都 >= minClearance
+ * （用 traverseCells 精確走訪，不是固定步數取樣）。minClearance 是
+ * string-pulling「不能抄近路抄到比原本 Dijkstra 路徑更貼牆」的門檻，由
+ * 呼叫端算好傳入。
+ */
+function hasLineOfSight(
+  cells: Set<number>,
+  width: number,
+  clearance: Map<number, number>,
+  minClearance: number,
+  a: Point,
+  b: Point,
+): boolean {
+  return traverseCells(a, b, (col, row) => {
+    if (col < 0 || col >= width || row < 0) return false;
+    const idx = row * width + col;
+    if (!cells.has(idx)) return false;
+    return (clearance.get(idx) ?? 0) >= minClearance;
+  });
+}
+
+/**
+ * 貪婪 string-pulling：從頭盡量跳到看得到的最遠點，折線頂點數降到最少。
+ * pointCells[k] 是 points[k] 對應的格 index（給 clearance 查詢用；頭尾兩點
+ * 對應起訖格本身，即使起訖點貼著牆也不擋——因為門檻取「原路徑沿途最小值」，
+ * 起訖格本身的低 clearance 早就算進這個最小值裡，等於自動豁免）。
+ * desiredClearance：理想門檻（通常 3，走廊正中央），實際門檻＝
+ * min(desiredClearance, i..j 之間 Dijkstra 路徑原有的最小 clearance)——
+ * 保證抄近路不會比原路徑更貼牆，但也不會比原路徑更嚴格。
+ */
+function pullString(
+  points: Point[],
+  pointCells: number[],
+  cells: Set<number>,
+  width: number,
+  clearance: Map<number, number>,
+  desiredClearance: number,
+): Point[] {
+  if (points.length <= 2) return points;
+  const out: Point[] = [points[0]];
+  let i = 0;
+  while (i < points.length - 1) {
+    let j = points.length - 1;
+    for (; j > i + 1; j--) {
+      let minAlong = Infinity;
+      for (let k = i; k <= j; k++) minAlong = Math.min(minAlong, clearance.get(pointCells[k]) ?? 0);
+      const threshold = Math.min(desiredClearance, minAlong);
+      if (hasLineOfSight(cells, width, clearance, threshold, points[i], points[j])) break;
+    }
+    out.push(points[j]);
+    i = j;
+  }
+  return out;
+}
+
+// ponytail: clearance>=3（5 格寬走廊的正中央）不罰，string-pulling 也以此為
+// 理想門檻；純數字調過，視覺觀察不夠再調整（連同 clearancePenalty）即可。
+const DESIRED_CLEARANCE = 3;
+
+/**
+ * 純函式版最短可行走路徑：cells＝開放格 index 陣列（同 walkRegion 回傳格式，
+ * row*width+col）、width＝格陣寬度。a/b 是合成圖像素座標，回傳折線的頭尾固定
+ * 是 a 與 b 本身（不會被吸到格子中心）。起訖點附近（1 格內）找不到開放格、
+ * 或兩點不連通時回 null，呼叫端（getWalkPath）退回直線。
+ *
+ * 貼牆懲罰（clearancePenalty）讓 Dijkstra 偏好走廊正中央，避免路徑視覺上
+ * 貼著牆邊裝飾物（雕像、柱子、橋面）看起來像穿牆；string-pulling 化簡時
+ * 同樣不允許抄近路抄到比 Dijkstra 已接受的路徑更貼牆（見 pullString）。
+ */
+export function walkPath(cells: number[], width: number, a: Point, b: Point): Point[] | null {
+  const set = new Set(cells);
+  const start = nearestCell(set, width, a);
+  const goal = nearestCell(set, width, b);
+  if (start == null || goal == null) return null;
+  const clearance = computeClearance(set, width);
+  const cellPath = dijkstraCellPath(set, width, clearance, start, goal);
+  if (!cellPath) return null;
+  const waypoints = [a, ...cellPath.map((idx) => cellCenter(idx, width)), b];
+  const waypointCells = [start, ...cellPath, goal];
+  return pullString(waypoints, waypointCells, set, width, clearance, DESIRED_CLEARANCE);
+}
+
+/**
+ * 兩點間的可行走路徑（合成圖像素座標折線，含頭尾）；查無可行走資料、或兩點
+ * 不連通時回 null，呼叫端（getRoutes）退回直線。包住 getWalkRegion（會打
+ * DB，有快取）＋walkPath（純運算）。
+ */
+export function getWalkPath(kind: StageKind, id: number, a: Point, b: Point): Point[] | null {
+  const region = getWalkRegion(kind, id, a);
+  if (!region || !regionHas(region, b)) return null;
+  return walkPath(region.cells, region.width, a, b);
+}
+
 // ponytail: 行程內永久快取；資料唯讀、key 只有攻略寫死的幾個起點，不會長大。
 const walkCache = new Map<string, WalkRegion | null>();
 

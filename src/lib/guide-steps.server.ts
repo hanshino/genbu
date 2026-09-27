@@ -3,6 +3,7 @@ import type { StageKind } from "@/lib/types/stage";
 import {
   getStageMapImage,
   getNpcPositionsForStage,
+  getWalkPath,
   getWalkRegion,
   regionHas,
 } from "@/lib/queries/maps";
@@ -12,6 +13,7 @@ import {
   inCrop,
   routeBox,
   type Crop,
+  type Point,
   type StepData,
   type StepInput,
   type StepRoute,
@@ -85,16 +87,33 @@ function getRoutes(
 ): StepRoute[] {
   if (!image) return [];
   const bounds: Crop = crop ?? [0, 0, image.imgWidth, image.imgHeight];
+  const kind = stageKindOf(stage);
   return input.flatMap((r) => {
     const points = r.points.map(([as, x, y]) => ({ as, x, y }));
     if (points.length === 0) return [];
     if (!points.every((p) => inCrop(p, bounds))) return [];
+    const segPaths: (Point[] | null)[] = [];
     for (let i = 1; i < points.length; i++) {
-      if (points[i - 1].as === "portal") continue;
-      const region = getWalkRegion(stageKindOf(stage), stage, points[i - 1]);
-      if (region && !regionHas(region, points[i])) return [];
+      const a: Point = points[i - 1];
+      const b: Point = points[i];
+      if (points[i - 1].as === "portal") {
+        segPaths.push(null); // 傳送段，前端畫弧線
+        continue;
+      }
+      const region = getWalkRegion(kind, stage, a);
+      if (region && !regionHas(region, b)) return [];
+      segPaths.push(region ? getWalkPath(kind, stage, a, b) : null);
     }
-    return [{ label: r.label, note: r.note ?? null, points, box: routeBox(points, bounds) }];
+    const boxPoints = [...points, ...segPaths.flatMap((p) => p ?? [])];
+    return [
+      {
+        label: r.label,
+        note: r.note ?? null,
+        points,
+        box: routeBox(boxPoints, bounds),
+        segPaths,
+      },
+    ];
   });
 }
 
