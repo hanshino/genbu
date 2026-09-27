@@ -1,15 +1,16 @@
 // 本地版本差異 → 更新日誌 JSON。
 //
-// 用法（務必「先跑腳本、再 commit 新 DB」）：
-//   1. 用新的 tthol.sqlite 覆蓋工作區檔（尚未 git add）
+// 用法：
+//   1. 用新的 tthol.sqlite 覆蓋工作區檔
 //   2. npm run changelog -- 1.23 [--note "說明"]   （版本號＝第一個位置參數）
 //      預設用本機 `claude -p`（走 Claude Code 訂閱登入身分，免 API key）跑 AI 策展；
 //      --no-ai 略過；--sdk 改走 @anthropic-ai/sdk（需 .env 的 ANTHROPIC_API_KEY）；--model 換模型
 //   3. review src/data/changelog/<date>-v1.23.json（highlights 可手改，改過把 ai.edited 設 true）
-//   4. git add tthol.sqlite src/data/changelog/*.json && git commit
+//   4. npm run db:publish（上傳新 DB 並改寫 db.lock.json）
+//   5. git add db.lock.json src/data/changelog/*.json && git commit
 //
-// 舊 DB 預設取自 git（HEAD:tthol.sqlite 的 blob）；用 spawn 直接把二進位
-// pipe 進暫存檔，不經 shell 重導向（Windows 下 > 會破壞二進位）。
+// 舊 DB 預設是 HEAD 的 db.lock.json 指向的 Release（也就是目前發布中的那版），
+// 下載到暫存檔再比對。用 HEAD 而不是工作區的 lock，所以步驟 3、4 順序對調也不會比到自己。
 
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -29,17 +30,17 @@ import {
   resolveAiPlan,
   type CurationClient,
 } from "../src/lib/changelog/curate";
+import { DB_FILE, downloadLocked, readLockAtRef } from "./db-release.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
-const DB_FILE = "tthol.sqlite";
 const OUT_DIR = path.join(PROJECT_ROOT, "src", "data", "changelog");
 
 interface Args {
   version?: string;
   date: string;
   note?: string;
-  from: string; // git ref 或檔案路徑
+  from: string; // git ref（取該 ref 的 db.lock.json）或檔案路徑
   to: string; // 檔案路徑
   force: boolean;
   noAi: boolean;
@@ -76,45 +77,12 @@ function parseArgs(argv: string[]): Args {
   return args;
 }
 
-function gitBlobToTemp(ref: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const tmp = path.join(os.tmpdir(), `tthol-old-${process.pid}.sqlite`);
-    const out = fs.createWriteStream(tmp);
-    const child = spawn("git", ["show", `${ref}:${DB_FILE}`], {
-      cwd: PROJECT_ROOT,
-      windowsHide: true,
-    });
-    let err = "";
-    let closed = false;
-    let finished = false;
-    let code: number | null = null;
-    const fail = (err: Error) => {
-      try {
-        fs.rmSync(tmp, { force: true });
-      } catch {
-        /* best effort */
-      }
-      reject(err);
-    };
-    const settle = () => {
-      if (!(closed && finished)) return;
-      if (code === 0) resolve(tmp);
-      else fail(new Error(`git show ${ref}:${DB_FILE} 失敗：${err.trim()}`));
-    };
-    child.stderr.on("data", (d) => (err += d.toString()));
-    child.on("error", fail);
-    child.stdout.pipe(out);
-    child.on("close", (c) => {
-      code = c;
-      closed = true;
-      settle();
-    });
-    out.on("error", fail);
-    out.on("finish", () => {
-      finished = true;
-      settle();
-    });
-  });
+async function lockedDbToTemp(ref: string): Promise<string> {
+  const lock = readLockAtRef(ref);
+  const tmp = path.join(os.tmpdir(), `tthol-old-${process.pid}.sqlite`);
+  console.log(`下載舊版 DB ${lock.tag}（${ref}:db.lock.json）…`);
+  await downloadLocked(lock, tmp);
+  return tmp;
 }
 
 // 真 client：唯一碰 SDK 的地方。金鑰由 SDK 自 process.env.ANTHROPIC_API_KEY 讀取，
@@ -230,11 +198,11 @@ async function main() {
     oldPath = args.from;
   } else {
     try {
-      oldPath = await gitBlobToTemp(args.from);
+      oldPath = await lockedDbToTemp(args.from);
       cleanup = oldPath;
     } catch (e) {
       console.error(String(e));
-      console.error(`取不到舊 DB。若 HEAD 尚無 ${DB_FILE}，請用 --from <舊檔路徑>。`);
+      console.error("取不到舊 DB。若該 ref 尚無 db.lock.json，請用 --from <舊檔路徑>。");
       process.exit(1);
     }
   }
@@ -313,7 +281,8 @@ async function main() {
   }
   console.log(`\n已寫入 ${path.relative(PROJECT_ROOT, outFile)}`);
   console.log("請 review 內容（可手改 note），再：");
-  console.log(`  git add ${DB_FILE} src/data/changelog/*.json && git commit`);
+  console.log("  npm run db:publish");
+  console.log("  git add db.lock.json src/data/changelog/*.json && git commit");
 }
 
 main().catch((err) => {

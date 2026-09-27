@@ -29,8 +29,8 @@ RUN addgroup --system --gid 1001 nodejs \
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-# Next standalone tracing may include the build input database; the builder
-# removes it so production must provide the read-only runtime mount.
+# tthol.sqlite is not in the build context (.dockerignore); production provides
+# it as a read-only runtime mount. The builder's rm above is a safety net.
 
 USER nextjs
 EXPOSE 3000
