@@ -21,7 +21,13 @@ import {
   Maximize2Icon,
   Minimize2Icon,
   RouteIcon,
+  ShieldIcon,
+  SparklesIcon,
   SplitIcon,
+  SwordIcon,
+  TargetIcon,
+  UsersIcon,
+  ZapIcon,
 } from "lucide-react";
 import {
   cropFrame,
@@ -35,6 +41,9 @@ import {
   type StepMark,
   type StepRoute,
   type StepRoutePoint,
+  type StepRow,
+  type StepSkill,
+  type StepSkillKind,
   type StepWalk,
 } from "@/lib/guide-steps";
 import { GRID_LAYOUT } from "@/lib/solvers/forest-matrix";
@@ -1272,6 +1281,95 @@ function RouteMap({ data, route, i }: { data: StepData; route: StepRoute; i: num
 
 /* ── 目標表格 ── */
 
+const SKILL_KIND: Record<StepSkillKind, { label: string; icon: typeof SwordIcon; attack: boolean }> = {
+  melee: { label: "近身", icon: SwordIcon, attack: true },
+  ranged: { label: "遠距", icon: TargetIcon, attack: true },
+  other: { label: "其他", icon: SparklesIcon, attack: true },
+  self: { label: "自身增益", icon: ShieldIcon, attack: false },
+  "group-buff": { label: "隊友增益", icon: UsersIcon, attack: false },
+};
+
+const kindLabel = (k: StepSkill) =>
+  k.kind === "ranged" && k.range != null ? `遠距・射程 ${k.range}` : SKILL_KIND[k.kind].label;
+
+function SkillChip({ skill }: { skill: StepSkill }) {
+  const kind = SKILL_KIND[skill.kind];
+  const Icon = kind.icon;
+  const status = kind.attack ? skill.extraStatus : null;
+  return (
+    <li
+      className={cn(
+        "bg-card inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-md border border-border/60 pl-2 text-[13px]",
+        skill.help ? "pr-1" : "pr-2",
+      )}
+    >
+      <Icon
+        className={cn("size-3.5 shrink-0", kind.attack ? "text-(--stop-ink)" : "text-muted-foreground")}
+        aria-hidden
+      />
+      <Link
+        href={`/skills/${skill.magicId}`}
+        className="hover:text-primary font-medium underline-offset-4 hover:underline"
+      >
+        {skill.name}
+      </Link>
+      <span className="text-muted-foreground font-mono text-[11.5px] tabular-nums">Lv {skill.level}</span>
+      <span className="text-muted-foreground">{kindLabel(skill)}</span>
+      {skill.multiplier != null && (
+        <span className="font-semibold text-(--stop-ink) tabular-nums">約 {skill.multiplier} 倍</span>
+      )}
+      {status && <span className="text-destructive">附帶{status}</span>}
+      {skill.help ? (
+        <Popover>
+          <PopoverTrigger
+            aria-label={`${skill.name} 說明`}
+            className="text-muted-foreground hover:bg-muted hover:text-foreground grid size-5 place-items-center rounded-sm outline-hidden focus-visible:ring-3 focus-visible:ring-ring/60"
+          >
+            <InfoIcon className="size-3.5" aria-hidden />
+          </PopoverTrigger>
+          <PopoverContent side="top" className="w-72 max-w-[calc(100vw-2rem)] gap-1.5">
+            <p className="font-heading font-semibold">
+              {skill.name}
+              <span className="text-muted-foreground ml-1.5 font-mono text-xs font-normal">Lv {skill.level}</span>
+            </p>
+            <p className="text-muted-foreground text-[13px] leading-relaxed whitespace-normal">{skill.help}</p>
+            <Link
+              href={`/skills/${skill.magicId}`}
+              className="text-primary inline-flex items-center gap-0.5 text-xs font-medium underline-offset-4 hover:underline"
+            >
+              技能資料
+              <ChevronRightIcon className="size-3.5" aria-hidden />
+            </Link>
+          </PopoverContent>
+        </Popover>
+      ) : null}
+    </li>
+  );
+}
+
+/** 怪物列下方的子列：攻擊附帶狀態＋會放的技能（攻擊技排前面）。 */
+function RowSkills({ row }: { row: StepRow }) {
+  const skills = [...row.skills].sort((a, b) => +SKILL_KIND[b.kind].attack - +SKILL_KIND[a.kind].attack);
+  return (
+    // 表格比外框寬時會橫向捲動：sticky + 外框寬度（cqw）讓技能在看得到的範圍內換行，不會被推到畫面外。
+    <div className="sticky left-3 flex w-[calc(100cqw-1.5rem)] flex-wrap items-center gap-1.5 @lg:pl-11">
+      {row.onHit && (
+        <Badge variant="destructive" className="h-7 rounded-md px-2 text-[13px] font-medium">
+          <ZapIcon aria-hidden />
+          攻擊附帶 {row.onHit.name} {row.onHit.prob}%
+        </Badge>
+      )}
+      {skills.length > 0 && (
+        <ul aria-label={`${row.name} 的技能`} className="contents">
+          {skills.map((k) => (
+            <SkillChip key={`${k.magicId}-${k.level}`} skill={k} />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 /** 本步驟目標：編號 / 名稱 / 等級 / 血量 / 防禦 / 護勁 / 要求命中；列與地圖標記互相高亮。 */
 export function StepTargets() {
   const s = useStep();
@@ -1292,7 +1390,7 @@ export function StepTargets() {
           </span>
         </p>
       )}
-      <div className="bg-card overflow-hidden rounded-xl border">
+      <div className="bg-card @container overflow-hidden rounded-xl border">
         <Table className="min-w-[700px]">
           <TableHeader className="bg-muted/60 [&_th]:font-heading">
             <TableRow className="hover:bg-transparent">
@@ -1311,76 +1409,97 @@ export function StepTargets() {
             {data.groups.flatMap((g) => {
               const on = lit(s) === g.key;
               const onMap = g.map && g.points.length > 0;
-              return g.rows.map((r, j) => (
-                <TableRow
-                  key={`${g.key}-${r.id}`}
-                  data-group={g.key}
-                  data-active={on || undefined}
-                  onMouseEnter={() => s.setHover(g.key)}
-                  onMouseLeave={() => s.setHover(null)}
-                  onClick={() => s.setActive(toggle(s.active, g.key))}
-                  style={mk(g.color)}
-                  className="cursor-pointer data-[active]:bg-(--mk)/10 motion-safe:transition-colors"
-                >
-                  <TableCell className="pl-2">
-                    {j === 0 && (
-                      <button
-                        type="button"
-                        disabled={!onMap}
-                        aria-pressed={s.active === g.key}
-                        aria-label={`在地圖上標出 ${g.color} 號`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          s.setActive(toggle(s.active, g.key));
-                        }}
-                        onFocus={() => s.setHover(g.key)}
-                        onBlur={() => s.setHover(null)}
-                        className="grid size-8 place-items-center rounded-full outline-hidden focus-visible:ring-3 focus-visible:ring-ring/60 disabled:cursor-default"
-                      >
-                        <span
-                          className={cn(
-                            "grid size-[22px] place-items-center rounded-full bg-(--mk) text-[11px] font-bold text-white tabular-nums motion-safe:transition-shadow",
-                            on && "shadow-[0_0_0_2px_var(--card),0_0_0_4px_var(--mk)]",
-                          )}
-                        >
-                          {g.color}
-                        </span>
-                      </button>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span className="flex items-center gap-2.5">
-                      <EntityPortrait image={r.image} alt={r.name} size="sm" className="size-8" />
-                      <Link
-                        href={`/monsters/${r.id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="hover:text-primary font-medium underline-offset-4 hover:underline"
-                      >
-                        {r.name}
-                      </Link>
-                      {g.tag && (
-                        <Badge variant="outline" className="font-normal">
-                          {g.tag}
-                        </Badge>
-                      )}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">Lv {r.level}</TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">{fmt(r.hp)}</TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">{fmt(r.def)}</TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">{fmt(r.mdef)}</TableCell>
-                  <TableCell
+              const rowProps = {
+                "data-group": g.key,
+                "data-active": on || undefined,
+                onMouseEnter: () => s.setHover(g.key),
+                onMouseLeave: () => s.setHover(null),
+                style: mk(g.color),
+              };
+              return g.rows.flatMap((r, j) => {
+                const extra = r.skills.length > 0 || r.onHit != null;
+                return [
+                  <TableRow
+                    key={`${g.key}-${r.id}`}
+                    {...rowProps}
+                    onClick={() => s.setActive(toggle(s.active, g.key))}
                     className={cn(
-                      "pr-4 text-right font-mono tabular-nums",
-                      r.dodge != null && r.dodge === top && "font-semibold text-(--stop-ink)",
+                      "cursor-pointer data-[active]:bg-(--mk)/10 motion-safe:transition-colors",
+                      extra && "border-b-0",
                     )}
                   >
-                    {r.dodge == null ? "—" : `＞${fmt(r.dodge)}`}
-                  </TableCell>
-                  <TableCell>{formatStatusResistance(r.weakenRes)}</TableCell>
-                  <TableCell className="pr-4">{formatStatusResistance(r.bleedRes)}</TableCell>
-                </TableRow>
-              ));
+                    <TableCell className="pl-2">
+                      {j === 0 && (
+                        <button
+                          type="button"
+                          disabled={!onMap}
+                          aria-pressed={s.active === g.key}
+                          aria-label={`在地圖上標出 ${g.color} 號`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            s.setActive(toggle(s.active, g.key));
+                          }}
+                          onFocus={() => s.setHover(g.key)}
+                          onBlur={() => s.setHover(null)}
+                          className="grid size-8 place-items-center rounded-full outline-hidden focus-visible:ring-3 focus-visible:ring-ring/60 disabled:cursor-default"
+                        >
+                          <span
+                            className={cn(
+                              "grid size-[22px] place-items-center rounded-full bg-(--mk) text-[11px] font-bold text-white tabular-nums motion-safe:transition-shadow",
+                              on && "shadow-[0_0_0_2px_var(--card),0_0_0_4px_var(--mk)]",
+                            )}
+                          >
+                            {g.color}
+                          </span>
+                        </button>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span className="flex items-center gap-2.5">
+                        <EntityPortrait image={r.image} alt={r.name} size="sm" className="size-8" />
+                        <Link
+                          href={`/monsters/${r.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="hover:text-primary font-medium underline-offset-4 hover:underline"
+                        >
+                          {r.name}
+                        </Link>
+                        {g.tag && (
+                          <Badge variant="outline" className="font-normal">
+                            {g.tag}
+                          </Badge>
+                        )}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums">Lv {r.level}</TableCell>
+                    <TableCell className="text-right font-mono tabular-nums">{fmt(r.hp)}</TableCell>
+                    <TableCell className="text-right font-mono tabular-nums">{fmt(r.def)}</TableCell>
+                    <TableCell className="text-right font-mono tabular-nums">{fmt(r.mdef)}</TableCell>
+                    <TableCell
+                      className={cn(
+                        "pr-4 text-right font-mono tabular-nums",
+                        r.dodge != null && r.dodge === top && "font-semibold text-(--stop-ink)",
+                      )}
+                    >
+                      {r.dodge == null ? "—" : `＞${fmt(r.dodge)}`}
+                    </TableCell>
+                    <TableCell>{formatStatusResistance(r.weakenRes)}</TableCell>
+                    <TableCell className="pr-4">{formatStatusResistance(r.bleedRes)}</TableCell>
+                  </TableRow>,
+                  extra && (
+                    <TableRow
+                      key={`${g.key}-${r.id}-skills`}
+                      {...rowProps}
+                      data-skills={r.id}
+                      className="data-[active]:bg-(--mk)/10 motion-safe:transition-colors"
+                    >
+                      <TableCell colSpan={9} className="px-3 pt-0 pb-3 whitespace-normal">
+                        <RowSkills row={r} />
+                      </TableCell>
+                    </TableRow>
+                  ),
+                ];
+              });
             })}
           </TableBody>
         </Table>
