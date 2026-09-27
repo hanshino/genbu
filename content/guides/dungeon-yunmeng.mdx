@@ -1,0 +1,109 @@
+---
+title: "雲夢湖底深淵"
+slug: dungeon-yunmeng
+stage: topic
+category: dungeon
+levelMin: 180
+levelMax: 180
+order: 14
+author: 罕
+updated: 2026-09-26
+unlocks: []
+summary: "Lv180 五人每日限時副本：六層各打珍珠貝撿符節、打滿指定隻數開傳送陣，第七層清光水生魚人與龍蝦王，進寶庫拿雲夢寶箱。"
+---
+
+## 通關可以拿到什麼
+
+<Mission id={18935}>雲夢湖底深淵</Mission>共七層。前六層每層湊齊一顆符節並開啟傳送陣，第七層打倒<Monster id={11352}>龍蝦王</Monster>後進寶庫，打開湖底寶箱就能拿到<Item id={34196}>雲夢寶箱</Item>，本趟完成。寶箱開出什麼請看道具頁。
+
+## 進本前先確認
+
+到<Map id={21}>雲夢湖東</Map>找**霈溪**接任務。**Lv180 以上、五人組隊、每天一次。**
+
+接任務時會拿到<Item id={34197}>泡泡頭罩</Item>，**限時 2 小時**。頭罩失效就會被送到湖底出口，這趟算失敗；失效後再找霈溪可以重新挑戰。中途被傳出時，只要頭罩還有效，找霈溪就能回到原本的樓層。
+
+<Checklist storageKey="dungeon-yunmeng-prep">
+  <Check label="全員 Lv180，組好五人隊">全程都要在隊伍裡，脫隊會被傳出副本。</Check>
+  <Check label="背包留一格、剩餘負重至少五">接任務時會檢查。</Check>
+  <Check label="泡泡頭罩在身上">限時 2 小時，失效就會被送出。</Check>
+</Checklist>
+
+## 每層怎麼過
+
+前六層玩法相同：
+
+1. 打<Monster id={11341}>暗夜珍珠貝</Monster>，有機率掉出該層的**雲夢符節**，越下層越難掉。**每個人都要有自己的一顆**，已經拿到的人不會再掉。
+2. 打該層的另一種怪，打滿指定隻數後會出現「傳送陣已開始運作」的提示，這種怪也會停止重生。
+3. 帶著符節走到傳送陣，符節會被收走，傳到下一層。沒有符節或隻數未滿時走上去，會提示無法通過。
+
+隻數是全隊一起算的，符節卻要每人一顆，所以珍珠貝要打到五個人都拿到為止。兩件事可以分頭進行。表格的要求命中是**大於怪物閃躲**。小怪依抗性推算都能卸冑、中毒；能施加不代表一定成功。
+
+<DungeonStep n={1} title="第一層：水生貝殼" stage={1725} crop={[0,2300,2580,4300]} groups={[{ids:[11341],tag:"掉符節"},{ids:[11342],tag:"打滿 20 隻"}]} routes={[{label:"第一層",points:[["landing",480,2856],["portal",2204,4004]]}]}>
+
+進場的落點在島的左上角，傳送陣在右下角。打珍珠貝撿符節，<Monster id={11342}>水生貝殼</Monster>打滿 20 隻就會開啟傳送陣。水生貝殼防禦較高，交給內力角色；珍珠貝防禦、護勁一樣，內力、外功都能打。
+
+<StepMap />
+<StepTargets />
+<StepDone>有符節、貝殼打滿 20 隻 → 走右下角傳送陣到第二層。</StepDone>
+</DungeonStep>
+
+<DungeonStep n={2} title="第二層：水生貝殼與寄居蟹" stage={1725} crop={[3020,2300,5600,4300]} groups={[{ids:[11341],tag:"掉符節"},{ids:[11342,11343],tag:"合計 20 隻"}]} routes={[{label:"第二層",points:[["landing",3880,3096],["portal",3404,3884]]}]}>
+
+<Monster id={11342}>水生貝殼</Monster>和<Monster id={11343}>水生寄居蟹</Monster>合計打滿 20 隻就會開啟傳送陣，傳送陣在落點左下方。兩種怪都是防禦較高，內力角色較有利。
+
+<StepMap />
+<StepTargets />
+<StepDone>有符節、打滿 20 隻 → 走傳送陣到第三層。</StepDone>
+</DungeonStep>
+
+<DungeonStep n={3} title="第三層：水生青蛙與蓮妖" stage={1725} crop={[3180,4620,5600,6380]} groups={[{ids:[11341],tag:"掉符節"},{ids:[11344,11345],tag:"合計 25 隻"}]} routes={[{label:"第三層",points:[["landing",4920,5096],["portal",4524,5724]]}]}>
+
+<Monster id={11344}>水生青蛙</Monster>和<Monster id={11345}>水生蓮妖</Monster>合計打滿 25 隻就會開啟傳送陣。青蛙的護勁較高，交給外功角色；蓮妖的防禦較高，交給內力角色。
+
+<StepMap />
+<StepTargets />
+<StepDone>有符節、打滿 25 隻 → 走傳送陣到第四層。</StepDone>
+</DungeonStep>
+
+<DungeonStep n={4} title="第四層：水生螃蟹與鰻魚" stage={1725} crop={[3100,0,5600,2300]} groups={[{ids:[11341],tag:"掉符節"},{ids:[11346,11347,11348],tag:"合計 30 隻"}]} routes={[{label:"第四層",points:[["landing",4440,1736],["portal",4404,164]]}]}>
+
+<Monster id={11346}>水生螃蟹</Monster>和<Monster id={11348}>水生鰻魚</Monster>合計打滿 30 隻就會開啟傳送陣，傳送陣在島的最北端。螃蟹的防禦較高，交給內力角色；鰻魚的護勁較高，交給外功角色。
+
+<StepMap />
+<StepTargets />
+<StepDone>有符節、打滿 30 隻 → 走北端傳送陣到第五層。</StepDone>
+</DungeonStep>
+
+<DungeonStep n={5} title="第五層：水生烏賊與毒蛇" stage={1725} crop={[0,0,2580,2260]} groups={[{ids:[11341],tag:"掉符節"},{ids:[11349,11350],tag:"合計 35 隻"}]} routes={[{label:"第五層",points:[["landing",2000,1536],["portal",764,1484]]}]}>
+
+<Monster id={11349}>水生烏賊</Monster>和<Monster id={11350}>水生毒蛇</Monster>合計打滿 35 隻就會開啟傳送陣，傳送陣在落點西邊。兩種怪都是護勁較高，外功角色較有利。
+
+<StepMap />
+<StepTargets />
+<StepDone>有符節、打滿 35 隻 → 走傳送陣到第六層。</StepDone>
+</DungeonStep>
+
+<DungeonStep n={6} title="第六層：水生魚人" stage={1725} crop={[0,4700,2580,6180]} groups={[{ids:[11341],tag:"掉符節"},{ids:[11351],tag:"打滿 40 隻"}]} routes={[{label:"第六層",points:[["landing",2160,5696],["portal",1164,5044]]}]}>
+
+<Monster id={11351}>水生魚人</Monster>打滿 40 隻就會開啟傳送陣，傳送陣在落點西北方。魚人的護勁明顯較高，交給外功角色。這一層的符節最難掉，五個人都拿到要花不少時間，留意頭罩剩餘時間。
+
+<StepMap />
+<StepTargets />
+
+<Warning>這顆符節走傳送陣時不會被收走，**進第七層後要一直帶在身上**，身上沒有符節會被送出副本。</Warning>
+
+<StepDone>有符節、魚人打滿 40 隻 → 走傳送陣到第七層。</StepDone>
+</DungeonStep>
+
+<DungeonStep n={7} title="第七層：龍蝦王與寶庫" stage={1725} crop={[140,6540,4260,7800]} groups={[{ids:[11351],tag:"打滿 40 隻"},{ids:[11352],tag:"王"}]} routes={[{label:"第七層",points:[["landing",3887,7480],["boss",2171,7206],["portal",1484,7284]]}]}>
+
+先打<Monster id={11351}>水生魚人</Monster>，打滿 40 隻後<Monster id={11352}>龍蝦王</Monster>就會出現，魚人也不再重生。**先把剩下的魚人清光再打龍蝦王**：場上還有魚人時打倒龍蝦王，牠會重新出現。
+
+龍蝦王血量遠高於前面的怪，防禦、護勁相同，內力、外功都能輸出；**不能卸冑、不能中毒**，全隊集中火力。
+
+魚人和龍蝦王都清光後，走左側的傳送陣進寶庫。進寶庫前系統會檢查**背包至少一格、剩餘負重至少十五**，不夠就進不去。打開湖底寶箱就能拿到雲夢寶箱，泡泡頭罩會被收回，並被送到湖底出口，走上出口確認即可離開。
+
+<StepMap />
+<StepTargets />
+<StepDone>魚人與龍蝦王清光 → 走左側傳送陣進寶庫，開箱後結束。</StepDone>
+</DungeonStep>

@@ -20,9 +20,9 @@ import type { StepGroupInput, StepMarkInput, StepInput } from "../guide-steps";
 const CONTENT_DIR = path.join(process.cwd(), "content", "guides");
 
 describe("getGuides", () => {
-  it("returns all 13 drafted guides sorted by order", () => {
+  it("returns all 14 drafted guides sorted by order", () => {
     const guides = getGuides();
-    expect(guides.length).toBe(13);
+    expect(guides.length).toBe(14);
     for (let i = 1; i < guides.length; i++) {
       expect(guides[i].order).toBeGreaterThan(guides[i - 1].order);
     }
@@ -72,6 +72,8 @@ describe("getGuides", () => {
     expect(bySlug.get("dungeon-liemo")?.order).toBe(12);
     expect(bySlug.get("dungeon-jiyuan")?.order).toBe(13);
     expect(bySlug.get("dungeon-jiyuan")?.stage).toBe("topic");
+    expect(bySlug.get("dungeon-yunmeng")?.order).toBe(14);
+    expect(bySlug.get("dungeon-yunmeng")?.stage).toBe("topic");
   });
 });
 
@@ -432,6 +434,7 @@ const DUNGEON_SLUGS = [
   "dungeon-mozu",
   "dungeon-liemo",
   "dungeon-jiyuan",
+  "dungeon-yunmeng",
 ];
 
 function readDungeonBody(slug: string): string {
