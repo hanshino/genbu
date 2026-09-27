@@ -53,5 +53,9 @@ next-env.d.ts
 # playwright-mcp scratch
 .playwright-mcp/
 
+# game database: stored as a GitHub Release asset, pinned by db.lock.json (npm run db:pull)
+/tthol.sqlite
+/tthol.sqlite.download
+
 # dev screenshots at repo root
 /*.png

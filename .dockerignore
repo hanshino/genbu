@@ -1,4 +1,6 @@
 node_modules
+tthol.sqlite
+tthol.sqlite.download
 .next
 .git
 .gitignore

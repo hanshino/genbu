@@ -23,6 +23,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - uses: actions/cache@v4
+        with:
+          path: tthol.sqlite
+          key: tthol-db-${{ hashFiles('db.lock.json') }}
+      - run: npm run db:pull
       - run: npm test
       - uses: docker/setup-buildx-action@v3
         if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main')

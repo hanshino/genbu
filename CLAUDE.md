@@ -24,7 +24,8 @@ genbu/
 │   ├── lib/          # Utilities, DB access, types
 │   └── configs/      # Weighted formulas, constants
 ├── public/           # Static assets
-├── tthol.sqlite      # Game database (read-only; runtime mount, not image content)
+├── tthol.sqlite      # Game database (read-only; not in git — `npm run db:pull`)
+├── db.lock.json      # Pins which GitHub Release holds the DB for this commit
 ├── Dockerfile
 └── CLAUDE.md
 ```
@@ -40,6 +41,7 @@ npm run lint      # ESLint
 ## Database
 
 - `tthol.sqlite` is read-only game data, do NOT modify it
+- It is not tracked by git: the file lives as a GitHub Release asset (`db-YYYY-MM-DD` prerelease) and `db.lock.json` pins tag + sha256. Fresh clone → `npm run db:pull`. New DB → `npm run changelog -- <version>`, `npm run db:publish`, then commit `db.lock.json` + changelog JSON (publish before push, or CI can't download it)
 - Access via better-sqlite3 in Server Components / Route Handlers only
 - Key tables: items (13k), magic (6k), item_rand (5k), npc (5k), strong_formula (4k), monsters (3k), hero (84), hero_connect (75)
 

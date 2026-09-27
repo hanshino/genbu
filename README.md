@@ -31,9 +31,20 @@ LINE bot 版本：[tthol-line-bot](https://github.com/hanshino/tthol-line-bot)
 
 ```bash
 npm install
+npm run db:pull       # 依 db.lock.json 從 GitHub Release 下載 tthol.sqlite
 npm run sync:images   # 從 Google Sheet 抓裝備圖到 public/equipment
 npm run dev
 ```
+
+`tthol.sqlite` 沒進 git，實體檔放在 GitHub Release（`db-日期` 的 pre-release），repo 只用 `db.lock.json` 記錄這個 commit 對應哪一版。
+
+### 更新遊戲資料庫
+
+1. 把新的 `tthol.sqlite` 覆蓋到專案根目錄。
+2. `npm run changelog -- <版本號>`：自動下載目前發布中的舊版比對，產出 `src/data/changelog/*.json`。
+3. `npm run db:publish`：上傳新 DB 成新的 Release，並改寫 `db.lock.json`。**要在 push 前做**，不然 CI 下載不到。
+4. `git add db.lock.json src/data/changelog/*.json`，commit、push。
+5. 線上主機換 DB（merge 不會自動換）：`curl -fL -o /home/hanshino/data/tthol.sqlite <db:publish 印出的網址>`，再重啟 container。
 
 裝備圖沒進 repo，第一次 clone 要先跑 `sync:images` 才看得到圖。之後遊戲出新裝再跑一次就更新。
 

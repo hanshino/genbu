@@ -129,7 +129,7 @@ frontmatter（category: dungeon, stage: topic）
 
 `npx vitest run`、`npm run typecheck`、`npm run lint`、`npm run build` 都要通過，而且 `package-lock.json` 不能有變動（lockfile 不同步會讓正式站 build 失敗，整站掛掉）。之後開 dev server，用 headless Chrome 截 1440 和 390 兩種寬度的整頁截圖，交給 observer 檢查地圖、標記和版面。
 
-注意：正式站的 DB 是 runtime mount，上線前要確認裡面有這篇用到的 stage 地圖圖片和座標，缺資料時頁面只會顯示表格。`tthol.sqlite` 雖然有進 git（更新 DB 要跟攻略一起 commit），但 merge 不會更新線上的 DB，要手動換掉。檔案已超過 50 MB，GitHub 會警告；再變大要考慮 Git LFS 或移出 git。
+注意：正式站的 DB 是 runtime mount，上線前要確認裡面有這篇用到的 stage 地圖圖片和座標，缺資料時頁面只會顯示表格。`tthol.sqlite` 不進 git：更新 DB 時跑 `npm run db:publish`，把改過的 `db.lock.json` 跟攻略一起 commit。merge 不會更新線上的 DB，要照 README「更新遊戲資料庫」手動換掉。
 
 ## 查證紀律
 

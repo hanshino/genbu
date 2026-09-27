@@ -13,7 +13,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "changelog": "node --env-file-if-exists=.env --import tsx scripts/db-changelog.ts",
-    "sync:images": "node scripts/sync-equipment-images.mjs"
+    "sync:images": "node scripts/sync-equipment-images.mjs",
+    "db:pull": "node scripts/db-release.mjs pull",
+    "db:publish": "node scripts/db-release.mjs publish"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.113.0",
