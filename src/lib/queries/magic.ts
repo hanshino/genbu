@@ -1,6 +1,8 @@
 import { getDb } from "@/lib/db";
 import { buildOrderBy, type SortDir } from "@/lib/sort";
+import { getStatusById } from "@/lib/queries/status";
 import type { Magic, MagicSummary } from "@/lib/types/magic";
+import type { StepSkill, StepSkillKind } from "@/lib/guide-steps";
 
 export interface GetSkillsParams {
   search?: string;
@@ -273,4 +275,88 @@ export function getSkillHitInfoBatch(
       return { id: p.id, name: p.name, firstLevel: p.firstLevel, minP1: r.minP1, maxP1: r.maxP1 };
     })
     .filter((x): x is SkillHitInfo => x !== null);
+}
+
+// 迷宮攻略怪物技能：skill_code = magic.id*100 + level（見 npc.skill1..4）。約 1.3%
+// 的代碼是孤兒參照（magic 表沒有對應 (id,level) 列，遊戲端資料本身如此），呼叫端
+// 用「查無就跳過」處理，不視為錯誤。抓「約N倍攻擊力」的倍率供表格顯示，抓不到時
+// 為 null（許多技能的 help 文字沒有這個描述，例如純輔助技能）。
+const MULTIPLIER_RE = /約([\d.]+)倍攻擊力/;
+
+// target 分類：見 guide-steps.ts 的 StepSkillKind 說明。
+// 近戰／遠程的分界取 range<=2（DB 實測敵方技能 range 幾乎都落在 1~3 或 6~10 兩群，
+// 中位數 2 是常見的近戰上限，見 tthol_data 對 hit_range 的抽樣）。
+function classifySkillKind(target: string | null, range: number | null): StepSkillKind {
+  if (target === "TARGET_SELF") return "self";
+  if (target === "TARGET_GROUP" || target === "TARGET_ALLY") return "group-buff";
+  if (target === "TARGET_ENEMYTARGET" || target === "TARGET_ENEMY" || target === "TARGET_ENEMYEX") {
+    if (range == null) return "other";
+    return range <= 2 ? "melee" : "ranged";
+  }
+  return "other";
+}
+
+/**
+ * 一批 skill_code（= magic.id*100 + level）解出的技能清單，用一次 `(id,level) IN (VALUES…)`
+ * 查完 magic，再批次查 status 補 extraStatus 名稱（同一個 extra_status 可能被多個技能共用，
+ * 用 Map 去重只查一次）。查無對應 magic 列的代碼（孤兒參照）直接跳過，不拋錯。
+ * 呼叫端（getNpcCombatStats）負責把結果依 npc 分組、依 skill1..4 原始順序排列、去重。
+ */
+export function getSkillsByCodesBatch(codes: readonly number[]): Map<number, StepSkill> {
+  const result = new Map<number, StepSkill>();
+  const uniqueCodes = [...new Set(codes)];
+  if (uniqueCodes.length === 0) return result;
+
+  const db = getDb();
+  const decoded = uniqueCodes.map((code) => ({
+    code,
+    magicId: Math.floor(code / 100),
+    level: code % 100,
+  }));
+  const placeholders = decoded.map(() => "(?,?)").join(",");
+  const args: number[] = [];
+  for (const d of decoded) args.push(d.magicId, d.level);
+
+  const rows = db
+    .prepare(
+      `SELECT id, level, name, target, range, help, extra_status, time
+       FROM magic
+       WHERE (id, level) IN (VALUES ${placeholders})`,
+    )
+    .all(...args) as Array<{
+    id: number;
+    level: number;
+    name: string;
+    target: string | null;
+    range: number | null;
+    help: string | null;
+    extra_status: number | null;
+    time: number | null;
+  }>;
+
+  const byKey = new Map(rows.map((r) => [`${r.id}:${r.level}`, r]));
+
+  // extra_status 批次查一次，避免每個技能各自打一次 status 表。
+  const statusIds = [...new Set(rows.map((r) => r.extra_status).filter((s): s is number => s != null))];
+  const statusNameById = new Map<number, string | null>();
+  for (const sid of statusIds) statusNameById.set(sid, getStatusById(sid)?.name ?? null);
+
+  for (const d of decoded) {
+    const row = byKey.get(`${d.magicId}:${d.level}`);
+    if (!row) continue; // 孤兒參照：magic 沒有這一列，跳過
+    const multiplierMatch = row.help?.match(MULTIPLIER_RE);
+    result.set(d.code, {
+      magicId: row.id,
+      level: row.level,
+      name: row.name,
+      target: row.target,
+      range: row.range,
+      kind: classifySkillKind(row.target, row.range),
+      multiplier: multiplierMatch ? Number(multiplierMatch[1]) : null,
+      help: row.help,
+      extraStatus: row.extra_status != null ? (statusNameById.get(row.extra_status) ?? null) : null,
+      time: row.time,
+    });
+  }
+  return result;
 }

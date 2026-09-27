@@ -99,6 +99,43 @@ export interface StepWalk {
   landing: Point | null;
 }
 
+/**
+ * 技能施放對象分類（給表格挑打法標籤用，非官方分類）：
+ * - "self"：只加在自己身上（TARGET_SELF）。
+ * - "group-buff"：對全隊生效（TARGET_GROUP／TARGET_ALLY），不是敵方技能。
+ * - "melee"：對敵方單體或範圍，施放距離 ≤ 2（TARGET_ENEMYTARGET／TARGET_ENEMY／TARGET_ENEMYEX）。
+ * - "ranged"：同上但距離 > 2。
+ * - "other"：其餘 target（TARGET_PASSIVE／TARGET_SIEGE_GROUND／TARGET_LOVE 等罕見值，或
+ *   敵方技能缺 range 資料時的保底），不特別分類。
+ */
+export type StepSkillKind = "self" | "group-buff" | "melee" | "ranged" | "other";
+
+export interface StepSkill {
+  magicId: number;
+  level: number;
+  name: string;
+  /** magic.target 原始字串，例如 TARGET_SELF、TARGET_ENEMYTARGET。 */
+  target: string | null;
+  /** magic.range，查無時為 null。 */
+  range: number | null;
+  kind: StepSkillKind;
+  /** 從 magic.help 內文抓「約N倍攻擊力」的倍率；抓不到時為 null。 */
+  multiplier: number | null;
+  /** magic.help 原始說明文字。 */
+  help: string | null;
+  /** magic.extra_status 對應的狀態名稱；查無（孤兒參照）或未設定時為 null。 */
+  extraStatus: string | null;
+  /** magic.time（毫秒），查無時為 null。 */
+  time: number | null;
+}
+
+export interface StepOnHit {
+  /** npc.extra_status 對應的狀態名稱。 */
+  name: string;
+  /** npc.status_prob（機率，通常是百分比整數）。 */
+  prob: number;
+}
+
 export interface StepRow {
   id: number;
   name: string;
@@ -110,6 +147,10 @@ export interface StepRow {
   weakenRes: number | null;
   bleedRes: number | null;
   image: EntityImage | null;
+  /** npc.skill1..4 解出的技能，已去重、跳過孤兒代碼。 */
+  skills: StepSkill[];
+  /** npc.extra_status／status_prob 換算的攻擊附加狀態；缺值或孤兒參照時為 null。 */
+  onHit: StepOnHit | null;
   /** Number of identical-stat ids merged into this row. */
   count: number;
 }
@@ -277,6 +318,8 @@ export interface StepStatInput {
   weakenRes: number | null;
   bleedRes: number | null;
   image: EntityImage | null;
+  skills: StepSkill[];
+  onHit: StepOnHit | null;
 }
 
 export interface BuildStepDataInput {
@@ -297,8 +340,9 @@ export interface BuildStepDataInput {
  * 組成 StepData。不打 DB，方便測試；getStepData（server）負責查資料後呼叫這裡。
  *
  * - 只保留落在 crop 內的座標（crop=null 時不限制）。
- * - 同一組內，name/level/hp/def/mdef/dodge/weakenRes/bleedRes 完全相同的 id 合併成一列（count 累加）；
- *   不同（例如 ▲精英 vs 一般）各自成列，依 ids 出現順序排列。
+ * - 同一組內，name/level/hp/def/mdef/dodge/weakenRes/bleedRes/skills/onHit 完全相同的 id
+ *   合併成一列（count 累加）；不同（例如 ▲精英 vs 一般，或技能組合不同）各自成列，
+ *   依 ids 出現順序排列。
  * - color = 這個 group 在輸入陣列中的順序（1-based）。
  * - hit = 所有 group rows 中最大的 dodge（忽略 null），names 為並列最大值的怪物名（去重）。
  * - missing：查無 DB 記錄，或（需要畫在地圖上時）套用 crop 後沒有任何座標點的 id。
@@ -334,6 +378,8 @@ export function buildStepData(input: BuildStepDataInput): StepData {
         stat.dodge,
         stat.weakenRes,
         stat.bleedRes,
+        stat.skills,
+        stat.onHit,
       ]);
       const existing = buckets.get(bucketKey);
       if (existing) {
@@ -350,6 +396,8 @@ export function buildStepData(input: BuildStepDataInput): StepData {
           weakenRes: stat.weakenRes,
           bleedRes: stat.bleedRes,
           image: stat.image,
+          skills: stat.skills,
+          onHit: stat.onHit,
           count: 1,
         });
       }

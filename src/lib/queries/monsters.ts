@@ -2,7 +2,9 @@ import { getDb } from "@/lib/db";
 import { buildOrderBy, type SortDir } from "@/lib/sort";
 import { MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL } from "@/lib/constants/monster-level";
 import { getNpcImageMap } from "./images";
-import type { StepStatInput } from "@/lib/guide-steps";
+import { getSkillsByCodesBatch } from "./magic";
+import { getStatusById } from "./status";
+import type { StepStatInput, StepSkill, StepOnHit } from "@/lib/guide-steps";
 import type {
   MonsterDetail,
   MonsterDropItem,
@@ -318,7 +320,10 @@ export function getAllMonsterIds(): number[] {
 /**
  * 給迷宮攻略步驟用：一批 npc id 的戰鬥數值（不限 type>0，機關/葵這類 npc 也要能查）。
  * extra_def→def、magic_def→mdef、base_dodge→dodge；查無 npc 記錄的 id 不會出現在
- * 回傳的 Map 裡（呼叫端可用 has() 判斷缺漏）。頭像用批次 getNpcImageMap 補（無 N+1）。
+ * 回傳的 Map 裡（呼叫端可用 has() 判斷缺漏）。頭像用批次 getNpcImageMap 補（無 N+1）；
+ * skill1..4 解出的技能用批次 getSkillsByCodesBatch 補（同一輪查詢裡的孤兒代碼只會
+ * 打一次 magic 表，不會每個 npc 各自查）；extra_status/status_prob 換算的攻擊附加
+ * 狀態用批次 getStatusById 查一次（同一個 status id 被多隻怪共用時不重複查）。
  */
 export function getNpcCombatStats(ids: number[]): Map<number, StepStatInput> {
   const result = new Map<number, StepStatInput>();
@@ -333,11 +338,14 @@ export function getNpcCombatStats(ids: number[]): Map<number, StepStatInput> {
               name,
               level,
               hp,
-              extra_def  AS def,
-              magic_def  AS mdef,
-              base_dodge AS dodge,
-              weaken_res AS weakenRes,
-              bleed_res  AS bleedRes
+              extra_def    AS def,
+              magic_def    AS mdef,
+              base_dodge   AS dodge,
+              weaken_res   AS weakenRes,
+              bleed_res    AS bleedRes,
+              skill1, skill2, skill3, skill4,
+              extra_status AS extraStatusId,
+              status_prob  AS statusProb
        FROM npc
        WHERE id IN (${placeholders})`,
     )
@@ -351,10 +359,48 @@ export function getNpcCombatStats(ids: number[]): Map<number, StepStatInput> {
     dodge: number | null;
     weakenRes: number | null;
     bleedRes: number | null;
+    skill1: number | null;
+    skill2: number | null;
+    skill3: number | null;
+    skill4: number | null;
+    extraStatusId: number | null;
+    statusProb: number | null;
   }>;
+
+  // 一次收集全部 npc 引用到的 skill code，批次查 magic（孤兒代碼查不到，getSkillsByCodesBatch
+  // 本身就會跳過，這裡不需要額外過濾）。
+  const allCodes = new Set<number>();
+  for (const r of rows) {
+    for (const code of [r.skill1, r.skill2, r.skill3, r.skill4]) {
+      if (code) allCodes.add(code);
+    }
+  }
+  const skillByCode = getSkillsByCodesBatch([...allCodes]);
+
+  // onHit 的狀態名稱一樣批次查一次，避免每隻怪各自打一次 status 表。
+  const onHitStatusIds = [
+    ...new Set(rows.map((r) => r.extraStatusId).filter((s): s is number => s != null && s !== 0)),
+  ];
+  const onHitNameById = new Map<number, string | null>();
+  for (const sid of onHitStatusIds) onHitNameById.set(sid, getStatusById(sid)?.name ?? null);
 
   const imageMap = getNpcImageMap(rows.map((r) => r.id));
   for (const r of rows) {
+    const skills: StepSkill[] = [];
+    const seenCodes = new Set<number>();
+    for (const code of [r.skill1, r.skill2, r.skill3, r.skill4]) {
+      if (!code || seenCodes.has(code)) continue;
+      seenCodes.add(code);
+      const skill = skillByCode.get(code);
+      if (skill) skills.push(skill);
+    }
+
+    let onHit: StepOnHit | null = null;
+    if (r.extraStatusId != null && r.extraStatusId !== 0 && r.statusProb != null && r.statusProb > 0) {
+      const name = onHitNameById.get(r.extraStatusId);
+      if (name) onHit = { name, prob: r.statusProb };
+    }
+
     result.set(r.id, {
       id: r.id,
       name: r.name,
@@ -366,6 +412,8 @@ export function getNpcCombatStats(ids: number[]): Map<number, StepStatInput> {
       weakenRes: r.weakenRes,
       bleedRes: r.bleedRes,
       image: imageMap.get(r.id) ?? null,
+      skills,
+      onHit,
     });
   }
   return result;

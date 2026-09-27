@@ -91,6 +91,8 @@ function stat(overrides: Partial<StepStatInput> & { id: number }): StepStatInput
     weakenRes: 100,
     bleedRes: 100,
     image: null,
+    skills: [],
+    onHit: null,
     ...overrides,
   };
 }

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import type { StepData } from "@/lib/guide-steps";
+import type { StepData, StepSkill } from "@/lib/guide-steps";
 import type { StageMapImage } from "@/lib/queries/maps";
 import { GRID_LAYOUT } from "@/lib/solvers/forest-matrix";
 import {
@@ -33,6 +33,8 @@ const row = (id: number, def: number, mdef: number, withImage = true) => ({
   weakenRes: 95,
   bleedRes: 100,
   image: withImage ? { url: `https://img.hanshino.dev/${id}.webp`, width: 80, height: 80 } : null,
+  skills: [],
+  onHit: null,
   count: 1,
 });
 
@@ -283,6 +285,47 @@ describe("StepTargets", () => {
     expect(within(table).getByText("高護勁")).toBeInTheDocument();
     expect(within(table).queryByText(/11034/)).toBeNull();
     expect(within(table).getAllByText("＞520")).toHaveLength(2);
+  });
+
+  it("有技能或攻擊附帶狀態時在怪物下方多一列，沒有的不多", () => {
+    const skill = (over: Partial<StepSkill>): StepSkill => ({
+      magicId: 709,
+      level: 20,
+      name: "蓮蒼掌",
+      target: "TARGET_ENEMYTARGET",
+      range: 7,
+      kind: "ranged",
+      multiplier: 26,
+      help: "遠距攻擊，約26倍攻擊力。",
+      extraStatus: null,
+      time: null,
+      ...over,
+    });
+    const boss = {
+      ...row(11402, 3300, 2750),
+      name: "飄渺生之難",
+      onHit: { name: "麻痺", prob: 5 },
+      skills: [
+        skill({ magicId: 374, level: 5, name: "激攻靈壇", target: "TARGET_GROUP", range: 1, kind: "group-buff", multiplier: null, help: null }),
+        skill({}),
+      ],
+    };
+    const { container } = renderStep({
+      ...data,
+      groups: [{ ...data.groups[0], rows: [boss] }, data.groups[1]],
+    });
+    const sub = container.querySelectorAll("tr[data-skills]");
+    expect(sub).toHaveLength(1);
+    expect(sub[0]).toHaveTextContent("攻擊附帶 麻痺 5%");
+    // 攻擊技排在增益前面
+    const items = within(screen.getByRole("list", { name: "飄渺生之難 的技能" })).getAllByRole("listitem");
+    expect(items.map((li) => li.textContent)).toEqual(["蓮蒼掌Lv 20遠距・射程 7約 26 倍", "激攻靈壇Lv 5隊友增益"]);
+    expect(within(items[0]).getByRole("link", { name: "蓮蒼掌" })).toHaveAttribute("href", "/skills/709");
+    // 說明收在按鈕裡，沒說明的不給按鈕
+    expect(within(items[1]).queryByRole("button")).toBeNull();
+    expect(screen.queryByText("遠距攻擊，約26倍攻擊力。")).toBeNull();
+    fireEvent.click(within(items[0]).getByRole("button", { name: "蓮蒼掌 說明" }));
+    expect(screen.getByText("遠距攻擊，約26倍攻擊力。")).toBeInTheDocument();
   });
 
   it("沒有頭像時用 Ghost 代替", () => {

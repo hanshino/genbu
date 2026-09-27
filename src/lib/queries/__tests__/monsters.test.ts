@@ -7,6 +7,7 @@ import {
   getDropsForMonster,
   getDistinctMonsterTypes,
   getDistinctElementals,
+  getNpcCombatStats,
 } from "../monsters";
 
 describe("parseDropItem", () => {
@@ -240,5 +241,92 @@ describe("getMonsters — sort", () => {
     expect(invalidResult.monsters.map((m) => m.id)).toEqual(
       defaultResult.monsters.map((m) => m.id),
     );
+  });
+});
+
+describe("getNpcCombatStats — skills / onHit (飄渺秘境 生之難/死之難)", () => {
+  it("11402 飄渺生之難：激攻靈壇 Lv5（group-buff）+ 霸修羅刀 Lv20（melee, ×30），onHit 麻痺 5", () => {
+    const stats = getNpcCombatStats([11402]);
+    const row = stats.get(11402);
+    expect(row).toBeDefined();
+
+    expect(row!.skills).toHaveLength(2);
+    const [buff, melee] = row!.skills;
+
+    expect(buff.magicId).toBe(374);
+    expect(buff.level).toBe(5);
+    expect(buff.name).toBe("激攻靈壇");
+    expect(buff.target).toBe("TARGET_GROUP");
+    expect(buff.kind).toBe("group-buff");
+    expect(buff.multiplier).toBeNull();
+
+    expect(melee.magicId).toBe(706);
+    expect(melee.level).toBe(20);
+    expect(melee.name).toBe("霸修羅刀");
+    expect(melee.target).toBe("TARGET_ENEMYTARGET");
+    expect(melee.range).toBe(2);
+    expect(melee.kind).toBe("melee");
+    expect(melee.multiplier).toBe(30);
+
+    expect(row!.onHit).toEqual({ name: "麻痺", prob: 5 });
+  });
+
+  it("11404 飄渺死之難：凝霜護體 Lv20（self）+ 蓮蒼掌 Lv20（ranged, range 7, ×26），onHit 麻痺 5", () => {
+    const stats = getNpcCombatStats([11404]);
+    const row = stats.get(11404);
+    expect(row).toBeDefined();
+
+    expect(row!.skills).toHaveLength(2);
+    const [selfBuff, ranged] = row!.skills;
+
+    expect(selfBuff.magicId).toBe(349);
+    expect(selfBuff.level).toBe(20);
+    expect(selfBuff.name).toBe("凝霜護體");
+    expect(selfBuff.target).toBe("TARGET_SELF");
+    expect(selfBuff.kind).toBe("self");
+
+    expect(ranged.magicId).toBe(709);
+    expect(ranged.level).toBe(20);
+    expect(ranged.name).toBe("蓮蒼掌");
+    expect(ranged.target).toBe("TARGET_ENEMYTARGET");
+    expect(ranged.range).toBe(7);
+    expect(ranged.kind).toBe("ranged");
+    expect(ranged.multiplier).toBe(26);
+
+    expect(row!.onHit).toEqual({ name: "麻痺", prob: 5 });
+  });
+
+  it("5547 ●邪道鬼王：孤兒代碼（skill3=13208 → magic id=132 level=8 不存在）被跳過，只留可解出的技能", () => {
+    const stats = getNpcCombatStats([5547]);
+    const row = stats.get(5547);
+    expect(row).toBeDefined();
+
+    // skill3=13208 是孤兒代碼，跳過；skill4=57501 → magic id=575 level=1「懾魂輓歌」可解出。
+    expect(row!.skills).toHaveLength(1);
+    expect(row!.skills[0].magicId).toBe(575);
+    expect(row!.skills[0].level).toBe(1);
+    expect(row!.skills[0].name).toBe("懾魂輓歌");
+    expect(row!.skills[0].target).toBe("TARGET_ENEMYTARGET");
+
+    // onHit：extra_status=1013（卸冑）、status_prob=8。
+    expect(row!.onHit).toEqual({ name: "卸冑", prob: 8 });
+  });
+
+  it("npc with no skills (all skill1..4 = 0) returns empty skills array and null onHit", () => {
+    // 皇室禁衛（6650）：純劇情 NPC，is_monster=0，skill1..4 皆 0，extra_status/status_prob 亦 0。
+    const stats = getNpcCombatStats([6650]);
+    const row = stats.get(6650);
+    expect(row).toBeDefined();
+    expect(row!.skills).toEqual([]);
+    expect(row!.onHit).toBeNull();
+  });
+
+  it("duplicate skill codes across skill1..4 are deduped", () => {
+    // npc 5926: skill1=27306, skill3=27306（相同代碼重複出現）, skill4=50310。
+    const stats = getNpcCombatStats([5926]);
+    const row = stats.get(5926);
+    expect(row).toBeDefined();
+    const codes = row!.skills.map((s) => `${s.magicId}:${s.level}`);
+    expect(new Set(codes).size).toBe(codes.length); // 沒有重複
   });
 });
