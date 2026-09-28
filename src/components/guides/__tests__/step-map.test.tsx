@@ -258,6 +258,36 @@ describe("StepMap", () => {
     expect(container.querySelectorAll("[data-route-arrow]")).toHaveLength(1);
   });
 
+  it("座標標記與區塊：開關用 label 命名、圖例併成一列；區塊標籤放外側，圖例可只看區塊", () => {
+    const walk = [
+      { label: "甲通道", note: null, path: "M200 400 600 400 600 800 200 800Z", labelAt: { x: 400, y: 420 }, portal: null, landing: null },
+    ];
+    const at = (label: string, x: number, y: number) => ({ key: label, id: null, name: "", label, as: "device" as const, tbd: false, image: null, points: [{ x, y }] });
+    const { container } = renderStep({
+      ...data,
+      walk,
+      marks: [at("甲1", 400, 500), at("甲2", 400, 700)],
+      zones: [
+        { box: [200, 560, 600, 620], label: "甲毒1", tone: "hazard" },
+        { box: [900, 560, 1300, 620], label: "乙毒1", tone: "hazard" },
+      ],
+    });
+    expect(screen.getByRole("img", { name: "甲1" })).toHaveTextContent("甲1");
+    expect(screen.getByText("甲1、甲2")).toBeInTheDocument();
+    expect(container.querySelectorAll('[data-zone="hazard"]')).toHaveLength(2);
+    // 左半邊的區塊標籤貼左緣 (200 → 4%)、右半邊貼右緣 (1300 → 92%)；y 取中線 590 → 21%
+    const west = container.querySelector<HTMLElement>('[data-zone-label="甲毒1"]')!;
+    const east = container.querySelector<HTMLElement>('[data-zone-label="乙毒1"]')!;
+    expect(parseFloat(west.style.left)).toBeCloseTo(4, 2);
+    expect(parseFloat(west.style.top)).toBeCloseTo(21, 2);
+    expect(parseFloat(east.style.left)).toBeCloseTo(92, 2);
+    // 只看危險區域：通道變淡，隱藏通道後仍可用
+    fireEvent.click(screen.getByRole("button", { name: "只看危險區域" }));
+    expect(screen.getByTestId("walk-layer").querySelector("g")).toHaveClass("opacity-20");
+    fireEvent.click(screen.getByRole("button", { name: "隱藏通道" }));
+    expect(screen.getByRole("button", { name: "只看危險區域" })).toBeEnabled();
+  });
+
   it("只有一條通道時不說互不相通", () => {
     renderStep({ ...data, walk: [{ label: "甲通道", note: null, path: "M0 0 40 0 40 40 0 40Z", labelAt: { x: 20, y: 20 }, portal: null, landing: null }] });
     expect(screen.queryByText(/互不相通/)).toBeNull();

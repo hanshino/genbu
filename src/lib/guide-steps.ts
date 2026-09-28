@@ -27,11 +27,20 @@ export interface StepGroupInput {
   map?: boolean;
 }
 
+/** 有 at 時位置直接用 at（合成圖像素，同 walk.at），id 可省略（沒有 npc 的開關等）。 */
 export interface StepMarkInput {
-  id: number;
+  id?: number;
+  at?: [x: number, y: number];
   as: "npc" | "ok" | "device" | "room";
   label?: string;
   tbd?: boolean;
+}
+
+/** 地圖上的半透明區塊（合成圖像素 [x0,y0,x1,y1]），例如毒地；tone:"hazard" 用警示色。 */
+export interface StepZoneInput {
+  box: Crop;
+  label: string;
+  tone?: "hazard";
 }
 
 /**
@@ -65,6 +74,7 @@ export interface StepInput {
   marks?: StepMarkInput[];
   walk?: StepWalkInput[];
   routes?: StepRouteInput[];
+  zones?: StepZoneInput[];
 }
 
 export interface StepRoutePoint extends Point {
@@ -168,7 +178,8 @@ export interface StepGroup {
 
 export interface StepMark {
   key: string;
-  id: number;
+  /** 只給 at 的座標標記為 null。 */
+  id: number | null;
   name: string;
   label: string | null;
   as: StepMarkInput["as"];
@@ -191,6 +202,8 @@ export interface StepData {
   walk?: StepWalk[];
   /** 路線；有點超出本區塊、或步行段在可行走資料上不相連的整條略過。 */
   routes?: StepRoute[];
+  /** 半透明區塊（原樣傳遞；超出本區塊的部分被地圖裁掉）。 */
+  zones?: StepZoneInput[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -347,6 +360,7 @@ export interface BuildStepDataInput {
  * - hit = 所有 group rows 中最大的 dodge（忽略 null），names 為並列最大值的怪物名（去重）。
  * - missing：查無 DB 記錄，或（需要畫在地圖上時）套用 crop 後沒有任何座標點的 id。
  *   group 的 map 預設 true（未設為 false 才需要座標）；mark 只有非 tbd 才需要座標。
+ * - mark 有 at 時直接用 at 當座標（仍套用 crop 過濾），不看 DB 位置；沒給 id 就不查名稱、不進 missing。
  */
 export function buildStepData(input: BuildStepDataInput): StepData {
   const { stageId, stageName, image, crop, groups, marks, stats, points } = input;
@@ -415,17 +429,18 @@ export function buildStepData(input: BuildStepDataInput): StepData {
   });
 
   const outMarks: StepMark[] = marks.map((m, i) => {
-    const stat = stats.get(m.id);
+    const stat = m.id != null ? stats.get(m.id) : undefined;
     const tbd = m.tbd ?? false;
-    const idPoints = pointsInCrop(points.get(m.id), crop);
-    if (!stat) {
-      missing.add(m.id);
-    } else if (!tbd && idPoints.length === 0) {
+    const idPoints = m.at
+      ? pointsInCrop([{ x: m.at[0], y: m.at[1] }], crop)
+      : pointsInCrop(m.id != null ? points.get(m.id) : undefined, crop);
+    // 座標標記（at）不查 DB 位置；有 id 時仍要查得到名稱。
+    if (m.id != null && (!stat || (!m.at && !tbd && idPoints.length === 0))) {
       missing.add(m.id);
     }
     return {
       key: `m${i + 1}`,
-      id: m.id,
+      id: m.id ?? null,
       name: stat?.name ?? "",
       label: m.label ?? null,
       as: m.as,

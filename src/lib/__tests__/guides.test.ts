@@ -20,9 +20,9 @@ import type { StepGroupInput, StepMarkInput, StepInput } from "../guide-steps";
 const CONTENT_DIR = path.join(process.cwd(), "content", "guides");
 
 describe("getGuides", () => {
-  it("returns all 15 drafted guides sorted by order", () => {
+  it("returns all 16 drafted guides sorted by order", () => {
     const guides = getGuides();
-    expect(guides.length).toBe(15);
+    expect(guides.length).toBe(16);
     for (let i = 1; i < guides.length; i++) {
       expect(guides[i].order).toBeGreaterThan(guides[i - 1].order);
     }
@@ -76,6 +76,8 @@ describe("getGuides", () => {
     expect(bySlug.get("dungeon-yunmeng")?.stage).toBe("topic");
     expect(bySlug.get("dungeon-piaomiao")?.order).toBe(15);
     expect(bySlug.get("dungeon-piaomiao")?.stage).toBe("topic");
+    expect(bySlug.get("dungeon-yinling")?.order).toBe(16);
+    expect(bySlug.get("dungeon-yinling")?.stage).toBe("topic");
   });
 });
 
@@ -208,6 +210,32 @@ describe("renderGuideBody", () => {
     expect(html).toContain('data-route-map="鬼爪島"');
     expect(html).toContain("（11，94）");
     expect(html).not.toContain("（89，67）"); // 其他島的座標在各自分頁，沒打開就不渲染
+  });
+
+  it("陰靈絕域毒地房：八個座標開關、八塊毒帶都在本區塊內並畫出來", async () => {
+    const guide = getGuide("dungeon-yinling")!;
+    const tag = [...guide.source.matchAll(/<DungeonStep\b([\s\S]*?)>/g)]
+      .map((m) => parseTagProps(m[1]))
+      .find((p) => p.n === 2)!;
+    const crop = tag.crop as [number, number, number, number];
+    const data = getStepData({
+      stage: Number(tag.stage),
+      crop,
+      marks: tag.marks as StepInput["marks"],
+      zones: tag.zones as StepInput["zones"],
+    });
+    expect(data.marks.map((m) => m.label)).toEqual(["甲1", "甲2", "甲3", "甲4", "乙1", "乙2", "乙3", "乙4"]);
+    for (const m of data.marks) expect(m.points).toHaveLength(1);
+    expect(data.missing).toEqual([]);
+    expect(data.zones).toHaveLength(8);
+    for (const { box } of data.zones!) {
+      expect(box[0] >= crop[0] && box[1] >= crop[1] && box[2] <= crop[2] && box[3] <= crop[3]).toBe(true);
+    }
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { guideMdxComponents } = await import("@/components/guides/mdx-components");
+    const html = renderToStaticMarkup(await renderGuideBody(guide.source, guideMdxComponents));
+    expect(html.match(/data-zone="hazard"/g)).toHaveLength(8);
+    expect(html).toContain('data-zone-label="乙毒4"');
   });
 
   it("does not turn single tildes in level ranges into strikethrough", async () => {
@@ -438,6 +466,7 @@ const DUNGEON_SLUGS = [
   "dungeon-jiyuan",
   "dungeon-yunmeng",
   "dungeon-piaomiao",
+  "dungeon-yinling",
 ];
 
 function readDungeonBody(slug: string): string {
