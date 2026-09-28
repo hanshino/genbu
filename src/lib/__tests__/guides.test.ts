@@ -212,6 +212,32 @@ describe("renderGuideBody", () => {
     expect(html).not.toContain("（89，67）"); // 其他島的座標在各自分頁，沒打開就不渲染
   });
 
+  it("陰靈絕域毒地房：八個座標開關、八塊毒帶都在本區塊內並畫出來", async () => {
+    const guide = getGuide("dungeon-yinling")!;
+    const tag = [...guide.source.matchAll(/<DungeonStep\b([\s\S]*?)>/g)]
+      .map((m) => parseTagProps(m[1]))
+      .find((p) => p.n === 2)!;
+    const crop = tag.crop as [number, number, number, number];
+    const data = getStepData({
+      stage: Number(tag.stage),
+      crop,
+      marks: tag.marks as StepInput["marks"],
+      zones: tag.zones as StepInput["zones"],
+    });
+    expect(data.marks.map((m) => m.label)).toEqual(["甲1", "甲2", "甲3", "甲4", "乙1", "乙2", "乙3", "乙4"]);
+    for (const m of data.marks) expect(m.points).toHaveLength(1);
+    expect(data.missing).toEqual([]);
+    expect(data.zones).toHaveLength(8);
+    for (const { box } of data.zones!) {
+      expect(box[0] >= crop[0] && box[1] >= crop[1] && box[2] <= crop[2] && box[3] <= crop[3]).toBe(true);
+    }
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { guideMdxComponents } = await import("@/components/guides/mdx-components");
+    const html = renderToStaticMarkup(await renderGuideBody(guide.source, guideMdxComponents));
+    expect(html.match(/data-zone="hazard"/g)).toHaveLength(8);
+    expect(html).toContain('data-zone-label="乙毒4"');
+  });
+
   it("does not turn single tildes in level ranges into strikethrough", async () => {
     const { renderToStaticMarkup } = await import("react-dom/server");
     const el = await renderGuideBody("1~9 等、低自己 2~4 等；~~真刪除線~~", {});

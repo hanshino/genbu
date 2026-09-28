@@ -7,6 +7,7 @@ import type {
   StepMarkInput,
   StepRouteInput,
   StepWalkInput,
+  StepZoneInput,
 } from "@/lib/guide-steps";
 import { getStepData } from "@/lib/guide-steps.server";
 import { StepProvider } from "./step-map";
@@ -24,6 +25,8 @@ interface DungeonStepProps {
   walk?: StepWalkInput[];
   /** 走法路線：每條給依序經過的點（落點、傳點、轉折、王），地圖會畫出步行線與傳送弧線。 */
   routes?: StepRouteInput[];
+  /** 半透明區塊（例如毒地）：box 是合成圖像素 [x0,y0,x1,y1]。 */
+  zones?: StepZoneInput[];
   children?: ReactNode;
 }
 
@@ -41,9 +44,10 @@ export function DungeonStep({
   marks,
   walk,
   routes,
+  zones,
   children,
 }: DungeonStepProps) {
-  const data = getStepData({ stage: Number(stage), crop, groups, marks, walk, routes });
+  const data = getStepData({ stage: Number(stage), crop, groups, marks, walk, routes, zones });
   const seal = String(n).padStart(2, "0");
   const kinds = data.groups.reduce((s, g) => s + g.rows.length, 0);
   const dev = process.env.NODE_ENV !== "production";

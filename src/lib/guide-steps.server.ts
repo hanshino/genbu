@@ -39,7 +39,7 @@ function stageKindOf(id: number): StageKind {
  * native module 而炸掉。只能在 Server Component / Route Handler 呼叫。
  */
 export function getStepData(input: StepInput): StepData {
-  const { stage, crop = null, groups = [], marks = [], walk = [], routes = [] } = input;
+  const { stage, crop = null, groups = [], marks = [], walk = [], routes = [], zones = [] } = input;
   const kind = stageKindOf(stage);
 
   const db = getDb();
@@ -51,7 +51,7 @@ export function getStepData(input: StepInput): StepData {
 
   const ids = new Set<number>();
   for (const g of groups) for (const id of g.ids) ids.add(id);
-  for (const m of marks) ids.add(m.id);
+  for (const m of marks) if (m.id != null) ids.add(m.id);
   const idList = [...ids];
 
   const stats = getNpcCombatStats(idList);
@@ -71,6 +71,7 @@ export function getStepData(input: StepInput): StepData {
     ...data,
     walk: getWalks(stage, crop, walk),
     routes: getRoutes(stage, crop, image, routes),
+    zones,
   };
 }
 

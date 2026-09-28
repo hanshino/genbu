@@ -26,6 +26,7 @@ import {
   SplitIcon,
   SwordIcon,
   TargetIcon,
+  TriangleAlertIcon,
   UsersIcon,
   ZapIcon,
 } from "lucide-react";
@@ -261,11 +262,13 @@ function MarkPin({ mark, at }: { mark: StepMark; at: { left: number; top: number
     );
   }
 
-  const title = mark.tbd ? `${mark.name}（位置待確認）` : mark.name;
+  // 座標標記（at）沒有 npc 名稱，改用 label。
+  const name = mark.name || text;
+  const title = mark.tbd ? `${name}（位置待確認）` : name;
   return (
     <span
       role="img"
-      aria-label={mark.as === "ok" ? `${mark.name}：已完成，不可攻擊` : title}
+      aria-label={mark.as === "ok" ? `${name}：已完成，不可攻擊` : title}
       title={title}
       style={pos(at)}
       className={cn(hit, "pointer-events-auto z-[1]")}
@@ -424,6 +427,98 @@ function WalkLayer({ walk, box, view }: { walk: StepWalk[]; box: string; view: W
 
 const pill =
   "pointer-events-none absolute -translate-x-1/2 rounded-full px-2 py-px text-[11.5px] font-semibold whitespace-nowrap text-[oklch(0.2_0.02_260)] shadow-[0_0_0_1.5px_var(--walk-halo),0_1px_4px_rgb(0_0_0/0.4)] motion-safe:transition-opacity motion-safe:duration-200";
+
+/* ── 區塊（例如毒地）── */
+
+/** 圖例「只看區塊」用的 index，和通道 index（0 起）錯開；此時所有通道一起變淡。 */
+const ZONES = -1;
+type StepZone = NonNullable<StepData["zones"]>[number];
+const zoneColor = (z: Pick<StepZone, "tone">) =>
+  z.tone === "hazard" ? "var(--hazard)" : "oklch(0.93 0.01 85)";
+
+/** 區塊圖層：實心半透明填色＋深色底邊，和通道的條紋／圓點分得開；疊在通道上面。 */
+function ZoneLayer({ zones, box, lit }: { zones: StepZone[]; box: string; lit: boolean }) {
+  return (
+    <svg
+      aria-hidden
+      data-testid="zone-layer"
+      viewBox={box}
+      preserveAspectRatio="none"
+      className="pointer-events-none absolute inset-0 size-full"
+    >
+      {zones.map((z, i) => {
+        const [x0, y0, x1, y1] = z.box;
+        const rect = { x: x0, y: y0, width: x1 - x0, height: y1 - y0, rx: 8 };
+        const color = zoneColor(z);
+        return (
+          <g key={i} data-zone={z.tone ?? "plain"}>
+            <rect
+              {...rect}
+              fill={color}
+              fillOpacity={lit ? 0.6 : 0.42}
+              stroke="var(--walk-halo)"
+              strokeWidth={lit ? 6 : 5}
+              vectorEffect="non-scaling-stroke"
+              className="motion-safe:transition-[fill-opacity] motion-safe:duration-200"
+            />
+            <rect
+              {...rect}
+              fill="none"
+              stroke={color}
+              strokeWidth={lit ? 3 : 2}
+              vectorEffect="non-scaling-stroke"
+            />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/** 區塊名稱：放在區塊靠地圖外側的那一邊（左半邊的放左、右半邊的放右），不壓到區塊中間的標記。 */
+function ZoneLabels({ data, crop }: { data: StepData; crop: Crop }) {
+  const mid = (crop[0] + crop[2]) / 2;
+  return (data.zones ?? []).map((z, i) => {
+    const [x0, y0, x1, y1] = z.box;
+    const west = (x0 + x1) / 2 < mid;
+    const at = toPercent({ x: west ? x0 : x1, y: (y0 + y1) / 2 }, data.image!, crop);
+    return (
+      <span
+        key={i}
+        data-zone-label={z.label}
+        style={{ ...pos(at), background: zoneColor(z) }}
+        className={cn(
+          pill,
+          "z-[1] inline-flex -translate-y-1/2 items-center gap-0.5 pl-1.5",
+          west ? "-translate-x-[calc(100%+6px)]" : "translate-x-1.5",
+        )}
+      >
+        {z.tone === "hazard" && <TriangleAlertIcon className="size-3" strokeWidth={2.75} aria-hidden />}
+        {z.label}
+      </span>
+    );
+  });
+}
+
+/** 圖例色塊：同地圖上的區塊，暗底＋半透明填色＋實線邊。 */
+function ZoneSwatch({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 18 12" className="h-3 w-[18px] shrink-0 overflow-visible" aria-hidden>
+      <rect x=".75" y=".75" width="16.5" height="10.5" rx="2" fill="oklch(0.2 0.02 260)" />
+      <rect
+        x=".75"
+        y=".75"
+        width="16.5"
+        height="10.5"
+        rx="2"
+        fill={color}
+        fillOpacity={0.5}
+        stroke={color}
+        strokeWidth={1.5}
+      />
+    </svg>
+  );
+}
 
 function WalkLabels({
   data,
@@ -927,7 +1022,7 @@ function SoloButton({
       type="button"
       aria-pressed={pin === i}
       aria-label={`只看${label}`}
-      disabled={!view.show}
+      disabled={i !== ZONES && !view.show}
       onClick={() => setPin(pin === i ? null : i)}
       onMouseEnter={() => setPeek(i)}
       onMouseLeave={() => setPeek(null)}
@@ -945,8 +1040,23 @@ function Legend({ data, walkProps }: { data: StepData; walkProps: WalkLegendProp
   const numbered = data.groups.some((g) => g.map && g.points.length > 0 && g.as !== "area");
   const walk = data.walk ?? [];
   const routes = data.routes ?? [];
+  const zones = data.zones ?? [];
+  const hazard = zones.some((z) => z.tone === "hazard");
+  // 座標標記沒有 npc 名稱：同種類併成一列，只列標籤。
+  const named = marks.filter((m) => m.name);
+  const coord = (["npc", "device", "ok"] as const).flatMap((as) => {
+    const labels = marks.filter((m) => !m.name && m.as === as).map((m) => m.label).filter(Boolean);
+    return labels.length > 0 ? [{ as, text: labels.join("、") }] : [];
+  });
   const { view } = walkProps;
-  if (marks.length === 0 && !numbered && walk.length === 0 && routes.length === 0) return null;
+  if (
+    marks.length === 0 &&
+    !numbered &&
+    walk.length === 0 &&
+    routes.length === 0 &&
+    zones.length === 0
+  )
+    return null;
   return (
     <ul className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1.5 px-3 py-2.5 text-[12.5px] leading-relaxed">
       {routes.length > 0 && (
@@ -993,17 +1103,24 @@ function Legend({ data, walkProps }: { data: StepData; walkProps: WalkLegendProp
           </span>
         </li>
       )}
-      {marks.map((m) => (
+      {zones.length > 0 && (
+        <li data-legend="zones">
+          <SoloButton i={ZONES} label={hazard ? "危險區域" : "標示區域"} props={walkProps}>
+            <ZoneSwatch color={zoneColor({ tone: hazard ? "hazard" : undefined })} />
+            <span className="text-foreground/85">{hazard ? "危險區域" : "標示區域"}</span>
+            {hazard && <span>・別停在上面</span>}
+          </SoloButton>
+        </li>
+      )}
+      {coord.map((c) => (
+        <li key={`at-${c.as}`} className="inline-flex items-center gap-1.5">
+          <MarkSwatch as={c.as} />
+          <span className="text-foreground/85">{c.text}</span>
+        </li>
+      ))}
+      {named.map((m) => (
         <li key={m.key} className="inline-flex items-center gap-1.5">
-          {m.as === "npc" && (
-            <span className="size-2.5 rotate-45 rounded-[2px] bg-(--stop)" aria-hidden />
-          )}
-          {m.as === "device" && (
-            <span className="bg-foreground/85 h-2.5 w-3.5 rounded-[2px]" aria-hidden />
-          )}
-          {m.as === "ok" && (
-            <CheckIcon className="size-3.5 text-(--marker-3)" strokeWidth={3} aria-hidden />
-          )}
+          <MarkSwatch as={m.as} />
           <span className="text-foreground/85">
             {m.label && m.as !== "ok" ? `${m.label}・${m.name}` : m.name}
           </span>
@@ -1014,6 +1131,16 @@ function Legend({ data, walkProps }: { data: StepData; walkProps: WalkLegendProp
       {numbered && <li>圓點編號對應下方表格，滑過或點一下可以對照。</li>}
     </ul>
   );
+}
+
+function MarkSwatch({ as }: { as: StepMark["as"] }) {
+  if (as === "npc")
+    return <span className="size-2.5 shrink-0 rotate-45 rounded-[2px] bg-(--stop)" aria-hidden />;
+  if (as === "device")
+    return <span className="bg-foreground/85 h-2.5 w-3.5 shrink-0 rounded-[2px]" aria-hidden />;
+  if (as === "ok")
+    return <CheckIcon className="size-3.5 shrink-0 text-(--marker-3)" strokeWidth={3} aria-hidden />;
+  return null;
 }
 
 const viewBox = (c: Crop) => `${c[0]} ${c[1]} ${c[2] - c[0]} ${c[3] - c[1]}`;
@@ -1038,7 +1165,9 @@ export function StepMap({ alt }: { alt?: string }) {
   }
 
   const walk = data.walk ?? [];
+  const zones = data.zones ?? [];
   const view: WalkView = { show: showWalk, lit: peek ?? pin };
+  const zonesLit = view.lit === ZONES;
   const crop = data.crop;
   const showCrop = crop != null && !full;
   const label = alt ?? `${data.stageName}地圖`;
@@ -1047,9 +1176,15 @@ export function StepMap({ alt }: { alt?: string }) {
     <figure className="bg-card my-5 overflow-hidden rounded-xl border">
       {showCrop ? (
         <CropView data={data} crop={crop} alt={`${label}（本區塊）`}>
+          {walk.length > 0 && <WalkLayer walk={walk} box={viewBox(crop)} view={view} />}
+          {zones.length > 0 && (
+            <>
+              <ZoneLayer zones={zones} box={viewBox(crop)} lit={zonesLit} />
+              <ZoneLabels data={data} crop={crop} />
+            </>
+          )}
           {walk.length > 0 && (
             <>
-              <WalkLayer walk={walk} box={viewBox(crop)} view={view} />
               <WalkLabels data={data} crop={crop} view={view} />
               <WalkPoints data={data} crop={crop} view={view} />
             </>
@@ -1074,6 +1209,9 @@ export function StepMap({ alt }: { alt?: string }) {
             />
             {walk.length > 0 && (
               <WalkLayer walk={walk} box={`0 0 ${img.imgWidth} ${img.imgHeight}`} view={view} />
+            )}
+            {zones.length > 0 && (
+              <ZoneLayer zones={zones} box={`0 0 ${img.imgWidth} ${img.imgHeight}`} lit={zonesLit} />
             )}
             {crop && (
               <span
