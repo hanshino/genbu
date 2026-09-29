@@ -262,18 +262,22 @@ describe("StepMap", () => {
     const walk = [
       { label: "甲通道", note: null, path: "M200 400 600 400 600 800 200 800Z", labelAt: { x: 400, y: 420 }, portal: null, landing: null },
     ];
-    const at = (label: string, x: number, y: number) => ({ key: label, id: null, name: "", label, as: "device" as const, tbd: false, image: null, points: [{ x, y }] });
+    const at = (label: string, x: number, y: number, as: "device" | "switch" = "switch") => ({ key: label, id: null, name: "", label, as, tbd: false, image: null, points: [{ x, y }] });
     const { container } = renderStep({
       ...data,
       walk,
-      marks: [at("甲1", 400, 500), at("甲2", 400, 700)],
+      marks: [at("甲1", 400, 500), at("甲2", 400, 700), at("傳點", 1000, 700, "device")],
       zones: [
         { box: [200, 560, 600, 620], label: "甲毒1", tone: "hazard" },
         { box: [900, 560, 1300, 620], label: "乙毒1", tone: "hazard" },
       ],
     });
     expect(screen.getByRole("img", { name: "甲1" })).toHaveTextContent("甲1");
-    expect(screen.getByText("甲1、甲2")).toBeInTheDocument();
+    // 開關和其他機關分開列，開關那列註明「開關」
+    expect(container.querySelector('[data-legend="mark-switch"]')).toHaveTextContent("甲1、甲2・開關");
+    expect(container.querySelector('[data-legend="mark-device"]')).toHaveTextContent(/^傳點$/);
+    // 貼近上緣的通道名稱整個放進地圖裡 (y 420 → 約 2%)
+    expect(container.querySelector('[data-walk-label="甲通道"]')).toHaveClass("translate-y-1");
     expect(container.querySelectorAll('[data-zone="hazard"]')).toHaveLength(2);
     // 左半邊的區塊標籤貼左緣 (200 → 4%)、右半邊貼右緣 (1300 → 92%)；y 取中線 590 → 21%
     const west = container.querySelector<HTMLElement>('[data-zone-label="甲毒1"]')!;
@@ -306,10 +310,9 @@ describe("StepTargets", () => {
     expect(screen.getByText(/本步驟要求命中：/)).toHaveTextContent("本步驟要求命中：＞520（被汙染的機關）");
     expect(screen.getByText(/要求命中＝玩家命中需大於怪物閃躲/)).toHaveTextContent("依怪物抗性推算，待實機驗證");
     const table = screen.getByRole("table");
-    expect(within(table).getByRole("columnheader", { name: "卸冑" })).toBeInTheDocument();
-    expect(within(table).getByRole("columnheader", { name: "中毒" })).toBeInTheDocument();
+    expect(within(table).getByRole("columnheader", { name: "卸冑／中毒" })).toBeInTheDocument();
     for (const row of within(table).getAllByRole("row").slice(1)) {
-      expect(within(row).getAllByRole("cell").slice(-2).map(cell => cell.textContent)).toEqual(["可", "不可"]);
+      expect(within(row).getAllByRole("cell").at(-1)?.textContent).toBe("可／不可");
     }
     expect(within(table).getByText("高防禦")).toBeInTheDocument();
     expect(within(table).getByText("高護勁")).toBeInTheDocument();

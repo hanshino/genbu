@@ -138,7 +138,9 @@ function getWalks(
       label: w.label,
       note: w.note ?? null,
       path: region.path,
-      labelAt: labelAt(region.cells, region.width, crop),
+      labelAt: w.labelAt
+        ? { x: w.labelAt[0], y: w.labelAt[1] }
+        : labelAt(region.cells, region.width, crop),
       portal: inCrop(portal, crop) ? portal : null,
       landing: landing && inCrop(landing, crop) && regionHas(region, landing) ? landing : null,
     });
