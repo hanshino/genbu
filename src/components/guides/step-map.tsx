@@ -283,7 +283,7 @@ function MarkPin({ mark, at }: { mark: StepMark; at: { left: number; top: number
           <span className="-rotate-45">{[...text][0]}</span>
         </span>
       )}
-      {mark.as === "device" && (
+      {(mark.as === "device" || mark.as === "switch") && (
         <span
           className={cn(
             "grid h-[21px] place-items-center rounded-[5px] border-2 border-white bg-foreground/85 px-1.5 text-[11px] font-semibold whitespace-nowrap text-background shadow-[0_1px_3px_rgb(0_0_0/0.45)]",
@@ -529,20 +529,25 @@ function WalkLabels({
   crop: StepData["crop"];
   view: WalkView;
 }) {
-  return (data.walk ?? []).map((w, i) => (
+  return (data.walk ?? []).map((w, i) => {
+    const at = toPercent(w.labelAt, data.image!, crop);
+    return (
     <span
       key={i}
       aria-hidden
-      style={{ ...pos(toPercent(w.labelAt, data.image!, crop)), background: walkColor(i) }}
+      data-walk-label={w.label}
+      style={{ ...pos(at), background: walkColor(i) }}
       className={cn(
         pill,
-        "-translate-y-1/2",
+        // 太靠近上緣時整個放進地圖裡，免得被裁掉一半
+        at.top < 8 ? "translate-y-1" : "-translate-y-1/2",
         !view.show ? "opacity-0" : view.lit != null && view.lit !== i && "opacity-25",
       )}
     >
       {w.label}
     </span>
-  ));
+    );
+  });
 }
 
 const WALK_POINT = {
@@ -1044,9 +1049,9 @@ function Legend({ data, walkProps }: { data: StepData; walkProps: WalkLegendProp
   const hazard = zones.some((z) => z.tone === "hazard");
   // 座標標記沒有 npc 名稱：同種類併成一列，只列標籤。
   const named = marks.filter((m) => m.name);
-  const coord = (["npc", "device", "ok"] as const).flatMap((as) => {
+  const coord = (["npc", "device", "switch", "ok"] as const).flatMap((as) => {
     const labels = marks.filter((m) => !m.name && m.as === as).map((m) => m.label).filter(Boolean);
-    return labels.length > 0 ? [{ as, text: labels.join("、") }] : [];
+    return labels.length > 0 ? [{ as, labels }] : [];
   });
   const { view } = walkProps;
   if (
@@ -1113,9 +1118,16 @@ function Legend({ data, walkProps }: { data: StepData; walkProps: WalkLegendProp
         </li>
       )}
       {coord.map((c) => (
-        <li key={`at-${c.as}`} className="inline-flex items-center gap-1.5">
+        <li key={`at-${c.as}`} data-legend={`mark-${c.as}`} className="inline-flex items-center gap-1.5">
           <MarkSwatch as={c.as} />
-          <span className="text-foreground/85">{c.text}</span>
+          {/* break-keep：換行只斷在「、」，不會把「乙4」拆開；最後一個標籤和「・開關」綁在一起 */}
+          <span className="text-foreground/85 break-keep">
+            {c.labels.slice(0, -1).map((l) => `${l}、`)}
+            <span className="whitespace-nowrap">
+              {c.labels.at(-1)}
+              {c.as === "switch" && <span className="text-muted-foreground">・開關</span>}
+            </span>
+          </span>
         </li>
       ))}
       {named.map((m) => (
@@ -1136,7 +1148,7 @@ function Legend({ data, walkProps }: { data: StepData; walkProps: WalkLegendProp
 function MarkSwatch({ as }: { as: StepMark["as"] }) {
   if (as === "npc")
     return <span className="size-2.5 shrink-0 rotate-45 rounded-[2px] bg-(--stop)" aria-hidden />;
-  if (as === "device")
+  if (as === "device" || as === "switch")
     return <span className="bg-foreground/85 h-2.5 w-3.5 shrink-0 rounded-[2px]" aria-hidden />;
   if (as === "ok")
     return <CheckIcon className="size-3.5 shrink-0 text-(--marker-3)" strokeWidth={3} aria-hidden />;
@@ -1419,6 +1431,13 @@ function RouteMap({ data, route, i }: { data: StepData; route: StepRoute; i: num
 
 /* ── 目標表格 ── */
 
+// 窄版時「編號」「目標」兩欄固定在左邊，其餘欄位左右滑動；底色要不透明才蓋得住滑過去的欄位。
+// 編號欄窄版固定 40px（w-10），目標欄就從 left-10 開始黏。
+const pinned = "@max-lg:sticky @max-lg:z-[1] @max-lg:bg-card";
+const pinnedHead = cn(pinned, "@max-lg:bg-[color-mix(in_oklab,var(--muted)_60%,var(--card))]");
+const pinnedCell = cn(pinned, "@max-lg:in-data-[active]:bg-[color-mix(in_oklab,var(--mk)_10%,var(--card))]");
+const numCol = "w-12 @max-lg:left-0 @max-lg:w-10 @max-lg:px-1";
+
 const SKILL_KIND: Record<StepSkillKind, { label: string; icon: typeof SwordIcon; attack: boolean }> = {
   melee: { label: "近身", icon: SwordIcon, attack: true },
   ranged: { label: "遠距", icon: TargetIcon, attack: true },
@@ -1516,7 +1535,7 @@ export function StepTargets() {
   const top = data.hit?.dodge;
 
   return (
-    <div className="my-5">
+    <div className="@container my-5">
       {data.hit && (
         <p className="mb-2.5 flex items-center gap-2 text-[14.5px]">
           <CrosshairIcon className="size-4 shrink-0 text-(--stop-ink)" aria-hidden />
@@ -1528,19 +1547,18 @@ export function StepTargets() {
           </span>
         </p>
       )}
-      <div className="bg-card @container overflow-hidden rounded-xl border">
-        <Table className="min-w-[700px]">
+      <div className="bg-card @container relative overflow-hidden rounded-xl border">
+        <Table>
           <TableHeader className="bg-muted/60 [&_th]:font-heading">
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-14 pl-3">編號</TableHead>
-              <TableHead>目標</TableHead>
+              <TableHead className={cn(pinnedHead, numCol, "pl-3")}>編號</TableHead>
+              <TableHead className={cn(pinnedHead, "@max-lg:left-10")}>目標</TableHead>
               <TableHead className="text-right">等級</TableHead>
               <TableHead className="text-right">血量</TableHead>
               <TableHead className="text-right">防禦</TableHead>
               <TableHead className="text-right">護勁</TableHead>
-              <TableHead className="pr-4 text-right">要求命中</TableHead>
-              <TableHead>卸冑</TableHead>
-              <TableHead className="pr-4">中毒</TableHead>
+              <TableHead className="pr-3 text-right">要求命中</TableHead>
+              <TableHead className="pr-3">卸冑／中毒</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -1566,7 +1584,7 @@ export function StepTargets() {
                       extra && "border-b-0",
                     )}
                   >
-                    <TableCell className="pl-2">
+                    <TableCell className={cn(pinnedCell, numCol, "pl-2")}>
                       {j === 0 && (
                         <button
                           type="button"
@@ -1592,9 +1610,21 @@ export function StepTargets() {
                         </button>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell
+                      className={cn(
+                        pinnedCell,
+                        // 名稱過長時換行，其餘欄位就不會被擠出外框
+                        "min-w-28 whitespace-normal @max-lg:left-10 @max-lg:min-w-32",
+                      )}
+                    >
+                      {/* 特徵標籤放在頭像＋名稱下面一整列，欄寬只要容得下兩者較寬的那個 */}
                       <span className="flex items-center gap-2.5">
-                        <EntityPortrait image={r.image} alt={r.name} size="sm" className="size-8" />
+                        <EntityPortrait
+                          image={r.image}
+                          alt={r.name}
+                          size="sm"
+                          className="size-8 @max-md:hidden"
+                        />
                         <Link
                           href={`/monsters/${r.id}`}
                           onClick={(e) => e.stopPropagation()}
@@ -1602,12 +1632,13 @@ export function StepTargets() {
                         >
                           {r.name}
                         </Link>
-                        {g.tag && (
-                          <Badge variant="outline" className="font-normal">
-                            {g.tag}
-                          </Badge>
-                        )}
                       </span>
+                      {g.tag && (
+                        // ponytail: 上限 7.2rem，1440 放得下目前所有正常標籤；更長的截斷，滑過看全文
+                        <Badge variant="outline" title={g.tag} className="mt-1 max-w-[7.2rem] font-normal">
+                          <span className="truncate">{g.tag}</span>
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums">Lv {r.level}</TableCell>
                     <TableCell className="text-right font-mono tabular-nums">{fmt(r.hp)}</TableCell>
@@ -1615,14 +1646,15 @@ export function StepTargets() {
                     <TableCell className="text-right font-mono tabular-nums">{fmt(r.mdef)}</TableCell>
                     <TableCell
                       className={cn(
-                        "pr-4 text-right font-mono tabular-nums",
+                        "pr-3 text-right font-mono tabular-nums",
                         r.dodge != null && r.dodge === top && "font-semibold text-(--stop-ink)",
                       )}
                     >
                       {r.dodge == null ? "—" : `＞${fmt(r.dodge)}`}
                     </TableCell>
-                    <TableCell>{formatStatusResistance(r.weakenRes)}</TableCell>
-                    <TableCell className="pr-4">{formatStatusResistance(r.bleedRes)}</TableCell>
+                    <TableCell className="pr-3">
+                      {formatStatusResistance(r.weakenRes)}／{formatStatusResistance(r.bleedRes)}
+                    </TableCell>
                   </TableRow>,
                   extra && (
                     <TableRow
@@ -1631,7 +1663,7 @@ export function StepTargets() {
                       data-skills={r.id}
                       className="data-[active]:bg-(--mk)/10 motion-safe:transition-colors"
                     >
-                      <TableCell colSpan={9} className="px-3 pt-0 pb-3 whitespace-normal">
+                      <TableCell colSpan={8} className="px-3 pt-0 pb-3 whitespace-normal">
                         <RowSkills row={r} />
                       </TableCell>
                     </TableRow>
@@ -1641,11 +1673,17 @@ export function StepTargets() {
             })}
           </TableBody>
         </Table>
+        {/* 窄版時右緣淡出，提示還有欄位可以滑過去 */}
+        <span
+          aria-hidden
+          className="from-card pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l to-transparent @lg:hidden"
+        />
       </div>
+      <p className="text-muted-foreground mt-2 text-[12px] @lg:hidden">表格可左右滑動</p>
       <p className="text-muted-foreground mt-2 flex items-center gap-1.5 text-[12.5px]">
         <InfoIcon className="size-3.5 shrink-0" aria-hidden />
         <span>
-          要求命中＝玩家命中需大於怪物閃躲。卸冑＝百針滲血、千瘡百孔；中毒＝百八蟲毒。依怪物抗性推算，待實機驗證。
+          要求命中＝玩家命中需大於怪物閃躲。「卸冑／中毒」依序是能不能卸冑（百針滲血、千瘡百孔）、能不能中毒（百八蟲毒）。依怪物抗性推算，待實機驗證。
         </span>
       </p>
     </div>

@@ -31,7 +31,8 @@ export interface StepGroupInput {
 export interface StepMarkInput {
   id?: number;
   at?: [x: number, y: number];
-  as: "npc" | "ok" | "device" | "room";
+  /** switch＝開關，畫法同 device，圖例會註明「開關」。 */
+  as: "npc" | "ok" | "device" | "switch" | "room";
   label?: string;
   tbd?: boolean;
 }
@@ -52,6 +53,8 @@ export interface StepWalkInput {
   landing?: [x: number, y: number];
   label: string;
   note?: string;
+  /** 通道名稱的位置；省略時自動放在本區塊內最上面一列可走格的中間。 */
+  labelAt?: [x: number, y: number];
 }
 
 /**

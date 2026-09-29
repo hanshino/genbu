@@ -400,6 +400,21 @@ describe("可行走通道（map_walkability）", () => {
     expect(top.portal).toBeNull();
     expect(top.landing).toEqual({ x: 708, y: 1326 });
   });
+
+  it("通道名稱位置：有給 labelAt 就照用，沒給才自動放", async () => {
+    const { getStepData } = await import("../guide-steps.server");
+    const crop: Crop = [300, 1050, 2500, 2900];
+    const [manual, auto] = getStepData({
+      stage: 1723,
+      crop,
+      walk: [
+        { at: [2044, 2604], label: "金甲通道", labelAt: [1500, 2500] },
+        { at: [1774, 2108], label: "銅甲通道" },
+      ],
+    }).walk!;
+    expect(manual.labelAt).toEqual({ x: 1500, y: 2500 });
+    expect(inCrop(auto.labelAt, crop)).toBe(true);
+  });
 });
 
 describe("路線（routes）", () => {
