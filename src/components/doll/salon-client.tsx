@@ -26,7 +26,6 @@ import {
   RotateCcwIcon,
   SearchIcon,
   ShieldIcon,
-  SlashIcon,
   ShirtIcon,
   SparklesIcon,
   SwordIcon,
@@ -404,7 +403,12 @@ export function SalonClient(props: Props) {
             </ToggleGroup>
           </div>
           {hairOptions.length > 0 && (
-            <HairSwatches options={hairOptions} value={hair} onChange={setHair} />
+            <HairSwatches
+              options={hairOptions}
+              frames={frames.filter((f) => f.slot === "head" && f.sequence === head && f.dir === 7)}
+              value={hair}
+              onChange={setHair}
+            />
           )}
           <div className="flex flex-wrap items-center gap-2 px-4 py-2.5">
             <Button onClick={share}>
@@ -852,35 +856,38 @@ function WornGroup({ label, look, flags }: { label: string; look: DollLook; flag
   );
 }
 
-/**
- * 棕色在 DB 是 r/g/b 0,0,0、mix_level 0：遊戲裡染出來跟原色一模一樣，
- * 直接用 DB 的顏色會跟黑色分不出來，所以只有這一色改用棕色色票。
- */
-const HAIR_SWATCH_OVERRIDE: Record<string, string> = { 棕色: "rgb(122 78 46)" };
+/** 色票裡放大看頭頂那一塊：2 倍、以圖寬中線和圖高 16% 處（頭頂，避開額頭皮膚）為中心 */
+const SWATCH_PX = 24;
+const SWATCH_ZOOM = 2;
+const SWATCH_FOCUS_Y = 0.16;
 
+/**
+ * 髮色色票：直接用遊戲預先染好的頭型圖（正面、站立優先），裁出頭髮那一塊。
+ * doll_hair_colors 的 r/g/b 是染劑參數不是顯示色，所以不拿來畫；某色沒有圖就不列。
+ */
 function HairSwatches({
   options,
+  frames,
   value,
   onChange,
 }: {
   options: DollHairColor[];
+  /** 目前頭型、方向 7 的所有頭型圖（各色、各動作） */
+  frames: DollFrame[];
   value: number;
   onChange: (color: number) => void;
 }) {
-  const current = value === 0 ? "原色" : (options.find((o) => o.color === value)?.label ?? "原色");
-  const swatch =
-    "size-6 shrink-0 rounded-full border border-foreground/15 p-0 shadow-[inset_0_1px_2px_rgb(0_0_0/0.18)] hover:border-foreground/40 data-pressed:shadow-none data-pressed:ring-2 data-pressed:ring-primary data-pressed:ring-offset-2 data-pressed:ring-offset-card";
-  const items = [
-    { color: 0, label: "原色", fill: undefined as string | undefined },
-    ...options.map((o) => ({
-      color: o.color,
-      label: o.label,
-      fill: HAIR_SWATCH_OVERRIDE[o.label] ?? `rgb(${o.r} ${o.g} ${o.b})`,
-    })),
-  ];
+  const frameOf = (color: number) =>
+    frames.find((f) => f.color === color && f.action === "wait") ??
+    frames.find((f) => f.color === color);
+  const items = [{ color: 0, label: "原色" }, ...options]
+    .map((o) => ({ color: o.color, label: o.label, frame: frameOf(o.color) }))
+    .filter((it): it is { color: number; label: string; frame: DollFrame } => !!it.frame);
+  if (items.length <= 1) return null;
+  const current = items.find((it) => it.color === value)?.label ?? "原色";
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border/60 px-4 py-2.5">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-border/60 px-4 py-2.5">
       <span className="flex items-baseline gap-1.5 text-xs text-muted-foreground">
         髮色
         {/* 觸控裝置沒有 tooltip，目前選的顏色直接寫出來 */}
@@ -892,30 +899,44 @@ function HairSwatches({
         onValueChange={(v) => v[0] && onChange(Number(v[0]))}
         className="flex flex-wrap gap-1 border-0 bg-transparent p-1 sm:gap-1.5"
       >
-        {items.map((it) => (
-          <Tooltip key={it.color}>
+        {items.map(({ color, label, frame }) => (
+          <Tooltip key={color}>
             <TooltipTrigger
               delay={150}
               render={
                 <ToggleGroupItem
-                  value={String(it.color)}
-                  aria-label={`髮色：${it.label}`}
+                  value={String(color)}
+                  aria-label={`髮色：${label}`}
                   className={cn(
-                    swatch,
-                    // 原色：虛線中性色票＋斜線，跟「有顏色」的色票區隔開
-                    it.fill == null &&
-                      "border-dashed border-foreground/35 bg-muted text-muted-foreground data-pressed:bg-muted data-pressed:text-foreground",
+                    "relative size-6 shrink-0 overflow-hidden rounded-full border border-foreground/15 bg-background p-0 hover:border-foreground/40 data-pressed:bg-background data-pressed:shadow-none data-pressed:ring-2 data-pressed:ring-primary data-pressed:ring-offset-2 data-pressed:ring-offset-card",
+                    // 原色：虛線外框，跟染過的色票區隔（棕色在多數頭型跟原色同一張圖，靠這個和名稱分辨）
+                    color === 0 && "border-dashed border-foreground/50",
                   )}
-                  style={it.fill ? { backgroundColor: it.fill } : undefined}
                 />
               }
             >
-              {it.fill == null && <SlashIcon className="size-3.5!" aria-hidden />}
+              {/* eslint-disable-next-line @next/next/no-img-element -- 像素原圖 hotlink */}
+              <img
+                src={frame.url}
+                alt=""
+                loading="lazy"
+                draggable={false}
+                className="pointer-events-none absolute max-w-none select-none [image-rendering:pixelated]"
+                style={{
+                  width: frame.width * SWATCH_ZOOM,
+                  height: frame.height * SWATCH_ZOOM,
+                  left: SWATCH_PX / 2 - (frame.width * SWATCH_ZOOM) / 2,
+                  top: SWATCH_PX / 2 - frame.height * SWATCH_FOCUS_Y * SWATCH_ZOOM,
+                }}
+              />
             </TooltipTrigger>
-            <TooltipContent>{it.label}</TooltipContent>
+            <TooltipContent>{label}</TooltipContent>
           </Tooltip>
         ))}
       </ToggleGroup>
+      <p className="w-full text-[11px] text-muted-foreground sm:ml-auto sm:w-auto">
+        染髮顏色為估算，與遊戲可能有落差
+      </p>
     </div>
   );
 }
