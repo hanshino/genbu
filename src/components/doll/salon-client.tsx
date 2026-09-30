@@ -163,7 +163,8 @@ export function SalonClient(props: Props) {
   useEffect(() => {
     if (looksBySlot[tab] || inflight.current.has(tab)) return;
     inflight.current.add(tab);
-    fetch(`/api/doll/looks?g=${gender}&slot=${tab}`)
+    // ponytail: v= 讓瀏覽器丟掉舊格式的快取（API 有 max-age=3600），回應格式改了就 +1
+    fetch(`/api/doll/looks?g=${gender}&slot=${tab}&v=3`)
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((data: { looks: DollLook[]; frames: DollFrame[]; rides: DollRide[] }) => {
         setLooksBySlot((prev) => ({ ...prev, [tab]: data.looks }));
