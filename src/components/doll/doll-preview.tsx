@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { DollFrame, DollRule } from "@/lib/queries/doll";
+import type { DollFrame, DollPart, DollRule } from "@/lib/queries/doll";
 import { cn } from "@/lib/utils";
 
 /** 場景是 120×120 的原始像素空間，角色原點（脖子／腳底共用的掛點）固定在這裡。 */
@@ -17,11 +17,19 @@ export interface DollLayer {
 
 /**
  * 依方向算出每一層的位置。規則全部來自 DB（doll_slot_rules），這裡不寫死偏移。
- * frames 只需放「這一套造型」的圖：每個部位只會有一組 sequence。缺圖的部位直接跳過。
+ * frames 可以是一整包圖；有給 parts 就只畫 parts 列出的部位，沒給就每個部位取第一組。
+ * 缺圖的部位直接跳過。
  */
-export function buildDollLayers(frames: DollFrame[], rules: DollRule[], dir: number): DollLayer[] {
+export function buildDollLayers(
+  frames: DollFrame[],
+  rules: DollRule[],
+  dir: number,
+  parts?: DollPart[],
+): DollLayer[] {
+  const wanted = parts && new Set(parts.map((p) => `${p.slot}:${p.sequence}`));
   const frameBy = new Map<string, DollFrame>();
   for (const f of frames) {
+    if (wanted && !wanted.has(`${f.slot}:${f.sequence}`)) continue;
     const key = `${f.slot}:${f.dir}`;
     if (!frameBy.has(key)) frameBy.set(key, f);
   }
@@ -48,13 +56,15 @@ interface Props {
   frames: DollFrame[];
   rules: DollRule[];
   dir: number;
+  /** 要畫哪些部位（frames 是一整包時用）；不給就全畫 */
+  parts?: DollPart[];
   /** 整數倍率。不給的話讀 CSS 變數 `--doll-scale`（方便用 class 做 RWD），預設 4。 */
   scale?: number;
   className?: string;
 }
 
-export function DollPreview({ frames, rules, dir, scale, className }: Props) {
-  const layers = buildDollLayers(frames, rules, dir);
+export function DollPreview({ frames, rules, dir, parts, scale, className }: Props) {
+  const layers = buildDollLayers(frames, rules, dir, parts);
   const size = `calc(${SCENE}px * var(--doll-scale, 4))`;
 
   return (

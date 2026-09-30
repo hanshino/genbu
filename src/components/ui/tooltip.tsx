@@ -47,4 +47,7 @@ function TooltipContent({
   );
 }
 
-export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };
+/** 一個 Tooltip 給很多個 trigger 共用（例如上百格的圖示格），trigger 用 `handle` + `payload` 接上。 */
+const createTooltipHandle = TooltipPrimitive.createHandle;
+
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, createTooltipHandle };

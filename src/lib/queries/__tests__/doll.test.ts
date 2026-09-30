@@ -1,15 +1,19 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
-  DOLL_EQUIP_SLOTS,
+  getDollSlots,
   getDollRules,
   getDollHeads,
-  getDollCatalog,
+  getDollLooks,
+  getDollLookByItem,
   getDollFrames,
   getItemDoll,
-  getDefaultDollOutfit,
+  getDollDefaults,
   type DollGender,
   type DollSlot,
 } from "../doll";
+import { GET } from "@/app/api/doll/looks/route";
+import { getDb } from "@/lib/db";
+import type { DollLook, DollFrame } from "../doll";
 
 // 真實 id（存在於 tthol.sqlite）
 const BODY_ITEM_ID = 55376; // 鬼道陰陽衣：男 body 102872
@@ -19,10 +23,11 @@ const ITEM_WITHOUT_PART = 23838; // 麋鹿女頭：has_part=0
 const ITEM_WITHOUT_IMAGE = 20413; // 國王的新武器：有 part，沒有站立圖
 
 describe("doll.ts", () => {
-  it("讀取 48 條規則，方向 4 鏡像方向 2", () => {
+  it("讀取全部規則，方向 4 鏡像方向 2", () => {
     const rules = getDollRules();
-    expect(rules).toHaveLength(48);
-    expect(rules.filter((rule) => rule.dir === 4)).toHaveLength(6);
+    const slots = new Set(rules.map((rule) => rule.slot));
+    expect(rules).toHaveLength(slots.size * 8);
+    expect(rules.filter((rule) => rule.dir === 4)).toHaveLength(slots.size);
     for (const rule of rules.filter((rule) => rule.dir === 4)) {
       expect(rule.mirrorOf).toBe(2);
     }
@@ -67,27 +72,124 @@ describe("doll.ts", () => {
     expect(getItemDoll(999999999)).toEqual([]);
   });
 
-  it.each(["m", "f"] as const)("%s 目錄只含四個裝備部位、不重複道具", (gender) => {
-    const catalog = getDollCatalog(gender);
-    expect(Object.keys(catalog)).toEqual(DOLL_EQUIP_SLOTS);
-    const ids = DOLL_EQUIP_SLOTS.flatMap((slot) => catalog[slot].map((item) => item.itemId));
-    expect(new Set(ids).size).toBe(ids.length);
-    expect(ids).not.toContain(ITEM_WITHOUT_PART);
-    expect(catalog.wing).toContainEqual({
-      itemId: WING_ITEM_ID, name: "熊貓背袱",
-      sequence: gender === "m" ? 104090 : 304090, hasImage: true,
-    });
-    if (gender === "m") {
-      expect(catalog.body).toContainEqual({
-        itemId: BODY_ITEM_ID, name: "鬼道陰陽衣", sequence: 102872, hasImage: true,
-      });
+  it("裝備部位按順序讀取，舊 schema 回傳五個部位", () => {
+    const slots = getDollSlots();
+    expect(slots.map((info) => info.sortOrder)).toEqual(
+      slots.map((info) => info.sortOrder).sort((a, b) => a - b),
+    );
+    expect(slots.some((info) => info.slot === "head")).toBe(false);
+    if (getDb().prepare("PRAGMA table_info(doll_slots)").all().length === 0) {
+      expect(slots.map(({ slot, label }) => ({ slot, label }))).toEqual([
+        { slot: "cap", label: "帽子" }, { slot: "body", label: "衣服" },
+        { slot: "foot", label: "褲子" }, { slot: "wing", label: "背飾" },
+        { slot: "right", label: "武器" },
+      ]);
+      expect(slots.every((info) => info.replaces === null)).toBe(true);
     } else {
-      expect(ids).not.toContain(BODY_ITEM_ID);
+      expect(slots).toHaveLength(9);
+      expect(slots.find((info) => info.slot === "horse")?.replaces).toBe("foot");
     }
-    for (const slot of DOLL_EQUIP_SLOTS) {
-      for (const item of catalog[slot]) {
-        expect(typeof item.hasImage).toBe("boolean");
-        expect(item.hasImage).toBe(getDollFrames(gender, [{ slot, sequence: item.sequence }]).length > 0);
+  });
+
+  it("舊 schema 偵測只執行一次，使用五部位與 main fallback", async () => {
+    vi.resetModules();
+    const db = getDb();
+    const prepare = db.prepare.bind(db);
+    const spy = vi.spyOn(db, "prepare").mockImplementation((sql) => {
+      // 只模擬舊 schema 的 pragma，外觀、道具、圖片仍查真實唯讀 DB。
+      if (sql === "PRAGMA table_info(doll_slots)") return prepare("SELECT 1 WHERE 0");
+      if (sql === "PRAGMA table_info(item_doll)") return prepare("SELECT 'item_id' AS name");
+      return prepare(sql);
+    });
+    try {
+      const fallback = await import("../doll");
+      expect(fallback.getDollSlots()).toHaveLength(5);
+      expect(fallback.getDollSlots().map((info) => info.label)).toEqual([
+        "帽子", "衣服", "褲子", "背飾", "武器",
+      ]);
+      expect(fallback.getDollLooks("m", "body")).toHaveLength(103);
+      expect(fallback.getDollLookByItem("m", BODY_ITEM_ID)?.items).toContainEqual({
+        itemId: BODY_ITEM_ID, name: "鬼道陰陽衣", isExtra: true,
+      });
+      expect(spy.mock.calls.filter(([sql]) => sql.startsWith("PRAGMA"))).toHaveLength(2);
+    } finally {
+      spy.mockRestore();
+      vi.resetModules();
+    }
+  });
+
+  it("新 schema 武器 pair 一起畫，offhand 獨立提供", () => {
+    const columns = getDb().prepare("PRAGMA table_info(item_doll)").all() as { name: string }[];
+    if (!columns.some((column) => column.name === "role")) return;
+    const pair = getDollLookByItem("m", 20086); // 幻龍手套
+    expect(pair?.layers).toEqual([
+      { slot: "right", sequence: 211018 }, { slot: "left", sequence: 261018 },
+    ]);
+    expect(pair?.offhandLayers).toBeNull();
+    const blade = getDollLookByItem("m", 20001); // 青銅刀
+    expect(blade?.layers).toEqual([{ slot: "right", sequence: 201001 }]);
+    expect(blade?.offhandLayers).toEqual([{ slot: "left", sequence: 251001 }]);
+  });
+
+  it("男衣服有 103 種外觀，包含鬼道陰陽衣", () => {
+    const looks = getDollLooks("m", "body");
+    expect(looks).toHaveLength(103);
+    const look = looks.find((look) => look.items.some((item) => item.itemId === BODY_ITEM_ID));
+    expect(look).toMatchObject({
+      key: "body:102872", slot: "body", layers: [{ slot: "body", sequence: 102872 }],
+      offhandLayers: null, hasImage: true,
+    });
+    expect(look?.items).toContainEqual({ itemId: BODY_ITEM_ID, name: "鬼道陰陽衣", isExtra: true });
+  });
+
+  it("藍錦布甲與精工藍錦布甲共享同一個女外觀", () => {
+    const look = getDollLookByItem("f", 21047);
+    expect(look?.layers).toEqual([{ slot: "body", sequence: 302017 }]);
+    expect(look?.items.map((item) => item.itemId)).toEqual(expect.arrayContaining([21047, 21057]));
+    expect(getDollLookByItem("f", 21057)).toEqual(look);
+    expect(getDollLookByItem("m", WING_ITEM_ID)?.slot).toBe("wing");
+    expect(getDollLookByItem("f", BODY_ITEM_ID)).toBeNull();
+    expect(getDollLookByItem("m", ITEM_WITHOUT_PART)).toBeNull();
+    expect(getDollLookByItem("m", 999999999)).toBeNull();
+  });
+
+  it.each(["m", "f"] as const)("%s 外觀分組、圖片、外裝與排序正確", (gender) => {
+    for (const { slot } of getDollSlots()) {
+      const looks = getDollLooks(gender, slot);
+      const ids = looks.flatMap((look) => look.items.map((item) => item.itemId));
+      expect(new Set(ids).size).toBe(ids.length);
+      expect(ids).not.toContain(ITEM_WITHOUT_PART);
+      expect(new Set(looks.map((look) => look.key)).size).toBe(looks.length);
+      for (const [index, look] of looks.entries()) {
+        expect(look.slot).toBe(slot);
+        expect(look.items.map((item) => item.itemId)).toEqual(
+          look.items.map((item) => item.itemId).sort((a, b) => a - b),
+        );
+        const frames = getDollFrames(gender, look.layers);
+        expect(look.hasImage).toBe(look.layers.every((part) => frames.some((frame) =>
+          frame.slot === part.slot && frame.sequence === part.sequence,
+        )));
+        const columns = getDb().prepare("PRAGMA table_info(item_doll)").all() as { name: string }[];
+        const hasRoles = columns.some((column) => column.name === "role");
+        let firstIcon: string | null = null;
+        for (const item of look.items) {
+          const equip = getDb().prepare(hasRoles
+            ? "SELECT equip_slot FROM item_doll WHERE item_id = ? AND gender = ? AND role = 'main'"
+            : "SELECT equip_slot FROM items WHERE id = ? AND ? IN ('m', 'f')",
+          ).get(item.itemId, gender) as { equip_slot: string | null };
+          expect(item.isExtra).toBe(equip.equip_slot?.startsWith("EXTRA_") ?? false);
+          const icon = getDb().prepare("SELECT url FROM item_images WHERE item_id = ? AND kind = 'icon'")
+            .get(item.itemId) as { url: string } | undefined;
+          firstIcon ??= icon?.url ?? null;
+        }
+        expect(look.icon).toBe(firstIcon);
+        if (index > 0) {
+          const previous = looks[index - 1];
+          expect(Number(previous.hasImage)).toBeGreaterThanOrEqual(Number(look.hasImage));
+          if (previous.hasImage === look.hasImage) {
+            expect(previous.items.length).toBeGreaterThanOrEqual(look.items.length);
+          }
+        }
       }
     }
   });
@@ -123,7 +225,7 @@ describe("doll.ts", () => {
   it.each([ ["m", 100001, 21045], ["f", 300001, 21047] ] as const)(
     "%s 預設頭型與預設衣褲有圖",
     (gender, head, body) => {
-      expect(getDefaultDollOutfit(gender)).toEqual({ head, body, foot: 21131 });
+      expect(getDollDefaults(gender)).toEqual({ head, items: { body, foot: 21131 } });
       for (const itemId of [body, 21131]) {
         expect(getItemDoll(itemId).some((part) => part.gender === gender && part.hasImage)).toBe(true);
       }
@@ -133,9 +235,12 @@ describe("doll.ts", () => {
   it("空輸入、不合法性別與部位安全回傳", () => {
     const invalidGender = "m' OR 1=1 --" as DollGender;
     expect(getDollHeads(invalidGender)).toEqual([]);
-    expect(getDollCatalog(invalidGender)).toEqual({ cap: [], body: [], foot: [], wing: [] });
+    expect(getDollLooks(invalidGender, "body")).toEqual([]);
+    expect(getDollLooks("m", "body' OR 1=1 --" as DollSlot)).toEqual([]);
+    expect(getDollLooks("m", "head")).toEqual([]);
+    expect(getDollLookByItem(invalidGender, BODY_ITEM_ID)).toBeNull();
     expect(getDollFrames(invalidGender, [{ slot: "head", sequence: HEAD_SEQUENCE }])).toEqual([]);
-    expect(getDefaultDollOutfit(invalidGender)).toEqual({ head: 0, body: null, foot: null });
+    expect(getDollDefaults(invalidGender)).toEqual({ head: 0, items: {} });
     expect(getDollFrames("m", [])).toEqual([]);
     expect(getDollFrames("m", [
       { slot: "head' OR 1=1 --" as DollSlot, sequence: HEAD_SEQUENCE },
@@ -143,6 +248,45 @@ describe("doll.ts", () => {
       { slot: "head", sequence: -1 },
       { slot: "head", sequence: 1.5 },
     ])).toEqual([]);
-    for (const id of [NaN, Infinity, -1, 0, 1.5]) expect(getItemDoll(id)).toEqual([]);
+    for (const id of [NaN, Infinity, -1, 0, 1.5]) {
+      expect(getItemDoll(id)).toEqual([]);
+      expect(getDollLookByItem("m", id)).toBeNull();
+    }
+  });
+});
+
+describe("GET /api/doll/looks", () => {
+  it.each(["g=m&slot=bad", "g=x&slot=cap", "g=m&slot=head", "slot=cap", "g=m"])(
+    "不合法參數 %s 回傳 400",
+    async (query) => {
+      const response = GET(new Request(`http://localhost/api/doll/looks?${query}`));
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({ error: expect.any(String) });
+      expect(response.headers.get("Cache-Control")).toBeNull();
+    },
+  );
+
+  it("回傳全部外觀及去重圖層，允許快取", async () => {
+    const response = GET(new Request("http://localhost/api/doll/looks?g=m&slot=cap"));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toContain("s-maxage=86400");
+    const data = await response.json() as { looks: DollLook[]; frames: DollFrame[] };
+    expect(data.looks).toEqual(getDollLooks("m", "cap"));
+    expect(data.frames.length).toBeGreaterThan(0);
+    expect(data.frames).toEqual(getDollFrames("m", data.looks.flatMap((look) => [
+      ...look.layers, ...(look.offhandLayers ?? []),
+    ])));
+    expect(new Set(data.frames.map((frame) => `${frame.slot}:${frame.sequence}:${frame.dir}`)).size)
+      .toBe(data.frames.length);
+  });
+
+  it("量測男武器完整 JSON 回應大小", async () => {
+    const response = GET(new Request("http://localhost/api/doll/looks?g=m&slot=right"));
+    expect(response.status).toBe(200);
+    const json = await response.text();
+    const data = JSON.parse(json) as { looks: DollLook[]; frames: DollFrame[] };
+    console.info(`m/right: ${data.looks.length} looks, ${data.frames.length} frames, ${Buffer.byteLength(json, "utf8")} bytes (JSON, uncompressed)`);
+    expect(data.looks.length).toBeGreaterThan(0);
+    expect(data.frames.length).toBeGreaterThan(0);
   });
 });

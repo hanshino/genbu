@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { getDb } from "@/lib/db";
 import {
+  getDollSlots,
+  getDollLooks,
+  getDollLookByItem,
+  getDollDefaults,
+} from "../doll";
+import {
   getAchievementCategories,
   getAchievementsByCategory,
   getAchievementsWithRewards,
@@ -693,5 +699,24 @@ describe("schema smoke — 任務對話上游解析表", () => {
     const db = getDb();
     const row = db.prepare("SELECT name FROM sqlite_master WHERE type = 'view' AND name = ?").get(view);
     expect(row).toBeDefined();
+  });
+});
+
+describe("schema smoke — 紙娃娃新 schema / 舊 schema 相容", () => {
+  it("doll_slots 存在時檢查新欄位，否則檢查 fallback", () => {
+    const db = getDb();
+    const columns = db.prepare("PRAGMA table_info(doll_slots)").all();
+    if (columns.length > 0) {
+      expect(() => db.prepare("SELECT slot, label, catalog, sort_order, replaces FROM doll_slots").all())
+        .not.toThrow();
+      expect(() => db.prepare("SELECT role, equip_slot FROM item_doll").all()).not.toThrow();
+    }
+    expect(() => getDollSlots()).not.toThrow();
+  });
+
+  it("外觀分組與預設服裝查詢實際 prepare", () => {
+    expect(() => getDollLooks("m", "right")).not.toThrow();
+    expect(() => getDollLookByItem("m", 22082)).not.toThrow();
+    expect(() => getDollDefaults("f")).not.toThrow();
   });
 });
