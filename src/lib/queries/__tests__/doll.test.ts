@@ -10,6 +10,7 @@ import {
   getDollDefaults,
   getDollBase,
   getDollRides,
+  getDollHairColors,
   type DollGender,
   type DollSlot,
 } from "../doll";
@@ -185,17 +186,20 @@ describe("doll.ts", () => {
     }
   });
 
-  it("男頭型 100001 回傳兩個 action 各五方向及圖像錨點", () => {
+  it("男頭型 100001 的每種 color 回傳兩個 action 各五方向及圖像錨點", () => {
     const frames = getDollFrames("m", [{ slot: "head", sequence: HEAD_SEQUENCE }]);
-    expect(frames).toHaveLength(10);
-    for (const action of ["wait", "prepare"] as const) {
-      expect(frames.filter((frame) => frame.action === action).map((frame) => frame.dir))
-        .toEqual([1, 2, 3, 7, 8]);
+    expect(frames).toHaveLength(110);
+    for (let color = 0; color <= 10; color++) {
+      for (const action of ["wait", "prepare"] as const) {
+        expect(frames.filter((frame) => frame.action === action && frame.color === color).map((frame) => frame.dir))
+          .toEqual([1, 2, 3, 7, 8]);
+      }
     }
     for (const frame of frames) {
       expect(frame).toEqual({
         slot: "head", sequence: HEAD_SEQUENCE, dir: expect.any(Number),
         action: expect.stringMatching(/^(wait|prepare)$/),
+        color: expect.any(Number),
         url: expect.any(String), width: expect.any(Number), height: expect.any(Number),
         anchorX: expect.any(Number), anchorY: expect.any(Number),
       });
@@ -206,18 +210,35 @@ describe("doll.ts", () => {
     expect(getDollFrames("f", [{ slot: "head", sequence: HEAD_SEQUENCE }])).toEqual([]);
   });
 
-  it("有染髮圖片的頭型只回傳 color=0 的圖片", () => {
+  it("頭型包含 color 0..10 圖片，棕色與原色共用 URL", () => {
     const db = getDb();
     const dyed = db.prepare(
       "SELECT COUNT(*) AS n FROM doll_frame_images WHERE gender = 'm' AND slot = 'head' AND sequence = ? AND color > 0",
     ).get(HEAD_SEQUENCE) as { n: number };
     expect(dyed.n).toBeGreaterThan(0);
     const expected = db.prepare(
-      `SELECT slot, sequence, action, dir, url, width, height, anchor_x AS anchorX, anchor_y AS anchorY
-       FROM doll_frame_images WHERE gender = 'm' AND slot = 'head' AND sequence = ? AND color = 0
-       ORDER BY action, dir`,
+      `SELECT slot, sequence, action, color, dir, url, width, height, anchor_x AS anchorX, anchor_y AS anchorY
+       FROM doll_frame_images WHERE gender = 'm' AND slot = 'head' AND sequence = ? AND color BETWEEN 0 AND 10
+       ORDER BY color, action, dir`,
     ).all(HEAD_SEQUENCE);
-    expect(getDollFrames("m", [{ slot: "head", sequence: HEAD_SEQUENCE }])).toEqual(expected);
+    const frames = getDollFrames("m", [{ slot: "head", sequence: HEAD_SEQUENCE }]);
+    expect(frames).toEqual(expected);
+    for (const brown of frames.filter((frame) => frame.color === 2)) {
+      expect(brown.url).toBe(frames.find((frame) =>
+        frame.color === 0 && frame.action === brown.action && frame.dir === brown.dir,
+      )?.url);
+    }
+  });
+
+  it.each([ ["m", 11], ["f", 10] ] as const)("%s 頭型染髮選項按 sequence、color 排序", (gender, count) => {
+    const colors = getDollHairColors(gender);
+    expect(colors).toHaveLength(count * 10);
+    expect(colors).toEqual([...colors].sort((a, b) => a.sequence - b.sequence || a.color - b.color));
+    for (const head of getDollHeads(gender)) {
+      expect(colors.filter((option) => option.sequence === head.sequence).map((option) => option.color))
+        .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    }
+    expect(colors[2]).toEqual({ sequence: gender === "m" ? 100001 : 300001, color: 3, label: "紅色", r: 255, g: 0, b: 0 });
   });
 
   it("騎乘偏移依性別與 sequence 查詢，保留鏡像方向原值", () => {
@@ -236,7 +257,8 @@ describe("doll.ts", () => {
     const head = { slot: "head" as const, sequence: HEAD_SEQUENCE };
     const body = { slot: "body" as const, sequence: 102872 };
     const frames = getDollFrames("m", [head, body, head, { slot: "wing", sequence: HEAD_SEQUENCE }]);
-    expect(frames).toHaveLength(20);
+    expect(frames).toHaveLength(120);
+    expect(frames.filter((frame) => frame.slot !== "head").every((frame) => frame.color === 0)).toBe(true);
     expect(new Set(frames.map((frame) => frame.slot))).toEqual(new Set(["head", "body"]));
     const many = Array.from({ length: 950 }, (_, index) => ({
       slot: "head" as const, sequence: 900000000 + index,
@@ -271,6 +293,7 @@ describe("doll.ts", () => {
   it("空輸入、不合法性別與部位安全回傳", () => {
     const invalidGender = "m' OR 1=1 --" as DollGender;
     expect(getDollHeads(invalidGender)).toEqual([]);
+    expect(getDollHairColors(invalidGender)).toEqual([]);
     expect(getDollLooks(invalidGender, "body")).toEqual([]);
     expect(getDollLooks("m", "body' OR 1=1 --" as DollSlot)).toEqual([]);
     expect(getDollLooks("m", "head")).toEqual([]);
@@ -290,6 +313,44 @@ describe("doll.ts", () => {
       expect(getItemDoll(id)).toEqual([]);
       expect(getDollLookByItem("m", id)).toBeNull();
     }
+  });
+});
+
+describe("buildDollLayers 染髮", () => {
+  it.each([7, 6])("方向 %s 依頭型選色，保留動作與鏡像邏輯", (dir) => {
+    const parts: DollPart[] = [
+      { slot: "head", sequence: HEAD_SEQUENCE },
+      ...Object.values(getDollBase("m")),
+      ...getDollLookByItem("m", 20101)!.layers,
+    ];
+    const frames = getDollFrames("m", parts);
+    const rules = getDollRules();
+    for (let color = 0; color <= 10; color++) {
+      const layers = buildDollLayers([...frames].reverse(), rules, dir, parts, undefined, color);
+      const head = layers.find((layer) => layer.frame.slot === "head")!;
+      expect(head.frame.color).toBe(color);
+      expect(head.frame.action).toBe("prepare");
+      expect(head.frame.dir).toBe(dir === 6 ? 8 : 7);
+      expect(head.mirrored).toBe(dir === 6);
+      expect(layers.filter((layer) => layer.frame.slot !== "head").every((layer) => layer.frame.color === 0)).toBe(true);
+    }
+    const undyed = buildDollLayers(frames, rules, dir, parts);
+    expect(buildDollLayers(frames.filter((frame) => frame.color !== 3), rules, dir, parts, undefined, 3))
+      .toEqual(undyed);
+    expect(buildDollLayers(frames, rules, dir, parts, undefined, 99)).toEqual(undyed);
+    const unarmed = parts.filter((part) => part.slot !== "right");
+    expect(buildDollLayers(frames, rules, dir, unarmed, undefined, 3)
+      .find((layer) => layer.frame.slot === "head")?.frame).toMatchObject({ color: 3, action: "wait" });
+  });
+
+  it("非 head 圖層忽略非原色圖片，沒有原色時跳過", () => {
+    const parts = Object.values(getDollBase("m"));
+    const frames = getDollFrames("m", parts);
+    const dyed = frames.map((frame) => ({ ...frame, color: 3, url: "invalid-dyed-body" }));
+    const rules = getDollRules();
+    expect(buildDollLayers([...dyed, ...frames], rules, 7, parts, undefined, 3))
+      .toEqual(buildDollLayers(frames, rules, 7, parts));
+    expect(buildDollLayers(dyed, rules, 7, parts, undefined, 3)).toEqual([]);
   });
 });
 

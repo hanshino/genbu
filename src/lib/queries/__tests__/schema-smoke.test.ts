@@ -9,6 +9,7 @@ import {
   getDollHeads,
   getDollFrames,
   getDollRides,
+  getDollHairColors,
 } from "../doll";
 import {
   getAchievementCategories,
@@ -691,6 +692,7 @@ describe("schema smoke — 任務對話上游解析表", () => {
     "doll_slot_rules",
     "doll_slots",
     "doll_ride_offsets",
+    "doll_hair_colors",
   ];
 
   it.each(TABLES)("表 %s 存在", (table) => {
@@ -729,5 +731,6 @@ describe("schema smoke — 紙娃娃", () => {
     expect(() => getDollBase("f")).not.toThrow();
     expect(() => getDollFrames("f", Object.values(getDollBase("f")))).not.toThrow();
     expect(() => getDollRides("f", [303382])).not.toThrow();
+    expect(() => getDollHairColors("f")).not.toThrow();
   });
 });

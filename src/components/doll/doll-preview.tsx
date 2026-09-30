@@ -29,13 +29,15 @@ export function buildDollLayers(
   dir: number,
   parts?: DollPart[],
   rides?: DollRide[],
+  hairColor = 0,
 ): DollLayer[] {
   const wanted = parts && new Set(parts.map((p) => `${p.slot}:${p.sequence}`));
   const frameBy = new Map<string, DollFrame>();
   let armed = false;
   for (const f of frames) {
     if (wanted && !wanted.has(`${f.slot}:${f.sequence}`)) continue;
-    const key = `${f.slot}:${f.dir}:${f.action}`;
+    if (f.color !== 0 && (f.slot !== "head" || f.color !== hairColor)) continue;
+    const key = `${f.slot}:${f.dir}:${f.action}:${f.color}`;
     if (!frameBy.has(key)) frameBy.set(key, f);
     if (f.slot === "right" || f.slot === "left") armed = true;
   }
@@ -45,7 +47,11 @@ export function buildDollLayers(
   for (const rule of rules) {
     if (rule.dir !== dir) continue;
     const key = `${rule.slot}:${rule.mirrorOf ?? dir}`;
-    const frame = frameBy.get(`${key}:${pose}`) ?? frameBy.get(`${key}:${fallback}`);
+    const color = rule.slot === "head" ? hairColor : 0;
+    const frame = frameBy.get(`${key}:${pose}:${color}`)
+      ?? frameBy.get(`${key}:${pose}:0`)
+      ?? frameBy.get(`${key}:${fallback}:${color}`)
+      ?? frameBy.get(`${key}:${fallback}:0`);
     if (!frame) continue;
     const mirrored = rule.mirrorOf != null;
     const anchorX = mirrored ? frame.width - frame.anchorX : frame.anchorX;
@@ -76,6 +82,7 @@ interface Props {
   /** 要畫哪些部位（frames 是一整包時用）；不給就全畫 */
   parts?: DollPart[];
   rides?: DollRide[];
+  hairColor?: number;
   /** 整數倍率。不給的話讀 CSS 變數 `--doll-scale`（方便用 class 做 RWD），預設 4。 */
   scale?: number;
   className?: string;
@@ -87,10 +94,10 @@ const ALL_DIRS = [1, 2, 3, 4, 5, 6, 7, 8];
  * 畫布範圍：至少是 120×120 的場景，大型背飾、坐騎超出時往外撐。
  * 取 8 個方向的聯集，轉方向時角色才不會跳來跳去。
  */
-function sceneBox(frames: DollFrame[], rules: DollRule[], parts?: DollPart[], rides?: DollRide[]) {
+function sceneBox(frames: DollFrame[], rules: DollRule[], parts?: DollPart[], rides?: DollRide[], hairColor = 0) {
   let [x0, y0, x1, y1] = [0, 0, SCENE, SCENE];
   for (const d of ALL_DIRS) {
-    for (const l of buildDollLayers(frames, rules, d, parts, rides)) {
+    for (const l of buildDollLayers(frames, rules, d, parts, rides, hairColor)) {
       x0 = Math.min(x0, l.left);
       y0 = Math.min(y0, l.top);
       x1 = Math.max(x1, l.left + l.frame.width);
@@ -100,9 +107,9 @@ function sceneBox(frames: DollFrame[], rules: DollRule[], parts?: DollPart[], ri
   return { x0, y0, w: x1 - x0, h: y1 - y0 };
 }
 
-export function DollPreview({ frames, rules, dir, parts, rides, scale, className }: Props) {
-  const layers = buildDollLayers(frames, rules, dir, parts, rides);
-  const box = sceneBox(frames, rules, parts, rides);
+export function DollPreview({ frames, rules, dir, parts, rides, hairColor = 0, scale, className }: Props) {
+  const layers = buildDollLayers(frames, rules, dir, parts, rides, hairColor);
+  const box = sceneBox(frames, rules, parts, rides, hairColor);
 
   return (
     <div

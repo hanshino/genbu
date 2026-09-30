@@ -26,6 +26,7 @@ import {
   RotateCcwIcon,
   SearchIcon,
   ShieldIcon,
+  SlashIcon,
   ShirtIcon,
   SparklesIcon,
   SwordIcon,
@@ -36,6 +37,7 @@ import type {
   DollFrame,
   DollGender,
   DollHead,
+  DollHairColor,
   DollLook,
   DollPart,
   DollRule,
@@ -104,7 +106,7 @@ const weaponUsesLeft = (look: DollLook | undefined, hand: Hand) =>
 /** 「不穿」那格的文字：衣服、褲子空著其實是穿初心者外觀 */
 const noneLabel = (label: string, hasBase: boolean) =>
   hasBase ? `${label}：預設外觀（初心者）` : `不穿${label}`;
-const frameKey = (f: { slot: string; sequence: number }) => `${f.slot}:${f.sequence}`;
+const frameKey = (f: DollFrame) => `${f.slot}:${f.sequence}:${f.action}:${f.dir}:${f.color}`;
 
 interface TipPayload {
   label: string;
@@ -118,6 +120,8 @@ interface Props {
   slots: DollSlotInfo[];
   counts: Record<string, number>;
   heads: DollHead[];
+  hairColors: DollHairColor[];
+  initialHair: number;
   rules: DollRule[];
   initialFrames: DollFrame[];
   initialRides: DollRide[];
@@ -139,6 +143,7 @@ export function SalonClient(props: Props) {
 
   const [worn, setWorn] = useState<SalonWorn>(props.initialWorn);
   const [head, setHead] = useState(props.initialHead);
+  const [hair, setHair] = useState(props.initialHair);
   const [dir, setDir] = useState(props.initialDir);
   const [hand, setHand] = useState<Hand>(props.initialHand);
   const [tab, setTab] = useState<DollSlot>(props.initialTab);
@@ -168,7 +173,10 @@ export function SalonClient(props: Props) {
         });
         setRides((prev) => {
           const have = new Set(prev.map((ride) => `${ride.sequence}:${ride.dir}`));
-          return [...prev, ...data.rides.filter((ride) => !have.has(`${ride.sequence}:${ride.dir}`))];
+          return [
+            ...prev,
+            ...data.rides.filter((ride) => !have.has(`${ride.sequence}:${ride.dir}`)),
+          ];
         });
       })
       .catch(() => setFailed((prev) => ({ ...prev, [tab]: true })))
@@ -191,12 +199,13 @@ export function SalonClient(props: Props) {
     parts.push(...(useOffhand ? w.look.offhandLayers! : w.look.layers));
   }
   const drawParts = parts.filter((p) => !hidden.has(p.slot));
-  const layerCount = buildDollLayers(frames, rules, dir, drawParts, rides).length;
+  const layerCount = buildDollLayers(frames, rules, dir, drawParts, rides, hair).length;
   const missing = slots.filter((s) => worn[s.slot] && !worn[s.slot]!.look.hasImage);
 
   // ── 網址：換裝、轉向都只改網址，不打伺服器 ──
   const href = useMemo(() => {
     const p = new URLSearchParams({ g: gender, head: String(head) });
+    if (hair !== 0) p.set("hair", String(hair));
     for (const s of slots) {
       const w = worn[s.slot];
       if (w) p.set(s.slot, String(w.itemId));
@@ -204,7 +213,7 @@ export function SalonClient(props: Props) {
     if (worn.right?.look.offhandLayers && hand === "l") p.set("hand", "l");
     p.set("dir", String(dir));
     return `/tools/salon?${p.toString()}`;
-  }, [gender, head, slots, worn, hand, dir]);
+  }, [gender, head, hair, slots, worn, hand, dir]);
 
   useEffect(() => {
     window.history.replaceState(null, "", href);
@@ -269,6 +278,7 @@ export function SalonClient(props: Props) {
   const reset = () => {
     setWorn(props.defaultWorn);
     setHead(props.defaultHead);
+    setHair(0);
     setHand("r");
     setDir(7);
   };
@@ -279,6 +289,7 @@ export function SalonClient(props: Props) {
     const p = new URLSearchParams(href.split("?")[1]);
     p.set("g", g);
     p.set("head", "");
+    p.delete("hair");
     router.replace(`/tools/salon?${p.toString()}`, { scroll: false });
   };
 
@@ -298,7 +309,8 @@ export function SalonClient(props: Props) {
     return notes;
   };
 
-  const headThumbs = frames.filter((f) => f.slot === "head" && f.dir === 7);
+  const headThumbs = frames.filter((f) => f.slot === "head" && f.dir === 7 && f.color === 0);
+  const hairOptions = props.hairColors.filter((color) => color.sequence === head);
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_452px] lg:gap-5">
@@ -328,6 +340,7 @@ export function SalonClient(props: Props) {
                 dir={dir}
                 parts={drawParts}
                 rides={rides}
+                hairColor={hair}
                 className="[--doll-scale:2] sm:[--doll-scale:3] lg:[--doll-scale:4]"
               />
               {missing.length > 0 && (
@@ -389,6 +402,9 @@ export function SalonClient(props: Props) {
               })}
             </ToggleGroup>
           </div>
+          {hairOptions.length > 0 && (
+            <HairSwatches options={hairOptions} value={hair} onChange={setHair} />
+          )}
           <div className="flex flex-wrap items-center gap-2 px-4 py-2.5">
             <Button onClick={share}>
               {copied ? <CheckIcon aria-hidden /> : <LinkIcon aria-hidden />}
@@ -832,6 +848,74 @@ function WornGroup({ label, look, flags }: { label: string; look: DollLook; flag
         </div>
       </CollapsiblePanel>
     </Collapsible>
+  );
+}
+
+/**
+ * 棕色在 DB 是 r/g/b 0,0,0、mix_level 0：遊戲裡染出來跟原色一模一樣，
+ * 直接用 DB 的顏色會跟黑色分不出來，所以只有這一色改用棕色色票。
+ */
+const HAIR_SWATCH_OVERRIDE: Record<string, string> = { 棕色: "rgb(122 78 46)" };
+
+function HairSwatches({
+  options,
+  value,
+  onChange,
+}: {
+  options: DollHairColor[];
+  value: number;
+  onChange: (color: number) => void;
+}) {
+  const current = value === 0 ? "原色" : (options.find((o) => o.color === value)?.label ?? "原色");
+  const swatch =
+    "size-6 shrink-0 rounded-full border border-foreground/15 p-0 shadow-[inset_0_1px_2px_rgb(0_0_0/0.18)] hover:border-foreground/40 data-pressed:shadow-none data-pressed:ring-2 data-pressed:ring-primary data-pressed:ring-offset-2 data-pressed:ring-offset-card";
+  const items = [
+    { color: 0, label: "原色", fill: undefined as string | undefined },
+    ...options.map((o) => ({
+      color: o.color,
+      label: o.label,
+      fill: HAIR_SWATCH_OVERRIDE[o.label] ?? `rgb(${o.r} ${o.g} ${o.b})`,
+    })),
+  ];
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border/60 px-4 py-2.5">
+      <span className="flex items-baseline gap-1.5 text-xs text-muted-foreground">
+        髮色
+        {/* 觸控裝置沒有 tooltip，目前選的顏色直接寫出來 */}
+        <span className="text-foreground/80">{current}</span>
+      </span>
+      <ToggleGroup
+        aria-label="髮色"
+        value={[String(value)]}
+        onValueChange={(v) => v[0] && onChange(Number(v[0]))}
+        className="flex flex-wrap gap-1 border-0 bg-transparent p-1 sm:gap-1.5"
+      >
+        {items.map((it) => (
+          <Tooltip key={it.color}>
+            <TooltipTrigger
+              delay={150}
+              render={
+                <ToggleGroupItem
+                  value={String(it.color)}
+                  aria-label={`髮色：${it.label}`}
+                  className={cn(
+                    swatch,
+                    // 原色：虛線中性色票＋斜線，跟「有顏色」的色票區隔開
+                    it.fill == null &&
+                      "border-dashed border-foreground/35 bg-muted text-muted-foreground data-pressed:bg-muted data-pressed:text-foreground",
+                  )}
+                  style={it.fill ? { backgroundColor: it.fill } : undefined}
+                />
+              }
+            >
+              {it.fill == null && <SlashIcon className="size-3.5!" aria-hidden />}
+            </TooltipTrigger>
+            <TooltipContent>{it.label}</TooltipContent>
+          </Tooltip>
+        ))}
+      </ToggleGroup>
+    </div>
   );
 }
 

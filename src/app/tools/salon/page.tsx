@@ -6,6 +6,7 @@ import {
   getDollDefaults,
   getDollFrames,
   getDollHeads,
+  getDollHairColors,
   getDollLookByItem,
   getDollLooks,
   getDollRules,
@@ -54,6 +55,7 @@ export default async function SalonPage({ searchParams }: Props) {
   const gender: DollGender = one(params.g) === "f" ? "f" : "m";
   const slots = getDollSlots();
   const heads = getDollHeads(gender);
+  const hairColors = getDollHairColors(gender);
   const base = getDollBase(gender);
 
   // 預設造型一律帶給 client，「重設」就不用再跑一趟伺服器
@@ -75,6 +77,8 @@ export default async function SalonPage({ searchParams }: Props) {
   const dirParam = Number(one(params.dir));
   const dir = DIRS.includes(dirParam) ? dirParam : 7;
   const hand = one(params.hand) === "l" ? "l" : "r";
+  const hairParam = Number(one(params.hair));
+  const hair = Number.isInteger(hairParam) && hairParam >= 1 && hairParam <= 10 ? hairParam : 0;
 
   // ponytail: 分頁數字要每個部位各查一次；DB 查詢在毫秒級，慢了再改成只算數量的 SQL
   const looksBySlot = Object.fromEntries(slots.map((s) => [s.slot, getDollLooks(gender, s.slot)]));
@@ -109,6 +113,8 @@ export default async function SalonPage({ searchParams }: Props) {
         slots={slots}
         counts={counts}
         heads={heads}
+        hairColors={hairColors}
+        initialHair={hair}
         rules={getDollRules()}
         initialFrames={frames}
         initialRides={rides}

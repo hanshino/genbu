@@ -25,6 +25,7 @@ export interface DollFrame {
   slot: DollSlot;
   sequence: number;
   action: "wait" | "prepare";
+  color: number;
   dir: number;
   url: string;
   width: number;
@@ -44,6 +45,15 @@ export interface DollHead {
   sequence: number;
   label: string;
   itemId: number;
+}
+
+export interface DollHairColor {
+  sequence: number;
+  color: number;
+  label: string;
+  r: number;
+  g: number;
+  b: number;
 }
 
 export interface DollLookItem {
@@ -139,6 +149,14 @@ interface LookRow extends DollPart {
   hasImage: number;
 }
 
+export function getDollHairColors(gender: DollGender): DollHairColor[] {
+  if (!isGender(gender)) return [];
+  return getDb().prepare(
+    `SELECT sequence, color, label, r, g, b FROM doll_hair_colors
+     WHERE gender = ? ORDER BY sequence, color`,
+  ).all(gender) as DollHairColor[];
+}
+
 export function getDollLooks(gender: DollGender, slot: DollSlot): DollLook[] {
   if (!isGender(gender) || !isSlot(slot) || slot === "head") return [];
   // items.id 沒有索引；先掃 items，再查 item_doll 的主鍵，避免每個部位列重掃 items。
@@ -230,13 +248,13 @@ export function getDollFrames(gender: DollGender, parts: DollPart[]): DollFrame[
       frames.push(
         ...(db
           .prepare(
-            `SELECT slot, sequence, action, dir, url, width, height,
+            `SELECT slot, sequence, action, color, dir, url, width, height,
                   anchor_x AS anchorX, anchor_y AS anchorY
            FROM doll_frame_images
            WHERE gender = ? AND slot = ? AND action IN ('wait', 'prepare')
-             AND color = 0
+              AND ${slot === "head" ? "color BETWEEN 0 AND 10" : "color = 0"}
              AND sequence IN (${placeholders})
-           ORDER BY sequence, action, dir`,
+            ORDER BY sequence, color, action, dir`,
           )
           .all(gender, slot, ...chunk) as DollFrame[]),
       );
