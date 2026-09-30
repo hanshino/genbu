@@ -56,7 +56,7 @@ function parseArgs(argv: string[]): Args {
     force: false,
     noAi: false,
     sdk: false,
-    model: "claude-opus-4-8",
+    model: "claude-opus-5-5",
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -97,7 +97,7 @@ function anthropicClient(): CurationClient {
         thinking: { type: "adaptive" },
         system,
         messages: [{ role: "user", content: user }],
-        output_config: { format: { type: "json_schema", schema: schema as Record<string, unknown> } },
+        output_config: { effort: "medium", format: { type: "json_schema", schema: schema as Record<string, unknown> } },
       });
       const text = res.content
         .filter((b): b is Anthropic.TextBlock => b.type === "text")
@@ -138,6 +138,8 @@ function claudeCliClient(): CurationClient {
             "-p",
             "--model",
             model,
+            "--effort",
+            "medium",
             "--output-format",
             "json",
             "--system-prompt",

@@ -3,7 +3,7 @@
 // 測試注入假 client，不打真 API、不需金鑰。
 import type { AiCuration, AiDigest, ChangelogEntry } from "./types";
 
-const DEFAULT_MODEL = "claude-opus-4-8";
+const DEFAULT_MODEL = "claude-opus-5-5";
 const MAX_HIGHLIGHTS = 12;
 
 // SDK 抽象：CLI 用真 Anthropic 實作，測試用假物件。
