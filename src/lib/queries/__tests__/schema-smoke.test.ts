@@ -675,6 +675,10 @@ describe("schema smoke — 任務對話上游解析表", () => {
     "mission_rewards",
     "mystery_boxes",
     "mystery_box_items",
+    "item_doll",
+    "doll_parts",
+    "doll_frame_images",
+    "doll_slot_rules",
   ];
 
   it.each(TABLES)("表 %s 存在", (table) => {
