@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { BackLink } from "@/components/common/back-link";
 import { SalonClient, type SalonWorn } from "@/components/doll/salon-client";
 import {
+  getDollBase,
   getDollDefaults,
   getDollFrames,
   getDollHeads,
@@ -52,6 +53,7 @@ export default async function SalonPage({ searchParams }: Props) {
   const gender: DollGender = one(params.g) === "f" ? "f" : "m";
   const slots = getDollSlots();
   const heads = getDollHeads(gender);
+  const base = getDollBase(gender);
 
   // 預設造型一律帶給 client，「重設」就不用再跑一趟伺服器
   const defaults = getDollDefaults(gender);
@@ -81,6 +83,7 @@ export default async function SalonPage({ searchParams }: Props) {
 
   const frames = getDollFrames(gender, [
     ...heads.map((h) => ({ slot: "head" as const, sequence: h.sequence })),
+    ...Object.values(base),
     ...initialLooks.flatMap(lookParts),
     ...Object.values(worn).flatMap((w) => lookParts(w!.look)),
     ...Object.values(defaultWorn).flatMap((w) => lookParts(w!.look)),
@@ -113,6 +116,7 @@ export default async function SalonPage({ searchParams }: Props) {
         defaultHead={defaults.head}
         initialDir={dir}
         initialHand={hand}
+        base={base}
       />
     </div>
   );

@@ -5,6 +5,9 @@ import {
   getDollLooks,
   getDollLookByItem,
   getDollDefaults,
+  getDollBase,
+  getDollHeads,
+  getDollFrames,
 } from "../doll";
 import {
   getAchievementCategories,
@@ -685,6 +688,7 @@ describe("schema smoke — 任務對話上游解析表", () => {
     "doll_parts",
     "doll_frame_images",
     "doll_slot_rules",
+    "doll_slots",
   ];
 
   it.each(TABLES)("表 %s 存在", (table) => {
@@ -702,15 +706,13 @@ describe("schema smoke — 任務對話上游解析表", () => {
   });
 });
 
-describe("schema smoke — 紙娃娃新 schema / 舊 schema 相容", () => {
-  it("doll_slots 存在時檢查新欄位，否則檢查 fallback", () => {
+describe("schema smoke — 紙娃娃", () => {
+  it("檢查新版欄位", () => {
     const db = getDb();
-    const columns = db.prepare("PRAGMA table_info(doll_slots)").all();
-    if (columns.length > 0) {
-      expect(() => db.prepare("SELECT slot, label, catalog, sort_order, replaces FROM doll_slots").all())
-        .not.toThrow();
-      expect(() => db.prepare("SELECT role, equip_slot FROM item_doll").all()).not.toThrow();
-    }
+    expect(() => db.prepare("SELECT slot, label, catalog, sort_order, replaces FROM doll_slots").all())
+      .not.toThrow();
+    expect(() => db.prepare("SELECT role, equip_slot FROM item_doll").all()).not.toThrow();
+    expect(() => db.prepare("SELECT wait_frame, prepare_frame FROM doll_parts").all()).not.toThrow();
     expect(() => getDollSlots()).not.toThrow();
   });
 
@@ -718,5 +720,8 @@ describe("schema smoke — 紙娃娃新 schema / 舊 schema 相容", () => {
     expect(() => getDollLooks("m", "right")).not.toThrow();
     expect(() => getDollLookByItem("m", 22082)).not.toThrow();
     expect(() => getDollDefaults("f")).not.toThrow();
+    expect(() => getDollHeads("m")).not.toThrow();
+    expect(() => getDollBase("f")).not.toThrow();
+    expect(() => getDollFrames("f", Object.values(getDollBase("f")))).not.toThrow();
   });
 });

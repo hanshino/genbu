@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  createElement,
   useEffect,
   useMemo,
   useRef,
@@ -91,18 +92,23 @@ const SLOT_ICON: Partial<Record<DollSlot, LucideIcon>> = {
   right: SwordIcon,
   left: ShieldIcon,
 };
-const slotIcon = (slot: DollSlot) => SLOT_ICON[slot] ?? PackageIcon;
+const slotIcon = (slot: DollSlot, className: string) =>
+  createElement(SLOT_ICON[slot] ?? PackageIcon, { className, "aria-hidden": true });
 const WEAPON_SLOTS: DollSlot[] = ["right", "left"];
 
 const isTwoHand = (look: DollLook) => look.layers.some((p) => p.slot === "left");
 /** 右手武器這時候有沒有佔用左手（雙手武器，或單手武器改拿左手） */
 const weaponUsesLeft = (look: DollLook | undefined, hand: Hand) =>
   !!look && (isTwoHand(look) || (hand === "l" && !!look.offhandLayers));
+/** 「不穿」那格的文字：衣服、褲子空著其實是穿初心者外觀 */
+const noneLabel = (label: string, hasBase: boolean) =>
+  hasBase ? `${label}：預設外觀（初心者）` : `不穿${label}`;
 const frameKey = (f: { slot: string; sequence: number }) => `${f.slot}:${f.sequence}`;
 
 interface TipPayload {
   label: string;
   look: DollLook | null;
+  hasBase?: boolean;
 }
 const tip = createTooltipHandle<TipPayload>();
 
@@ -121,10 +127,12 @@ interface Props {
   defaultHead: number;
   initialDir: number;
   initialHand: Hand;
+  /** 衣服／褲子沒穿時畫的初心者外觀 */
+  base: Partial<Record<DollSlot, DollPart>>;
 }
 
 export function SalonClient(props: Props) {
-  const { gender, slots, counts, heads, rules } = props;
+  const { gender, slots, counts, heads, rules, base } = props;
   const router = useRouter();
 
   const [worn, setWorn] = useState<SalonWorn>(props.initialWorn);
@@ -167,7 +175,11 @@ export function SalonClient(props: Props) {
   const parts: DollPart[] = [{ slot: "head", sequence: head }];
   for (const s of slots) {
     const w = worn[s.slot];
-    if (!w) continue;
+    if (!w) {
+      // 衣服、褲子空著就畫初心者外觀，角色不會缺手缺腳
+      if (base[s.slot]) parts.push(base[s.slot]!);
+      continue;
+    }
     const useOffhand = s.slot === "right" && hand === "l" && w.look.offhandLayers;
     parts.push(...(useOffhand ? w.look.offhandLayers! : w.look.layers));
   }
@@ -401,7 +413,14 @@ export function SalonClient(props: Props) {
                 if (!w) {
                   return (
                     <WornLine key={s.slot} label={s.label}>
-                      <span className="text-muted-foreground">未配戴</span>
+                      <span className="min-w-0 flex-1 text-muted-foreground">
+                        {base[s.slot] ? "預設外觀（初心者）" : "未配戴"}
+                      </span>
+                      {base[s.slot] && hidden.has(s.slot) && (
+                        <Badge variant="secondary" className="font-normal text-muted-foreground">
+                          不顯示
+                        </Badge>
+                      )}
                     </WornLine>
                   );
                 }
@@ -422,7 +441,7 @@ export function SalonClient(props: Props) {
       <Card className="gap-0 py-0">
         <PanelHeader title="外觀選擇" hint={labelOf(tab)} />
         <Tabs value={tab} onValueChange={(v) => setTab(v as DollSlot)} className="gap-0">
-          <TabsList className="mx-4 mt-3.5 grid h-auto w-auto grid-cols-[repeat(auto-fit,minmax(3.5rem,1fr))] gap-[3px] p-1 group-data-horizontal/tabs:h-auto">
+          <TabsList className="mx-4 mt-3.5 grid h-auto w-auto grid-cols-5 gap-[3px] p-1 group-data-horizontal/tabs:h-auto">
             {slots.map((s) => (
               <TabsTrigger
                 key={s.slot}
@@ -441,6 +460,7 @@ export function SalonClient(props: Props) {
               key={tab}
               slot={tab}
               label={labelOf(tab)}
+              hasBase={!!base[tab]}
               looks={looksBySlot[tab]}
               failed={!!failed[tab]}
               selectedKey={worn[tab]?.look.key ?? null}
@@ -488,7 +508,7 @@ export function SalonClient(props: Props) {
                   )}
                 </>
               ) : (
-                `不穿${payload.label}`
+                noneLabel(payload.label, !!payload.hasBase)
               )}
             </TooltipContent>
           ) : null;
@@ -501,6 +521,7 @@ export function SalonClient(props: Props) {
 function LookPicker({
   slot,
   label,
+  hasBase,
   looks,
   failed,
   selectedKey,
@@ -510,6 +531,7 @@ function LookPicker({
 }: {
   slot: DollSlot;
   label: string;
+  hasBase: boolean;
   looks: DollLook[] | undefined;
   failed: boolean;
   selectedKey: string | null;
@@ -521,7 +543,6 @@ function LookPicker({
   const [filter, setFilter] = useState<Filter>("all");
   const [focus, setFocus] = useState(0);
   const gridRef = useRef<HTMLDivElement>(null);
-  const Icon = slotIcon(slot);
 
   const kw = q.trim().toLowerCase();
   const visible = (looks ?? []).filter((look) => {
@@ -637,11 +658,11 @@ function LookPicker({
       >
         <TooltipTrigger
           handle={tip}
-          payload={{ label, look: null }}
+          payload={{ label, look: null, hasBase }}
           data-cell
           role="option"
           aria-selected={selectedKey == null}
-          aria-label={`不穿${label}`}
+          aria-label={noneLabel(label, hasBase)}
           tabIndex={focusAt === 0 ? 0 : -1}
           onClick={() => {
             setFocus(0);
@@ -649,7 +670,11 @@ function LookPicker({
           }}
           className={cn(cellClass, "bg-muted text-muted-foreground")}
         >
-          <BanIcon className="size-[18px]" aria-hidden />
+          {hasBase ? (
+            slotIcon(slot, "size-[18px]")
+          ) : (
+            <BanIcon className="size-[18px]" aria-hidden />
+          )}
         </TooltipTrigger>
 
         {visible.map((look, idx) => {
@@ -691,7 +716,7 @@ function LookPicker({
                   )}
                 />
               ) : (
-                <Icon className="size-[19px] opacity-75" aria-hidden />
+                slotIcon(slot, "size-[19px] opacity-75")
               )}
               {n > 1 && (
                 <span className="absolute top-0 right-0 rounded-bl-[5px] bg-muted/90 px-[3px] py-0.5 text-[9.5px] leading-none text-muted-foreground tabular-nums group-aria-selected/cell:bg-primary group-aria-selected/cell:text-primary-foreground">

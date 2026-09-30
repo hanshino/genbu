@@ -19,6 +19,9 @@ export interface DollLayer {
  * 依方向算出每一層的位置。規則全部來自 DB（doll_slot_rules），這裡不寫死偏移。
  * frames 可以是一整包圖；有給 parts 就只畫 parts 列出的部位，沒給就每個部位取第一組。
  * 缺圖的部位直接跳過。
+ *
+ * 姿勢跟遊戲一樣：只要有畫到武器（右手或左手），全身都改用備戰（prepare）圖，
+ * 沒有武器就用站立（wait）圖；某一層缺那個姿勢時退回另一個。
  */
 export function buildDollLayers(
   frames: DollFrame[],
@@ -28,16 +31,20 @@ export function buildDollLayers(
 ): DollLayer[] {
   const wanted = parts && new Set(parts.map((p) => `${p.slot}:${p.sequence}`));
   const frameBy = new Map<string, DollFrame>();
+  let armed = false;
   for (const f of frames) {
     if (wanted && !wanted.has(`${f.slot}:${f.sequence}`)) continue;
-    const key = `${f.slot}:${f.dir}`;
+    const key = `${f.slot}:${f.dir}:${f.action}`;
     if (!frameBy.has(key)) frameBy.set(key, f);
+    if (f.slot === "right" || f.slot === "left") armed = true;
   }
+  const [pose, fallback] = armed ? ["prepare", "wait"] : ["wait", "prepare"];
 
   const layers: DollLayer[] = [];
   for (const rule of rules) {
     if (rule.dir !== dir) continue;
-    const frame = frameBy.get(`${rule.slot}:${rule.mirrorOf ?? dir}`);
+    const key = `${rule.slot}:${rule.mirrorOf ?? dir}`;
+    const frame = frameBy.get(`${key}:${pose}`) ?? frameBy.get(`${key}:${fallback}`);
     if (!frame) continue;
     const mirrored = rule.mirrorOf != null;
     const anchorX = mirrored ? frame.width - frame.anchorX : frame.anchorX;
