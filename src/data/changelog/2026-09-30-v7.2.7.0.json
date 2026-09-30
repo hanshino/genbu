@@ -1,0 +1,1229 @@
+{
+  "version": "7.2.7.0",
+  "date": "2026-09-30",
+  "summary": {
+    "added": 148,
+    "changed": 170404,
+    "removed": 19
+  },
+  "addedTables": [
+    {
+      "table": "npc_ai",
+      "label": "npc_ai",
+      "rows": 252
+    },
+    {
+      "table": "status_groups",
+      "label": "status_groups",
+      "rows": 38
+    }
+  ],
+  "removedTables": [],
+  "tables": [
+    {
+      "table": "items",
+      "label": "道具",
+      "tier": "rich",
+      "counts": {
+        "added": 1,
+        "changed": 13,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "34395"
+          ],
+          "name": "國慶靈衡禮盒",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "國慶靈衡禮盒"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "打開有機會獲得全新背飾「寰宇靈衡」、戰鸛衛疆、繽紛氣球、神機鋼犬、幽影幻罈、錦繡山河系列外裝及副門派進階書等超值好禮。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "100"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "BONUS"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "24917"
+          ],
+          "name": "碧空靛青",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "不起眼的青菜",
+              "to": "碧空靛青"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "《活動道具》正因為不起眼，而有更長時間吸收大地之精華，可謂百年難得一見之食材",
+              "to": "《活動道具》\\n象徵萬里澄澈、四海清平。\\n活動物品，活動結束後將擇期統一回收。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "24918"
+          ],
+          "name": "煌煌晴陽",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "粗糙的雞蛋",
+              "to": "煌煌晴陽"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "《活動道具》粗糙的蛋殼就是新鮮的保證，噢！似乎還感覺得到母雞的體溫",
+              "to": "《活動道具》\\n象徵光明普照、盛世昌隆。\\n活動物品，活動結束後將擇期統一回收。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "24919"
+          ],
+          "name": "丹霞朱華",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "被遺忘的醃肉",
+              "to": "丹霞朱華"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "《活動道具》發現於醃漬容器的底部，除了濃濃的紅糟醃料包覆外，完全無異味，堪稱料理界一絕",
+              "to": "《活動道具》\\n象徵花開遍地、萬民同歡。\\n活動物品，活動結束後將擇期統一回收。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33654"
+          ],
+          "name": "長明祈願燈",
+          "fields": [
+            {
+              "col": "type_name",
+              "label": "類型",
+              "from": "NORMAL_ITEM",
+              "to": "BONUS"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33655"
+          ],
+          "name": "長明祈願燈",
+          "fields": [
+            {
+              "col": "type_name",
+              "label": "類型",
+              "from": "NORMAL_ITEM",
+              "to": "BONUS"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "52078"
+          ],
+          "name": "寰宇靈衡",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試道具",
+              "to": "寰宇靈衡"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "擷取九天星輝鑄成靈妙金秤，丈量著浮世陰陽，兩端輕托萬象與山河，願長風所至皆見清明，歲歲華光不墜人間。"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "from": "0",
+              "to": "3500"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "from": "0",
+              "to": "800"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "from": "0",
+              "to": "15"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "from": "0",
+              "to": "15"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "from": "0",
+              "to": "200"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "from": "0",
+              "to": "100"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "from": "0",
+              "to": "100"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "from": "0",
+              "to": "100"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "54146"
+          ],
+          "name": "紅耀旋十字",
+          "fields": [
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "十字上閃耀著紅耀石般的光輝，沐浴光輝之下，身心有種被洗滌過的感覺。",
+              "to": "[外裝]十字上閃耀著紅耀石般的光輝，沐浴光輝之下，身心有種被洗滌過的感覺。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "55433"
+          ],
+          "name": "錦繡青嵐帽",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試道具",
+              "to": "錦繡青嵐帽"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "浩瀚天地的靈木精華，化為一抹瀟灑御風的青翠山嵐，他踏碎落葉而來，見證著這錦繡紅塵的無盡繁華。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "55434"
+          ],
+          "name": "錦繡青蘿帽",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試道具",
+              "to": "錦繡青蘿帽"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "廣袤幽林的仙草靈氣，化為一襲輕靈婉約的碧綠藤蘿，她伴隨秋風而至，沉醉於這盛世人間的靜好歲月。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "55435"
+          ],
+          "name": "錦繡青嵐衣",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試道具",
+              "to": "錦繡青嵐衣"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "浩瀚天地的靈木精華，化為一抹瀟灑御風的青翠山嵐，他踏碎落葉而來，見證著這錦繡紅塵的無盡繁華。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "55436"
+          ],
+          "name": "錦繡青蘿衣",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試道具",
+              "to": "錦繡青蘿衣"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "廣袤幽林的仙草靈氣，化為一襲輕靈婉約的碧綠藤蘿，她伴隨秋風而至，沉醉於這盛世人間的靜好歲月。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "55437"
+          ],
+          "name": "錦繡青嵐褲",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試道具",
+              "to": "錦繡青嵐褲"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "浩瀚天地的靈木精華，化為一抹瀟灑御風的青翠山嵐，他踏碎落葉而來，見證著這錦繡紅塵的無盡繁華。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "55438"
+          ],
+          "name": "錦繡青蘿褲",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試道具",
+              "to": "錦繡青蘿褲"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "廣袤幽林的仙草靈氣，化為一襲輕靈婉約的碧綠藤蘿，她伴隨秋風而至，沉醉於這盛世人間的靜好歲月。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "achievements",
+      "label": "成就",
+      "tier": "rich",
+      "counts": {
+        "added": 1,
+        "changed": 1,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "30020"
+          ],
+          "name": "十方來朝共賀雙十",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "十方來朝共賀雙十"
+            },
+            {
+              "col": "description",
+              "label": "描述",
+              "value": "完成活動任務：青天白日映丹霞6次"
+            },
+            {
+              "col": "points",
+              "label": "點數",
+              "value": "0"
+            },
+            {
+              "col": "reward_amount",
+              "label": "獎勵數量",
+              "value": "500"
+            },
+            {
+              "col": "prereq_achievement_id",
+              "label": "前置成就",
+              "value": "0"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "30019"
+          ],
+          "name": "望月傳香",
+          "fields": [
+            {
+              "col": "description",
+              "label": "描述",
+              "from": "與秋香婆共度中秋，深諳分餅團圓之道。",
+              "to": "完成活動任務：中秋弄月烤肉香6次"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "mission_steps",
+      "label": "任務步驟",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 8,
+        "removed": 7
+      },
+      "removed": [
+        {
+          "idParts": [
+            "10728",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10728",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10728",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10728",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10728",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10728",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10728",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "10728",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待0",
+              "to": "找鴻臚寺少卿"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10728",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待1",
+              "to": "到山中瀑布與西域使者對話"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10728",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待2",
+              "to": "到莫愁谷谷口與東海使者對話"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10728",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待3",
+              "to": "到繡玉谷東與南境使者對話"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10728",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待4",
+              "to": "回忘憂村找鴻臚寺卿"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10728",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待5",
+              "to": "回忘憂村找禮部員外郎"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10728",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待6",
+              "to": "獲得碧空靛青[item24917×1]、煌煌晴陽[item24918×1]、丹霞朱華[item24919×3]給禮部員外郎"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10728",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待7",
+              "to": "1分鐘後找禮部員外郎"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "missions",
+      "label": "任務",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 1,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "10728"
+          ],
+          "name": "青天白日映丹霞",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留",
+              "to": "青天白日映丹霞"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "from": "敬請期待",
+              "to": "盛世佳節將至，十方使者紛至中原，進獻各地祥瑞珍寶。傳聞只要將碧空靛青、煌煌晴陽與丹霞朱華三件瑞寶同置於雙曜臺上，便能映現青天朗日、赤霞鋪地之奇景。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc",
+      "label": "NPC",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 5,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "7150"
+          ],
+          "name": "禮部員外郎",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "長劍門柳長老",
+              "to": "禮部員外郎"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7151"
+          ],
+          "name": "鴻臚寺少卿",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "小牧童",
+              "to": "鴻臚寺少卿"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7152"
+          ],
+          "name": "西域使者",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "老黃牛",
+              "to": "西域使者"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7153"
+          ],
+          "name": "東海使者",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "杏娘",
+              "to": "東海使者"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7154"
+          ],
+          "name": "南境使者",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "蒙面醉漢",
+              "to": "南境使者"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc_strings",
+      "label": "NPC 對話",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 5,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "30859"
+          ],
+          "name": "禮部員外郎",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "柳長老",
+              "to": "禮部員外郎"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30860"
+          ],
+          "name": "鴻臚寺少卿",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "小牧童",
+              "to": "鴻臚寺少卿"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30861"
+          ],
+          "name": "西域使者",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "老黃牛",
+              "to": "西域使者"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30862"
+          ],
+          "name": "東海使者",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "杏娘",
+              "to": "東海使者"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30863"
+          ],
+          "name": "南境使者",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "蒙面醉漢",
+              "to": "南境使者"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "achievement_targets",
+      "label": "achievement_targets",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 58,
+        "removed": 0
+      }
+    },
+    {
+      "table": "dialogue_edges",
+      "label": "dialogue_edges",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 33411,
+        "removed": 6
+      }
+    },
+    {
+      "table": "item_images",
+      "label": "item_images",
+      "tier": "count",
+      "counts": {
+        "added": 3,
+        "changed": 9,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_dims",
+      "label": "map_dims",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 7,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_event_ops",
+      "label": "map_event_ops",
+      "tier": "count",
+      "counts": {
+        "added": 12,
+        "changed": 34293,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_events",
+      "label": "map_events",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 6328,
+        "removed": 1
+      }
+    },
+    {
+      "table": "map_images",
+      "label": "map_images",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 3,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_placements",
+      "label": "map_placements",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 43486,
+        "removed": 5
+      }
+    },
+    {
+      "table": "map_walkability",
+      "label": "map_walkability",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 3,
+        "removed": 0
+      }
+    },
+    {
+      "table": "messages",
+      "label": "對話訊息",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 209,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_events",
+      "label": "mission_events",
+      "tier": "count",
+      "counts": {
+        "added": 26,
+        "changed": 5265,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_refs",
+      "label": "任務關聯",
+      "tier": "count",
+      "counts": {
+        "added": 6,
+        "changed": 877,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_requirements",
+      "label": "mission_requirements",
+      "tier": "count",
+      "counts": {
+        "added": 6,
+        "changed": 1219,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_rewards",
+      "label": "mission_rewards",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 582,
+        "removed": 0
+      }
+    },
+    {
+      "table": "monster_spawns",
+      "label": "monster_spawns",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 5,
+        "removed": 0
+      }
+    },
+    {
+      "table": "npc_images",
+      "label": "npc_images",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 4,
+        "removed": 0
+      }
+    },
+    {
+      "table": "op_defs",
+      "label": "op_defs",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 14,
+        "removed": 0
+      }
+    },
+    {
+      "table": "status",
+      "label": "status",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 0,
+        "removed": 0
+      },
+      "structural": {
+        "addedColumns": [
+          "time"
+        ],
+        "removedColumns": []
+      }
+    },
+    {
+      "table": "trigger_ops",
+      "label": "trigger_ops",
+      "tier": "count",
+      "counts": {
+        "added": 91,
+        "changed": 44598,
+        "removed": 0
+      }
+    }
+  ],
+  "ai": {
+    "model": "claude-opus-5-5",
+    "edited": false,
+    "highlights": [
+      "國慶活動任務「青天白日映丹霞」上線：原本「保留／敬請期待」的任務欄位已填入正式內容。劇情是十方使者來到中原進獻祥瑞，玩家要把碧空靛青、煌煌晴陽、丹霞朱華三件瑞寶一起放上雙曜臺",
+      "任務流程：先找鴻臚寺少卿，接著到山中瀑布找西域使者、莫愁谷谷口找東海使者、繡玉谷東找南境使者，然後回忘憂村找鴻臚寺卿與禮部員外郎，交出碧空靛青×1、煌煌晴陽×1、丹霞朱華×3，1分鐘後再回去找禮部員外郎",
+      "新成就「十方來朝共賀雙十」：完成活動任務「青天白日映丹霞」6次，獎勵數量 500",
+      "新禮盒「國慶靈衡禮盒」：說明寫打開有機會拿到全新背飾「寰宇靈衡」、戰鸛衛疆、繽紛氣球、神機鋼犬、幽影幻罈、錦繡山河系列外裝和副門派進階書",
+      "背飾「寰宇靈衡」由原本的測試道具改成正式道具，屬性為體力 3500、真氣 800、外功 15、身法 15、物攻 200、防禦 100、護勁 100、命中 100",
+      "錦繡青嵐帽／衣／褲與錦繡青蘿帽／衣／褲共六件，名稱與說明從測試道具改成正式內容",
+      "三個活動道具改名並換了說明：不起眼的青菜改成碧空靛青、粗糙的雞蛋改成煌煌晴陽、被遺忘的醃肉改成丹霞朱華，說明都註明活動結束後會擇期統一回收",
+      "5 個 NPC 改成活動角色：禮部員外郎、鴻臚寺少卿、西域使者、東海使者、南境使者（原本是柳長老、小牧童、老黃牛、杏娘、蒙面醉漢）",
+      "中秋成就「望月傳香」的描述改成「完成活動任務：中秋弄月烤肉香6次」；長明祈願燈的類型從 NORMAL_ITEM 改成 BONUS；紅耀旋十字的說明開頭加上 [外裝] 標籤",
+      "其他地圖事件、觸發指令、對話連線、任務事件等表合計十幾萬筆變動，大多是重新建置造成的編號或排序調整，不是玩法改動；另外新增 npc_ai、status_groups 兩張資料表"
+    ],
+    "tables": {
+      "items": {
+        "mode": "detail",
+        "note": "國慶禮盒上線，背飾寰宇靈衡、錦繡系列外裝與三件活動瑞寶從測試或舊道具改成正式內容"
+      },
+      "missions": {
+        "mode": "detail",
+        "note": "原本的保留任務改成國慶活動「青天白日映丹霞」"
+      },
+      "mission_steps": {
+        "mode": "detail",
+        "note": "原本「敬請期待」的步驟改成完整活動流程"
+      },
+      "achievements": {
+        "mode": "detail",
+        "note": "新增國慶成就；中秋成就描述改成任務次數條件"
+      },
+      "npc": {
+        "mode": "detail",
+        "note": "5 個 NPC 改成國慶活動的使者和官員"
+      },
+      "npc_strings": {
+        "mode": "summary",
+        "note": "跟 NPC 改名同步更新顯示名"
+      },
+      "dialogue_edges": {
+        "mode": "summary",
+        "note": "三萬多筆對話連線變動，屬於建置調整"
+      },
+      "map_event_ops": {
+        "mode": "summary",
+        "note": "三萬多筆地圖事件指令變動，大多是重新建置造成的調整"
+      },
+      "map_events": {
+        "mode": "summary",
+        "note": "六千多筆地圖事件變動，屬於建置調整"
+      },
+      "map_placements": {
+        "mode": "summary",
+        "note": "四萬多筆地圖擺放資料變動，屬於建置調整"
+      },
+      "trigger_ops": {
+        "mode": "summary",
+        "note": "四萬多筆觸發指令變動，大多是建置調整，其中少量新增跟活動有關"
+      },
+      "mission_events": {
+        "mode": "summary",
+        "note": "五千多筆任務事件變動，大多是建置調整"
+      },
+      "mission_refs": {
+        "mode": "summary",
+        "note": "大多是建置調整，少量新增跟新任務有關"
+      },
+      "mission_requirements": {
+        "mode": "summary",
+        "note": "大多是建置調整，少量新增跟新任務有關"
+      },
+      "mission_rewards": {
+        "mode": "summary",
+        "note": "大多是建置調整"
+      },
+      "achievement_targets": {
+        "mode": "summary",
+        "note": "跟新成就連動的目標資料，其餘是建置調整"
+      },
+      "messages": {
+        "mode": "summary",
+        "note": "對話訊息批量更新"
+      },
+      "item_images": {
+        "mode": "summary",
+        "note": "新道具與改名道具的圖示更新"
+      },
+      "status": {
+        "mode": "summary",
+        "note": "只新增一個欄位，沒有資料列變動"
+      },
+      "op_defs": {
+        "mode": "summary",
+        "note": "指令定義小幅調整"
+      },
+      "map_dims": {
+        "mode": "summary",
+        "note": "地圖尺寸資料小幅調整"
+      },
+      "map_images": {
+        "mode": "summary",
+        "note": "地圖圖檔小幅更新"
+      },
+      "map_walkability": {
+        "mode": "summary",
+        "note": "地圖可走區域小幅更新"
+      },
+      "monster_spawns": {
+        "mode": "summary",
+        "note": "少量怪物出沒資料變動"
+      },
+      "npc_images": {
+        "mode": "summary",
+        "note": "少量 NPC 圖像更新"
+      }
+    }
+  }
+}

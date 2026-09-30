@@ -3,7 +3,7 @@
 // 測試注入假 client，不打真 API、不需金鑰。
 import type { AiCuration, AiDigest, ChangelogEntry } from "./types";
 
-const DEFAULT_MODEL = "claude-opus-4-8";
+const DEFAULT_MODEL = "claude-opus-5-5";
 const MAX_HIGHLIGHTS = 12;
 
 // SDK 抽象：CLI 用真 Anthropic 實作，測試用假物件。
@@ -37,6 +37,7 @@ export const CURATION_SCHEMA = {
 const SYSTEM_PROMPT = [
   "你在為武林同萌傳（TTHOL）玩家寫「更新日誌」，用繁體中文（zh-tw）、遊戲圈口語。",
   "只根據提供的 diff 摘要（digest）下判斷；不得杜撰 digest 沒有的道具、數值或名稱。",
+  "屬性、欄位名稱一律照 digest 的 label 原文（例如外功、身法、真氣、內勁），不可換成其他遊戲的通用說法（力量、敏捷、MP、法攻…）。",
   "逐表判定 detail（有玩法新聞、值得攤開逐列）或 summary（批量／建置噪音，一句帶過）。",
   "把「保留N」「敬請期待」之類佔位符被填入，理解為『新內容上線』而非單純修改。",
   "禮盒／道具說明點名的內容物，照說明轉述（如「開箱可得…」），不得斷言那些內容物本身是新道具。",

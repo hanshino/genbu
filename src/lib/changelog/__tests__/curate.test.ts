@@ -84,7 +84,7 @@ describe("curateWithClaude", () => {
     expect(c.tables).toEqual([{ table: "items", mode: "summary", note: "售價批量調整" }]); // ghost 濾掉
   });
 
-  it("model 預設 claude-opus-4-8", async () => {
+  it("model 預設 claude-opus-5-5", async () => {
     let model = "";
     const fake: CurationClient = {
       async curate(req) {
@@ -93,7 +93,7 @@ describe("curateWithClaude", () => {
       },
     };
     await curateWithClaude(digest, { client: fake });
-    expect(model).toBe("claude-opus-4-8");
+    expect(model).toBe("claude-opus-5-5");
   });
 });
 

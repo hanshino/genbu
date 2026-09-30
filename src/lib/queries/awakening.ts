@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { bonusLabel } from "@/lib/queries/compound";
 import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import type { Item } from "@/lib/types/item";
 import type { AwakeningBonus, AwakeningPath, AwakeningStage } from "@/lib/types/awakening";
@@ -43,25 +44,6 @@ export function itemTypeToSlotPrefix(type: string | null): string | null {
   if (type === "STAFF") return "法術武器";
   return null;
 }
-
-const BONUS_LABELS: Record<string, string> = {
-  ITEM_BONUS_DEF: "防禦",
-  ITEM_BONUS_MDEF: "魔防",
-  ITEM_BONUS_ATK: "物攻",
-  ITEM_BONUS_MATK: "內勁",
-  ITEM_BONUS_HP: "體力",
-  ITEM_BONUS_MP: "內力",
-  ITEM_BONUS_DODGE: "閃躲",
-  ITEM_BONUS_HIT: "命中",
-  ITEM_BONUS_CRITICAL: "暴擊",
-  ITEM_BONUS_UNCANNYDODGE: "閃避反擊",
-  ITEM_BONUS_STR: "力量",
-  ITEM_BONUS_VIT: "體質",
-  ITEM_BONUS_DEX: "技巧",
-  ITEM_BONUS_AGI: "敏捷",
-  ITEM_BONUS_POW: "悟性",
-  ITEM_BONUS_WIS: "意志",
-};
 
 interface FormulaRow {
   name: string;
@@ -124,7 +106,7 @@ export function getAwakeningPath(item: Item): AwakeningPath | null {
     );
     const bonuses: AwakeningBonus[] = chosen.map((r) => ({
       bonusType: r.bonus_type,
-      label: BONUS_LABELS[r.bonus_type] ?? r.bonus_type,
+      label: bonusLabel(r.bonus_type) ?? r.bonus_type,
       value: Number(r.bonus_value),
     }));
 
