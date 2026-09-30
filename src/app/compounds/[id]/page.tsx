@@ -71,7 +71,7 @@ export default async function CompoundGroupDetailPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
       <nav className="text-sm text-muted-foreground">
-        <BackLink href="/compounds">返回配方目錄</BackLink>
+        <BackLink href="/compounds" />
       </nav>
 
       <header className="space-y-1">

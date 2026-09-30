@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import {
   ChevronsUpIcon,
   FlagIcon,
@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useUrlFilters } from "@/lib/hooks/use-url-filters";
 import type { MissionGroupStats, MissionListItem } from "@/lib/types/mission";
 
 interface Props {
@@ -31,6 +32,9 @@ interface Props {
 }
 
 const FACTION_ALL = "__all__";
+// URL query keys；空值 = 預設，不出現在 URL
+const URL_KEYS = ["q", "faction", "min", "max", "reward", "timed"] as const;
+const LEVEL_RE = /^-?\d+$/;
 
 function groupLabel(groupId: number | null): string {
   return groupId == null ? "未分類" : `分組 #${groupId}`;
@@ -86,18 +90,21 @@ function MissionMeta({ m }: { m: MissionListItem }) {
 }
 
 export function MissionList({ missions, groups }: Props) {
-  const [query, setQuery] = useState("");
-  const [faction, setFaction] = useState(FACTION_ALL);
-  const [levelMin, setLevelMin] = useState("");
-  const [levelMax, setLevelMax] = useState("");
-  const [rewardOnly, setRewardOnly] = useState(false);
-  const [timedOnly, setTimedOnly] = useState(false);
+  const { values, update, composition } = useUrlFilters(URL_KEYS);
 
   // 門派選項直接從資料裡出現過的門派組出來（op=2 summary 內的名稱）
   const factionOptions = useMemo(
     () => [...new Set(missions.flatMap((m) => m.factions ?? []))],
     [missions],
   );
+
+  // URL 來的值可能是任意字串：不認得的門派 / 非整數等級 / 非 "1" 的旗標一律視為預設。
+  const query = values.q;
+  const faction = factionOptions.includes(values.faction) ? values.faction : FACTION_ALL;
+  const levelMin = LEVEL_RE.test(values.min) ? values.min : "";
+  const levelMax = LEVEL_RE.test(values.max) ? values.max : "";
+  const rewardOnly = values.reward === "1";
+  const timedOnly = values.timed === "1";
 
   const trimmed = query.trim();
   const lo = parseLevel(levelMin);
@@ -151,13 +158,8 @@ export function MissionList({ missions, groups }: Props) {
     [grouped],
   );
 
-  const clearFilters = () => {
-    setFaction(FACTION_ALL);
-    setLevelMin("");
-    setLevelMax("");
-    setRewardOnly(false);
-    setTimedOnly(false);
-  };
+  // 清除篩選不動搜尋字（沿用既有行為）
+  const clearFilters = () => update({ faction: "", min: "", max: "", reward: "", timed: "" });
 
   const chipBase =
     "rounded-md border border-border/60 bg-card px-2.5 py-1 font-mono text-xs";
@@ -207,7 +209,8 @@ export function MissionList({ missions, groups }: Props) {
             type="search"
             placeholder="搜尋任務名稱或 ID…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => update({ q: e.target.value })}
+            {...composition}
             className="pl-9"
           />
         </div>
@@ -234,7 +237,10 @@ export function MissionList({ missions, groups }: Props) {
 
       {/* 篩選列：不 sticky，捲動時收進搜尋列下方；清除鈕留在 sticky 列 */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <Select value={faction} onValueChange={(v) => setFaction(v ?? FACTION_ALL)}>
+        <Select
+          value={faction}
+          onValueChange={(v) => update({ faction: v == null || v === FACTION_ALL ? "" : v })}
+        >
           <SelectTrigger className="w-[132px]" aria-label="門派">
             <SelectValue>
               {(v: unknown) => (v == null || v === FACTION_ALL ? "全部門派" : String(v))}
@@ -258,7 +264,7 @@ export function MissionList({ missions, groups }: Props) {
             placeholder="下限"
             aria-label="需求等級下限"
             value={levelMin}
-            onChange={(e) => setLevelMin(e.target.value)}
+            onChange={(e) => update({ min: e.target.value })}
             className="w-20"
           />
           <span aria-hidden className="text-muted-foreground">
@@ -271,7 +277,7 @@ export function MissionList({ missions, groups }: Props) {
             placeholder="上限"
             aria-label="需求等級上限"
             value={levelMax}
-            onChange={(e) => setLevelMax(e.target.value)}
+            onChange={(e) => update({ max: e.target.value })}
             className="w-20"
           />
         </div>
@@ -279,14 +285,14 @@ export function MissionList({ missions, groups }: Props) {
           <label className="inline-flex min-h-11 cursor-pointer select-none items-center gap-2 py-1">
             <Checkbox
               checked={rewardOnly}
-              onCheckedChange={(checked) => setRewardOnly(checked === true)}
+              onCheckedChange={(checked) => update({ reward: checked === true ? "1" : "" })}
             />
             <span>有獎勵</span>
           </label>
           <label className="inline-flex min-h-11 cursor-pointer select-none items-center gap-2 py-1">
             <Checkbox
               checked={timedOnly}
-              onCheckedChange={(checked) => setTimedOnly(checked === true)}
+              onCheckedChange={(checked) => update({ timed: checked === true ? "1" : "" })}
             />
             <span>限時任務</span>
           </label>

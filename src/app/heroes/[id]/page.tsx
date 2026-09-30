@@ -39,7 +39,7 @@ export default async function HeroDetailPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
       <nav className="text-sm text-muted-foreground">
-        <BackLink href="/heroes">返回英雄列表</BackLink>
+        <BackLink href="/heroes" />
       </nav>
 
       <header className="space-y-2">

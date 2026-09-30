@@ -71,7 +71,7 @@ export default async function SkillDetailPage({ params, searchParams }: PageProp
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
       <nav className="text-sm text-muted-foreground">
-        <BackLink href="/skills">返回技能列表</BackLink>
+        <BackLink href="/skills" />
       </nav>
 
       <SkillDetail skill={base} current={current} allLevels={levels} status={status} />

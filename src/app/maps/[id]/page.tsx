@@ -238,7 +238,7 @@ export default async function MapDetailPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
       <nav className="text-sm text-muted-foreground">
-        <BackLink href="/maps">返回地圖列表</BackLink>
+        <BackLink href="/maps" />
       </nav>
 
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">

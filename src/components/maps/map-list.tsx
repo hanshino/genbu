@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useUrlFilters } from "@/lib/hooks/use-url-filters";
 import { sortStageFlags } from "@/lib/constants/stage-flags";
 import { StageFlagBadge } from "@/components/maps/stage-flag-badge";
 import type { StageGroupStats, StageListItem } from "@/lib/types/stage";
@@ -14,8 +15,11 @@ interface Props {
   groups: StageGroupStats[];
 }
 
+const URL_KEYS = ["q"] as const;
+
 export function MapList({ stages, groups }: Props) {
-  const [query, setQuery] = useState("");
+  const { values, update, composition } = useUrlFilters(URL_KEYS);
+  const query = values.q;
 
   const trimmed = query.trim();
   const filtered = useMemo(() => {
@@ -102,7 +106,8 @@ export function MapList({ stages, groups }: Props) {
             type="search"
             placeholder="搜尋地圖名稱或 ID…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => update({ q: e.target.value })}
+            {...composition}
             className="pl-9"
           />
         </div>

@@ -5,7 +5,14 @@ import { ChevronLeftIcon } from "lucide-react";
 
 // 返回連結：優先走 history.back() 還原列表的 page/filter/scroll 狀態。
 // 若本 tab 是直接進 detail（無 history），fallback 到 href。
-export function BackLink({ href, children }: { href: string; children: React.ReactNode }) {
+// 文案固定「返回上一頁」：實際行為多半是 history.back()，寫死目的地會跟實際去處不符。
+export function BackLink({
+  href,
+  children = "返回上一頁",
+}: {
+  href: string;
+  children?: React.ReactNode;
+}) {
   const router = useRouter();
 
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
