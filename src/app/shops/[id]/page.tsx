@@ -68,7 +68,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
       <nav className="text-sm text-muted-foreground">
-        <BackLink href="/shops">返回商店列表</BackLink>
+        <BackLink href="/shops" />
       </nav>
 
       <header className="flex flex-wrap items-baseline gap-2">

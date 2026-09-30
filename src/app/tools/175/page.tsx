@@ -11,7 +11,7 @@ export default function SevenStarPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <nav className="mb-4 text-sm text-muted-foreground">
-        <BackLink href="/tools">返回工具列表</BackLink>
+        <BackLink href="/tools" />
       </nav>
       <header className="mb-6">
         <h1 className="font-heading text-3xl font-bold">175 副本 — 北斗七星</h1>

@@ -5,6 +5,10 @@ import {
 } from "@/lib/queries/missions";
 import { MissionList } from "@/components/missions/mission-list";
 
+// 列表篩選存在 URL（client 端 useSearchParams 讀取）；動態渲染才能 SSR 出已篩選的結果，
+// 靜態頁會要求 Suspense 並讓整個列表變成 client-only。
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "任務 · 玄武",
   description: "瀏覽全部任務、步驟與所需物品",

@@ -143,9 +143,7 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
       <nav className="text-sm text-muted-foreground">
-        <BackLink href={from === "ranking" ? "/ranking" : "/items"}>
-          {from === "ranking" ? "返回排行榜" : "返回道具列表"}
-        </BackLink>
+        <BackLink href={from === "ranking" ? "/ranking" : "/items"} />
       </nav>
 
       <ItemDetail

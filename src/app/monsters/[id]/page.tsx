@@ -53,7 +53,7 @@ export default async function MonsterDetailPage({ params, searchParams }: PagePr
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
       <nav className="text-sm text-muted-foreground">
-        <BackLink href="/monsters">返回怪物列表</BackLink>
+        <BackLink href="/monsters" />
       </nav>
 
       <MonsterDetailView monster={monster} portrait={portrait} />

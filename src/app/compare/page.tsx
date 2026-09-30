@@ -40,9 +40,7 @@ export default async function ComparePage({ searchParams }: Props) {
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
       <nav className="text-sm text-muted-foreground">
-        <BackLink href={`/ranking?type=${encodeURIComponent(activeType)}`}>
-          返回排行榜
-        </BackLink>
+        <BackLink href={`/ranking?type=${encodeURIComponent(activeType)}`} />
       </nav>
       <h1 className="text-2xl font-semibold md:text-3xl">裝備比較</h1>
       <CompareClient
