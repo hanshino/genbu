@@ -70,9 +70,28 @@ interface Props {
   className?: string;
 }
 
+const ALL_DIRS = [1, 2, 3, 4, 5, 6, 7, 8];
+
+/**
+ * 畫布範圍：至少是 120×120 的場景，大型背飾、坐騎超出時往外撐。
+ * 取 8 個方向的聯集，轉方向時角色才不會跳來跳去。
+ */
+function sceneBox(frames: DollFrame[], rules: DollRule[], parts?: DollPart[]) {
+  let [x0, y0, x1, y1] = [0, 0, SCENE, SCENE];
+  for (const d of ALL_DIRS) {
+    for (const l of buildDollLayers(frames, rules, d, parts)) {
+      x0 = Math.min(x0, l.left);
+      y0 = Math.min(y0, l.top);
+      x1 = Math.max(x1, l.left + l.frame.width);
+      y1 = Math.max(y1, l.top + l.frame.height);
+    }
+  }
+  return { x0, y0, w: x1 - x0, h: y1 - y0 };
+}
+
 export function DollPreview({ frames, rules, dir, parts, scale, className }: Props) {
   const layers = buildDollLayers(frames, rules, dir, parts);
-  const size = `calc(${SCENE}px * var(--doll-scale, 4))`;
+  const box = sceneBox(frames, rules, parts);
 
   return (
     <div
@@ -82,22 +101,22 @@ export function DollPreview({ frames, rules, dir, parts, scale, className }: Pro
       style={
         {
           ...(scale ? { "--doll-scale": scale } : null),
-          width: size,
-          height: size,
+          width: `calc(${box.w}px * var(--doll-scale, 4))`,
+          height: `calc(${box.h}px * var(--doll-scale, 4))`,
         } as CSSProperties
       }
     >
       <div
         className="absolute top-0 left-0 origin-top-left"
-        style={{ width: SCENE, height: SCENE, transform: "scale(var(--doll-scale, 4))" }}
+        style={{ width: box.w, height: box.h, transform: "scale(var(--doll-scale, 4))" }}
       >
         {/* 腳下陰影 */}
         <div
           aria-hidden
           className="absolute rounded-[50%] opacity-30 dark:opacity-60"
           style={{
-            left: ORIGIN_X - 22,
-            top: ORIGIN_Y + 33,
+            left: ORIGIN_X - 22 - box.x0,
+            top: ORIGIN_Y + 33 - box.y0,
             width: 44,
             height: 10,
             background: "radial-gradient(ellipse at center, #000, transparent 70%)",
@@ -113,7 +132,12 @@ export function DollPreview({ frames, rules, dir, parts, scale, className }: Pro
             height={frame.height}
             draggable={false}
             className="absolute max-w-none select-none [image-rendering:pixelated]"
-            style={{ left, top, zIndex, transform: mirrored ? "scaleX(-1)" : undefined }}
+            style={{
+              left: left - box.x0,
+              top: top - box.y0,
+              zIndex,
+              transform: mirrored ? "scaleX(-1)" : undefined,
+            }}
           />
         ))}
       </div>

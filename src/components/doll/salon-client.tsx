@@ -320,7 +320,7 @@ export function SalonClient(props: Props) {
                 rules={rules}
                 dir={dir}
                 parts={drawParts}
-                className="-my-6 [--doll-scale:2] sm:my-0 sm:[--doll-scale:3] lg:[--doll-scale:4]"
+                className="[--doll-scale:2] sm:[--doll-scale:3] lg:[--doll-scale:4]"
               />
               {missing.length > 0 && (
                 <p className="absolute top-2.5 left-3 flex items-center gap-1.5 rounded-md bg-card/85 px-2 py-1 text-xs text-muted-foreground backdrop-blur-sm">
