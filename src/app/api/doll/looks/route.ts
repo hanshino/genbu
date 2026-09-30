@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDollFrames, getDollLooks, getDollSlots } from "@/lib/queries/doll";
+import { getDollFrames, getDollLooks, getDollRides, getDollSlots } from "@/lib/queries/doll";
 
 export const runtime = "nodejs";
 
@@ -11,10 +11,14 @@ export function GET(request: Request) {
     return NextResponse.json({ error: "性別或部位無效。" }, { status: 400 });
   }
   const looks = getDollLooks(gender, slot);
-  const frames = getDollFrames(gender, looks.flatMap((look) => [
+  const parts = looks.flatMap((look) => [
     ...look.layers, ...(look.offhandLayers ?? []),
-  ]));
-  return NextResponse.json({ looks, frames }, {
+  ]);
+  const frames = getDollFrames(gender, parts);
+  const rides = slot === "horse"
+    ? getDollRides(gender, parts.filter((part) => part.slot === "horse").map((part) => part.sequence))
+    : [];
+  return NextResponse.json({ looks, frames, rides }, {
     headers: { "Cache-Control": "public, max-age=3600, s-maxage=86400" },
   });
 }

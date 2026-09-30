@@ -9,12 +9,14 @@ import {
   getItemDoll,
   getDollDefaults,
   getDollBase,
+  getDollRides,
   type DollGender,
   type DollSlot,
 } from "../doll";
 import { GET } from "@/app/api/doll/looks/route";
 import { getDb } from "@/lib/db";
-import type { DollLook, DollFrame } from "../doll";
+import { buildDollLayers } from "@/components/doll/doll-preview";
+import type { DollLook, DollFrame, DollRide, DollPart } from "../doll";
 
 // 真實 id（存在於 tthol.sqlite）
 const BODY_ITEM_ID = 55376; // 鬼道陰陽衣：男 body 102872
@@ -204,6 +206,32 @@ describe("doll.ts", () => {
     expect(getDollFrames("f", [{ slot: "head", sequence: HEAD_SEQUENCE }])).toEqual([]);
   });
 
+  it("有染髮圖片的頭型只回傳 color=0 的圖片", () => {
+    const db = getDb();
+    const dyed = db.prepare(
+      "SELECT COUNT(*) AS n FROM doll_frame_images WHERE gender = 'm' AND slot = 'head' AND sequence = ? AND color > 0",
+    ).get(HEAD_SEQUENCE) as { n: number };
+    expect(dyed.n).toBeGreaterThan(0);
+    const expected = db.prepare(
+      `SELECT slot, sequence, action, dir, url, width, height, anchor_x AS anchorX, anchor_y AS anchorY
+       FROM doll_frame_images WHERE gender = 'm' AND slot = 'head' AND sequence = ? AND color = 0
+       ORDER BY action, dir`,
+    ).all(HEAD_SEQUENCE);
+    expect(getDollFrames("m", [{ slot: "head", sequence: HEAD_SEQUENCE }])).toEqual(expected);
+  });
+
+  it("騎乘偏移依性別與 sequence 查詢，保留鏡像方向原值", () => {
+    const rides = getDollRides("f", [303382]);
+    expect(rides.map((ride) => ride.dir)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(rides.find((ride) => ride.dir === 7)).toEqual({ sequence: 303382, dir: 7, dx: 1, dy: -29 });
+    expect(rides.find((ride) => ride.dir === 6)).toEqual({ sequence: 303382, dir: 6, dx: -4, dy: -30 });
+    expect(getDollRides("m", [303382])).toEqual([]);
+    const many = Array.from({ length: 950 }, (_, index) => 900000000 + index);
+    expect(getDollRides("f", [...many, 303382, 303382])).toEqual(rides);
+    expect(getDollRides("f", [])).toEqual([]);
+    expect(getDollRides("f", [NaN, Infinity, 0, -1, 1.5])).toEqual([]);
+  });
+
   it("多部位查詢按 slot 配對、去重且支援分塊", () => {
     const head = { slot: "head" as const, sequence: HEAD_SEQUENCE };
     const body = { slot: "body" as const, sequence: 102872 };
@@ -250,6 +278,7 @@ describe("doll.ts", () => {
     expect(getDollFrames(invalidGender, [{ slot: "head", sequence: HEAD_SEQUENCE }])).toEqual([]);
     expect(getDollDefaults(invalidGender)).toEqual({ head: 0, items: {} });
     expect(getDollBase(invalidGender)).toEqual({});
+    expect(getDollRides(invalidGender, [303382])).toEqual([]);
     expect(getDollFrames("m", [])).toEqual([]);
     expect(getDollFrames("m", [
       { slot: "head' OR 1=1 --" as DollSlot, sequence: HEAD_SEQUENCE },
@@ -261,6 +290,41 @@ describe("doll.ts", () => {
       expect(getItemDoll(id)).toEqual([]);
       expect(getDollLookByItem("m", id)).toBeNull();
     }
+  });
+});
+
+describe("buildDollLayers 騎乘偏移", () => {
+  it.each([7, 6])("方向 %s 只移動非坐騎圖層，鏡像偏移直接使用 DB 值", (dir) => {
+    const parts: DollPart[] = [
+      { slot: "head", sequence: 300001 },
+      { slot: "horse", sequence: 303382 },
+      ...Object.values(getDollBase("f")),
+      ...getDollLookByItem("f", 20101)!.layers,
+    ];
+    const frames = getDollFrames("f", parts);
+    const rules = getDollRules();
+    const rides = getDollRides("f", [303382]);
+    const ride = rides.find((ride) => ride.dir === dir)!;
+    const without = buildDollLayers(frames, rules, dir, parts);
+    const withRide = buildDollLayers(frames, rules, dir, parts, rides);
+    expect(withRide.some((layer) => layer.frame.slot === "horse")).toBe(true);
+    expect(withRide).toHaveLength(without.length);
+    for (const [index, layer] of withRide.entries()) {
+      const original = without[index];
+      const horse = layer.frame.slot === "horse";
+      expect(layer).toEqual({
+        ...original,
+        left: original.left + (horse ? 0 : ride.dx),
+        top: original.top + (horse ? 0 : ride.dy),
+      });
+      expect(layer.mirrored).toBe(dir === 6);
+    }
+    expect(buildDollLayers(frames, rules, dir, parts, [])).toEqual(without);
+    const unmounted = parts.filter((part) => part.slot !== "horse");
+    expect(buildDollLayers(frames, rules, dir, unmounted, rides))
+      .toEqual(buildDollLayers(frames, rules, dir, unmounted));
+    expect(buildDollLayers(frames.filter((frame) => frame.slot !== "horse"), rules, dir, parts, rides))
+      .toEqual(buildDollLayers(frames.filter((frame) => frame.slot !== "horse"), rules, dir, parts));
   });
 });
 
@@ -279,7 +343,8 @@ describe("GET /api/doll/looks", () => {
     const response = GET(new Request("http://localhost/api/doll/looks?g=m&slot=cap"));
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toContain("s-maxage=86400");
-    const data = await response.json() as { looks: DollLook[]; frames: DollFrame[] };
+    const data = await response.json() as { looks: DollLook[]; frames: DollFrame[]; rides: DollRide[] };
+    expect(data.rides).toEqual([]);
     expect(data.looks).toEqual(getDollLooks("m", "cap"));
     expect(data.frames.length).toBeGreaterThan(0);
     expect(new Set(data.frames.map((frame) => frame.action))).toEqual(new Set(["wait", "prepare"]));
@@ -288,6 +353,19 @@ describe("GET /api/doll/looks", () => {
     ])));
     expect(new Set(data.frames.map((frame) => `${frame.slot}:${frame.sequence}:${frame.action}:${frame.dir}`)).size)
       .toBe(data.frames.length);
+  });
+
+  it("坐騎回傳全部外觀的 rides，包含八個方向", async () => {
+    const response = GET(new Request("http://localhost/api/doll/looks?g=f&slot=horse"));
+    expect(response.status).toBe(200);
+    const data = await response.json() as { looks: DollLook[]; frames: DollFrame[]; rides: DollRide[] };
+    const sequences = data.looks.flatMap((look) => look.layers)
+      .filter((part) => part.slot === "horse").map((part) => part.sequence);
+    expect(data.rides).toEqual(getDollRides("f", sequences));
+    expect(data.rides).toContainEqual({ sequence: 303382, dir: 7, dx: 1, dy: -29 });
+    expect(data.rides).toContainEqual({ sequence: 303382, dir: 6, dx: -4, dy: -30 });
+    expect(new Set(data.rides.map((ride) => `${ride.sequence}:${ride.dir}`)).size)
+      .toBe(data.rides.length);
   });
 
   it("量測男武器完整 JSON 回應大小", async () => {

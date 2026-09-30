@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { DollFrame, DollPart, DollRule } from "@/lib/queries/doll";
+import type { DollFrame, DollPart, DollRide, DollRule } from "@/lib/queries/doll";
 import { cn } from "@/lib/utils";
 
 /** 場景是 120×120 的原始像素空間，角色原點（脖子／腳底共用的掛點）固定在這裡。 */
@@ -28,6 +28,7 @@ export function buildDollLayers(
   rules: DollRule[],
   dir: number,
   parts?: DollPart[],
+  rides?: DollRide[],
 ): DollLayer[] {
   const wanted = parts && new Set(parts.map((p) => `${p.slot}:${p.sequence}`));
   const frameBy = new Map<string, DollFrame>();
@@ -56,6 +57,15 @@ export function buildDollLayers(
       zIndex: rule.zOrder,
     });
   }
+  const horse = layers.find((layer) => layer.frame.slot === "horse");
+  const ride = horse && rides?.find((row) => row.sequence === horse.frame.sequence && row.dir === dir);
+  if (ride) {
+    for (const layer of layers) {
+      if (layer.frame.slot === "horse") continue;
+      layer.left += ride.dx;
+      layer.top += ride.dy;
+    }
+  }
   return layers;
 }
 
@@ -65,6 +75,7 @@ interface Props {
   dir: number;
   /** 要畫哪些部位（frames 是一整包時用）；不給就全畫 */
   parts?: DollPart[];
+  rides?: DollRide[];
   /** 整數倍率。不給的話讀 CSS 變數 `--doll-scale`（方便用 class 做 RWD），預設 4。 */
   scale?: number;
   className?: string;
@@ -76,10 +87,10 @@ const ALL_DIRS = [1, 2, 3, 4, 5, 6, 7, 8];
  * 畫布範圍：至少是 120×120 的場景，大型背飾、坐騎超出時往外撐。
  * 取 8 個方向的聯集，轉方向時角色才不會跳來跳去。
  */
-function sceneBox(frames: DollFrame[], rules: DollRule[], parts?: DollPart[]) {
+function sceneBox(frames: DollFrame[], rules: DollRule[], parts?: DollPart[], rides?: DollRide[]) {
   let [x0, y0, x1, y1] = [0, 0, SCENE, SCENE];
   for (const d of ALL_DIRS) {
-    for (const l of buildDollLayers(frames, rules, d, parts)) {
+    for (const l of buildDollLayers(frames, rules, d, parts, rides)) {
       x0 = Math.min(x0, l.left);
       y0 = Math.min(y0, l.top);
       x1 = Math.max(x1, l.left + l.frame.width);
@@ -89,9 +100,9 @@ function sceneBox(frames: DollFrame[], rules: DollRule[], parts?: DollPart[]) {
   return { x0, y0, w: x1 - x0, h: y1 - y0 };
 }
 
-export function DollPreview({ frames, rules, dir, parts, scale, className }: Props) {
-  const layers = buildDollLayers(frames, rules, dir, parts);
-  const box = sceneBox(frames, rules, parts);
+export function DollPreview({ frames, rules, dir, parts, rides, scale, className }: Props) {
+  const layers = buildDollLayers(frames, rules, dir, parts, rides);
+  const box = sceneBox(frames, rules, parts, rides);
 
   return (
     <div

@@ -33,6 +33,13 @@ export interface DollFrame {
   anchorY: number;
 }
 
+export interface DollRide {
+  sequence: number;
+  dir: number;
+  dx: number;
+  dy: number;
+}
+
 export interface DollHead {
   sequence: number;
   label: string;
@@ -110,7 +117,8 @@ export function getDollHeads(gender: DollGender): DollHead[] {
          AND EXISTS (
            SELECT 1 FROM doll_frame_images f
            WHERE f.gender = p.gender AND f.slot = p.slot
-              AND f.sequence = p.sequence AND f.action IN ('wait', 'prepare')
+             AND f.color = 0
+             AND f.sequence = p.sequence AND f.action IN ('wait', 'prepare')
          )
        ORDER BY p.item_id`,
     )
@@ -142,6 +150,7 @@ export function getDollLooks(gender: DollGender, slot: DollSlot): DollLook[] {
               EXISTS (
                 SELECT 1 FROM doll_frame_images f
                 WHERE f.gender = d.gender AND f.slot = d.slot
+                  AND f.color = 0
                   AND f.sequence = d.sequence AND f.action IN ('wait', 'prepare')
               ) AS hasImage
        FROM items i CROSS JOIN item_doll d ON d.item_id = i.id
@@ -225,6 +234,7 @@ export function getDollFrames(gender: DollGender, parts: DollPart[]): DollFrame[
                   anchor_x AS anchorX, anchor_y AS anchorY
            FROM doll_frame_images
            WHERE gender = ? AND slot = ? AND action IN ('wait', 'prepare')
+             AND color = 0
              AND sequence IN (${placeholders})
            ORDER BY sequence, action, dir`,
           )
@@ -235,6 +245,23 @@ export function getDollFrames(gender: DollGender, parts: DollPart[]): DollFrame[
   return frames;
 }
 
+export function getDollRides(gender: DollGender, sequences: number[]): DollRide[] {
+  if (!isGender(gender)) return [];
+  const unique = [...new Set(sequences.filter((seq) => Number.isSafeInteger(seq) && seq > 0))];
+  if (unique.length === 0) return [];
+  const db = getDb();
+  const rides: DollRide[] = [];
+  for (let i = 0; i < unique.length; i += CHUNK_SIZE) {
+    const chunk = unique.slice(i, i + CHUNK_SIZE);
+    rides.push(...(db.prepare(
+      `SELECT sequence, dir, dx, dy FROM doll_ride_offsets
+       WHERE gender = ? AND sequence IN (${chunk.map(() => "?").join(",")})
+       ORDER BY sequence, dir`,
+    ).all(gender, ...chunk) as DollRide[]));
+  }
+  return rides;
+}
+
 export function getItemDoll(itemId: number): ItemDoll[] {
   if (!Number.isSafeInteger(itemId) || itemId <= 0) return [];
   const rows = getDb()
@@ -243,6 +270,7 @@ export function getItemDoll(itemId: number): ItemDoll[] {
               (d.has_part = 1 AND EXISTS (
                 SELECT 1 FROM doll_frame_images f
                 WHERE f.gender = d.gender AND f.slot = d.slot
+                  AND f.color = 0
                   AND f.sequence = d.sequence AND f.action IN ('wait', 'prepare')
               )) AS hasImage
        FROM item_doll d WHERE d.item_id = ? ORDER BY d.gender, d.slot`,
@@ -264,6 +292,7 @@ export function getDollBase(gender: DollGender): Partial<Record<DollSlot, DollPa
        AND EXISTS (
          SELECT 1 FROM doll_frame_images f
          WHERE f.gender = d.gender AND f.slot = d.slot AND f.sequence = d.sequence
+           AND f.color = 0
            AND f.action IN ('wait', 'prepare')
        ) ORDER BY d.item_id`,
   ).all(gender, ...ids) as DollPart[];
