@@ -3,7 +3,9 @@
 import Link from "next/link";
 import {
   createElement,
+  useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -24,12 +26,15 @@ import {
   PackageIcon,
   RabbitIcon,
   RotateCcwIcon,
+  ScanIcon,
   SearchIcon,
   ShieldIcon,
   ShirtIcon,
   SparklesIcon,
   SwordIcon,
   XIcon,
+  ZoomInIcon,
+  ZoomOutIcon,
   type LucideIcon,
 } from "lucide-react";
 import type {
@@ -143,6 +148,43 @@ export function SalonClient(props: Props) {
   const [hair, setHair] = useState(props.initialHair);
   const [dir, setDir] = useState(props.initialDir);
   const [hand, setHand] = useState<Hand>(props.initialHand);
+  // 手動縮放跟著當下的坐騎：換坐騎就回到「符合舞台」；換性別整個元件重掛，也會回去
+  const horseKey = worn.horse?.look.key ?? "";
+  const [zoomState, setZoomState] = useState<{ horse: string; value: number | "fit" }>({
+    horse: horseKey,
+    value: "fit",
+  });
+  const zoom = zoomState.horse === horseKey ? zoomState.value : "fit";
+  const [fitScale, setFitScale] = useState<number | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  /** 縮放前畫面中心在場景上的相對位置，縮放後捲回同一點 */
+  const zoomAnchor = useRef<{ x: number; y: number } | null>(null);
+  const setZoom = (value: number | "fit") => {
+    const el = stageRef.current;
+    if (el) {
+      zoomAnchor.current = {
+        x:
+          el.scrollWidth > el.clientWidth
+            ? (el.scrollLeft + el.clientWidth / 2) / el.scrollWidth
+            : 0.5,
+        y:
+          el.scrollHeight > el.clientHeight
+            ? (el.scrollTop + el.clientHeight / 2) / el.scrollHeight
+            : 0.5,
+      };
+    }
+    setZoomState({ horse: horseKey, value });
+  };
+  useLayoutEffect(() => {
+    const el = stageRef.current;
+    const a = zoomAnchor.current;
+    if (!el || !a) return;
+    zoomAnchor.current = null;
+    el.scrollLeft = a.x * el.scrollWidth - el.clientWidth / 2;
+    el.scrollTop = a.y * el.scrollHeight - el.clientHeight / 2;
+  }, [zoom]);
+  const onFitChange = useCallback((v: number) => setFitScale(v), []);
+  const pan = useDragPan(stageRef);
   const [tab, setTab] = useState<DollSlot>(props.initialTab);
   const [looksBySlot, setLooksBySlot] = useState<Partial<Record<DollSlot, DollLook[]>>>({
     [props.initialTab]: props.initialLooks,
@@ -303,7 +345,7 @@ export function SalonClient(props: Props) {
   const hairOptions = props.hairColors.filter((color) => color.sequence === head);
 
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_452px] lg:gap-5">
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_452px] lg:gap-5">
       {/* 桌機：左欄整塊黏住；手機：只有舞台黏在上方，穿著清單排到最後 */}
       <div className="contents lg:sticky lg:top-18 lg:flex lg:flex-col lg:gap-4">
         <div className="sticky top-14 z-30 -mx-4 bg-background px-4 pt-2 pb-1 lg:static lg:m-0 lg:p-0">
@@ -314,7 +356,7 @@ export function SalonClient(props: Props) {
               hint={`${layerCount} 層 · 像素原圖`}
             />
             <div
-              className="relative grid max-h-[46svh] min-h-[236px] place-items-center overflow-hidden sm:max-h-[60svh] sm:min-h-[330px] lg:max-h-[min(720px,calc(100svh-180px))] lg:min-h-[480px]"
+              className="relative"
               style={{
                 background: [
                   "linear-gradient(to right, color-mix(in oklab, var(--border) 55%, transparent) 1px, transparent 1px) 0 0 / 28px 28px",
@@ -324,14 +366,31 @@ export function SalonClient(props: Props) {
                 ].join(", "),
               }}
             >
-              <DollPreview
-                frames={frames}
-                rules={rules}
-                dir={dir}
-                parts={drawParts}
-                hairColor={hair}
-                className="[--doll-scale:2] sm:[--doll-scale:3] lg:[--doll-scale:4]"
-              />
+              {/* 捲動層：max-h 也是 DollPreview 自動縮放的高度上限；放大超出時可捲動／拖曳 */}
+              <div
+                ref={stageRef}
+                {...pan}
+                className={cn(
+                  "grid max-h-[46svh] min-h-[236px] overflow-auto overscroll-contain sm:max-h-[60svh] sm:min-h-[330px] lg:max-h-[min(720px,calc(100svh-180px))] lg:min-h-[480px]",
+                  zoom !== "fit" &&
+                    fitScale != null &&
+                    zoom > fitScale &&
+                    "cursor-grab active:cursor-grabbing",
+                )}
+              >
+                <DollPreview
+                  frames={frames}
+                  rules={rules}
+                  dir={dir}
+                  parts={drawParts}
+                  hairColor={hair}
+                  zoom={zoom}
+                  onFitChange={onFitChange}
+                  // m-auto：比舞台小時置中，比舞台大時從左上開始，才捲得到每一邊
+                  className="m-auto [--doll-scale:2] sm:[--doll-scale:3] lg:[--doll-scale:4]"
+                />
+              </div>
+              <StageZoom zoom={zoom} fitScale={fitScale} onChange={setZoom} />
               {missing.length > 0 && (
                 <p className="absolute top-2.5 left-3 flex items-center gap-1.5 rounded-md bg-card/85 px-2 py-1 text-xs text-muted-foreground backdrop-blur-sm">
                   <CircleAlertIcon className="size-3.5 shrink-0" aria-hidden />
@@ -928,6 +987,141 @@ function HairSwatches({
       </p>
     </div>
   );
+}
+
+const ZOOM_MIN = 1;
+const ZOOM_MAX = 8;
+const fmtScale = (v: number) => `${Number.isInteger(v) ? v : v.toFixed(1)}x`;
+
+/** 舞台右上角的縮放：預設「符合舞台」，＋／－ 以整數倍率 1x–8x 手動調整 */
+function StageZoom({
+  zoom,
+  fitScale,
+  onChange,
+}: {
+  zoom: number | "fit";
+  fitScale: number | null;
+  onChange: (v: number | "fit") => void;
+}) {
+  const fit = zoom === "fit";
+  const base = fit ? fitScale : zoom;
+  const up = base == null ? null : fit ? Math.floor(base) + 1 : base + 1;
+  const down = base == null ? null : fit ? Math.ceil(base) - 1 : base - 1;
+  const canUp = up != null && up <= ZOOM_MAX;
+  const canDown = down != null && down >= ZOOM_MIN;
+
+  const tip = (label: string, node: React.ReactElement) => (
+    <Tooltip>
+      <TooltipTrigger delay={300} render={node} />
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+
+  return (
+    <div className="absolute top-2 right-2 z-10 flex items-center gap-0.5 rounded-lg border border-border/70 bg-card/85 p-0.5 shadow-sm backdrop-blur-sm">
+      {tip(
+        "縮小",
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="縮小"
+          disabled={!canDown}
+          onClick={() => canDown && onChange(down)}
+        >
+          <ZoomOutIcon aria-hidden />
+        </Button>,
+      )}
+      <span
+        className="min-w-[4.5rem] text-center text-xs tabular-nums"
+        aria-live="polite"
+        aria-label={
+          base == null ? undefined : `目前倍率 ${fmtScale(base)}${fit ? "（符合舞台）" : ""}`
+        }
+      >
+        {fit && <span className="mr-1 text-muted-foreground">符合</span>}
+        {base == null ? "—" : fmtScale(base)}
+      </span>
+      {tip(
+        "放大",
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="放大"
+          disabled={!canUp}
+          onClick={() => canUp && onChange(up)}
+        >
+          <ZoomInIcon aria-hidden />
+        </Button>,
+      )}
+      {tip(
+        "符合舞台",
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="符合舞台"
+          aria-pressed={fit}
+          disabled={fit}
+          onClick={() => onChange("fit")}
+        >
+          <ScanIcon aria-hidden />
+        </Button>,
+      )}
+    </div>
+  );
+}
+
+/**
+ * 滑鼠按住拖曳來捲動舞台（觸控維持原生捲動）。拖超過 4px 才算拖曳，
+ * 拖完那一下的 click 會被吃掉，避免放開時誤觸舞台上的東西。
+ */
+function useDragPan(ref: React.RefObject<HTMLDivElement | null>) {
+  const drag = useRef<{ x: number; y: number; left: number; top: number; moved: boolean } | null>(
+    null,
+  );
+  return {
+    onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
+      const el = ref.current;
+      if (!el || e.pointerType !== "mouse" || e.button !== 0) return;
+      if (el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight) return;
+      drag.current = {
+        x: e.clientX,
+        y: e.clientY,
+        left: el.scrollLeft,
+        top: el.scrollTop,
+        moved: false,
+      };
+    },
+    onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => {
+      const el = ref.current;
+      const d = drag.current;
+      if (!el || !d) return;
+      const dx = e.clientX - d.x;
+      const dy = e.clientY - d.y;
+      if (!d.moved && Math.hypot(dx, dy) < 4) return;
+      if (!d.moved) {
+        d.moved = true;
+        el.setPointerCapture(e.pointerId);
+      }
+      e.preventDefault();
+      el.scrollLeft = d.left - dx;
+      el.scrollTop = d.top - dy;
+    },
+    onPointerUp: (e: React.PointerEvent<HTMLDivElement>) => {
+      const el = ref.current;
+      if (el?.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+      if (!drag.current?.moved) drag.current = null;
+    },
+    onPointerCancel: () => {
+      drag.current = null;
+    },
+    onClickCapture: (e: React.MouseEvent) => {
+      if (drag.current?.moved) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+      drag.current = null;
+    },
+  };
 }
 
 function DirectionCompass({ dir, onChange }: { dir: number; onChange: (d: number) => void }) {

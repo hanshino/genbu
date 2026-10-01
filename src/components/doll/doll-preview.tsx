@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import type { DollFrame, DollPart, DollRule } from "@/lib/queries/doll";
 import { cn } from "@/lib/utils";
 
@@ -100,6 +100,10 @@ interface Props {
    * 父層的可用高度取自它的 `max-height`（沒設就只看寬度）。
    */
   scale?: number;
+  /** "fit"（預設）＝自動縮放到放得進父層；給數字就照這個倍率畫，放不下由父層捲動 */
+  zoom?: number | "fit";
+  /** 回報自動縮放算出來的倍率（父層尺寸或場景變了會再回報），給外面顯示用 */
+  onFitChange?: (scale: number) => void;
   className?: string;
 }
 
@@ -137,6 +141,7 @@ function useFitScale(
 ) {
   // undefined = 還沒量（伺服器端與 hydration 前）；null = 想要的倍率就放得下
   const [fit, setFit] = useState<number | null | undefined>(undefined);
+  const [want, setWant] = useState(scale ?? 4);
   useLayoutEffect(() => {
     const el = ref.current;
     const parent = el?.parentElement;
@@ -148,6 +153,7 @@ function useFitScale(
       const availH = Number.isFinite(maxH) ? maxH - FIT_PAD * 2 : Infinity;
       const room = Math.min(availW / w, availH / h);
       const next = room >= want ? want : room >= 1 ? Math.floor(room) : Math.max(room, 0.25);
+      setWant(want);
       setFit(next === want ? null : next);
     };
     measure();
@@ -155,20 +161,36 @@ function useFitScale(
     ro.observe(parent);
     return () => ro.disconnect();
   }, [ref, w, h, scale]);
-  return fit;
+  return { fit, want };
 }
 
-export function DollPreview({ frames, rules, dir, parts, hairColor = 0, scale, className }: Props) {
+export function DollPreview({
+  frames,
+  rules,
+  dir,
+  parts,
+  hairColor = 0,
+  scale,
+  zoom = "fit",
+  onFitChange,
+  className,
+}: Props) {
   const layers = buildDollLayers(frames, rules, dir, parts, hairColor);
   const box = sceneBox(frames, rules, parts, hairColor);
   const ref = useRef<HTMLDivElement>(null);
-  const fit = useFitScale(ref, box.w, box.h, scale);
+  const { fit, want } = useFitScale(ref, box.w, box.h, scale);
+  const fitScale = fit ?? want;
+  useEffect(() => {
+    if (fit !== undefined) onFitChange?.(fitScale);
+  }, [fit, fitScale, onFitChange]);
+  const manual = zoom !== "fit";
   // --doll-scale 是想要的倍率（class / prop），--doll-fit 是實際用的；不另外寫 inline --doll-scale，量測才讀得到 class 的值
   const k = "var(--doll-fit, var(--doll-scale, 4))";
   // 超出預設場景的大圖（大型坐騎）在量到父層之前先佔預設場景的大小、不顯示，
   // 避免 hydration 前以 4x 撐爆舞台再縮回來的跳動。一般角色照常直接畫。
   const oversized = box.w > SCENE * 1.5 || box.h > SCENE * 1.5;
-  const pending = fit === undefined && oversized;
+  const pending = !manual && fit === undefined && oversized;
+  const applied = manual ? zoom : (fit ?? scale);
 
   return (
     <div
@@ -178,7 +200,7 @@ export function DollPreview({ frames, rules, dir, parts, hairColor = 0, scale, c
       className={cn("relative shrink-0", className)}
       style={
         {
-          ...((fit ?? scale) != null ? { "--doll-fit": fit ?? scale } : null),
+          ...(applied != null ? { "--doll-fit": applied } : null),
           width: `calc(${pending ? Math.min(box.w, SCENE) : box.w}px * ${k})`,
           height: `calc(${pending ? Math.min(box.h, SCENE) : box.h}px * ${k})`,
           ...(pending ? { visibility: "hidden", overflow: "hidden" } : null),
