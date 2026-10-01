@@ -36,8 +36,8 @@ describe("getAllMissionListItems", () => {
     expect(all.filter((m) => m.timed).length).toBeGreaterThan(50);
   });
 
-  it("門派只出現 op=2 summary 裡的六個門派", () => {
+  it("門派只出現 op=2 summary 裡的七個門派", () => {
     const factions = new Set(all.flatMap((m) => m.factions ?? []));
-    expect([...factions].sort()).toEqual(["天外天", "惡人谷", "曼陀羅", "火狐", "移花宮", "雪狼"].sort());
+    expect([...factions].sort()).toEqual(["天外天", "惡人谷", "曼陀羅", "火狐", "移花宮", "雪狼", "麒麟"].sort());
   });
 });

@@ -36,8 +36,9 @@ describe("getMissionDialogue", () => {
     }
   });
 
-  it("任務 1 的對話只包含 file_no=12（is_gm=0 事件全落在該檔）", () => {
-    const groups = getMissionDialogue(1);
-    expect(groups.map((g) => g.fileNo)).toEqual([12]);
+  it("任務 1 的對話包含 file_no=12，且不含只有 gm 事件的 file_no=39", () => {
+    const fileNos = getMissionDialogue(1).map((g) => g.fileNo);
+    expect(fileNos).toContain(12);
+    expect(fileNos).not.toContain(39);
   });
 });

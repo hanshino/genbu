@@ -46,6 +46,7 @@ interface EventRow {
   step: number | null;
   minutes: number | null;
   npcName: string | null;
+  fileNo: number;
   msgId: number;
 }
 
@@ -53,7 +54,7 @@ function getEventRows(missionId: number): EventRow[] {
   const db = getDb();
   return db
     .prepare(
-      `SELECT e.event, e.step, e.minutes, e.msg_id AS msgId,
+      `SELECT e.event, e.step, e.minutes, e.file_no AS fileNo, e.msg_id AS msgId,
               ns.name AS npcName
        FROM mission_events e
        LEFT JOIN npc_strings ns ON ns.id = e.npc_name_id
@@ -101,7 +102,10 @@ function getConditionOpConfidence(): Map<number, string> {
   return new Map(rows.map((r) => [r.op, r.confidence]));
 }
 
-/** reject_msg_id 對 messages.msg_id 全域唯一（無跨檔重複），不用帶 file_no。 */
+/**
+ * reject_msg_id 常指向別的檔（623 筆中 153 筆跨檔），只能用 msg_id 查。
+ * msg_id 跨檔唯一重複的是 1001（file 1、2 皆為 NULL），已被 msg IS NOT NULL 濾掉。
+ */
 function getRejectTexts(rejectMsgIds: number[]): Map<number, string> {
   const result = new Map<number, string>();
   if (rejectMsgIds.length === 0) return result;
@@ -260,7 +264,7 @@ export function getMissionLogic(missionId: number): MissionLogic {
         .map((r) => r.msgId),
     ),
   ];
-  const dialogueByMsgId = getMessageTexts(flowMsgIds);
+  const dialogueByMsgKey = getMessageTexts(flowMsgIds);
 
   const byStep = new Map<number, { npcs: Set<string>; dialogue: string | null }>();
   const ensure = (step: number) => {
@@ -277,7 +281,7 @@ export function getMissionLogic(missionId: number): MissionLogic {
     const entry = ensure(step);
     if (r.npcName) entry.npcs.add(r.npcName);
     if (entry.dialogue === null) {
-      const text = dialogueByMsgId.get(r.msgId);
+      const text = dialogueByMsgKey.get(`${r.fileNo}:${r.msgId}`);
       if (text) entry.dialogue = text;
     }
   }
@@ -332,15 +336,16 @@ export function getNpcImagesByName(names: string[]): Map<string, EntityImage | n
   return map;
 }
 
-function getMessageTexts(msgIds: number[]): Map<number, string> {
-  const map = new Map<number, string>();
+/** 回傳 key 為 `${file_no}:${msg_id}`：messages 主鍵是 (file_no, msg_id)，msg_id 可跨檔重複。 */
+function getMessageTexts(msgIds: number[]): Map<string, string> {
+  const map = new Map<string, string>();
   if (msgIds.length === 0) return map;
   const db = getDb();
   const ph = msgIds.map(() => "?").join(",");
   const rows = db
-    .prepare(`SELECT msg_id AS msgId, msg FROM messages WHERE msg_id IN (${ph}) AND msg IS NOT NULL`)
-    .all(...msgIds) as Array<{ msgId: number; msg: string }>;
-  for (const r of rows) map.set(r.msgId, r.msg);
+    .prepare(`SELECT file_no AS fileNo, msg_id AS msgId, msg FROM messages WHERE msg_id IN (${ph}) AND msg IS NOT NULL`)
+    .all(...msgIds) as Array<{ fileNo: number; msgId: number; msg: string }>;
+  for (const r of rows) map.set(`${r.fileNo}:${r.msgId}`, r.msg);
   return map;
 }
 
