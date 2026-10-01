@@ -521,6 +521,7 @@ export function getStageMapImage(kind: StageKind, id: number): StageMapImage | n
 }
 
 export interface NpcPlacement {
+  placementId: number;
   npcId: number;
   name: string | null;
   /**
@@ -544,7 +545,8 @@ export function getNpcPlacementsForStage(kind: StageKind, id: number): NpcPlacem
   const db = getDb();
   const rows = db
     .prepare(
-      `SELECT p.npc_id AS npcId,
+      `SELECT p.id AS placementId,
+              p.npc_id AS npcId,
               n.name    AS name,
               p.raw_x   AS rawX,
               p.raw_y   AS rawY
@@ -557,6 +559,7 @@ export function getNpcPlacementsForStage(kind: StageKind, id: number): NpcPlacem
        ORDER BY p.id`,
     )
     .all(kind, id) as Array<{
+    placementId: number;
     npcId: number;
     name: string | null;
     rawX: number;

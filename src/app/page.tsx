@@ -64,6 +64,7 @@ const groups: FeatureGroup[] = [
       { title: "英雄", description: "英雄清單、相惜組合，還能試排隊伍編成", href: "/heroes" },
       { title: "任務", description: "任務步驟、所需物品、地點與 NPC", href: "/missions" },
       { title: "地圖", description: "全部場景地圖、所屬區域與屬性", href: "/maps" },
+      { title: "NPC 位置", description: "搜尋 NPC 名稱，查它出現在哪些地圖", href: "/npcs" },
       { title: "練功地圖", description: "輸入等級，找適合練功的地圖", href: "/training-spots" },
       { title: "煉化", description: "煉化配方來源、產出與機率", href: "/compounds" },
       { title: "成就", description: "1,200+ 成就的點數、描述與獎勵", href: "/achievements" },

@@ -20,6 +20,7 @@ import type { InboundLink, StageDetail, StageMissionRef } from "@/lib/types/stag
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ npc?: string | string[] }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -179,8 +180,12 @@ function MissionsList({ missions }: { missions: StageMissionRef[] }) {
   );
 }
 
-export default async function MapDetailPage({ params }: PageProps) {
+export default async function MapDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const { npc } = await searchParams;
+  const placementId = typeof npc === "string" && /^\d+$/.test(npc) ? Number(npc) : NaN;
+  const focusedPlacementId =
+    Number.isSafeInteger(placementId) && placementId > 0 ? placementId : undefined;
   const stageId = Number(id);
   if (!Number.isInteger(stageId) || stageId <= 0) notFound();
 
@@ -282,6 +287,7 @@ export default async function MapDetailPage({ params }: PageProps) {
         stageName={stage.name}
         image={mapImage}
         placements={npcPlacements}
+        focusedPlacementId={focusedPlacementId}
         monsters={monsterMarkers}
         aside={aside.length > 0 ? aside : null}
       />
