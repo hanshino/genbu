@@ -13,6 +13,7 @@ import {
   buildMonsterMarkers,
   getMonsterSpawnPositions,
   getNpcPlacementsForStage,
+  getPortalExits,
   getStageMapImage,
 } from "@/lib/queries/maps";
 import { StageMapViewer } from "@/components/maps/stage-map-viewer";
@@ -122,7 +123,7 @@ function entranceRows(stage: StageDetail) {
 
 function Entrances({ rows }: { rows: ReturnType<typeof entranceRows> }) {
   return (
-    <AsideCard title="出入口">
+    <AsideCard title="預設入口與登出設定">
       <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5 text-sm">
         {rows.map((r) => (
           <div key={r.label} className="contents">
@@ -141,7 +142,10 @@ const rowLink =
 function InboundList({ inbound }: { inbound: InboundLink[] }) {
   return (
     <AsideCard title="指向此處的地圖" count={inbound.length} flush>
-      <ul className="divide-y divide-border/60">
+      <p className="px-4 py-2 text-xs text-muted-foreground">
+        預設入口或登出點設在這裡的地圖，不是傳點。
+      </p>
+      <ul className="divide-y divide-border/60 border-t border-border/60">
         {inbound.map((l) => (
           <li key={l.fromId}>
             <Link href={`/maps/${l.fromId}`} className={rowLink}>
@@ -195,6 +199,7 @@ export default async function MapDetailPage({ params, searchParams }: PageProps)
   const monsters = getMonstersAtStage(stage.kind, stage.id);
   const mapImage = getStageMapImage(stage.kind, stage.id);
   const npcPlacements = getNpcPlacementsForStage(stage.kind, stage.id);
+  const portals = getPortalExits(stage.kind, stage.id);
   const monsterImages = getNpcImageMap(monsters.map((m) => m.npcId));
   // 沒有地圖圖片就不必查座標；markers 仍要建，清單的高血量標示也靠它。
   const monsterMarkers = buildMonsterMarkers(
@@ -289,6 +294,9 @@ export default async function MapDetailPage({ params, searchParams }: PageProps)
         placements={npcPlacements}
         focusedPlacementId={focusedPlacementId}
         monsters={monsterMarkers}
+        portals={portals}
+        stageKind={stage.kind}
+        stageId={stage.id}
         aside={aside.length > 0 ? aside : null}
       />
     </div>
