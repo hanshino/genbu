@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { gameTextPlain } from "@/lib/format/game-text";
 import type { StageKind } from "@/lib/types/stage";
 import type { StageMonsterSpawn } from "@/lib/types/monster-spawn";
 import type { Point } from "@/lib/guide-steps";
@@ -518,6 +519,145 @@ export function getStageMapImage(kind: StageKind, id: number): StageMapImage | n
     )
     .get(kind, id) as StageMapImage | undefined;
   return row ?? null;
+}
+
+export type PortalPoint = [number, number];
+
+export interface PortalOption {
+  key: string;
+  /** 對話選項文字；直接傳送為 null。 */
+  label: string | null;
+  dest: { id: number; kind: StageKind | null; name: string; image: StageMapImage | null };
+  /** 目的地上 tag_id = dst_tag 的 trigger；空陣列 = 落點未收錄。 */
+  landings: PortalPoint[];
+  instance: boolean;
+}
+
+export interface PortalExit {
+  key: string;
+  eventTag: number;
+  /** 同一個 tag 拆出的第幾區（從 1 開始）、共幾區。 */
+  part: number;
+  parts: number;
+  cells: PortalPoint[];
+  /** 踩點格的平均原始像素座標。 */
+  center: PortalPoint;
+  prompt: string | null;
+  options: PortalOption[];
+}
+
+interface PortalWarpRow {
+  id: number;
+  eventTag: number;
+  dstId: number;
+  dstKind: StageKind | null;
+  dstName: string | null;
+  dstTag: number | null;
+  fileNo: number | null;
+  msgId: number | null;
+  entryMsgId: number | null;
+  warpOp: number | null;
+}
+
+/** Chebyshev 距離 ≤ 120px（三格）的踩點格，依遞移連通性歸成一區。 */
+function portalClusters(cells: PortalPoint[]): PortalPoint[][] {
+  const left = [...cells];
+  const out: PortalPoint[][] = [];
+  // ponytail: O(n²) 掃描；每個 tag 只有少量踩點，數量顯著增加時再改空間索引。
+  while (left.length) {
+    const group = [left.pop()!];
+    for (let i = 0; i < group.length; i++) {
+      for (let j = left.length - 1; j >= 0; j--) {
+        const [x, y] = left[j];
+        if (Math.max(Math.abs(x - group[i][0]), Math.abs(y - group[i][1])) <= 120)
+          group.push(...left.splice(j, 1));
+      }
+    }
+    out.push(group);
+  }
+  return out.sort((a, b) => a[0][1] - b[0][1] || a[0][0] - b[0][0]);
+}
+
+/** 地圖踩點傳送出口；同一 event tag 的分區共用選項，不包含 NPC 對話傳送。 */
+export function getPortalExits(kind: StageKind, id: number): PortalExit[] {
+  const db = getDb();
+  const warps = db
+    .prepare(
+      `SELECT w.id, w.event_tag AS eventTag, w.dst_stage_id AS dstId, s.kind AS dstKind,
+              s.name AS dstName, w.dst_tag AS dstTag, w.msg_file_no AS fileNo, w.msg_id AS msgId,
+              w.entry_msg_id AS entryMsgId, w.warp_op AS warpOp
+       FROM map_warps w LEFT JOIN stages s ON s.id = w.dst_stage_id
+       WHERE w.warp_kind = 'map_event' AND w.src_kind = ? AND w.src_stage_id = ?
+       ORDER BY w.event_tag, w.id`,
+    )
+    .all(kind, id) as PortalWarpRow[];
+
+  const cellsQ = db.prepare(
+    `SELECT raw_x AS x, raw_y AS y FROM map_placements
+     WHERE stage_kind = ? AND stage_id = ? AND category = 'arrival' AND event_tag = ?
+     ORDER BY raw_y, raw_x, id`,
+  );
+  const landingQ = db.prepare(
+    `SELECT raw_x AS x, raw_y AS y FROM map_placements
+     WHERE stage_kind = ? AND stage_id = ? AND category = 'trigger' AND tag_id = ?
+     ORDER BY raw_y, raw_x, id`,
+  );
+  const msgQ = db.prepare(`SELECT msg FROM messages WHERE file_no = ? AND msg_id = ?`);
+  const text = (fileNo: number | null, msgId: number | null): string | null => {
+    if (fileNo == null || msgId == null) return null;
+    const row = msgQ.get(fileNo, msgId) as { msg: string | null } | undefined;
+    return row?.msg ? gameTextPlain(row.msg).trim() || null : null;
+  };
+  const points = (rows: unknown[]): PortalPoint[] =>
+    (rows as { x: number; y: number }[]).map((r) => [r.x, r.y]);
+
+  const destinations = new Map<number, PortalOption["dest"]>();
+  const byTag = new Map<number, PortalWarpRow[]>();
+  for (const w of warps) {
+    const rows = byTag.get(w.eventTag);
+    if (rows) rows.push(w);
+    else byTag.set(w.eventTag, [w]);
+  }
+  return [...byTag].flatMap(([eventTag, rows]) => {
+    const groups = portalClusters(points(cellsQ.all(kind, id, eventTag)));
+    if (groups.length === 0) return [];
+    const options: PortalOption[] = rows.map((w) => {
+      let dest = destinations.get(w.dstId);
+      if (!dest) {
+        dest = {
+          id: w.dstId,
+          kind: w.dstKind,
+          name: w.dstName ?? `#${w.dstId}`,
+          image: w.dstKind == null ? null : getStageMapImage(w.dstKind, w.dstId),
+        };
+        destinations.set(w.dstId, dest);
+      }
+      return {
+        key: String(w.id),
+        label: text(w.fileNo, w.msgId),
+        dest,
+        landings:
+          dest.kind == null || w.dstTag == null
+            ? []
+            : points(landingQ.all(dest.kind, dest.id, w.dstTag)),
+        instance: w.warpOp === 64,
+      };
+    });
+    const prompt = text(rows[0].fileNo, rows[0].entryMsgId);
+    return groups.map((cells, i): PortalExit => ({
+      key: `${eventTag}-${i + 1}`,
+      eventTag,
+      part: i + 1,
+      parts: groups.length,
+      cells,
+      center: [
+        cells.reduce((sum, p) => sum + p[0], 0) / cells.length,
+        cells.reduce((sum, p) => sum + p[1], 0) / cells.length,
+      ],
+      prompt,
+      options,
+    }));
+  });
 }
 
 export interface NpcPlacement {

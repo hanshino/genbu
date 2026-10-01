@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StageMapViewer, clusterPoints, letterTag, type MapMonster } from "../stage-map-viewer";
-import type { StageMapImage, NpcPlacement } from "@/lib/queries/maps";
+import type { StageMapImage, NpcPlacement, PortalExit } from "@/lib/queries/maps";
 
 const image: StageMapImage = {
   url: "https://img.hanshino.dev/test.webp",
@@ -66,7 +66,8 @@ const monsters: MapMonster[] = [
   },
 ];
 
-const figureOf = () => screen.getByRole("img", { name: /地圖/ }).closest("figure")!;
+// 傳點卡片的縮圖 alt 是「… 地圖縮圖」，這裡只抓主地圖。
+const figureOf = () => screen.getByRole("img", { name: / 地圖$/ }).closest("figure")!;
 const markers = () => within(figureOf()).queryAllByRole("button");
 const markerLabels = () => markers().map((b) => b.getAttribute("aria-label"));
 
@@ -332,5 +333,277 @@ describe("<StageMapViewer>", () => {
     // 無圖時不提座標，只顯示刷怪點數。
     expect(screen.getByText("4 點")).toBeInTheDocument();
     expect(screen.getByText("打鐵舖伙計")).toBeInTheDocument();
+  });
+});
+
+const destImage: StageMapImage = {
+  ...image,
+  url: "https://img.hanshino.dev/dest.webp",
+  imgWidth: 3200,
+  imgHeight: 2400,
+};
+const direct: PortalExit = {
+  key: "256-1",
+  eventTag: 256,
+  part: 1,
+  parts: 1,
+  cells: [
+    [2004, 84],
+    [2084, 84],
+  ],
+  center: [2044, 84],
+  prompt: null,
+  options: [
+    {
+      key: "1",
+      label: null,
+      dest: { id: 2, kind: "stage", name: "莫愁谷村莊", image: destImage },
+      landings: [
+        [320, 2136],
+        [280, 2056],
+      ],
+      instance: false,
+    },
+  ],
+};
+const menuA: PortalExit = {
+  key: "300-1",
+  eventTag: 300,
+  part: 1,
+  parts: 2,
+  cells: [[100, 3000]],
+  center: [100, 3000],
+  prompt: "要回到流星村火島何處呢？",
+  options: [
+    {
+      key: "2",
+      label: "回到流星冰島˙南",
+      dest: { id: 57, kind: "stage", name: "流星村", image: destImage },
+      landings: [[1555, 1692]],
+      instance: true,
+    },
+    {
+      key: "3",
+      label: "前往莫愁谷",
+      dest: { id: 1, kind: "stage", name: "莫愁谷入口", image: destImage },
+      landings: [],
+      instance: false,
+    },
+  ],
+};
+const menuB: PortalExit = {
+  ...menuA,
+  key: "300-2",
+  part: 2,
+  cells: [[4000, 3000]],
+  center: [4000, 3000],
+};
+const sameMap: PortalExit = {
+  ...direct,
+  key: "400-1",
+  eventTag: 400,
+  cells: [[2000, 2000]],
+  center: [2000, 2000],
+  options: [
+    {
+      key: "4",
+      label: null,
+      dest: { id: 99, kind: "stage", name: "極之淵", image },
+      landings: [[2400, 3000]],
+      instance: false,
+    },
+  ],
+};
+
+function renderPortals(portals: PortalExit[]) {
+  return render(
+    <StageMapViewer
+      stageName="極之淵"
+      image={image}
+      placements={[]}
+      portals={portals}
+      stageKind="stage"
+      stageId={99}
+    />,
+  );
+}
+const thumb = () => document.querySelector("[data-portal-thumb]");
+const portalMarker = (name: string) =>
+  within(figureOf()).getByRole("button", { name: `傳點：${name}` });
+const menuTitle = (part: number) => `對話選擇（2 個目的地）・第 ${part} 區／共 2 區`;
+
+describe("<StageMapViewer> 傳點", () => {
+  it("單一目的地：點開自動選取，縮圖畫落點且不是連結，前往按鈕連到目的地", async () => {
+    const user = userEvent.setup();
+    renderPortals([direct]);
+    expect(thumb()).toBeNull();
+    await user.click(portalMarker("往莫愁谷村莊"));
+    const go = await screen.findByRole("link", { name: "前往莫愁谷村莊" });
+    expect(go).toHaveAttribute("href", "/maps/2");
+    const img = screen.getByRole("img", { name: "莫愁谷村莊 地圖縮圖" });
+    expect(img).toHaveAttribute("loading", "lazy");
+    expect(img.closest("a")).toBeNull();
+    expect(thumb()!.querySelectorAll("[data-portal-landing]")).toHaveLength(2);
+    expect(screen.getByText("縮圖上的點是傳過去後的落點（2 處）。")).toBeInTheDocument();
+  });
+
+  it("對話選單：不預選、沒有縮圖；選了才顯示目的地、副本標示與落點未收錄", async () => {
+    const user = userEvent.setup();
+    renderPortals([menuA, menuB]);
+    await user.click(portalMarker(menuTitle(1)));
+    expect(await screen.findByText("選一個選項來看目的地")).toBeInTheDocument();
+    expect(screen.getByText("「要回到流星村火島何處呢？」")).toBeInTheDocument();
+    expect(thumb()).toBeNull();
+    const ice = screen.getByRole("button", { name: /回到流星冰島˙南/ });
+    expect(ice).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(ice);
+    expect(ice).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("副本")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "前往流星村" })).toHaveAttribute("href", "/maps/57");
+    expect(thumb()).not.toBeNull();
+
+    await user.click(screen.getByRole("button", { name: /前往莫愁谷/ }));
+    expect(screen.getByText("落點未收錄")).toBeInTheDocument();
+    expect(screen.queryByText("副本")).toBeNull();
+  });
+
+  it("換開另一區出口時清掉先前的選項", async () => {
+    const user = userEvent.setup();
+    renderPortals([menuA, menuB]);
+    await user.click(portalMarker(menuTitle(1)));
+    await user.click(await screen.findByRole("button", { name: /回到流星冰島˙南/ }));
+    expect(thumb()).not.toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "關閉傳點資訊" }));
+    await user.click(portalMarker(menuTitle(2)));
+    expect(await screen.findByText("選一個選項來看目的地")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /回到流星冰島˙南/ })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    expect(thumb()).toBeNull();
+  });
+
+  it("目的地是本圖：不放縮圖，改在地圖上畫弧線與落點", async () => {
+    const user = userEvent.setup();
+    const { container } = renderPortals([sameMap]);
+    expect(container.querySelector("[data-portal-arc]")).toBeNull();
+    await user.click(portalMarker("往極之淵"));
+    expect(await screen.findByText("目的地就是本圖，落點已標在地圖上。")).toBeInTheDocument();
+    expect(container.querySelector("[data-portal-arc]")).not.toBeNull();
+    expect(within(figureOf()).getByRole("img", { name: "落點 1" })).toBeInTheDocument();
+    expect(thumb()).toBeNull();
+    expect(screen.queryByRole("link", { name: /^前往/ })).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "關閉傳點資訊" }));
+    expect(container.querySelector("[data-portal-arc]")).toBeNull();
+    expect(portalMarker("往極之淵")).toHaveFocus();
+  });
+
+  it("清單列可開卡片；眼睛隱藏單一傳點並關掉卡片，群組可全部隱藏", async () => {
+    const user = userEvent.setup();
+    renderPortals([direct, menuA]);
+    await user.click(screen.getByRole("button", { name: "開啟傳點資訊 往莫愁谷村莊" }));
+    expect(await screen.findByRole("link", { name: "前往莫愁谷村莊" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "在地圖上顯示 往莫愁谷村莊" }));
+    expect(screen.queryByRole("link", { name: "前往莫愁谷村莊" })).toBeNull();
+    expect(markerLabels()).toEqual([`傳點：${menuTitle(1)}`]);
+
+    await user.click(screen.getByRole("button", { name: "全部隱藏" }));
+    expect(markers()).toHaveLength(0);
+  });
+
+  it("手機寬度：卡片放在地圖下方，只掛一份縮圖", async () => {
+    const user = userEvent.setup();
+    const original = window.matchMedia;
+    window.matchMedia = ((q: string) => ({
+      matches: false,
+      media: q,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    })) as unknown as typeof window.matchMedia;
+    try {
+      renderPortals([direct]);
+      await user.click(portalMarker("往莫愁谷村莊"));
+      const panel = screen.getByRole("region", { name: "傳點資訊" });
+      expect(within(panel).getByRole("link", { name: "前往莫愁谷村莊" })).toBeInTheDocument();
+      expect(document.querySelectorAll("[data-portal-thumb]")).toHaveLength(1);
+      await user.click(within(panel).getByRole("button", { name: "關閉傳點資訊" }));
+      expect(screen.queryByRole("region", { name: "傳點資訊" })).toBeNull();
+    } finally {
+      window.matchMedia = original;
+    }
+  });
+});
+
+describe("傳點縮圖視窗", () => {
+  // 仿 231 杭州城：2400×8000 的長圖，落點在下方。
+  const tall: StageMapImage = { ...image, imgWidth: 2400, imgHeight: 8000 };
+  const toTall = (landings: [number, number][]): PortalExit => ({
+    ...direct,
+    options: [
+      {
+        ...direct.options[0],
+        dest: { id: 231, kind: "stage", name: "杭州城", image: tall },
+        landings,
+      },
+    ],
+  });
+  const pctOf = (s: string) => parseFloat(s);
+
+  it("長圖：框固定 4:3，視窗夾在圖內、落點在框中", async () => {
+    const user = userEvent.setup();
+    renderPortals([
+      toTall([
+        [280, 6656],
+        [360, 6656],
+      ]),
+    ]);
+    await user.click(portalMarker("往杭州城"));
+    const frame = thumb() as HTMLElement;
+    expect(frame).toHaveClass("aspect-[4/3]");
+    expect(frame).toHaveAttribute("data-view", "landings");
+    // 60 格 × 40px = 2400 寬（等於圖寬）、1800 高；左緣 0，上緣 6656 − 900 = 5756（未超過 8000 − 1800）。
+    const img = within(frame).getByRole("img", { name: "杭州城 地圖縮圖" });
+    expect(pctOf(img.style.width)).toBeCloseTo(100);
+    expect(pctOf(img.style.left)).toBeCloseTo(0);
+    expect(pctOf(img.style.top)).toBeCloseTo((-5756 / 1800) * 100);
+    const dots = [...frame.querySelectorAll<HTMLElement>("[data-portal-landing]")];
+    expect(dots.map((d) => pctOf(d.style.left))).toEqual([
+      expect.closeTo((280 / 2400) * 100),
+      expect.closeTo((360 / 2400) * 100),
+    ]);
+    for (const d of dots) {
+      expect(pctOf(d.style.top)).toBeCloseTo(50);
+    }
+  });
+
+  it("切到全圖改成 contain，再切回落點附近", async () => {
+    const user = userEvent.setup();
+    renderPortals([toTall([[280, 6656]])]);
+    await user.click(portalMarker("往杭州城"));
+    const frame = thumb() as HTMLElement;
+    await user.click(within(frame).getByRole("button", { name: "全圖" }));
+    expect(frame).toHaveAttribute("data-view", "full");
+    const img = within(frame).getByRole("img");
+    // 高度撐滿，寬度 2400 / (8000 × 4/3) = 22.5%，水平置中。
+    expect(pctOf(img.style.height)).toBeCloseTo(100);
+    expect(pctOf(img.style.width)).toBeCloseTo(22.5);
+    expect(pctOf(img.style.left)).toBeCloseTo(38.75);
+    await user.click(within(frame).getByRole("button", { name: "落點附近" }));
+    expect(frame).toHaveAttribute("data-view", "landings");
+  });
+
+  it("落點未收錄：整張圖 contain，沒有切換鈕", async () => {
+    const user = userEvent.setup();
+    renderPortals([toTall([])]);
+    await user.click(portalMarker("往杭州城"));
+    const frame = thumb() as HTMLElement;
+    expect(frame).toHaveAttribute("data-view", "full");
+    expect(pctOf(within(frame).getByRole("img").style.width)).toBeCloseTo(22.5);
+    expect(within(frame).queryByRole("button")).toBeNull();
+    expect(screen.getByText("落點未收錄")).toBeInTheDocument();
   });
 });

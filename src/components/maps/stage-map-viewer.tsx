@@ -2,8 +2,17 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronRightIcon, EyeIcon, EyeOffIcon, InfoIcon, XIcon } from "lucide-react";
+import {
+  ArrowDownToDotIcon,
+  ChevronRightIcon,
+  EyeIcon,
+  EyeOffIcon,
+  InfoIcon,
+  LoaderPinwheelIcon,
+  XIcon,
+} from "lucide-react";
 import { EntityPortrait } from "@/components/common/entity-portrait";
+import { PortalCard, isSameMap, portalTitle } from "@/components/maps/portal-card";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -18,7 +27,14 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { EntityImage } from "@/lib/queries/images";
-import type { NpcPlacement, StageMapImage, StageMonsterMarker } from "@/lib/queries/maps";
+import type {
+  NpcPlacement,
+  PortalExit,
+  PortalPoint,
+  StageMapImage,
+  StageMonsterMarker,
+} from "@/lib/queries/maps";
+import type { StageKind } from "@/lib/types/stage";
 
 export interface MapMonster extends StageMonsterMarker {
   image?: EntityImage | null;
@@ -31,22 +47,28 @@ interface StageMapViewerProps {
   focusedPlacementId?: number;
   /** 已由 buildMonsterMarkers 算好 highHp 與百分比座標；UI 不再做任何判斷。 */
   monsters?: MapMonster[];
+  /** 地圖踩點傳送出口；每個出口區一個標記。 */
+  portals?: PortalExit[];
+  /** 目前地圖，用來判斷傳點目的地是不是本圖。 */
+  stageKind?: StageKind;
+  stageId?: number;
   /** 清單右側欄（出入口、同區域地圖、相關任務），由 Server Component 傳入。 */
   aside?: React.ReactNode;
 }
 
 interface Entity {
   key: string;
-  kind: "m" | "n";
-  /** 地圖與清單共用的識別：怪物 1..N、NPC A..Z/AA.. */
+  /** m 怪物、n NPC、p 傳點。 */
+  kind: "m" | "n" | "p";
+  /** 地圖與清單共用的識別：怪物 1..N、NPC A..Z/AA..；傳點用圖示不用代號。 */
   tag: string;
-  /** 怪物才有；NPC 用前景色方塊。 */
+  /** 怪物才有；NPC 用前景色方塊、傳點用中性色圓。 */
   color?: string;
-  npcId: number;
   name: string;
   image: EntityImage | null;
   points: { left: number; top: number; placementId?: number }[];
   monster?: MapMonster;
+  exit?: PortalExit;
 }
 
 interface MapPoint {
@@ -113,12 +135,30 @@ function useElementWidth<T extends HTMLElement>() {
   return [ref, width] as const;
 }
 
+const DESKTOP_MQ = "(min-width: 768px)";
+
+/** 傳點資訊在桌機用浮動卡片、手機放地圖下方；只掛一份，縮圖不會下載兩次。 */
+function useIsDesktop() {
+  return React.useSyncExternalStore(
+    (onChange) => {
+      const mq = window.matchMedia?.(DESKTOP_MQ);
+      mq?.addEventListener("change", onChange);
+      return () => mq?.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia?.(DESKTOP_MQ).matches ?? true,
+    () => true,
+  );
+}
+
 export function StageMapViewer({
   stageName,
   image,
   placements,
   focusedPlacementId,
   monsters,
+  portals,
+  stageKind,
+  stageId,
   aside,
 }: StageMapViewerProps) {
   const entities = React.useMemo<Entity[]>(() => {
@@ -127,7 +167,6 @@ export function StageMapViewer({
       kind: "m",
       tag: String(i + 1),
       color: markerColor(i),
-      npcId: m.npcId,
       name: m.name,
       image: m.image ?? null,
       points: m.points,
@@ -141,7 +180,6 @@ export function StageMapViewer({
           key: `n:${p.npcId}`,
           kind: "n",
           tag: letterTag(npcs.size),
-          npcId: p.npcId,
           name: p.name ?? `NPC #${p.npcId}`,
           image: p.image,
           points: [],
@@ -157,14 +195,39 @@ export function StageMapViewer({
         });
       }
     }
-    return [...list, ...npcs.values()];
-  }, [monsters, placements, image]);
+    const hasImage = image != null && image.imgWidth > 0 && image.imgHeight > 0;
+    const exits: Entity[] = (portals ?? []).map((x) => ({
+      key: `p:${x.key}`,
+      kind: "p",
+      tag: "",
+      name: portalTitle(x),
+      image: null,
+      points: hasImage
+        ? [
+            {
+              left: (x.center[0] / image.imgWidth) * 100,
+              top: (x.center[1] / image.imgHeight) * 100,
+            },
+          ]
+        : [],
+      exit: x,
+    }));
+    return [...list, ...npcs.values(), ...exits];
+  }, [monsters, placements, portals, image]);
 
   const [hidden, setHidden] = React.useState<Set<string>>(() => new Set());
   const [pinned, setPinned] = React.useState<string | null>(null);
   const [pinnedPoint, setPinnedPoint] = React.useState<string | null>(null);
   const [hoverKey, setHoverKey] = React.useState<string | null>(null);
   const [openId, setOpenId] = React.useState<string | null>(null);
+  // 傳點對話選項；換開別的卡片（或關閉）就清掉，同樣用 derive-on-change。
+  const [portalPick, setPortalPick] = React.useState<string | null>(null);
+  const [pickFor, setPickFor] = React.useState<string | null>(null);
+  if (pickFor !== openId) {
+    setPickFor(openId);
+    setPortalPick(null);
+  }
+  const isDesktop = useIsDesktop();
   const [mapRef, width] = useElementWidth<HTMLDivElement>();
   const figureRef = React.useRef<HTMLElement>(null);
   // 首次出現時標記依序落下；之後重新分群產生的新標記不再延遲。
@@ -218,12 +281,23 @@ export function StageMapViewer({
 
   const monstersE = entities.filter((e) => e.kind === "m");
   const npcsE = entities.filter((e) => e.kind === "n");
+  const portalsE = entities.filter((e) => e.kind === "p");
   const byKey = new Map(entities.map((e) => [e.key, e]));
   const showMap = image != null;
 
   const rawActive = hoverKey ?? pinned;
   const active = rawActive && !hidden.has(rawActive) ? rawActive : null;
   const pinnedEntity = pinned && !hidden.has(pinned) ? byKey.get(pinned) : undefined;
+
+  // 開著的傳點卡片：單一目的地自動選，對話選單要使用者自己選。
+  const openPortal = portalsE.find((e) => `${e.key}#0` === openId && !hidden.has(e.key));
+  const openExit = openPortal?.exit;
+  const portalOption =
+    openExit && (portalPick ?? (openExit.options.length === 1 ? openExit.options[0].key : null));
+  const sameMapOption =
+    openExit && stageKind && stageId != null
+      ? openExit.options.find((o) => o.key === portalOption && isSameMap(o, stageKind, stageId))
+      : undefined;
 
   const markers = React.useMemo(() => {
     if (!image) return [];
@@ -276,8 +350,10 @@ export function StageMapViewer({
       return next;
     });
     setHoverKey(null);
+    // 隱藏後不留開著的卡片（重新顯示時不會突然彈出）。
+    setOpenId((cur) => (cur?.startsWith(`${key}#`) ? null : cur));
   };
-  const setGroupHidden = (list: Entity[], hide: boolean) =>
+  const setGroupHidden = (list: Entity[], hide: boolean) => {
     setHidden((prev) => {
       const next = new Set(prev);
       for (const e of list) {
@@ -286,11 +362,15 @@ export function StageMapViewer({
       }
       return next;
     });
+    if (hide) setOpenId((cur) => (list.some((e) => cur?.startsWith(`${e.key}#`)) ? null : cur));
+  };
 
   const pin = (key: string) => {
     const next = pinned === key ? null : key;
     select(next);
     setHoverKey(null);
+    // 傳點的清單列直接開卡片；取消標亮就一起關掉。
+    if (byKey.get(key)?.kind === "p") setOpenId(next ? `${key}#0` : null);
     setHidden((prev) => {
       if (!prev.has(key)) return prev;
       const s = new Set(prev);
@@ -308,6 +388,22 @@ export function StageMapViewer({
   const openChange = (id: string) => (open: boolean) =>
     setOpenId((cur) => (open ? id : cur === id ? null : cur));
 
+  const closePortal = () => {
+    const pid = openId;
+    setOpenId(null);
+    mapRef.current?.querySelector<HTMLElement>(`[data-point-id="${pid}"]`)?.focus();
+  };
+  const portalCard = openExit && stageKind && stageId != null && (
+    <PortalCard
+      exit={openExit}
+      stageKind={stageKind}
+      stageId={stageId}
+      optionKey={portalOption ?? null}
+      onOption={setPortalPick}
+      onClose={closePortal}
+    />
+  );
+
   const hasCoords = entities.some((e) => e.points.length > 0);
   const totalSpawns = monstersE.reduce((s, e) => s + (e.monster?.spawnPoints ?? 0), 0);
 
@@ -324,6 +420,12 @@ export function StageMapViewer({
           <span className="inline-flex items-center gap-1.5">
             <MarkerBadge entity={{ kind: "n", tag: "A" }} />
             NPC
+          </span>
+        )}
+        {portalsE.length > 0 && (
+          <span className="inline-flex items-center gap-1.5">
+            <MarkerBadge entity={{ kind: "p", tag: "" }} />
+            傳點
           </span>
         )}
         <span className="inline-flex items-center gap-1.5">
@@ -391,6 +493,15 @@ export function StageMapViewer({
             draggable={false}
             className="block h-auto w-full select-none"
           />
+          {portalsE.length > 0 && (
+            <PortalOverlay
+              image={image}
+              exits={portalsE.filter((e) => !hidden.has(e.key)).map((e) => e.exit!)}
+              activeKey={byKey.get(active ?? "")?.exit?.key ?? null}
+              arcFrom={sameMapOption ? openExit!.center : null}
+              landings={sameMapOption?.landings ?? []}
+            />
+          )}
           {markers.map((m, i) => {
             const delay = settled ? undefined : `${150 + i * 12}ms`;
             if (m.type === "cluster") {
@@ -412,6 +523,22 @@ export function StageMapViewer({
               );
             }
             const p = m.point;
+            if (p.entity.kind === "p")
+              return (
+                <PortalMarker
+                  key={p.pid}
+                  point={p}
+                  solo={m.solo}
+                  dimmed={active != null && !m.solo}
+                  delay={delay}
+                  // 手機不開浮動卡片，改用地圖下方的面板。
+                  open={isDesktop && openId === p.pid}
+                  onOpenChange={openChange(p.pid)}
+                  onSelect={() => select(p.entity.key)}
+                >
+                  {portalCard}
+                </PortalMarker>
+              );
             return (
               <PointMarker
                 key={p.pid}
@@ -428,6 +555,16 @@ export function StageMapViewer({
           })}
         </div>
       </figure>
+      {!isDesktop && portalCard && (
+        <div
+          role="region"
+          aria-label="傳點資訊"
+          className="mx-2 mb-2 rounded-md border border-border/60 bg-background p-3 text-sm"
+          onKeyDown={(e) => e.key === "Escape" && closePortal()}
+        >
+          {portalCard}
+        </div>
+      )}
     </section>
   );
 
@@ -471,7 +608,11 @@ export function StageMapViewer({
           <button
             type="button"
             aria-pressed={pinned === e.key && !hidden.has(e.key)}
-            aria-label={`在地圖上標亮 ${e.name}${e.monster ? ` Lv ${e.monster.level}` : ""}`}
+            aria-label={
+              e.kind === "p"
+                ? `開啟傳點資訊 ${e.name}`
+                : `在地圖上標亮 ${e.name}${e.monster ? ` Lv ${e.monster.level}` : ""}`
+            }
             className="block w-full min-w-0 rounded-sm text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             {label}
@@ -530,13 +671,14 @@ export function StageMapViewer({
         {monstersE.some((e) => e.monster?.highHp) &&
           "標「高血量」的怪，HP 是本圖其他怪物中位數的 10 倍以上，只是數字比較，不是遊戲裡的首領設定。"}
         預設入口與登出點是遊戲設定的預設落點，不是完整的傳送路線。
+        {portalsE.length > 0 && "傳點是踩上去就觸發的地圖傳送；透過 NPC 對話的傳送不在其中。"}
       </span>
     </p>
   );
 
   const listCard = entities.length > 0 && (
     <section
-      aria-label="地圖上的怪物與 NPC"
+      aria-label="地圖上的怪物、NPC 與傳點"
       className="overflow-hidden rounded-lg border border-border/60 bg-card"
     >
       {monstersE.length > 0 && (
@@ -652,6 +794,35 @@ export function StageMapViewer({
           </Table>
         </>
       )}
+      {portalsE.length > 0 && (
+        <>
+          <SectionHead
+            title="傳點"
+            summary={`${portalsE.length} 處`}
+            className={cn(monstersE.length + npcsE.length > 0 && "border-t border-border/60 pt-5")}
+          >
+            {groupToggle(portalsE)}
+          </SectionHead>
+          <Table>
+            <TableBody className="border-t border-border/60">
+              {portalsE.map((e) => (
+                <TableRow key={e.key} {...rowProps(e)}>
+                  <TableCell className="w-10 pl-4">
+                    <MarkerBadge entity={e} />
+                  </TableCell>
+                  {nameCell(
+                    e,
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {e.exit!.options.map((o) => o.dest.name).join("、")}
+                    </span>,
+                  )}
+                  {eyeCell(e)}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </>
+      )}
       <div className="border-t border-border/60 bg-muted/40">{note}</div>
     </section>
   );
@@ -706,6 +877,19 @@ function MarkerBadge({
   entity: Pick<Entity, "kind" | "tag" | "color">;
   className?: string;
 }) {
+  if (entity.kind === "p") {
+    return (
+      <span
+        aria-hidden
+        className={cn(
+          "inline-grid size-[22px] shrink-0 place-items-center rounded-full border-2 border-white bg-[oklch(0.2_0.02_260)] text-white shadow-[0_0_0_1px_rgb(0_0_0/0.25)]",
+          className,
+        )}
+      >
+        <LoaderPinwheelIcon className="size-3" strokeWidth={2.5} />
+      </span>
+    );
+  }
   if (entity.kind === "n") {
     return (
       <span
@@ -783,6 +967,142 @@ function enterStyle(delay: string | undefined, left: number, top: number): React
   return { left: `${left}%`, top: `${top}%`, animationDelay: delay };
 }
 const enterClass = "animate-in fade-in zoom-in-50 duration-400 [animation-fill-mode:both]";
+
+const ink = "oklch(0.2 0.02 260)";
+/** 出口常貼著圖邊；標記中心至少離邊 16px，才不會被 figure 的捲動框切掉。 */
+const edge = (pct: number) => `clamp(16px, ${pct}%, calc(100% - 16px))`;
+
+function PortalMarker({
+  point,
+  solo,
+  dimmed,
+  delay,
+  open,
+  onOpenChange,
+  onSelect,
+  children,
+}: Omit<PointMarkerProps, "byName"> & { children: React.ReactNode }) {
+  return (
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverTrigger
+        aria-label={`傳點：${point.entity.name}`}
+        data-point-id={point.pid}
+        onClick={onSelect}
+        data-dimmed={dimmed || undefined}
+        style={{ left: edge(point.left), top: edge(point.top), animationDelay: delay }}
+        className={cn(
+          markerBase,
+          enterClass,
+          dimmed && "z-[1] opacity-30",
+          solo && "z-[3] scale-115",
+        )}
+      >
+        <MarkerBadge entity={point.entity} className="size-6 shadow-[0_1px_3px_rgb(0_0_0/0.45)]" />
+        {solo && (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0.5 animate-ping rounded-full border-2 border-white [animation-fill-mode:forwards] [animation-iteration-count:2]"
+          />
+        )}
+      </PopoverTrigger>
+      <PopoverContent side="top" className="w-80">
+        {children}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/** 出口踩點區外框（只是把格子包起來，不代表實際形狀），以及目的地是本圖時的傳送弧線與落點。 */
+function PortalOverlay({
+  image,
+  exits,
+  activeKey,
+  arcFrom,
+  landings,
+}: {
+  image: StageMapImage;
+  exits: PortalExit[];
+  activeKey: string | null;
+  arcFrom: PortalPoint | null;
+  landings: PortalPoint[];
+}) {
+  const { imgWidth: w, imgHeight: h } = image;
+  const half = image.tilePx / 2;
+  const to = landings[0];
+  let arc: string | null = null;
+  if (arcFrom && to) {
+    const [ax, ay] = arcFrom;
+    const [bx, by] = to;
+    arc = `M${ax} ${ay} Q${(ax + bx) / 2 - (by - ay) * 0.25} ${(ay + by) / 2 + (bx - ax) * 0.25} ${bx} ${by}`;
+  }
+  return (
+    <>
+      <svg
+        viewBox={`0 0 ${w} ${h}`}
+        preserveAspectRatio="none"
+        aria-hidden
+        data-portal-overlay
+        className="pointer-events-none absolute inset-0 size-full"
+      >
+        {exits.map((x) => {
+          const xs = x.cells.map((c) => c[0]);
+          const ys = x.cells.map((c) => c[1]);
+          const x0 = Math.min(...xs) - half;
+          const y0 = Math.min(...ys) - half;
+          const on = x.key === activeKey;
+          return (
+            <rect
+              key={x.key}
+              x={x0}
+              y={y0}
+              width={Math.max(...xs) + half - x0}
+              height={Math.max(...ys) + half - y0}
+              rx={half / 2}
+              fill={on ? "var(--primary)" : ink}
+              fillOpacity={on ? 0.35 : 0.2}
+              stroke={on ? "var(--primary)" : "white"}
+              strokeWidth={on ? 3 : 1.5}
+              strokeDasharray={on ? undefined : "4 4"}
+              vectorEffect="non-scaling-stroke"
+            />
+          );
+        })}
+        {arc && (
+          <g data-portal-arc>
+            <path
+              d={arc}
+              fill="none"
+              stroke={ink}
+              strokeOpacity={0.6}
+              strokeWidth={6}
+              vectorEffect="non-scaling-stroke"
+            />
+            <path
+              d={arc}
+              fill="none"
+              stroke="var(--primary)"
+              strokeWidth={3}
+              strokeDasharray="2 6"
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          </g>
+        )}
+      </svg>
+      {landings.map(([x, y], i) => (
+        <span
+          key={i}
+          role="img"
+          aria-label={`落點 ${i + 1}`}
+          style={{ left: `${(x / w) * 100}%`, top: `${(y / h) * 100}%` }}
+          className="pointer-events-none absolute z-[3] grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-md border-2 border-white bg-primary text-primary-foreground shadow-[0_1px_4px_rgb(0_0_0/0.5)]"
+        >
+          <ArrowDownToDotIcon className="size-3.5" strokeWidth={2.5} aria-hidden />
+        </span>
+      ))}
+    </>
+  );
+}
 
 interface PointMarkerProps {
   point: MapPoint;
@@ -946,7 +1266,9 @@ function ClusterMarker({
               <span className="text-xs text-muted-foreground tabular-nums">
                 {p.entity.monster
                   ? `Lv ${p.entity.monster.level}${p.entity.monster.hp ? ` · HP ${p.entity.monster.hp.toLocaleString()}` : ""}`
-                  : "NPC"}
+                  : p.entity.kind === "p"
+                    ? "傳點"
+                    : "NPC"}
               </span>
             </button>
           ))}
