@@ -10,9 +10,9 @@ import { Badge } from "@/components/ui/badge";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "攻略 · 玄武",
+  title: "武林同萌傳（原新絕代雙驕）攻略｜玄武",
   description:
-    "照等級走的武林同萌傳修行路線：從剛創角、轉副門派、進階任務到轉生，每一站寫清楚該做什麼、會開放哪些系統。",
+    "照等級走的武林同萌傳（原新絕代雙驕）修行路線：從剛創角、轉副門派、進階任務到轉生，每一站寫清楚該做什麼、會開放哪些系統。",
   alternates: { canonical: "/guides" },
 };
 

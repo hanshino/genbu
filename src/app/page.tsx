@@ -19,7 +19,12 @@ import { getItemsByIds } from "@/lib/queries/items";
 import { getRecentReports } from "@/lib/queries/market-prices";
 import { SERVERS, formatAmount, relativeTime } from "@/lib/market-price";
 
-export const metadata: Metadata = { alternates: { canonical: "/" } };
+export const metadata: Metadata = {
+  title: "武林同萌傳資料庫（原新絕代雙驕）｜玄武",
+  description:
+    "查詢《武林同萌傳》（原《新絕代雙驕》）的道具取得方式、怪物掉落、技能與任務資料，搭配裝備比較及副本攻略，找回你需要的江湖情報。",
+  alternates: { canonical: "/" },
+};
 
 interface Feature {
   title: string;
@@ -138,7 +143,7 @@ export default function HomePage() {
         <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">玄武</h1>
         <p className="mt-1.5 text-sm text-muted-foreground">武林同萌傳 · 玩家資料庫</p>
         <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground">
-          道具、技能、怪物資料查詢，裝備流派比較，副本解謎工具，還有照等級走的攻略。
+          玄武提供《武林同萌傳》（原《新絕代雙驕》）的道具、怪物、技能與任務查詢，以及裝備比較和副本攻略。
         </p>
 
         <form action="/items" role="search" className="mt-6 flex w-full max-w-md gap-2">

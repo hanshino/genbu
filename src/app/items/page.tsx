@@ -12,8 +12,9 @@ import { SearchBeacon } from "@/components/analytics/search-beacon";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "道具查詢 · 玄武",
-  description: "查詢武林同萌傳 13,000+ 件道具的屬性、隨機詞條、掉落來源、商店販售與煉化用途",
+  title: "武林同萌傳／新絕代雙驕 道具查詢｜玄武",
+  description:
+    "查詢武林同萌傳（原新絕代雙驕）13,000+ 件道具的屬性、隨機詞條、掉落來源、商店販售與煉化用途",
   alternates: { canonical: "/items" },
 };
 
