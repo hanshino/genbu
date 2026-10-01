@@ -1,6 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { getDb } from "@/lib/db";
 import {
+  getDollSlots,
+  getDollLooks,
+  getDollLookByItem,
+  getDollDefaults,
+  getDollBase,
+  getDollHeads,
+  getDollFrames,
+  getDollHairColors,
+} from "../doll";
+import {
   getAchievementCategories,
   getAchievementsByCategory,
   getAchievementsWithRewards,
@@ -675,6 +685,12 @@ describe("schema smoke — 任務對話上游解析表", () => {
     "mission_rewards",
     "mystery_boxes",
     "mystery_box_items",
+    "item_doll",
+    "doll_parts",
+    "doll_frame_images",
+    "doll_slot_rules",
+    "doll_slots",
+    "doll_hair_colors",
   ];
 
   it.each(TABLES)("表 %s 存在", (table) => {
@@ -689,5 +705,29 @@ describe("schema smoke — 任務對話上游解析表", () => {
     const db = getDb();
     const row = db.prepare("SELECT name FROM sqlite_master WHERE type = 'view' AND name = ?").get(view);
     expect(row).toBeDefined();
+  });
+});
+
+describe("schema smoke — 紙娃娃", () => {
+  it("檢查新版欄位", () => {
+    const db = getDb();
+    expect(() => db.prepare("SELECT slot, label, catalog, sort_order, replaces FROM doll_slots").all())
+      .not.toThrow();
+    expect(() => db.prepare("SELECT role, equip_slot FROM item_doll").all()).not.toThrow();
+    expect(() => db.prepare("SELECT wait_frame, prepare_frame FROM doll_parts").all()).not.toThrow();
+    expect(() => db.prepare("SELECT color, points FROM doll_frame_images").all()).not.toThrow();
+    expect(() => db.prepare("SELECT slot, dir, attach_to, attach_point, z_order FROM doll_slot_rules").all())
+      .not.toThrow();
+    expect(() => getDollSlots()).not.toThrow();
+  });
+
+  it("外觀分組與預設服裝查詢實際 prepare", () => {
+    expect(() => getDollLooks("m", "right")).not.toThrow();
+    expect(() => getDollLookByItem("m", 22082)).not.toThrow();
+    expect(() => getDollDefaults("f")).not.toThrow();
+    expect(() => getDollHeads("m")).not.toThrow();
+    expect(() => getDollBase("f")).not.toThrow();
+    expect(() => getDollFrames("f", Object.values(getDollBase("f")))).not.toThrow();
+    expect(() => getDollHairColors("f")).not.toThrow();
   });
 });

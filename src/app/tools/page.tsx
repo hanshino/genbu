@@ -41,6 +41,12 @@ export default function ToolsHubPage() {
           subtitle="神武禁地"
           description="輸入總和與左上中（封印）數字，列出所有合法排列。"
         />
+        <ToolCard
+          href="/tools/salon"
+          title="易容閣"
+          subtitle="試穿外觀、坐騎與染髮"
+          description="選性別、頭型與各部位裝備，預覽角色穿上後的樣子，可轉方向、分享連結。"
+        />
       </div>
     </div>
   );
