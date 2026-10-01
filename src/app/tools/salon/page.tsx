@@ -19,7 +19,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "換裝沙龍 · 玄武",
+  title: "易容閣 · 玄武",
   description: "挑選各部位的外觀，預覽角色穿上後的樣子。",
   alternates: { canonical: "/tools/salon" },
 };
@@ -100,7 +100,7 @@ export default async function SalonPage({ searchParams }: Props) {
         <BackLink href="/tools" />
       </nav>
       <header className="mb-5">
-        <h1 className="font-heading text-3xl font-bold">換裝沙龍</h1>
+        <h1 className="font-heading text-3xl font-bold">易容閣</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           挑選各部位的外觀，預覽角色穿上後的樣子。相同外觀的道具合併成一格，點格子就能換裝。
         </p>

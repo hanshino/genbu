@@ -49,7 +49,7 @@ const navGroups: NavGroup[] = [
       { href: "/tools/160", label: "160 迷霧九宮格" },
       { href: "/tools/175", label: "175 北斗七星" },
       { href: "/tools/180", label: "180 神武禁地" },
-      { href: "/tools/salon", label: "換裝沙龍" },
+      { href: "/tools/salon", label: "易容閣" },
     ],
   },
   {
