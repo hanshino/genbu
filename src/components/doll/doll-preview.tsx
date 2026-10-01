@@ -31,6 +31,7 @@ export function buildDollLayers(
   dir: number,
   parts?: DollPart[],
   hairColor = 0,
+  extraHorse = false,
 ): DollLayer[] {
   const wanted = parts && new Set(parts.map((p) => `${p.slot}:${p.sequence}`));
   const frameBy = new Map<string, DollFrame>();
@@ -61,6 +62,7 @@ export function buildDollLayers(
   const horse = selected.find((layer) => layer.frame.slot === "horse");
   const root = horse ?? selected.find((layer) => layer.frame.slot === "foot");
   const body = selected.find((layer) => layer.frame.slot === "body");
+  const footZ = extraHorse ? rules.find((rule) => rule.slot === "foot" && rule.dir === dir)?.zOrder : undefined;
   const point = (layer: typeof root, index: number | null): [number, number] => {
     const p = index === null ? null : layer?.frame.points?.[index];
     // points 是來源方向的原值；鏡像只在這裡決定 x 的符號，不再翻一次。
@@ -82,7 +84,7 @@ export function buildDollLayers(
         mirrored,
         left: ORIGIN_X + x - anchorX,
         top: ORIGIN_Y + y - frame.anchorY,
-        zIndex: rule.zOrder,
+        zIndex: frame.slot === "horse" ? (footZ ?? rule.zOrder) : rule.zOrder,
       };
     });
 }
@@ -94,6 +96,7 @@ interface Props {
   /** 要畫哪些部位（frames 是一整包時用）；不給就全畫 */
   parts?: DollPart[];
   hairColor?: number;
+  extraHorse?: boolean;
   /**
    * 想要的倍率。不給的話讀 CSS 變數 `--doll-scale`（方便用 class 做 RWD），預設 4。
    * 場景放不進父層時會自動縮小：先找放得下的最大整數倍率，連 1x 都放不下才用小數。
@@ -113,10 +116,10 @@ const ALL_DIRS = [1, 2, 3, 4, 5, 6, 7, 8];
  * 畫布範圍：至少是 120×120 的場景，大型背飾、坐騎超出時往外撐。
  * 取 8 個方向的聯集，轉方向時角色才不會跳來跳去。
  */
-function sceneBox(frames: DollFrame[], rules: DollRule[], parts?: DollPart[], hairColor = 0) {
+function sceneBox(frames: DollFrame[], rules: DollRule[], parts?: DollPart[], hairColor = 0, extraHorse = false) {
   let [x0, y0, x1, y1] = [0, 0, SCENE, SCENE];
   for (const d of ALL_DIRS) {
-    for (const l of buildDollLayers(frames, rules, d, parts, hairColor)) {
+    for (const l of buildDollLayers(frames, rules, d, parts, hairColor, extraHorse)) {
       x0 = Math.min(x0, l.left);
       y0 = Math.min(y0, l.top);
       x1 = Math.max(x1, l.left + l.frame.width);
@@ -170,13 +173,14 @@ export function DollPreview({
   dir,
   parts,
   hairColor = 0,
+  extraHorse = false,
   scale,
   zoom = "fit",
   onFitChange,
   className,
 }: Props) {
-  const layers = buildDollLayers(frames, rules, dir, parts, hairColor);
-  const box = sceneBox(frames, rules, parts, hairColor);
+  const layers = buildDollLayers(frames, rules, dir, parts, hairColor, extraHorse);
+  const box = sceneBox(frames, rules, parts, hairColor, extraHorse);
   const ref = useRef<HTMLDivElement>(null);
   const { fit, want } = useFitScale(ref, box.w, box.h, scale);
   const fitScale = fit ?? want;

@@ -350,6 +350,55 @@ describe("buildDollLayers 染髮", () => {
   });
 });
 
+describe("buildDollLayers 坐騎層級", () => {
+  it("相同外觀依實際道具區分 HORSE 與 EXTRA_HORSE，方向 7 只改坐騎 zIndex", () => {
+    const normal = getDollLookByItem("f", 50541)!;
+    const extra = getDollLookByItem("f", 50618)!;
+    expect(normal).toEqual(extra);
+    expect(normal.layers).toEqual([{ slot: "horse", sequence: 303382 }]);
+    const parts: DollPart[] = [...normal.layers, ...Object.values(getDollBase("f"))];
+    const frames = getDollFrames("f", parts);
+    const rules = getDollRules();
+    const normalFlag = normal.items.find((item) => item.itemId === 50541)!.isExtra;
+    const extraFlag = extra.items.find((item) => item.itemId === 50618)!.isExtra;
+    expect(normalFlag).toBe(false);
+    expect(extraFlag).toBe(true);
+    const normalLayers = buildDollLayers(frames, rules, 7, parts, 0, normalFlag);
+    const extraLayers = buildDollLayers(frames, rules, 7, parts, 0, extraFlag);
+    expect(normalLayers.find((layer) => layer.frame.slot === "horse")?.zIndex).toBe(7);
+    expect(normalLayers.find((layer) => layer.frame.slot === "body")?.zIndex).toBe(2);
+    expect(extraLayers.find((layer) => layer.frame.slot === "horse")?.zIndex).toBe(1);
+    expect(extraLayers).toEqual(normalLayers.map((layer) => layer.frame.slot === "horse"
+      ? { ...layer, zIndex: rules.find((rule) => rule.slot === "foot" && rule.dir === 7)!.zOrder }
+      : layer,
+    ));
+    expect(buildDollLayers(frames, rules, 7, parts)).toEqual(normalLayers);
+  });
+
+  it.each([1, 2, 3, 4, 5, 6, 7, 8])("EXTRA_HORSE 方向 %s 使用同方向 foot 規則，pose/位置/鏡像不變", (dir) => {
+    const parts: DollPart[] = [
+      { slot: "horse", sequence: 303382 }, ...Object.values(getDollBase("f")),
+      ...getDollLookByItem("f", 20101)!.layers,
+    ];
+    const frames = getDollFrames("f", parts);
+    const rules = getDollRules();
+    const normal = buildDollLayers(frames, rules, dir, parts);
+    const extra = buildDollLayers(frames, rules, dir, parts, 0, true);
+    expect(extra).toEqual(normal.map((layer) => layer.frame.slot === "horse"
+      ? { ...layer, zIndex: rules.find((rule) => rule.slot === "foot" && rule.dir === dir)!.zOrder }
+      : layer,
+    ));
+  });
+
+  it("DB 的方向 3 武器位於 body 下方", () => {
+    const rules = getDollRules().filter((rule) => rule.dir === 3);
+    const bodyZ = rules.find((rule) => rule.slot === "body")!.zOrder;
+    for (const slot of ["right", "left"] as const) {
+      expect(rules.find((rule) => rule.slot === slot)!.zOrder).toBeLessThan(bodyZ);
+    }
+  });
+});
+
 describe("buildDollLayers 掛點", () => {
   // 把貼圖位置還原成 anchor 位置，不依賴舞台 ORIGIN 的絕對值。
   const anchor = (layer: ReturnType<typeof buildDollLayers>[number]) => [

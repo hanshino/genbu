@@ -231,7 +231,8 @@ export function SalonClient(props: Props) {
     parts.push(...(useOffhand ? w.look.offhandLayers! : w.look.layers));
   }
   const drawParts = parts.filter((p) => !hidden.has(p.slot));
-  const layerCount = buildDollLayers(frames, rules, dir, drawParts, hair).length;
+  const extraHorse = worn.horse?.look.items.find((item) => item.itemId === worn.horse?.itemId)?.isExtra ?? false;
+  const layerCount = buildDollLayers(frames, rules, dir, drawParts, hair, extraHorse).length;
   const missing = slots.filter((s) => worn[s.slot] && !worn[s.slot]!.look.hasImage);
 
   // ── 網址：換裝、轉向都只改網址，不打伺服器 ──
@@ -384,6 +385,7 @@ export function SalonClient(props: Props) {
                   dir={dir}
                   parts={drawParts}
                   hairColor={hair}
+                  extraHorse={extraHorse}
                   zoom={zoom}
                   onFitChange={onFitChange}
                   // m-auto：比舞台小時置中，比舞台大時從左上開始，才捲得到每一邊
