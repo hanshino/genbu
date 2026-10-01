@@ -1,4 +1,6 @@
-import type { CSSProperties } from "react";
+"use client";
+
+import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import type { DollFrame, DollPart, DollRule } from "@/lib/queries/doll";
 import { cn } from "@/lib/utils";
 
@@ -47,10 +49,11 @@ export function buildDollLayers(
     if (rule.dir !== dir) continue;
     const key = `${rule.slot}:${rule.mirrorOf ?? dir}`;
     const color = rule.slot === "head" ? hairColor : 0;
-    const frame = frameBy.get(`${key}:${pose}:${color}`)
-      ?? frameBy.get(`${key}:${pose}:0`)
-      ?? frameBy.get(`${key}:${fallback}:${color}`)
-      ?? frameBy.get(`${key}:${fallback}:0`);
+    const frame =
+      frameBy.get(`${key}:${pose}:${color}`) ??
+      frameBy.get(`${key}:${pose}:0`) ??
+      frameBy.get(`${key}:${fallback}:${color}`) ??
+      frameBy.get(`${key}:${fallback}:0`);
     if (!frame) continue;
     const mirrored = rule.mirrorOf != null;
     selected.push({ rule, frame, mirrored });
@@ -75,7 +78,8 @@ export function buildDollLayers(
       }
       const anchorX = mirrored ? frame.width - frame.anchorX : frame.anchorX;
       return {
-        frame, mirrored,
+        frame,
+        mirrored,
         left: ORIGIN_X + x - anchorX,
         top: ORIGIN_Y + y - frame.anchorY,
         zIndex: rule.zOrder,
@@ -90,7 +94,11 @@ interface Props {
   /** 要畫哪些部位（frames 是一整包時用）；不給就全畫 */
   parts?: DollPart[];
   hairColor?: number;
-  /** 整數倍率。不給的話讀 CSS 變數 `--doll-scale`（方便用 class 做 RWD），預設 4。 */
+  /**
+   * 想要的倍率。不給的話讀 CSS 變數 `--doll-scale`（方便用 class 做 RWD），預設 4。
+   * 場景放不進父層時會自動縮小：先找放得下的最大整數倍率，連 1x 都放不下才用小數。
+   * 父層的可用高度取自它的 `max-height`（沒設就只看寬度）。
+   */
   scale?: number;
   className?: string;
 }
@@ -114,26 +122,72 @@ function sceneBox(frames: DollFrame[], rules: DollRule[], parts?: DollPart[], ha
   return { x0, y0, w: x1 - x0, h: y1 - y0 };
 }
 
+/** 場景和父層邊緣至少留這麼多 px，避免貼邊 */
+const FIT_PAD = 8;
+
+/**
+ * 算出放得進父層的倍率；伺服器端與第一次 render 回傳 null（照 CSS 變數畫），
+ * 掛上後在 paint 前量一次，之後父層尺寸變了再重算。
+ */
+function useFitScale(
+  ref: React.RefObject<HTMLDivElement | null>,
+  w: number,
+  h: number,
+  scale?: number,
+) {
+  // undefined = 還沒量（伺服器端與 hydration 前）；null = 想要的倍率就放得下
+  const [fit, setFit] = useState<number | null | undefined>(undefined);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const parent = el?.parentElement;
+    if (!el || !parent) return;
+    const measure = () => {
+      const want = scale ?? (Number(getComputedStyle(el).getPropertyValue("--doll-scale")) || 4);
+      const maxH = parseFloat(getComputedStyle(parent).maxHeight);
+      const availW = parent.clientWidth - FIT_PAD * 2;
+      const availH = Number.isFinite(maxH) ? maxH - FIT_PAD * 2 : Infinity;
+      const room = Math.min(availW / w, availH / h);
+      const next = room >= want ? want : room >= 1 ? Math.floor(room) : Math.max(room, 0.25);
+      setFit(next === want ? null : next);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(parent);
+    return () => ro.disconnect();
+  }, [ref, w, h, scale]);
+  return fit;
+}
+
 export function DollPreview({ frames, rules, dir, parts, hairColor = 0, scale, className }: Props) {
   const layers = buildDollLayers(frames, rules, dir, parts, hairColor);
   const box = sceneBox(frames, rules, parts, hairColor);
+  const ref = useRef<HTMLDivElement>(null);
+  const fit = useFitScale(ref, box.w, box.h, scale);
+  // --doll-scale 是想要的倍率（class / prop），--doll-fit 是實際用的；不另外寫 inline --doll-scale，量測才讀得到 class 的值
+  const k = "var(--doll-fit, var(--doll-scale, 4))";
+  // 超出預設場景的大圖（大型坐騎）在量到父層之前先佔預設場景的大小、不顯示，
+  // 避免 hydration 前以 4x 撐爆舞台再縮回來的跳動。一般角色照常直接畫。
+  const oversized = box.w > SCENE * 1.5 || box.h > SCENE * 1.5;
+  const pending = fit === undefined && oversized;
 
   return (
     <div
+      ref={ref}
       role="img"
       aria-label="角色外觀預覽"
       className={cn("relative shrink-0", className)}
       style={
         {
-          ...(scale ? { "--doll-scale": scale } : null),
-          width: `calc(${box.w}px * var(--doll-scale, 4))`,
-          height: `calc(${box.h}px * var(--doll-scale, 4))`,
+          ...((fit ?? scale) != null ? { "--doll-fit": fit ?? scale } : null),
+          width: `calc(${pending ? Math.min(box.w, SCENE) : box.w}px * ${k})`,
+          height: `calc(${pending ? Math.min(box.h, SCENE) : box.h}px * ${k})`,
+          ...(pending ? { visibility: "hidden", overflow: "hidden" } : null),
         } as CSSProperties
       }
     >
       <div
         className="absolute top-0 left-0 origin-top-left"
-        style={{ width: box.w, height: box.h, transform: "scale(var(--doll-scale, 4))" }}
+        style={{ width: box.w, height: box.h, transform: `scale(${k})` }}
       >
         {/* 腳下陰影 */}
         <div

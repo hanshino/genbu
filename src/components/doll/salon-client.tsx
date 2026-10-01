@@ -311,10 +311,10 @@ export function SalonClient(props: Props) {
             <PanelHeader
               className="hidden lg:flex"
               title="角色預覽"
-              hint={`${layerCount} 層 · 4x 像素原圖`}
+              hint={`${layerCount} 層 · 像素原圖`}
             />
             <div
-              className="relative grid min-h-[236px] place-items-center overflow-hidden sm:min-h-[330px] lg:min-h-[480px]"
+              className="relative grid max-h-[46svh] min-h-[236px] place-items-center overflow-hidden sm:max-h-[60svh] sm:min-h-[330px] lg:max-h-[min(720px,calc(100svh-180px))] lg:min-h-[480px]"
               style={{
                 background: [
                   "linear-gradient(to right, color-mix(in oklab, var(--border) 55%, transparent) 1px, transparent 1px) 0 0 / 28px 28px",
