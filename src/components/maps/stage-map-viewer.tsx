@@ -28,6 +28,7 @@ interface StageMapViewerProps {
   stageName: string;
   image: StageMapImage | null;
   placements: NpcPlacement[];
+  focusedPlacementId?: number;
   /** 已由 buildMonsterMarkers 算好 highHp 與百分比座標；UI 不再做任何判斷。 */
   monsters?: MapMonster[];
   /** 清單右側欄（出入口、同區域地圖、相關任務），由 Server Component 傳入。 */
@@ -44,7 +45,7 @@ interface Entity {
   npcId: number;
   name: string;
   image: EntityImage | null;
-  points: { left: number; top: number }[];
+  points: { left: number; top: number; placementId?: number }[];
   monster?: MapMonster;
 }
 
@@ -116,11 +117,12 @@ export function StageMapViewer({
   stageName,
   image,
   placements,
-  monsters = [],
+  focusedPlacementId,
+  monsters,
   aside,
 }: StageMapViewerProps) {
   const entities = React.useMemo<Entity[]>(() => {
-    const list: Entity[] = monsters.map((m, i) => ({
+    const list: Entity[] = (monsters ?? []).map((m, i) => ({
       key: `m:${m.npcId}`,
       kind: "m",
       tag: String(i + 1),
@@ -149,6 +151,7 @@ export function StageMapViewer({
       // raw_x/raw_y 是合成圖像素座標，直接換百分比即與圖片對齊（見 NpcPlacement 註解）。
       if (image && image.imgWidth > 0 && image.imgHeight > 0) {
         e.points.push({
+          placementId: p.placementId,
           left: (p.rawX / image.imgWidth) * 100,
           top: (p.rawY / image.imgHeight) * 100,
         });
@@ -159,6 +162,7 @@ export function StageMapViewer({
 
   const [hidden, setHidden] = React.useState<Set<string>>(() => new Set());
   const [pinned, setPinned] = React.useState<string | null>(null);
+  const [pinnedPoint, setPinnedPoint] = React.useState<string | null>(null);
   const [hoverKey, setHoverKey] = React.useState<string | null>(null);
   const [openId, setOpenId] = React.useState<string | null>(null);
   const [mapRef, width] = useElementWidth<HTMLDivElement>();
@@ -169,6 +173,48 @@ export function StageMapViewer({
     const t = setTimeout(() => setSettled(true), 1500);
     return () => clearTimeout(t);
   }, []);
+
+  const focusedPoint = React.useMemo(() => {
+    if (
+      focusedPlacementId == null ||
+      !Number.isSafeInteger(focusedPlacementId) ||
+      focusedPlacementId <= 0
+    )
+      return null;
+    const entity = entities.find((e) => e.points.some((p) => p.placementId === focusedPlacementId));
+    return entity ? { key: entity.key, pid: `${entity.key}#${focusedPlacementId}` } : null;
+  }, [entities, focusedPlacementId]);
+
+  // 深連結目標變更時，於 render 期間同步套用選取（React 建議的 derive-on-change 模式）。
+  const [appliedFocus, setAppliedFocus] = React.useState<string | null>(null);
+  if (focusedPoint && appliedFocus !== focusedPoint.pid) {
+    setAppliedFocus(focusedPoint.pid);
+    setPinned(focusedPoint.key);
+    setPinnedPoint(focusedPoint.pid);
+    setHoverKey(null);
+    setOpenId(null);
+    setSettled(true);
+    setHidden((prev) => {
+      if (!prev.has(focusedPoint.key)) return prev;
+      const next = new Set(prev);
+      next.delete(focusedPoint.key);
+      return next;
+    });
+  }
+
+  React.useEffect(() => {
+    if (!focusedPoint || pinnedPoint !== focusedPoint.pid) return;
+    const marker = mapRef.current?.querySelector<HTMLButtonElement>(
+      `[data-point-id="${focusedPoint.pid}"]`,
+    );
+    marker?.focus({ preventScroll: true });
+    marker?.scrollIntoView?.({ block: "center", inline: "center" });
+  }, [focusedPoint, pinnedPoint, mapRef]);
+
+  const select = (key: string | null) => {
+    setPinned(key);
+    setPinnedPoint(null);
+  };
 
   const monstersE = entities.filter((e) => e.kind === "m");
   const npcsE = entities.filter((e) => e.kind === "n");
@@ -187,7 +233,7 @@ export function StageMapViewer({
       if (hidden.has(e.key)) continue;
       e.points.forEach((p, index) =>
         visible.push({
-          pid: `${e.key}#${index}`,
+          pid: `${e.key}#${p.placementId ?? index}`,
           entity: e,
           index,
           left: p.left,
@@ -197,9 +243,11 @@ export function StageMapViewer({
         }),
       );
     }
-    // 標亮中的種類不參與分群，永遠單獨畫在最上層。
-    const solo = visible.filter((p) => p.entity.key === active);
-    const rest = visible.filter((p) => p.entity.key !== active);
+    // 標亮的點不參與分群；深連結只標亮指定 placement，其餘操作仍以種類為單位。
+    const isActive = (p: MapPoint) =>
+      p.entity.key === active && (hoverKey != null || pinnedPoint == null || p.pid === pinnedPoint);
+    const solo = visible.filter(isActive);
+    const rest = visible.filter((p) => !isActive(p));
     // 還沒量到寬度（SSR / 測試環境）就不分群。
     const groups = clusterPoints(rest, width > 0 ? CLUSTER_PX : 0);
     return [
@@ -216,7 +264,7 @@ export function StageMapViewer({
       ),
       ...solo.map((point) => ({ type: "point" as const, point, solo: true })),
     ];
-  }, [entities, hidden, active, width, image]);
+  }, [entities, hidden, active, hoverKey, pinnedPoint, width, image]);
 
   if (!image && entities.length === 0) return aside ? <Layout aside={aside} /> : null;
 
@@ -241,7 +289,7 @@ export function StageMapViewer({
 
   const pin = (key: string) => {
     const next = pinned === key ? null : key;
-    setPinned(next);
+    select(next);
     setHoverKey(null);
     setHidden((prev) => {
       if (!prev.has(key)) return prev;
@@ -309,7 +357,7 @@ export function StageMapViewer({
                 variant="ghost"
                 size="icon-xs"
                 aria-label="取消標亮"
-                onClick={() => setPinned(null)}
+                onClick={() => select(null)}
               >
                 <XIcon />
               </Button>
@@ -328,7 +376,7 @@ export function StageMapViewer({
           onClick={(e) => {
             const t = e.target as HTMLElement;
             if (t === e.currentTarget || t.tagName === "IMG") {
-              setPinned(null);
+              select(null);
               setOpenId(null);
             }
           }}
@@ -357,7 +405,7 @@ export function StageMapViewer({
                   open={openId === m.id}
                   onOpenChange={openChange(m.id)}
                   onPick={(p) => {
-                    setPinned(p.entity.key);
+                    select(p.entity.key);
                     setOpenId(p.pid);
                   }}
                 />
@@ -374,7 +422,7 @@ export function StageMapViewer({
                 delay={delay}
                 open={openId === p.pid}
                 onOpenChange={openChange(p.pid)}
-                onSelect={() => setPinned(p.entity.key)}
+                onSelect={() => select(p.entity.key)}
               />
             );
           })}
@@ -770,6 +818,7 @@ function PointMarker({
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger
         aria-label={label}
+        data-point-id={point.pid}
         openOnHover
         delay={0}
         onClick={onSelect}

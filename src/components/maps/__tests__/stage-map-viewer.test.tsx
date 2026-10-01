@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StageMapViewer, clusterPoints, letterTag, type MapMonster } from "../stage-map-viewer";
@@ -13,8 +13,8 @@ const image: StageMapImage = {
   tilePx: 40,
 };
 const placements: NpcPlacement[] = [
-  { npcId: 6074, name: "打鐵舖伙計", rawX: 2640, rawY: 5000, image: null },
-  { npcId: 6566, name: "珍品商人", rawX: 3960, rawY: 400, image: null },
+  { placementId: 101, npcId: 6074, name: "打鐵舖伙計", rawX: 2640, rawY: 5000, image: null },
+  { placementId: 102, npcId: 6566, name: "珍品商人", rawX: 3960, rawY: 400, image: null },
 ];
 
 // 仿 208 極之淵：一隻高血量單點 + 一般怪 + 一隻無座標。
@@ -122,6 +122,64 @@ describe("letterTag", () => {
 });
 
 describe("<StageMapViewer>", () => {
+  it("深連結只標亮並聚焦指定 placement，同 NPC 的其他點保持變淡", () => {
+    const scrollIntoView = vi.fn();
+    const originalScroll = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    try {
+      const { container } = render(
+        <StageMapViewer
+          stageName="極之淵"
+          image={image}
+          placements={[...placements, { ...placements[0], placementId: 103, rawX: 100 }]}
+          focusedPlacementId={103}
+        />,
+      );
+      const target = container.querySelector('[data-point-id="n:6074#103"]')!;
+      const sibling = container.querySelector('[data-point-id="n:6074#101"]')!;
+      expect(target).toHaveClass("scale-115");
+      expect(target).not.toHaveAttribute("data-dimmed");
+      expect(sibling).toHaveAttribute("data-dimmed");
+      expect(target).toHaveFocus();
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: "center", inline: "center" });
+      expect(screen.getByRole("button", { name: "在地圖上標亮 打鐵舖伙計" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScroll;
+    }
+  });
+
+  it("深連結會重新顯示原本隱藏的 NPC 圖層", async () => {
+    const user = userEvent.setup();
+    const props = { stageName: "極之淵", image, placements };
+    const { rerender } = render(<StageMapViewer {...props} />);
+    await user.click(screen.getByRole("button", { name: "全部隱藏" }));
+    expect(markers()).toHaveLength(0);
+    rerender(<StageMapViewer {...props} focusedPlacementId={101} />);
+    expect(within(figureOf()).getByRole("button", { name: "打鐵舖伙計" })).toHaveClass("scale-115");
+    expect(screen.getByRole("button", { name: "在地圖上顯示 打鐵舖伙計" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(markerLabels()).not.toContain("珍品商人");
+  });
+
+  it.each([999, 0, -1, 1.5, NaN])("無效 placement %s 不改變預設顯示", (id) => {
+    render(
+      <StageMapViewer
+        stageName="極之淵"
+        image={image}
+        placements={placements}
+        focusedPlacementId={id}
+      />,
+    );
+    expect(markers()).toHaveLength(2);
+    expect(markers().every((m) => !m.hasAttribute("data-dimmed"))).toBe(true);
+    expect(screen.queryByRole("button", { name: "取消標亮" })).toBeNull();
+  });
+
   it("無圖、無 NPC、無怪物、無右欄時不渲染", () => {
     const { container } = render(
       <StageMapViewer stageName="空地圖" image={null} placements={[]} />,
