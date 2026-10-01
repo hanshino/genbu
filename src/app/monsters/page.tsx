@@ -17,8 +17,9 @@ import { SearchBeacon } from "@/components/analytics/search-beacon";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "怪物查詢 · 玄武",
-  description: "查詢武林同萌傳全部怪物的等級、屬性、HP 與掉落道具，支援等級區間與掉落條件篩選",
+  title: "武林同萌傳／新絕代雙驕 怪物掉落查詢｜玄武",
+  description:
+    "查詢武林同萌傳（原新絕代雙驕）全部怪物的等級、屬性、HP 與掉落道具，支援等級區間與掉落條件篩選",
   alternates: { canonical: "/monsters" },
 };
 
