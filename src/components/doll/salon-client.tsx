@@ -40,7 +40,6 @@ import type {
   DollLook,
   DollPart,
   DollRule,
-  DollRide,
   DollSlot,
   DollSlotInfo,
 } from "@/lib/queries/doll";
@@ -123,7 +122,6 @@ interface Props {
   initialHair: number;
   rules: DollRule[];
   initialFrames: DollFrame[];
-  initialRides: DollRide[];
   initialTab: DollSlot;
   initialLooks: DollLook[];
   initialWorn: SalonWorn;
@@ -151,7 +149,6 @@ export function SalonClient(props: Props) {
   });
   const [failed, setFailed] = useState<Partial<Record<DollSlot, boolean>>>({});
   const [frames, setFrames] = useState(props.initialFrames);
-  const [rides, setRides] = useState(props.initialRides);
   const [copied, setCopied] = useState(false);
   const inflight = useRef(new Set<DollSlot>());
 
@@ -163,20 +160,13 @@ export function SalonClient(props: Props) {
     if (looksBySlot[tab] || inflight.current.has(tab)) return;
     inflight.current.add(tab);
     // ponytail: v= 讓瀏覽器丟掉舊格式的快取（API 有 max-age=3600），回應格式改了就 +1
-    fetch(`/api/doll/looks?g=${gender}&slot=${tab}&v=3`)
+    fetch(`/api/doll/looks?g=${gender}&slot=${tab}&v=4`)
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((data: { looks: DollLook[]; frames: DollFrame[]; rides: DollRide[] }) => {
+      .then((data: { looks: DollLook[]; frames: DollFrame[] }) => {
         setLooksBySlot((prev) => ({ ...prev, [tab]: data.looks }));
         setFrames((prev) => {
           const have = new Set(prev.map(frameKey));
           return [...prev, ...data.frames.filter((f) => !have.has(frameKey(f)))];
-        });
-        setRides((prev) => {
-          const have = new Set(prev.map((ride) => `${ride.sequence}:${ride.dir}`));
-          return [
-            ...prev,
-            ...data.rides.filter((ride) => !have.has(`${ride.sequence}:${ride.dir}`)),
-          ];
         });
       })
       .catch(() => setFailed((prev) => ({ ...prev, [tab]: true })))
@@ -199,7 +189,7 @@ export function SalonClient(props: Props) {
     parts.push(...(useOffhand ? w.look.offhandLayers! : w.look.layers));
   }
   const drawParts = parts.filter((p) => !hidden.has(p.slot));
-  const layerCount = buildDollLayers(frames, rules, dir, drawParts, rides, hair).length;
+  const layerCount = buildDollLayers(frames, rules, dir, drawParts, hair).length;
   const missing = slots.filter((s) => worn[s.slot] && !worn[s.slot]!.look.hasImage);
 
   // ── 網址：換裝、轉向都只改網址，不打伺服器 ──
@@ -339,7 +329,6 @@ export function SalonClient(props: Props) {
                 rules={rules}
                 dir={dir}
                 parts={drawParts}
-                rides={rides}
                 hairColor={hair}
                 className="[--doll-scale:2] sm:[--doll-scale:3] lg:[--doll-scale:4]"
               />

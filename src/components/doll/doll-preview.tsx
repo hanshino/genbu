@@ -1,11 +1,11 @@
 import type { CSSProperties } from "react";
-import type { DollFrame, DollPart, DollRide, DollRule } from "@/lib/queries/doll";
+import type { DollFrame, DollPart, DollRule } from "@/lib/queries/doll";
 import { cn } from "@/lib/utils";
 
-/** 場景是 120×120 的原始像素空間，角色原點（脖子／腳底共用的掛點）固定在這裡。 */
+/** 場景是 120×120 的原始像素空間，原點固定在 root（褲子／坐騎）的腳底錨點。 */
 const SCENE = 120;
 const ORIGIN_X = 60;
-const ORIGIN_Y = 70;
+const ORIGIN_Y = 102;
 
 export interface DollLayer {
   frame: DollFrame;
@@ -28,7 +28,6 @@ export function buildDollLayers(
   rules: DollRule[],
   dir: number,
   parts?: DollPart[],
-  rides?: DollRide[],
   hairColor = 0,
 ): DollLayer[] {
   const wanted = parts && new Set(parts.map((p) => `${p.slot}:${p.sequence}`));
@@ -43,7 +42,7 @@ export function buildDollLayers(
   }
   const [pose, fallback] = armed ? ["prepare", "wait"] : ["wait", "prepare"];
 
-  const layers: DollLayer[] = [];
+  const selected: { rule: DollRule; frame: DollFrame; mirrored: boolean }[] = [];
   for (const rule of rules) {
     if (rule.dir !== dir) continue;
     const key = `${rule.slot}:${rule.mirrorOf ?? dir}`;
@@ -54,25 +53,34 @@ export function buildDollLayers(
       ?? frameBy.get(`${key}:${fallback}:0`);
     if (!frame) continue;
     const mirrored = rule.mirrorOf != null;
-    const anchorX = mirrored ? frame.width - frame.anchorX : frame.anchorX;
-    layers.push({
-      frame,
-      mirrored,
-      left: ORIGIN_X - anchorX + rule.offsetX,
-      top: ORIGIN_Y - frame.anchorY + rule.offsetY,
-      zIndex: rule.zOrder,
+    selected.push({ rule, frame, mirrored });
+  }
+  const horse = selected.find((layer) => layer.frame.slot === "horse");
+  const root = horse ?? selected.find((layer) => layer.frame.slot === "foot");
+  const body = selected.find((layer) => layer.frame.slot === "body");
+  const point = (layer: typeof root, index: number | null): [number, number] => {
+    const p = index === null ? null : layer?.frame.points?.[index];
+    // points 是來源方向的原值；鏡像只在這裡決定 x 的符號，不再翻一次。
+    return p ? [layer?.mirrored ? p[0] : -p[0], -p[1]] : [0, 0];
+  };
+  return selected
+    .filter((layer) => !horse || layer.frame.slot !== "foot")
+    .map(({ rule, frame, mirrored }) => {
+      let [x, y] = [0, 0];
+      if (rule.attachTo === "root") [x, y] = point(root, rule.attachPoint);
+      if (rule.attachTo === "body") {
+        const [rx, ry] = point(root, 0);
+        const [bx, by] = point(body, rule.attachPoint);
+        [x, y] = [rx + bx, ry + by];
+      }
+      const anchorX = mirrored ? frame.width - frame.anchorX : frame.anchorX;
+      return {
+        frame, mirrored,
+        left: ORIGIN_X + x - anchorX,
+        top: ORIGIN_Y + y - frame.anchorY,
+        zIndex: rule.zOrder,
+      };
     });
-  }
-  const horse = layers.find((layer) => layer.frame.slot === "horse");
-  const ride = horse && rides?.find((row) => row.sequence === horse.frame.sequence && row.dir === dir);
-  if (ride) {
-    for (const layer of layers) {
-      if (layer.frame.slot === "horse") continue;
-      layer.left += ride.dx;
-      layer.top += ride.dy;
-    }
-  }
-  return layers;
 }
 
 interface Props {
@@ -81,7 +89,6 @@ interface Props {
   dir: number;
   /** 要畫哪些部位（frames 是一整包時用）；不給就全畫 */
   parts?: DollPart[];
-  rides?: DollRide[];
   hairColor?: number;
   /** 整數倍率。不給的話讀 CSS 變數 `--doll-scale`（方便用 class 做 RWD），預設 4。 */
   scale?: number;
@@ -94,10 +101,10 @@ const ALL_DIRS = [1, 2, 3, 4, 5, 6, 7, 8];
  * 畫布範圍：至少是 120×120 的場景，大型背飾、坐騎超出時往外撐。
  * 取 8 個方向的聯集，轉方向時角色才不會跳來跳去。
  */
-function sceneBox(frames: DollFrame[], rules: DollRule[], parts?: DollPart[], rides?: DollRide[], hairColor = 0) {
+function sceneBox(frames: DollFrame[], rules: DollRule[], parts?: DollPart[], hairColor = 0) {
   let [x0, y0, x1, y1] = [0, 0, SCENE, SCENE];
   for (const d of ALL_DIRS) {
-    for (const l of buildDollLayers(frames, rules, d, parts, rides, hairColor)) {
+    for (const l of buildDollLayers(frames, rules, d, parts, hairColor)) {
       x0 = Math.min(x0, l.left);
       y0 = Math.min(y0, l.top);
       x1 = Math.max(x1, l.left + l.frame.width);
@@ -107,9 +114,9 @@ function sceneBox(frames: DollFrame[], rules: DollRule[], parts?: DollPart[], ri
   return { x0, y0, w: x1 - x0, h: y1 - y0 };
 }
 
-export function DollPreview({ frames, rules, dir, parts, rides, hairColor = 0, scale, className }: Props) {
-  const layers = buildDollLayers(frames, rules, dir, parts, rides, hairColor);
-  const box = sceneBox(frames, rules, parts, rides, hairColor);
+export function DollPreview({ frames, rules, dir, parts, hairColor = 0, scale, className }: Props) {
+  const layers = buildDollLayers(frames, rules, dir, parts, hairColor);
+  const box = sceneBox(frames, rules, parts, hairColor);
 
   return (
     <div
@@ -134,7 +141,7 @@ export function DollPreview({ frames, rules, dir, parts, rides, hairColor = 0, s
           className="absolute rounded-[50%] opacity-30 dark:opacity-60"
           style={{
             left: ORIGIN_X - 22 - box.x0,
-            top: ORIGIN_Y + 33 - box.y0,
+            top: ORIGIN_Y - box.y0,
             width: 44,
             height: 10,
             background: "radial-gradient(ellipse at center, #000, transparent 70%)",

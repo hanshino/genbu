@@ -9,7 +9,6 @@ import {
   getItemDoll,
   getDollDefaults,
   getDollBase,
-  getDollRides,
   getDollHairColors,
   type DollGender,
   type DollSlot,
@@ -17,7 +16,7 @@ import {
 import { GET } from "@/app/api/doll/looks/route";
 import { getDb } from "@/lib/db";
 import { buildDollLayers } from "@/components/doll/doll-preview";
-import type { DollLook, DollFrame, DollRide, DollPart } from "../doll";
+import type { DollLook, DollFrame, DollPart } from "../doll";
 
 // 真實 id（存在於 tthol.sqlite）
 const BODY_ITEM_ID = 55376; // 鬼道陰陽衣：男 body 102872
@@ -37,7 +36,7 @@ describe("doll.ts", () => {
     }
     expect(rules.find((rule) => rule.slot === "head" && rule.dir === 1)).toEqual({
       slot: "head", dir: 1, mirrorOf: null, zOrder: expect.any(Number),
-      offsetX: expect.any(Number), offsetY: expect.any(Number),
+      attachTo: "body", attachPoint: 0,
     });
   });
 
@@ -202,6 +201,7 @@ describe("doll.ts", () => {
         color: expect.any(Number),
         url: expect.any(String), width: expect.any(Number), height: expect.any(Number),
         anchorX: expect.any(Number), anchorY: expect.any(Number),
+        points: null,
       });
       expect(frame.url.length).toBeGreaterThan(0);
       expect(frame.width).toBeGreaterThan(0);
@@ -217,7 +217,7 @@ describe("doll.ts", () => {
     ).get(HEAD_SEQUENCE) as { n: number };
     expect(dyed.n).toBeGreaterThan(0);
     const expected = db.prepare(
-      `SELECT slot, sequence, action, color, dir, url, width, height, anchor_x AS anchorX, anchor_y AS anchorY
+      `SELECT slot, sequence, action, color, dir, url, width, height, anchor_x AS anchorX, anchor_y AS anchorY, points
        FROM doll_frame_images WHERE gender = 'm' AND slot = 'head' AND sequence = ? AND color BETWEEN 0 AND 10
        ORDER BY color, action, dir`,
     ).all(HEAD_SEQUENCE);
@@ -241,16 +241,13 @@ describe("doll.ts", () => {
     expect(colors[2]).toEqual({ sequence: gender === "m" ? 100001 : 300001, color: 3, label: "紅色", r: 255, g: 0, b: 0 });
   });
 
-  it("騎乘偏移依性別與 sequence 查詢，保留鏡像方向原值", () => {
-    const rides = getDollRides("f", [303382]);
-    expect(rides.map((ride) => ride.dir)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
-    expect(rides.find((ride) => ride.dir === 7)).toEqual({ sequence: 303382, dir: 7, dx: 1, dy: -29 });
-    expect(rides.find((ride) => ride.dir === 6)).toEqual({ sequence: 303382, dir: 6, dx: -4, dy: -30 });
-    expect(getDollRides("m", [303382])).toEqual([]);
-    const many = Array.from({ length: 950 }, (_, index) => 900000000 + index);
-    expect(getDollRides("f", [...many, 303382, 303382])).toEqual(rides);
-    expect(getDollRides("f", [])).toEqual([]);
-    expect(getDollRides("f", [NaN, Infinity, 0, -1, 1.5])).toEqual([]);
+  it("圖片 points JSON 解析成五個可空掛點，NULL 保持 null", () => {
+    const frames = getDollFrames("f", [
+      { slot: "horse", sequence: 303382 }, { slot: "head", sequence: 300001 },
+    ]);
+    expect(frames.find((frame) => frame.slot === "horse" && frame.dir === 7 && frame.action === "wait")?.points)
+      .toEqual([[-1, 61], null, null, null, null]);
+    expect(frames.filter((frame) => frame.slot === "head").every((frame) => frame.points === null)).toBe(true);
   });
 
   it("多部位查詢按 slot 配對、去重且支援分塊", () => {
@@ -301,7 +298,6 @@ describe("doll.ts", () => {
     expect(getDollFrames(invalidGender, [{ slot: "head", sequence: HEAD_SEQUENCE }])).toEqual([]);
     expect(getDollDefaults(invalidGender)).toEqual({ head: 0, items: {} });
     expect(getDollBase(invalidGender)).toEqual({});
-    expect(getDollRides(invalidGender, [303382])).toEqual([]);
     expect(getDollFrames("m", [])).toEqual([]);
     expect(getDollFrames("m", [
       { slot: "head' OR 1=1 --" as DollSlot, sequence: HEAD_SEQUENCE },
@@ -326,7 +322,7 @@ describe("buildDollLayers 染髮", () => {
     const frames = getDollFrames("m", parts);
     const rules = getDollRules();
     for (let color = 0; color <= 10; color++) {
-      const layers = buildDollLayers([...frames].reverse(), rules, dir, parts, undefined, color);
+      const layers = buildDollLayers([...frames].reverse(), rules, dir, parts, color);
       const head = layers.find((layer) => layer.frame.slot === "head")!;
       expect(head.frame.color).toBe(color);
       expect(head.frame.action).toBe("prepare");
@@ -335,11 +331,11 @@ describe("buildDollLayers 染髮", () => {
       expect(layers.filter((layer) => layer.frame.slot !== "head").every((layer) => layer.frame.color === 0)).toBe(true);
     }
     const undyed = buildDollLayers(frames, rules, dir, parts);
-    expect(buildDollLayers(frames.filter((frame) => frame.color !== 3), rules, dir, parts, undefined, 3))
+    expect(buildDollLayers(frames.filter((frame) => frame.color !== 3), rules, dir, parts, 3))
       .toEqual(undyed);
-    expect(buildDollLayers(frames, rules, dir, parts, undefined, 99)).toEqual(undyed);
+    expect(buildDollLayers(frames, rules, dir, parts, 99)).toEqual(undyed);
     const unarmed = parts.filter((part) => part.slot !== "right");
-    expect(buildDollLayers(frames, rules, dir, unarmed, undefined, 3)
+    expect(buildDollLayers(frames, rules, dir, unarmed, 3)
       .find((layer) => layer.frame.slot === "head")?.frame).toMatchObject({ color: 3, action: "wait" });
   });
 
@@ -348,44 +344,95 @@ describe("buildDollLayers 染髮", () => {
     const frames = getDollFrames("m", parts);
     const dyed = frames.map((frame) => ({ ...frame, color: 3, url: "invalid-dyed-body" }));
     const rules = getDollRules();
-    expect(buildDollLayers([...dyed, ...frames], rules, 7, parts, undefined, 3))
+    expect(buildDollLayers([...dyed, ...frames], rules, 7, parts, 3))
       .toEqual(buildDollLayers(frames, rules, 7, parts));
-    expect(buildDollLayers(dyed, rules, 7, parts, undefined, 3)).toEqual([]);
+    expect(buildDollLayers(dyed, rules, 7, parts, 3)).toEqual([]);
   });
 });
 
-describe("buildDollLayers 騎乘偏移", () => {
-  it.each([7, 6])("方向 %s 只移動非坐騎圖層，鏡像偏移直接使用 DB 值", (dir) => {
+describe("buildDollLayers 掛點", () => {
+  // 把貼圖位置還原成 anchor 位置，不依賴舞台 ORIGIN 的絕對值。
+  const anchor = (layer: ReturnType<typeof buildDollLayers>[number]) => [
+    layer.left + (layer.mirrored ? layer.frame.width - layer.frame.anchorX : layer.frame.anchorX),
+    layer.top + layer.frame.anchorY,
+  ];
+
+  it.each([
+    [303382, 7, 1, -61], [303370, 8, 34, -118],
+    [303370, 6, -34, -118], [303272, 8, -2, -172],
+  ])("女坐騎 %s 方向 %s 的 body anchor 相對 root 為 (%s, %s)", (sequence, dir, dx, dy) => {
     const parts: DollPart[] = [
+      { slot: "horse", sequence }, { slot: "body", sequence: 302032 },
+      { slot: "foot", sequence: 303032 }, { slot: "head", sequence: 300001 },
+    ];
+    const layers = buildDollLayers(getDollFrames("f", parts), getDollRules(), dir, parts);
+    const root = layers.find((layer) => layer.frame.slot === "horse")!;
+    const body = layers.find((layer) => layer.frame.slot === "body")!;
+    expect(layers.some((layer) => layer.frame.slot === "foot")).toBe(false);
+    expect([anchor(body)[0] - anchor(root)[0], anchor(body)[1] - anchor(root)[1]]).toEqual([dx, dy]);
+    expect(root.frame.action).toBe("wait");
+    expect(body.frame.action).toBe("wait");
+    expect(root.frame.dir).toBe(dir === 6 ? 8 : dir);
+    expect(root.mirrored).toBe(dir === 6);
+    expect(body.zIndex).toBe(getDollRules().find((rule) => rule.slot === "body" && rule.dir === dir)?.zOrder);
+  });
+
+  it("未騎乘女 foot 303032 + body 302032，方向 8 wait 掛點正確", () => {
+    const parts: DollPart[] = [
+      { slot: "foot", sequence: 303032 }, { slot: "body", sequence: 302032 },
       { slot: "head", sequence: 300001 },
-      { slot: "horse", sequence: 303382 },
-      ...Object.values(getDollBase("f")),
-      ...getDollLookByItem("f", 20101)!.layers,
     ];
     const frames = getDollFrames("f", parts);
     const rules = getDollRules();
-    const rides = getDollRides("f", [303382]);
-    const ride = rides.find((ride) => ride.dir === dir)!;
-    const without = buildDollLayers(frames, rules, dir, parts);
-    const withRide = buildDollLayers(frames, rules, dir, parts, rides);
-    expect(withRide.some((layer) => layer.frame.slot === "horse")).toBe(true);
-    expect(withRide).toHaveLength(without.length);
-    for (const [index, layer] of withRide.entries()) {
-      const original = without[index];
-      const horse = layer.frame.slot === "horse";
-      expect(layer).toEqual({
-        ...original,
-        left: original.left + (horse ? 0 : ride.dx),
-        top: original.top + (horse ? 0 : ride.dy),
-      });
-      expect(layer.mirrored).toBe(dir === 6);
+    const layers = buildDollLayers(frames, rules, 8, parts);
+    const root = layers.find((layer) => layer.frame.slot === "foot")!;
+    const body = layers.find((layer) => layer.frame.slot === "body")!;
+    const head = layers.find((layer) => layer.frame.slot === "head")!;
+    expect(anchor(root)).toEqual([60, 102]);
+    expect([anchor(body)[0] - anchor(root)[0], anchor(body)[1] - anchor(root)[1]]).toEqual([0, -31]);
+    expect([anchor(head)[0] - anchor(root)[0], anchor(head)[1] - anchor(root)[1]]).toEqual([0, -53]);
+    expect(layers.every((layer) => layer.frame.action === "wait")).toBe(true);
+
+    // 有武器時 root/body 都取本次 prepare；head 自己的掛點不影響任何圖層。
+    const armedParts = [...parts, ...getDollLookByItem("f", 20101)!.layers];
+    const armedFrames = getDollFrames("f", armedParts);
+    const armed = buildDollLayers(armedFrames, rules, 8, armedParts);
+    const armedRoot = armed.find((layer) => layer.frame.slot === "foot")!;
+    const armedBody = armed.find((layer) => layer.frame.slot === "body")!;
+    const armedHead = armed.find((layer) => layer.frame.slot === "head")!;
+    expect([anchor(armedBody)[0] - anchor(armedRoot)[0], anchor(armedBody)[1] - anchor(armedRoot)[1]])
+      .toEqual([-2, -31]);
+    expect([anchor(armedHead)[0] - anchor(armedRoot)[0], anchor(armedHead)[1] - anchor(armedRoot)[1]])
+      .toEqual([-1, -53]);
+    expect(armed.every((layer) => layer.frame.action === "prepare")).toBe(true);
+    expect(buildDollLayers(armedFrames.map((frame) => frame.slot === "head"
+      ? { ...frame, points: [[999, 999], null, null, null, null] as DollFrame["points"] } : frame,
+    ), rules, 8, armedParts)).toEqual(armed.map((layer) => layer.frame.slot === "head"
+      ? { ...layer, frame: { ...layer.frame, points: [[999, 999], null, null, null, null] } } : layer,
+    ));
+  });
+
+  it("缺 root/body 掛點退回零位移，缺 prepare 的 root 使用本次 wait frame", () => {
+    const parts: DollPart[] = [
+      { slot: "foot", sequence: 103225 }, { slot: "body", sequence: 102032 },
+      { slot: "head", sequence: HEAD_SEQUENCE }, ...getDollLookByItem("m", 20101)!.layers,
+    ];
+    const frames = getDollFrames("m", parts);
+    const rules = getDollRules();
+    const layers = buildDollLayers(frames, rules, 8, parts);
+    const root = layers.find((layer) => layer.frame.slot === "foot")!;
+    const body = layers.find((layer) => layer.frame.slot === "body")!;
+    const [x, y] = root.frame.points![0]!;
+    expect(root.frame.action).toBe("wait");
+    expect(body.frame.action).toBe("prepare");
+    expect([anchor(body)[0] - anchor(root)[0], anchor(body)[1] - anchor(root)[1]]).toEqual([-x, -y]);
+    for (const points of [null, [null, null, null, null, null]] as DollFrame["points"][]) {
+      const missing = buildDollLayers(frames.map((frame) => ({ ...frame, points })), rules, 8, parts);
+      for (const layer of missing) expect(anchor(layer)).toEqual([60, 102]);
     }
-    expect(buildDollLayers(frames, rules, dir, parts, [])).toEqual(without);
-    const unmounted = parts.filter((part) => part.slot !== "horse");
-    expect(buildDollLayers(frames, rules, dir, unmounted, rides))
-      .toEqual(buildDollLayers(frames, rules, dir, unmounted));
-    expect(buildDollLayers(frames.filter((frame) => frame.slot !== "horse"), rules, dir, parts, rides))
-      .toEqual(buildDollLayers(frames.filter((frame) => frame.slot !== "horse"), rules, dir, parts));
+    const noRoot = parts.filter((part) => part.slot !== "foot");
+    const noRootBody = buildDollLayers(frames, rules, 8, noRoot).find((layer) => layer.frame.slot === "body")!;
+    expect(anchor(noRootBody)).toEqual([60, 102]);
   });
 });
 
@@ -404,8 +451,8 @@ describe("GET /api/doll/looks", () => {
     const response = GET(new Request("http://localhost/api/doll/looks?g=m&slot=cap"));
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toContain("s-maxage=86400");
-    const data = await response.json() as { looks: DollLook[]; frames: DollFrame[]; rides: DollRide[] };
-    expect(data.rides).toEqual([]);
+    const data = await response.json() as { looks: DollLook[]; frames: DollFrame[] };
+    expect(Object.keys(data)).toEqual(["looks", "frames"]);
     expect(data.looks).toEqual(getDollLooks("m", "cap"));
     expect(data.frames.length).toBeGreaterThan(0);
     expect(new Set(data.frames.map((frame) => frame.action))).toEqual(new Set(["wait", "prepare"]));
@@ -416,17 +463,13 @@ describe("GET /api/doll/looks", () => {
       .toBe(data.frames.length);
   });
 
-  it("坐騎回傳全部外觀的 rides，包含八個方向", async () => {
+  it("坐騎的掛點包含在 frames，不再回傳 rides", async () => {
     const response = GET(new Request("http://localhost/api/doll/looks?g=f&slot=horse"));
     expect(response.status).toBe(200);
-    const data = await response.json() as { looks: DollLook[]; frames: DollFrame[]; rides: DollRide[] };
-    const sequences = data.looks.flatMap((look) => look.layers)
-      .filter((part) => part.slot === "horse").map((part) => part.sequence);
-    expect(data.rides).toEqual(getDollRides("f", sequences));
-    expect(data.rides).toContainEqual({ sequence: 303382, dir: 7, dx: 1, dy: -29 });
-    expect(data.rides).toContainEqual({ sequence: 303382, dir: 6, dx: -4, dy: -30 });
-    expect(new Set(data.rides.map((ride) => `${ride.sequence}:${ride.dir}`)).size)
-      .toBe(data.rides.length);
+    const data = await response.json() as { looks: DollLook[]; frames: DollFrame[] };
+    expect(Object.keys(data)).toEqual(["looks", "frames"]);
+    expect(data.frames.find((frame) => frame.sequence === 303382 && frame.dir === 7)?.points)
+      .toEqual([[-1, 61], null, null, null, null]);
   });
 
   it("量測男武器完整 JSON 回應大小", async () => {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDollFrames, getDollLooks, getDollRides, getDollSlots } from "@/lib/queries/doll";
+import { getDollFrames, getDollLooks, getDollSlots } from "@/lib/queries/doll";
 
 export const runtime = "nodejs";
 
@@ -15,10 +15,7 @@ export function GET(request: Request) {
     ...look.layers, ...(look.offhandLayers ?? []),
   ]);
   const frames = getDollFrames(gender, parts);
-  const rides = slot === "horse"
-    ? getDollRides(gender, parts.filter((part) => part.slot === "horse").map((part) => part.sequence))
-    : [];
-  return NextResponse.json({ looks, frames, rides }, {
+  return NextResponse.json({ looks, frames }, {
     headers: { "Cache-Control": "public, max-age=3600, s-maxage=86400" },
   });
 }

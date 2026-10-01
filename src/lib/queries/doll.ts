@@ -17,8 +17,8 @@ export interface DollRule {
   dir: number;
   mirrorOf: number | null;
   zOrder: number;
-  offsetX: number;
-  offsetY: number;
+  attachTo: "root" | "body" | null;
+  attachPoint: number | null;
 }
 
 export interface DollFrame {
@@ -32,13 +32,7 @@ export interface DollFrame {
   height: number;
   anchorX: number;
   anchorY: number;
-}
-
-export interface DollRide {
-  sequence: number;
-  dir: number;
-  dx: number;
-  dy: number;
+  points: ([number, number] | null)[] | null;
 }
 
 export interface DollHead {
@@ -111,7 +105,7 @@ export function getDollRules(): DollRule[] {
   return getDb()
     .prepare(
       `SELECT slot, dir, mirror_of AS mirrorOf, z_order AS zOrder,
-              offset_x AS offsetX, offset_y AS offsetY
+              attach_to AS attachTo, attach_point AS attachPoint
        FROM doll_slot_rules ORDER BY dir, z_order, slot`,
     )
     .all() as DollRule[];
@@ -245,39 +239,24 @@ export function getDollFrames(gender: DollGender, parts: DollPart[]): DollFrame[
     for (let i = 0; i < sequences.length; i += CHUNK_SIZE) {
       const chunk = sequences.slice(i, i + CHUNK_SIZE);
       const placeholders = chunk.map(() => "?").join(",");
-      frames.push(
-        ...(db
-          .prepare(
-            `SELECT slot, sequence, action, color, dir, url, width, height,
-                  anchor_x AS anchorX, anchor_y AS anchorY
+      const rows = db
+        .prepare(
+          `SELECT slot, sequence, action, color, dir, url, width, height,
+                  anchor_x AS anchorX, anchor_y AS anchorY, points
            FROM doll_frame_images
            WHERE gender = ? AND slot = ? AND action IN ('wait', 'prepare')
-              AND ${slot === "head" ? "color BETWEEN 0 AND 10" : "color = 0"}
+             AND ${slot === "head" ? "color BETWEEN 0 AND 10" : "color = 0"}
              AND sequence IN (${placeholders})
-            ORDER BY sequence, color, action, dir`,
-          )
-          .all(gender, slot, ...chunk) as DollFrame[]),
-      );
+           ORDER BY sequence, color, action, dir`,
+        )
+        .all(gender, slot, ...chunk) as (Omit<DollFrame, "points"> & { points: string | null })[];
+      frames.push(...rows.map((row) => ({
+        ...row,
+        points: row.points === null ? null : JSON.parse(row.points) as DollFrame["points"],
+      })));
     }
   }
   return frames;
-}
-
-export function getDollRides(gender: DollGender, sequences: number[]): DollRide[] {
-  if (!isGender(gender)) return [];
-  const unique = [...new Set(sequences.filter((seq) => Number.isSafeInteger(seq) && seq > 0))];
-  if (unique.length === 0) return [];
-  const db = getDb();
-  const rides: DollRide[] = [];
-  for (let i = 0; i < unique.length; i += CHUNK_SIZE) {
-    const chunk = unique.slice(i, i + CHUNK_SIZE);
-    rides.push(...(db.prepare(
-      `SELECT sequence, dir, dx, dy FROM doll_ride_offsets
-       WHERE gender = ? AND sequence IN (${chunk.map(() => "?").join(",")})
-       ORDER BY sequence, dir`,
-    ).all(gender, ...chunk) as DollRide[]));
-  }
-  return rides;
 }
 
 export function getItemDoll(itemId: number): ItemDoll[] {

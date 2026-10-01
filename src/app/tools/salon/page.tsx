@@ -10,7 +10,6 @@ import {
   getDollLookByItem,
   getDollLooks,
   getDollRules,
-  getDollRides,
   getDollSlots,
   type DollGender,
   type DollLook,
@@ -94,7 +93,6 @@ export default async function SalonPage({ searchParams }: Props) {
     ...Object.values(defaultWorn).flatMap((w) => lookParts(w!.look)),
   ];
   const frames = getDollFrames(gender, parts);
-  const rides = getDollRides(gender, parts.filter((part) => part.slot === "horse").map((part) => part.sequence));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -117,7 +115,6 @@ export default async function SalonPage({ searchParams }: Props) {
         initialHair={hair}
         rules={getDollRules()}
         initialFrames={frames}
-        initialRides={rides}
         initialTab={initialTab}
         initialLooks={initialLooks}
         initialWorn={worn}

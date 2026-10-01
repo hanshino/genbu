@@ -8,7 +8,6 @@ import {
   getDollBase,
   getDollHeads,
   getDollFrames,
-  getDollRides,
   getDollHairColors,
 } from "../doll";
 import {
@@ -691,7 +690,6 @@ describe("schema smoke — 任務對話上游解析表", () => {
     "doll_frame_images",
     "doll_slot_rules",
     "doll_slots",
-    "doll_ride_offsets",
     "doll_hair_colors",
   ];
 
@@ -717,8 +715,8 @@ describe("schema smoke — 紙娃娃", () => {
       .not.toThrow();
     expect(() => db.prepare("SELECT role, equip_slot FROM item_doll").all()).not.toThrow();
     expect(() => db.prepare("SELECT wait_frame, prepare_frame FROM doll_parts").all()).not.toThrow();
-    expect(() => db.prepare("SELECT color FROM doll_frame_images").all()).not.toThrow();
-    expect(() => db.prepare("SELECT gender, sequence, dir, dx, dy, source FROM doll_ride_offsets").all())
+    expect(() => db.prepare("SELECT color, points FROM doll_frame_images").all()).not.toThrow();
+    expect(() => db.prepare("SELECT slot, dir, attach_to, attach_point, z_order FROM doll_slot_rules").all())
       .not.toThrow();
     expect(() => getDollSlots()).not.toThrow();
   });
@@ -730,7 +728,6 @@ describe("schema smoke — 紙娃娃", () => {
     expect(() => getDollHeads("m")).not.toThrow();
     expect(() => getDollBase("f")).not.toThrow();
     expect(() => getDollFrames("f", Object.values(getDollBase("f")))).not.toThrow();
-    expect(() => getDollRides("f", [303382])).not.toThrow();
     expect(() => getDollHairColors("f")).not.toThrow();
   });
 });
