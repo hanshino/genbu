@@ -75,7 +75,8 @@ type Hand = "r" | "l";
 type Filter = "all" | "normal" | "extra";
 
 /** 順時針：正面 → 右前 → … → 左前。←/→ 就是沿這個順序轉。 */
-const DIR_ORDER = [7, 8, 1, 2, 3, 4, 5, 6];
+// 從正上方順時針排，按鈕放在角色臉朝的螢幕方向：背面 3 在上、正面 7 在下、6 左下、8 右下
+const DIR_ORDER = [3, 2, 1, 8, 7, 6, 5, 4];
 const DIR_NAME: Record<number, string> = {
   7: "正面",
   8: "右前",
