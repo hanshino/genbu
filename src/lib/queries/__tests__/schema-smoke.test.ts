@@ -103,6 +103,7 @@ import {
 } from "../stages";
 import { getStatusById } from "../status";
 import { getMeridianData } from "../meridian";
+import { getStatSimData, getStatSimWindows } from "../stat-sim";
 import type { Item } from "@/lib/types/item";
 import type { CompoundRow } from "@/lib/types/compound";
 
@@ -726,6 +727,30 @@ describe("schema smoke — 經脈", () => {
     expect(() => db.prepare("SELECT cd_time, trigger_id FROM magic LIMIT 1").get()).not.toThrow();
     expect(() => db.prepare("SELECT level, exp, str, pow, vit, agi, dex, wis FROM char_levels LIMIT 1").get())
       .not.toThrow();
+  });
+});
+
+describe("schema smoke — 屬性模擬器", () => {
+  it.each([
+    "SELECT id, name, base_lv, type_name, equip_slot, strong_equipment, hp, mp, str, pow, vit, agi, dex, wis, atk, matk, extra_def, magic_def, hit, dodge, critical_hit, uncanny_dodge, attack_speed, run_speed, weight FROM items LIMIT 1",
+    "SELECT id, level, name, clan, help FROM magic LIMIT 1",
+    "SELECT item_id, kind, url, width, height FROM item_images LIMIT 1",
+    "SELECT magic_id, level, stat, value, flag FROM magic_stats LIMIT 1",
+    "SELECT magic_id, level, url FROM magic_images LIMIT 1",
+    "SELECT magic_id, level, char_level, is_meridian FROM magic_learn LIMIT 1",
+    "SELECT magic_id FROM magic_meridians LIMIT 1",
+    'SELECT id, "list" FROM strong_equipment LIMIT 1',
+    "SELECT id, bonus_type, bonus_value FROM strong_formula LIMIT 1",
+    'SELECT "window", name, icon_id, width, height FROM ui_windows LIMIT 1',
+    'SELECT "window", ctrl_id, class, title, field, comment, x, y, width, height, color, icon_id FROM ui_controls LIMIT 1',
+    'SELECT "window", icon_id, state, frame, url FROM ui_images LIMIT 1',
+  ])("所用資料表／欄位：%s", (sql) => {
+    expect(() => getDb().prepare(sql).get()).not.toThrow();
+  });
+
+  it("getStatSimData / getStatSimWindows 實際 prepare 所有批次查詢", () => {
+    expect(() => getStatSimData()).not.toThrow();
+    expect(() => getStatSimWindows()).not.toThrow();
   });
 });
 

@@ -133,7 +133,7 @@ export function getCompoundsByCoreMaterial(itemId: number): Compound[] {
  * 譯名以 i18n.ts 為唯一來源，避免多處不同步。
  * 注意：EARTH_DEF → tree（木抗，非土抗）、LIGHTNING_DEF → thunder、MP → mp（真氣）。
  */
-const BONUS_TO_ATTR_KEY: Record<string, string> = {
+export const BONUS_TO_ATTR_KEY: Record<string, string> = {
   ITEM_BONUS_DEF: "def",
   ITEM_BONUS_MDEF: "mdef",
   ITEM_BONUS_ATK: "atk",
