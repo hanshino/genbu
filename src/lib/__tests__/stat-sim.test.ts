@@ -292,6 +292,31 @@ describe("加成、條件與資料完整性", () => {
     expect(panel.issues).toEqual([expect.objectContaining({ code: "invalid-random-roll", severity: "error" })]);
   });
 
+  it("隨機條數超上限只警告且合法值全計入；不要求填足下限", () => {
+    const { c, data, equipped } = rolledFixture();
+    data.itemsById[1].randomOptions!.push({ attribute: "體力", stat: "hp", ranges: [[10, 20]] });
+    equipped.randomRolls = [{ attribute: "外功", value: 3 }, { attribute: "體力", value: 20 }];
+    const base = computePanel(c, data);
+    data.itemsById[1].randomCount = [1, 1];
+    const panel = computePanel(c, data);
+    expect(panel.attributes).toEqual(base.attributes);
+    expect(panel.stats).toEqual(base.stats);
+    expect(panel.issues).toEqual([expect.objectContaining({ code: "excess-random-rolls", severity: "warning", refId: 1 })]);
+    equipped.randomRolls.pop();
+    expect(computePanel(c, data).issues).toEqual([]);
+    equipped.randomRolls = [];
+    expect(computePanel(c, data).issues).toEqual([]);
+    delete equipped.randomRolls;
+    expect(computePanel(c, data).issues).toEqual([]);
+    data.itemsById[1].randomCount = [0, 0];
+    equipped.randomRolls = [{ attribute: "外功", value: 3 }];
+    expect(computePanel(c, data).issues[0].severity).toBe("warning");
+    equipped.randomRolls = [{ attribute: "外功", value: 999 }];
+    const invalid = computePanel(c, data);
+    expect(invalid.attributes.str.value).toBe(10);
+    expect(invalid.issues.map((i) => i.severity)).toEqual(["warning", "error"]);
+  });
+
   it("惡人谷護勁對 P + 1.5W 整體取 floor", () => {
     expect(SECTS[2].mdef(3, 5)).toBe(10);
     expect(SECTS[2].mdef(3, 6)).toBe(12);

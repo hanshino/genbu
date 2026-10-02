@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { getDb } from "@/lib/db";
 import { HELP_PASSIVES, WEAPON_TYPE_NAMES } from "@/configs/stat-sim-passives";
 import { STAT_KEYS, type GameData } from "@/lib/types/stat-sim";
@@ -22,7 +22,7 @@ describe("stat-sim — 真實遊戲資料", () => {
     expect(data.itemsById[20001].randomOptions?.find((o) => o.attribute === "物攻")?.ranges).toEqual([[1, 3]]);
   });
 
-  it("隨機素質映射、零值與非面板列過濾；55216 的真實區間與 0 槽", () => {
+  it("隨機素質映射、零值與非面板列過濾；55216 的真實區間與 2 槽", () => {
     const aliases = {
       拆招: "uncanny_dodge", 閃躲: "dodge", 重擊: "critical", 真氣: "mp", 體力: "hp",
       防禦: "def", 護勁: "mdef", 內勁: "matk", 物攻: "atk", 命中: "hit",
@@ -31,7 +31,9 @@ describe("stat-sim — 真實遊戲資料", () => {
     for (const [label, key] of Object.entries(aliases)) expect(labelToKey(label)).toBe(key);
     const cap = data.itemsById[55216];
     expect(cap.name).toBe("蔚藍聖龍盔");
-    expect(cap.socketCount ?? 0).toBe(0);
+    expect(cap.socketCount).toBe(2);
+    expect(cap.socketMin).toBe(2);
+    expect(cap.randomCount).toEqual([5, 5]);
     expect(cap.randomOptions).toHaveLength(5);
     expect(cap.randomOptions).toEqual(expect.arrayContaining([
       { attribute: "命中", stat: "hit", ranges: [[50, 85]] },
@@ -67,7 +69,7 @@ describe("stat-sim — 真實遊戲資料", () => {
     c.equipment.cap = { itemId: 55216, enhancementLevel: 0, manualBonuses: {} };
     const base = computePanel(c, data);
     c.equipment.cap.randomRolls = [{ attribute: "命中", value: 85 }, { attribute: "體力", value: 1550 }];
-    c.equipment.cap.sockets = [{ recipeId: 10742, stat: "atk", value: 10 }];
+    c.equipment.cap.sockets = [null, null, { recipeId: 10742, stat: "atk", value: 10 }];
     const panel = computePanel(c, data);
     expect(panel.stats.hit.value).toBe(base.stats.hit.value! + 85);
     expect(panel.stats.hp.value).toBe(base.stats.hp.value! + 1550);
@@ -94,13 +96,6 @@ describe("stat-sim — 真實遊戲資料", () => {
     c.equipment.left.sockets = [{ recipeId: recipe.id, stat: "def", value }];
     expect(computePanel(c, data).stats.def.value).toBe(base.stats.def.value! + value);
     expect(computePanel(c, data).issues).toEqual([]);
-    const counts = getDb().prepare("SELECT id, compound_number FROM items").all() as Array<{ id: number; compound_number: number }>;
-    for (const row of counts) {
-      const item = data.itemsById[row.id];
-      if (!item) continue;
-      expect(item.socketCount ?? 0).toBe(row.compound_number ?? 0);
-      if (item.socketCount) expect(item.socketCategory).toBe(getEquipmentSlotForType(item.typeName));
-    }
     const rows = getDb().prepare("SELECT id, type, material_items, mod_prob FROM compounds").all() as
       Array<{ id: number; type: string; material_items: string; mod_prob: string }>;
     for (const row of rows) {
@@ -119,6 +114,62 @@ describe("stat-sim — 真實遊戲資料", () => {
         expect(effect.ranges).toEqual(mergeRanges(effects.filter((p) => BONUS_TO_ATTR_KEY[p.type] === effect.stat)
           .map((p) => [p.min!, p.max!])));
       }
+    }
+  });
+
+  it("槽數優先取 counts，缺列退回 compound_number；隨機條數上限截到支援屬性數", () => {
+    expect(data.itemsById[55008]).toMatchObject({ socketCount: 2, socketMin: 2, socketCategory: 1, randomCount: [0, 2] });
+    expect(data.itemsById[20006]).toMatchObject({ socketCount: 2, socketMin: 1 });
+    const rows = getDb().prepare(`SELECT i.id, i.compound_number, c.* FROM items i
+      LEFT JOIN item_rand_counts c ON c.item_id = i.id`).all() as Array<{
+        id: number; compound_number: number; item_id: number | null;
+        mod_count_min: number; mod_count_max: number; comp_count_min: number; comp_count_max: number;
+      }>;
+    let fallback = 0, excluded = 0;
+    for (const row of rows) {
+      const item = data.itemsById[row.id];
+      if (!item) { if (row.item_id !== null) excluded++; continue; }
+      expect(item.socketCount ?? 0).toBe(row.item_id === null ? row.compound_number ?? 0 : row.comp_count_max);
+      expect(item.socketMin).toBe(row.item_id === null ? undefined : row.comp_count_min);
+      if (item.socketCount) expect(item.socketCategory).toBe(getEquipmentSlotForType(item.typeName));
+      if (row.item_id === null || !item.randomOptions?.length) {
+        expect(item.randomCount).toBeUndefined();
+      } else {
+        expect(item.randomCount).toEqual([row.mod_count_min, Math.min(row.mod_count_max, item.randomOptions.length)]);
+      }
+      if (row.item_id === null && row.compound_number > 0) fallback++;
+    }
+    expect(fallback).toBeGreaterThan(0);
+    expect(excluded).toBeGreaterThan(0);
+
+    const c = createDefaultCharacter();
+    c.equipment.right = { itemId: 55008, enhancementLevel: 0, manualBonuses: {} };
+    const base = computePanel(c, data);
+    c.equipment.right.sockets = [null, { recipeId: 10742, stat: "atk", value: 10 }];
+    const panel = computePanel(c, data);
+    expect(panel.stats.atk.value).toBe(base.stats.atk.value! + 10);
+    expect(panel.issues).toEqual([]);
+  });
+
+  it("counts 上限大於支援屬性數時截斷，不修改 SQLite", () => {
+    // 真實超額列目前都沒有可用 randomOptions；以查詢回傳值模擬非空選項的超額情況。
+    const db = getDb();
+    const prepare = db.prepare.bind(db);
+    const spy = vi.spyOn(db, "prepare").mockImplementation((sql) => {
+      const statement = prepare(sql);
+      if (sql.includes("FROM item_rand_counts")) {
+        vi.spyOn(statement, "all").mockReturnValue([{
+          item_id: 55008, mod_count_min: 0, mod_count_max: 99, comp_count_min: 2, comp_count_max: 2,
+        }]);
+      }
+      return statement;
+    });
+    try {
+      const item = getStatSimData().itemsById[55008];
+      expect(item.randomOptions!.length).toBeGreaterThan(0);
+      expect(item.randomCount).toEqual([0, item.randomOptions!.length]);
+    } finally {
+      spy.mockRestore();
     }
   });
 

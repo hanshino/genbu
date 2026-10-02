@@ -173,6 +173,22 @@ export function getStatSimData(): GameData {
     for (const option of item.randomOptions ?? []) option.ranges = mergeRanges(option.ranges);
   }
 
+  // 只覆蓋已入選的裝備；BONUS 等道具的 comp_count 有不同語意，不可當插槽。
+  for (const row of db.prepare(`SELECT item_id, mod_count_min, mod_count_max,
+    comp_count_min, comp_count_max FROM item_rand_counts`).all() as Array<{
+      item_id: number; mod_count_min: number; mod_count_max: number;
+      comp_count_min: number; comp_count_max: number;
+    }>) {
+    const item = itemsById[row.item_id];
+    if (!item) continue;
+    item.socketCount = row.comp_count_max;
+    item.socketMin = row.comp_count_min;
+    item.socketCategory = row.comp_count_max > 0 ? getEquipmentSlotForType(item.typeName) : null;
+    if (item.randomOptions?.length) {
+      item.randomCount = [row.mod_count_min, Math.min(row.mod_count_max, item.randomOptions.length)];
+    }
+  }
+
   const socketRecipes: NonNullable<GameData["socketRecipes"]> = {};
   const socketRecipeIdsByCategory: NonNullable<GameData["socketRecipeIdsByCategory"]> = {};
   for (const row of db.prepare(`SELECT id, name, material_items, mod_prob FROM compounds

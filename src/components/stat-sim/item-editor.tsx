@@ -197,6 +197,21 @@ export function ItemEditor({ idBase, item, data, draft, ev, onChange }: Props) {
   const socketCount = item.socketCount ?? 0;
   const recipes = recipesFor(item, data);
   const legacy = formatBonus(draft.manualBonuses);
+  const checkedCount = options.filter((o) => draft.rolls[o.attribute] !== undefined).length;
+  const [rollMin, rollMax] = item.randomCount ?? [];
+  const countText =
+    rollMin == null || rollMax == null
+      ? ""
+      : rollMin === rollMax
+        ? `這件固定出現 ${rollMax} 條。`
+        : `這件會出現 ${rollMin}–${rollMax} 條。`;
+  // 只提醒、不擋套用：條數資料可能有例外。
+  const countHint =
+    rollMax != null && checkedCount > rollMax
+      ? `勾了 ${checkedCount} 條，超過這件最多 ${rollMax} 條，請確認`
+      : rollMin != null && rollMin === rollMax && checkedCount < rollMin
+        ? `這件應該有 ${rollMin} 條`
+        : null;
 
   const setRoll = (attribute: string, value: string | undefined) => {
     const rolls = { ...draft.rolls };
@@ -291,9 +306,18 @@ export function ItemEditor({ idBase, item, data, draft, ev, onChange }: Props) {
         <Section
           icon={<DicesIcon aria-hidden />}
           title="隨機素質"
-          badge={`已勾 ${Object.keys(draft.rolls).length} 項`}
-          note="勾選遊戲裡實際出現的素質，再填上數值；沒勾的不會算進去。"
+          badge={`已勾 ${checkedCount} 項`}
+          note={`${countText}勾選遊戲裡實際出現的素質，再填上數值；沒勾的不會算進去。`}
         >
+          {countHint && (
+            <p
+              role="status"
+              className="mb-2 flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-300"
+            >
+              <CircleAlertIcon className="size-3.5 shrink-0" aria-hidden />
+              {countHint}
+            </p>
+          )}
           <div className="flex flex-col gap-2">
             {options.map((opt, i) => {
               const raw = draft.rolls[opt.attribute];
@@ -383,9 +407,12 @@ export function ItemEditor({ idBase, item, data, draft, ev, onChange }: Props) {
           title="插槽"
           badge={`${draft.sockets.slice(0, socketCount).filter(Boolean).length} / ${socketCount} 已填`}
           note={
-            recipes.length
+            (item.socketMin != null && item.socketMin !== socketCount
+              ? `這件有 ${item.socketMin}–${socketCount} 個插槽，沒有的槽留空即可。`
+              : "") +
+            (recipes.length
               ? "一槽一個配方。固定效果直接帶入，隨機的請填遊戲裡實際的數值。"
-              : "這類裝備查無可插的配方。"
+              : "這類裝備查無可插的配方。")
           }
         >
           <div className="flex flex-col gap-2">

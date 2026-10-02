@@ -126,8 +126,12 @@ export interface SimItem {
   strongPathId: number | null;
   /** 省略或空陣列表示沒有隨機素質。 */
   randomOptions?: SimRandomOption[];
-  /** items.compound_number（0–3，遊戲不能擴槽）。 */
+  /** 最大槽數：item_rand_counts.comp_count_max，無該列時退回 items.compound_number。空槽不影響計算，故 UI 一律顯示到最大。 */
   socketCount?: number;
+  /** item_rand_counts.comp_count_min（槽數下限，僅供提示）。 */
+  socketMin?: number;
+  /** item_rand_counts.mod_count_min/max：實際出現的隨機素質條數，max 已截到 randomOptions 長度。 */
+  randomCount?: [number, number];
   /** compounds 裝備類別 1–5（盾為 3）；null 表示沒有可插配方。 */
   socketCategory?: number | null;
 }

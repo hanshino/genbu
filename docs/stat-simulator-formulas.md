@@ -108,9 +108,9 @@ DB 欄位都在 `items`：`hp mp str pow vit dex agi wis atk matk extra_def magi
 - genbu 已有 `src/lib/queries/compound.ts` 的 `BONUS_TO_ATTR_KEY`，可以共用。
 - 只實測過 +5；更高等級是照同一規則推的，例如 Lv198 麒麟的 +16 雙劍也吻合。
 
-**插槽（真元 / 魂石 / 魂珠）**：槽數取 `items.compound_number`（0–3，不可擴槽）。只收 `compounds.type = ITEM_COMPOUND_EQUIPMENT`，`material_items` 的類別 1–5 決定適用裝備（盾為 3）；排除 ORNAMENT / CREATEITEM 配方、無效果及非面板效果。配方以共用字典傳給 client，每槽記錄實際抽中的單一屬性與整數值，不以機率期望值代替。
+**插槽（真元 / 魂石 / 魂珠）**：槽數範圍優先取 `item_rand_counts.comp_count_min/max`，`socketCount` 為 max、`socketMin` 為 min；無該列時才退回 `items.compound_number` 並省略 socketMin。只套用模擬器裝備集合，BONUS（技能真解）等道具的 comp_count 是不同語意，不當插槽。55008「龍躍鳳鳴倭刀」為 2–2 槽（舊 compound_number 誤為 0），20006「圓月彎刀」為 1–2 槽；UI 可列至上限，空槽不加值，引擎不允許超過上限。只收 `compounds.type = ITEM_COMPOUND_EQUIPMENT`，`material_items` 的類別 1–5 決定適用裝備（盾為 3）；排除 ORNAMENT / CREATEITEM 配方、無效果及非面板效果。配方以共用字典傳給 client，每槽記錄實際抽中的單一屬性與整數值，不以機率期望值代替。
 
-**隨機屬性**：`item_rand.attribute` 透過 `labelToKey` 映射；非面板屬性及 `min=max=0` 列略過。同件同屬性區間取聯集（重疊／相鄰合併，保留缺口），玩家只填實際抽到的子集，同屬性不重複計入。55216「蔚藍聖龍盔」有命中 50–85、防禦 55–165、護勁 55–135、體力 1550–3100、真氣 1100–2200，但固定 0 槽。
+**隨機屬性**：`item_rand.attribute` 透過 `labelToKey` 映射；非面板屬性及 `min=max=0` 列略過。同件同屬性區間取聯集（重疊／相鄰合併，保留缺口），玩家只填實際抽到的子集，同屬性不重複計入。`randomCount` 取 `item_rand_counts.mod_count_min/max`，max 截到支援的 `randomOptions.length`；無 counts 列或無支援屬性時省略。條數超上限只回報 warning，合法值仍計入；不要求填足下限，個別非法值仍回報 error 且不計入。55008 隨機條數為 0–2；55216「蔚藍聖龍盔」為 5–5，有命中 50–85、防禦 55–165、護勁 55–135、體力 1550–3100、真氣 1100–2200，槽數依新表修正為 2–2。
 
 引擎順序：固定值 → 隨機素質 → `+N` → 插槽 → 舊版 `manualBonuses`；其中六圍全部先進公式。非法屬性、非整數／越界值、錯誤配方類別或超出槽數皆回報 error 且不計入，不 clamp。舊存檔省略 `randomRolls` / `sockets` 時數值不變；舊手動合計仍保留，改填明細時須自行清除重複的手動值。含裝轉裸值使用 `computePanel.attributes − 裸值`，因此也會扣除隨機／插槽六圍。
 

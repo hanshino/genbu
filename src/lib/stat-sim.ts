@@ -208,6 +208,9 @@ export function computePanel(character: CharacterV1, data: GameData): PanelResul
       issue("missing-item", `找不到裝備資料：${equipped.itemId}`, equipped.itemId, true);
     } else {
       addBonus(item.stats, "equipment", item.name, item.id, accept);
+      if (item.randomCount && (equipped.randomRolls?.length ?? 0) > item.randomCount[1]) {
+        issue("excess-random-rolls", `${item.name}填寫的隨機素質條數超過資料上限 ${item.randomCount[1]}，資料可能不完整，合法數值仍計入`, item.id);
+      }
       const seenAttributes = new Set<string>();
       for (const roll of equipped.randomRolls ?? []) {
         const option = item.randomOptions?.find((option) => option.attribute === roll.attribute);
@@ -234,7 +237,7 @@ export function computePanel(character: CharacterV1, data: GameData): PanelResul
       for (const [index, fill] of (equipped.sockets ?? []).entries()) {
         const label = `${item.name} 第 ${index + 1} 槽`;
         if (index >= (item.socketCount ?? 0)) {
-          issue("invalid-socket-index", `${label}超過固定插槽數 ${item.socketCount ?? 0}，未計入`, item.id, true);
+          issue("invalid-socket-index", `${label}超過插槽數上限 ${item.socketCount ?? 0}，未計入`, item.id, true);
           continue;
         }
         if (fill === null) continue;

@@ -30,8 +30,26 @@ const data: GameData = {
           ],
         },
       ],
+      randomCount: [0, 1],
       socketCount: 2,
+      socketMin: 1,
       socketCategory: 1,
+    },
+    603: {
+      id: 603,
+      name: "五行冠",
+      level: 150,
+      typeName: "HELMET",
+      slotHint: ["cap"],
+      stats: {},
+      strongPathId: null,
+      randomOptions: [
+        { attribute: "命中", stat: "hit", ranges: [[1, 9]] },
+        { attribute: "閃躲", stat: "dodge", ranges: [[1, 9]] },
+      ],
+      randomCount: [2, 2],
+      socketCount: 1,
+      socketMin: 1,
     },
     602: {
       id: 602,
@@ -205,6 +223,37 @@ describe("ItemPicker 裝備編輯", () => {
     await user.click(screen.getByRole("option", { name: "布帽" }));
     await user.click(screen.getByRole("button", { name: "套用" }));
     expect(applied()).toEqual({ itemId: 602, enhancementLevel: 0, manualBonuses: {} });
+  });
+
+  it("條數與插槽數提示：勾太多只提醒不擋套用", async () => {
+    const { user, applied } = setup(fresh());
+    const rolls = within(screen.getByRole("region", { name: "隨機素質" }));
+    expect(rolls.getByText(/^這件會出現 0–1 條。/)).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("region", { name: "插槽" })).getByText(
+        /^這件有 1–2 個插槽，沒有的槽留空即可。/,
+      ),
+    ).toBeInTheDocument();
+    expect(rolls.queryByRole("status")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("checkbox", { name: /^命中/ }));
+    await user.click(screen.getByRole("checkbox", { name: /^防禦/ }));
+    expect(rolls.getByRole("status")).toHaveTextContent("勾了 2 條，超過這件最多 1 條，請確認");
+    expect(screen.queryByText(/項需修正/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "套用" }));
+    expect(applied()?.randomRolls).toHaveLength(2);
+  });
+
+  it("固定條數：少勾時溫和提示；槽數上下限相同不多說明", async () => {
+    const { user } = setup({ itemId: 603, enhancementLevel: 0, manualBonuses: {} });
+    const rolls = within(screen.getByRole("region", { name: "隨機素質" }));
+    expect(rolls.getByText(/^這件固定出現 2 條。/)).toBeInTheDocument();
+    expect(rolls.getByRole("status")).toHaveTextContent("這件應該有 2 條");
+    expect(screen.queryByText(/個插槽，沒有的槽留空即可/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: /^命中/ }));
+    await user.click(screen.getByRole("checkbox", { name: /^閃躲/ }));
+    expect(rolls.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "套用" })).toBeEnabled();
   });
 
   it("取消不會套用草稿", async () => {
