@@ -320,7 +320,9 @@ export function getStatSimData(): GameData {
   const collectionThresholds = db.prepare(`
     SELECT value, magic_id AS magicId, level FROM collect_book_bonuses ORDER BY value, magic_id, level
   `).all() as NonNullable<GameData["collectionThresholds"]>;
-  return { itemsById, enhancementsByPath, passives, collectionThresholds, socketRecipes, socketRecipeIdsByCategory };
+  const meridianIds = (db.prepare("SELECT DISTINCT magic_id FROM magic_meridians ORDER BY magic_id")
+    .all() as Array<{ magic_id: number }>).map((row) => row.magic_id);
+  return { itemsById, enhancementsByPath, passives, meridianIds, collectionThresholds, socketRecipes, socketRecipeIdsByCategory };
 }
 
 /** 保留原始 control 座標/field，不以有錯字的 comment 推斷數值用途。 */

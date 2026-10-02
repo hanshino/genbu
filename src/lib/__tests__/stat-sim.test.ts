@@ -11,7 +11,7 @@ import {
   type PanelResult, type PassiveDef, type SectId, type SimItem,
 } from "@/lib/types/stat-sim";
 
-const emptyData = (): GameData => ({ itemsById: {}, enhancementsByPath: {}, passives: [] });
+const emptyData = (): GameData => ({ itemsById: {}, enhancementsByPath: {}, passives: [], meridianIds: [] });
 function character(overrides: Partial<CharacterV1> = {}): CharacterV1 {
   return {
     version: 1, id: "test", name: "測試角色", sectId: 8, subSects: [], level: 1,

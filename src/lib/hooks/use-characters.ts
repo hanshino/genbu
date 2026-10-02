@@ -95,6 +95,26 @@ export function useCharacters() {
     [loaded],
   );
 
+  const addImported = useCallback(
+    (character: CharacterV1) => {
+      if (!loaded) return;
+      const parsed = parseCharacter(character);
+      if (!parsed.ok) throw new Error("匯入角色資料不合法");
+      setStore((previous) => {
+        if (previous.characters.some((existing) => existing.id === parsed.character.id)) {
+          throw new Error("匯入角色 id 重複");
+        }
+        return {
+          ...previous,
+          activeCharacterId: parsed.character.id,
+          characters: [...previous.characters, parsed.character],
+        };
+      });
+      return parsed.character.id;
+    },
+    [loaded],
+  );
+
   const update = useCallback(
     (id: string, updater: (character: CharacterV1) => CharacterV1) => {
       if (!loaded) return;
@@ -162,6 +182,7 @@ export function useCharacters() {
     error,
     saveFailed,
     create,
+    addImported,
     duplicate,
     rename,
     remove,

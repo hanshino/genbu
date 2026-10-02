@@ -63,6 +63,7 @@ const data: GameData = {
   },
   enhancementsByPath: { 1: { maxLevel: 2, levels: [{}, { def: 10 }, { def: 20, hp: 50 }] } },
   passives: [],
+  meridianIds: [],
   socketRecipes: {
     10: { id: 10, name: "獵人強化裝備", effects: [{ stat: "hit", ranges: [[7, 7]] }] },
     11: {

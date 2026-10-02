@@ -1,18 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   InfoIcon,
   RotateCcwIcon,
   SparklesIcon,
   TriangleAlertIcon,
   UserIcon,
-  UserPlusIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCharacters } from "@/lib/hooks/use-characters";
+import { SECTS } from "@/configs/stat-sim";
+import { createDefaultCharacter } from "@/lib/stat-character";
+import { assembleImport } from "@/lib/stat-sim-import";
+import { decodeImport } from "@/lib/stat-sim-import-codec";
+import { ImportError, type ImportPanel } from "@/lib/types/stat-sim-import";
 import { bareFromEquipped, computePanel } from "@/lib/stat-sim";
 import {
   ATTRIBUTE_KEYS,
@@ -30,6 +34,10 @@ import { BasicTab } from "./basic-tab";
 import { CharacterBar } from "./character-bar";
 import { EquipmentWindow } from "./equipment-window";
 import { ItemPicker } from "./item-picker";
+import { ImportDialog, ImportEmptyState, type ImportStatus } from "./import-dialog";
+import { ImportResultCard, type ImportResultCardProps } from "./import-result-card";
+import { ImportCompareCard } from "./import-compare-card";
+import { buildCompareRows } from "./import-compare";
 import { STAT_LABELS, type ViewKey } from "./labels";
 import { ComingSoonCards, CostBandCard, ExtraCard, IssuesCard, SourceCard } from "./panel-cards";
 import { PassivesTab } from "./passives-tab";
@@ -58,6 +66,82 @@ export function StatSimClient({ data, windows }: Props) {
   const [picking, setPicking] = useState<EquipSlot | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<GearSnapshot | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importStatus, setImportStatus] = useState<ImportStatus>("idle");
+  const [importError, setImportError] = useState<string>();
+  const [initialImportText, setInitialImportText] = useState("");
+  const [imports, setImports] = useState<Record<string, {
+    result: Omit<ImportResultCardProps, "onClose">;
+    panel?: ImportPanel;
+    resultClosed?: boolean;
+    compareClosed?: boolean;
+  }>>({});
+  const hashHandled = useRef(false);
+  const importing = useRef(false);
+  const { loaded, addImported, store: characterStore } = store;
+
+  const submitImport = useCallback(async (text: string) => {
+    if (!loaded || importing.current) return;
+    importing.current = true;
+    setImportStatus("pending");
+    setImportError(undefined);
+    try {
+      const payload = await decodeImport(text);
+      const assembled = assembleImport(payload, data, { id: createDefaultCharacter().id },
+        characterStore.characters.map((character) => character.name));
+      const { character, renamed, diagnostics } = assembled;
+      addImported(character);
+      setImports((previous) => ({ ...previous, [character.id]: {
+        result: {
+          characterName: character.name, renamed, app: payload.app, at: payload.at, diagnostics,
+          summary: {
+            sectName: SECTS[character.sectId].name, level: character.level,
+            rebirthPoints: character.rebirthPoints,
+            equipCount: Object.values(character.equipment).filter(Boolean).length,
+            passiveCount: Object.values(character.passiveLevels).filter((level) => level > 0).length,
+            meridianHref: character.meridianPlan
+              ? `/tools/meridian?p=${encodeURIComponent(character.meridianPlan)}` : null,
+          },
+        },
+        panel: payload.panel,
+      } }));
+      setImportOpen(false);
+      setImportStatus("idle");
+      setEditError(null);
+      setSnapshot(null);
+    } catch (error) {
+      setImportError(error instanceof ImportError ? error.message : "匯入失敗，請重新複製");
+      setImportStatus("error");
+      setInitialImportText(text);
+      setImportOpen(true);
+    } finally {
+      importing.current = false;
+    }
+  }, [loaded, data, characterStore.characters, addImported]);
+
+  useEffect(() => {
+    if (!loaded || hashHandled.current) return;
+    hashHandled.current = true;
+    if (!new URLSearchParams(window.location.hash.slice(1)).has("import")) return;
+    const text = window.location.href;
+    window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- consume an explicit URL import once after store hydration
+    void submitImport(text);
+  }, [loaded, submitImport]);
+
+  const openImport = () => {
+    setInitialImportText("");
+    setImportError(undefined);
+    setImportStatus("idle");
+    setImportOpen(true);
+  };
+  const importDialog = <ImportDialog open={importOpen} onOpenChange={setImportOpen}
+    onSubmit={submitImport} status={importStatus} error={importError} initialText={initialImportText} />;
+  const imported = active ? imports[active.id] : undefined;
+  const closeImportCard = (card: "resultClosed" | "compareClosed") => {
+    if (!active || !imported) return;
+    setImports((previous) => ({ ...previous, [active.id]: { ...previous[active.id], [card]: true } }));
+  };
 
   const attrFields = useMemo(() => attributeFields(windows.attribute), [windows.attribute]);
   const eqFields = useMemo(() => equipmentFields(windows.equipment), [windows.equipment]);
@@ -167,25 +251,21 @@ export function StatSimClient({ data, windows }: Props) {
   if (!active) {
     return (
       <>
-        <CharacterBar store={store} />
-        <div className="rounded-xl border border-dashed border-border px-6 py-14 text-center">
-          <p className="text-sm text-muted-foreground">
-            還沒有角色。新增一隻，開始填門派、等級與裝備。
-          </p>
-          <Button className="mt-4" onClick={() => store.create()}>
-            <UserPlusIcon />
-            新增角色
-          </Button>
-        </div>
+        <CharacterBar store={store} onImport={openImport} />
+        <ImportEmptyState onCreate={() => store.create()} onImport={openImport} />
+        {importDialog}
       </>
     );
   }
 
   return (
     <>
-      <CharacterBar store={store} />
+      <CharacterBar store={store} onImport={openImport} />
+      {importDialog}
       <div className="grid items-start gap-6 min-[1180px]:grid-cols-[minmax(424px,1fr)_minmax(0,800px)]">
         <div className="order-2 min-w-0 min-[1180px]:order-1">
+          {imported && !imported.resultClosed && <ImportResultCard {...imported.result}
+            onClose={() => closeImportCard("resultClosed")} />}
           <Tabs value={tab} onValueChange={(v) => setTab(String(v))} className="gap-4">
             <TabsList className="grid h-10 w-full grid-cols-2">
               <TabsTrigger value="basic">
@@ -224,6 +304,9 @@ export function StatSimClient({ data, windows }: Props) {
             onAdd={addPoint}
             onEdit={editAttr}
           />
+          {imported?.panel && panel && !imported.compareClosed && <ImportCompareCard
+            rows={buildCompareRows(imported.panel, panel, weaponTypes)}
+            onClose={() => closeImportCard("compareClosed")} />}
 
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-muted-foreground">六圍輸入</span>

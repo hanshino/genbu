@@ -270,6 +270,12 @@ describe("stat-sim — 真實遊戲資料", () => {
     }
   });
 
+  it("經脈穴位 ID 非空、去重排序且包含 855", () => {
+    expect(data.meridianIds.length).toBeGreaterThan(0);
+    expect(data.meridianIds).toEqual([...new Set(data.meridianIds)].sort((a, b) => a - b));
+    expect(data.meridianIds).toContain(855);
+  });
+
   it("京門 1060 Lv2 HP=2400、提托 1010 Lv4 負重=3200，但兩者屬經脈必須排除", () => {
     // brief 的兩個累加例子都是經脈：驗真實資料規則，但不能放進 GameData.passives。
     const db = getDb();

@@ -14,6 +14,28 @@ afterEach(() => {
 });
 
 describe("useCharacters", () => {
+  it("validates imported characters, appends and activates in a single update", () => {
+    const { result } = renderHook(() => useCharacters());
+    const original = result.current.active!;
+    const imported = createDefaultCharacter("匯入角色");
+    expect(() => result.current.addImported({ ...imported, sectId: 1 } as never)).toThrow("匯入角色資料不合法");
+    expect(result.current.store.characters).toEqual([original]);
+    act(() => { result.current.addImported(imported); });
+    expect(result.current.store.characters).toEqual([original, imported]);
+    expect(result.current.active?.id).toBe(imported.id);
+    expect(JSON.parse(localStorage.getItem(KEY)!)).toEqual(result.current.store);
+  });
+
+  it("import does not overwrite a corrupted store", () => {
+    localStorage.setItem(KEY, "broken");
+    const { result } = renderHook(() => useCharacters());
+    const imported = createDefaultCharacter("僅記憶體匯入");
+    act(() => { result.current.addImported(imported); });
+    expect(result.current.active?.id).toBe(imported.id);
+    expect(result.current.store.characters).toHaveLength(2);
+    expect(localStorage.getItem(KEY)).toBe("broken");
+  });
+
   it("creates and persists one default character on the first visit", () => {
     const { result } = renderHook(() => useCharacters());
     expect(result.current.loaded).toBe(true);

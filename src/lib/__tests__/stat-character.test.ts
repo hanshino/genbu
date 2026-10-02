@@ -24,7 +24,7 @@ describe("stat-character", () => {
     expect(parsed.character.equipment.cap).not.toHaveProperty("sockets");
     const data = { itemsById: { 1: {
       id: 1, name: "舊帽", level: 1, typeName: "HELMET", slotHint: null, stats: { str: 3 }, strongPathId: null,
-    } }, enhancementsByPath: {}, passives: [] };
+    } }, enhancementsByPath: {}, passives: [], meridianIds: [] };
     const before = computePanel(parsed.character, data);
     c.equipment.cap.randomRolls = []; c.equipment.cap.sockets = [];
     expect(computePanel(c, data)).toEqual(before);

@@ -169,6 +169,8 @@ export interface GameData {
   enhancementsByPath: Record<number, EnhancementPath>;
   /** 包含收藏；經脈不列入，避免重複計算。 */
   passives: PassiveDef[];
+  /** 經脈穴位 magic id，來自 magic_meridians；匯入時用來辨識經脈技能。 */
+  meridianIds: number[];
   /** 收藏值門檻，由小到大排序；舊資料未提供時不開放自動換算。 */
   collectionThresholds?: CollectionThreshold[];
   socketRecipes?: Record<number, SocketRecipe>;
