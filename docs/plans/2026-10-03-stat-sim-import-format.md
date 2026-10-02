@@ -87,6 +87,8 @@ payload = base64url( deflate-raw( UTF-8( JSON ) ) )，不補 '='
 
 實例的 `hp` / `mp` 只在旗標為 0 或 1（固定加值）時計入，這部分由 tthol-memory 的 `read_item_stats` 處理。
 
+`stats` 只包含上表的 key。不在表內的 DB 固定值（例如 `weight`）不參與拆解，一律沿用 DB 值；不可把「沒匯出」當成 0 去算 `S − F`，否則會產生負的手動加值，把裝備重量抵銷掉。
+
 ---
 
 ## genbu 匯入流程
