@@ -189,9 +189,11 @@ export function getStatSimData(): GameData {
   const passives: PassiveDef[] = [];
   for (const row of metadata.values()) {
     const help = HELP_PASSIVES[row.id];
-    if (help && help.cumulative.length !== row.level + 1) {
-      throw new Error(`技能 ${row.id}：help 手抄表與 DB 最高等級不同`);
+    // 手抄表可比 DB 短：遊戲實際上限較低（如嫁衣神功 DB 寫 10、遊戲只到 4）。
+    if (help && help.cumulative.length > row.level + 1) {
+      throw new Error(`技能 ${row.id}：help 手抄表超過 DB 最高等級`);
     }
+    if (help) row.level = help.cumulative.length - 1;
     const cumulative: PanelBonus[] = help ? help.cumulative.map((bonus) => ({ ...bonus })) : [{}];
     const unknown = new Set<string>();
     if (!help) {

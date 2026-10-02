@@ -157,9 +157,9 @@ describe("stat-sim — 真實遊戲資料", () => {
     const wedding = data.passives.find((row) => row.id === 180)!;
     expect(wedding.cumulative[4]).toEqual({ hp: 12000 });
     expect(wedding.learnLevels.slice(1, 5)).toEqual([110, 120, 130, 140]);
-    expect(wedding.learnLevels.slice(5)).toEqual([-1, -1, -1, -1, -1, -1]);
-    expect(wedding.note).toContain("未提供");
-    expect(wedding.note).toContain("疑似誤貼");
+    expect(wedding.maxLevel).toBe(4);
+    expect(wedding.learnLevels).toHaveLength(5);
+    expect(wedding.note).toBeUndefined();
   });
 
   it("分組、max-level 名稱/圖示、learnLevels 與未知 stat diagnostics", () => {
