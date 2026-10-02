@@ -1,7 +1,7 @@
 {
   "v": 1,
   "app": "proto",
-  "at": "2026-10-02T20:41:04Z",
+  "at": "2026-10-02T22:11:58Z",
   "name": "止戰詩園",
   "sect": 8,
   "level": 190,
@@ -31,7 +31,8 @@
         "mdef": 35,
         "hit": 30,
         "uncanny_dodge": 5
-      }
+      },
+      "refineLeft": 0
     },
     "body": {
       "id": 50444,
@@ -47,7 +48,8 @@
         "mp": 1563,
         "def": 461,
         "mdef": 355
-      }
+      },
+      "refineLeft": 0
     },
     "foot": {
       "id": 50403,
@@ -64,7 +66,8 @@
         "def": 35,
         "mdef": 35,
         "dodge": 79
-      }
+      },
+      "refineLeft": 0
     },
     "right": {
       "id": 55008,
@@ -81,7 +84,13 @@
         "hit": 12,
         "attack_speed": 1,
         "critical": 26
-      }
+      },
+      "damage": {
+        "min": 1168,
+        "max": 1222
+      },
+      "zhenjie": 1912602754,
+      "refineLeft": 0
     },
     "left": null,
     "wing": {
@@ -102,7 +111,8 @@
         "hit": 25,
         "dodge": 25,
         "critical": 10
-      }
+      },
+      "refineLeft": 0
     },
     "horse": {
       "id": 50563,
@@ -125,7 +135,8 @@
         "hit": 20,
         "dodge": 35,
         "run_speed": 12
-      }
+      },
+      "refineLeft": 0
     },
     "ornament1": {
       "id": 21514,
@@ -140,7 +151,8 @@
         "dex": 2,
         "agi": 2,
         "critical": 3
-      }
+      },
+      "refineLeft": 0
     },
     "ornament2": {
       "id": 22389,
@@ -157,7 +169,8 @@
         "str": 4,
         "agi": 4,
         "critical": 2
-      }
+      },
+      "refineLeft": 0
     },
     "ornament3": {
       "id": 21733,
@@ -172,7 +185,8 @@
         "dex": 3,
         "agi": 4,
         "critical": 36
-      }
+      },
+      "refineLeft": 0
     }
   },
   "skills": {
@@ -265,6 +279,18 @@
     "critical": 85,
     "uncanny_dodge": 10,
     "attack_speed": 14,
+    "run_speed": 17,
     "weight_cap": 70940
+  },
+  "appearance": {
+    "gender": "m",
+    "hairItem": 29005,
+    "hairColor": 1,
+    "head": 100005,
+    "cap": 101018
+  },
+  "statuses": {
+    "buffs": [],
+    "debuffs": []
   }
 }

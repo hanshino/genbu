@@ -10,7 +10,8 @@
 - `.txt` 是 `TTHOL1.` 字串（約 1.1 KB），`.json` 是解碼後的內容，兩者是同一份資料（已做過 round-trip 驗證）。
 - 讀取當下兩隻角色身上**沒有丹藥**：`panel.attributes − bare − 裝備（實例 + 強化）− 被動 magic_stats` 六項都是 0（tthol-memory probe 驗算）。匯入後 genbu 算出的六圍應該跟 `panel.attributes` 完全一樣，這可以當成第一個驗收條件。
 - 兩隻都**不是** compat 佈局。
-- 2026-10-03 重新產出，加上選填擴充欄位（`appearance`、`statuses`、`panel.run_speed`、裝備的 `damage` / `zhenjie` / `refineLeft`）。止戰詩園的倭刀有真解 `0x72000082`：第 2、8 條，M = 114。
+- `*-ext.{json,txt}` 是後來重新讀的同一隻角色，加上了選填擴充欄位（`appearance`、`statuses`、`panel.run_speed`、裝備的 `damage` / `zhenjie` / `refineLeft`）。這兩份讀的時間比較晚，止戰詩園已經換過裝備，所以內容跟沒有 `-ext` 的版本不一樣。沒有 `-ext` 的原始樣本保持不動，因為測試是照它們寫的。止戰詩園 ext 版的倭刀有真解 `0x72000082`：第 2、8 條，M = 114。
+- 解碼器會丟掉擴充欄位，所以 ext 樣本**不能**用「解碼結果 == 原始 JSON」來比；要比的話，先把 `appearance`、`statuses` 和裝備的擴充 key 拿掉（`panel.run_speed` 是已知 key，會保留）。
 
 ## 建議 genbu 驗證的項目
 

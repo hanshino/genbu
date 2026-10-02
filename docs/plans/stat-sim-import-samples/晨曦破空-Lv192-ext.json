@@ -1,7 +1,7 @@
 {
   "v": 1,
   "app": "proto",
-  "at": "2026-10-02T20:41:05Z",
+  "at": "2026-10-02T22:11:59Z",
   "name": "晨曦破空",
   "sect": 4,
   "level": 192,
@@ -32,7 +32,8 @@
         "mdef": 35,
         "hit": 30,
         "uncanny_dodge": 5
-      }
+      },
+      "refineLeft": 0
     },
     "body": {
       "id": 50444,
@@ -48,7 +49,8 @@
         "mp": 1163,
         "def": 521,
         "mdef": 408
-      }
+      },
+      "refineLeft": 0
     },
     "foot": {
       "id": 50403,
@@ -66,7 +68,8 @@
         "def": 35,
         "mdef": 35,
         "dodge": 15
-      }
+      },
+      "refineLeft": 0
     },
     "right": {
       "id": 55001,
@@ -83,7 +86,12 @@
         "hit": 12,
         "attack_speed": 1,
         "critical": 10
-      }
+      },
+      "damage": {
+        "min": 945,
+        "max": 970
+      },
+      "refineLeft": 0
     },
     "left": {
       "id": 55012,
@@ -100,7 +108,8 @@
         "def": 126,
         "mdef": 33,
         "hit": 25
-      }
+      },
+      "refineLeft": 0
     },
     "wing": {
       "id": 50316,
@@ -119,7 +128,8 @@
         "atk": 20,
         "matk": 20,
         "hit": 10
-      }
+      },
+      "refineLeft": 0
     },
     "horse": {
       "id": 50562,
@@ -139,7 +149,8 @@
         "def": 30,
         "hit": 30,
         "run_speed": 11
-      }
+      },
+      "refineLeft": 0
     },
     "ornament1": {
       "id": 21455,
@@ -155,7 +166,8 @@
         "vit": 3,
         "atk": 5,
         "hit": 10
-      }
+      },
+      "refineLeft": 0
     },
     "ornament2": {
       "id": 21708,
@@ -172,7 +184,8 @@
         "atk": 20,
         "matk": 20,
         "critical": 2
-      }
+      },
+      "refineLeft": 0
     },
     "ornament3": {
       "id": 22048,
@@ -186,7 +199,8 @@
       "stats": {
         "str": 14,
         "vit": 2
-      }
+      },
+      "refineLeft": 0
     }
   },
   "skills": {
@@ -249,7 +263,8 @@
     "761": 5,
     "762": 5,
     "855": 3,
-    "1151": 1
+    "1151": 1,
+    "1195": 1
   },
   "panel": {
     "attributes": {
@@ -260,7 +275,7 @@
       "dex": 93,
       "wis": 1
     },
-    "hp": 48377,
+    "hp": 48877,
     "mp": 6170,
     "atk": 2332,
     "matk": 273,
@@ -270,7 +285,19 @@
     "dodge": 309,
     "critical": 16,
     "uncanny_dodge": 13,
-    "attack_speed": 11,
+    "attack_speed": 7,
+    "run_speed": 16,
     "weight_cap": 83608
+  },
+  "appearance": {
+    "gender": "m",
+    "hairItem": 29007,
+    "hairColor": 10,
+    "head": 100007,
+    "cap": 101195
+  },
+  "statuses": {
+    "buffs": [],
+    "debuffs": []
   }
 }
