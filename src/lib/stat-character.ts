@@ -107,7 +107,15 @@ export function parseCharacter(raw: unknown): { ok: true; character: CharacterV1
         (isRecord(item) &&
           integer(item.itemId, 1) &&
           integer(item.enhancementLevel, 0, 30) &&
-          bonus(item.manualBonuses))
+          bonus(item.manualBonuses) &&
+          (item.randomRolls === undefined ||
+            (Array.isArray(item.randomRolls) && Array.from(item.randomRolls).every((roll) =>
+              isRecord(roll) && typeof roll.attribute === "string" && roll.attribute.length > 0 &&
+              integer(roll.value, Number.MIN_SAFE_INTEGER)))) &&
+          (item.sockets === undefined ||
+            (Array.isArray(item.sockets) && Array.from(item.sockets).every((fill) =>
+              fill === null || (isRecord(fill) && integer(fill.recipeId, 1) &&
+                STAT_KEYS.some((key) => key === fill.stat) && integer(fill.value, Number.MIN_SAFE_INTEGER))))))
       );
     }) ||
     !isRecord(raw.passiveLevels) ||

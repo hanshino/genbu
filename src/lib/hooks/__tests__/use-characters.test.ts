@@ -181,6 +181,25 @@ describe("useCharacters", () => {
     expect(write).not.toHaveBeenCalled();
   });
 
+  it.each([{ randomRolls: [{ attribute: "命中", value: "85" }] },
+    { sockets: [{ recipeId: 10742, stat: "未知", value: 10 }] }])(
+    "損壞的隨機／插槽資料不會被預設角色或後續編輯覆寫 %#", (bad) => {
+      const character = createDefaultCharacter();
+      const raw = JSON.stringify({ version: 1, activeCharacterId: character.id, characters: [{
+        ...character, equipment: { ...character.equipment,
+          cap: { itemId: 55216, enhancementLevel: 0, manualBonuses: {}, ...bad },
+        },
+      }] });
+      window.localStorage.setItem(KEY, raw);
+      const write = vi.spyOn(Storage.prototype, "setItem");
+      const { result } = renderHook(() => useCharacters());
+      expect(result.current.error).toBe("corrupt");
+      act(() => result.current.rename(result.current.active!.id, "僅記憶體"));
+      expect(write).not.toHaveBeenCalled();
+      expect(window.localStorage.getItem(KEY)).toBe(raw);
+    },
+  );
+
   it("reports failed writes, retains edits in memory, and retries after another edit", () => {
     const write = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new DOMException("quota exceeded", "QuotaExceededError");

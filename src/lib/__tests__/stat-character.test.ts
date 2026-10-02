@@ -6,12 +6,66 @@ import {
   parseCharacterStore,
 } from "../stat-character";
 import { EQUIP_SLOTS, type CharacterStore, type CharacterV1 } from "../types/stat-sim";
+import { computePanel } from "../stat-sim";
 
 function store(character = createDefaultCharacter()): CharacterStore {
   return { version: 1, activeCharacterId: character.id, characters: [character] };
 }
 
 describe("stat-character", () => {
+  it("舊存檔原樣載入，新欄位省略或空陣列的計算完全相同", () => {
+    const c = createDefaultCharacter();
+    c.equipment.cap = { itemId: 1, enhancementLevel: 0, manualBonuses: { str: 2, hp: 50 } };
+    const raw = JSON.parse(JSON.stringify(c));
+    const parsed = parseCharacter(raw);
+    expect(parsed).toEqual({ ok: true, character: c });
+    if (!parsed.ok) throw new Error("存檔應有效");
+    expect(parsed.character.equipment.cap).not.toHaveProperty("randomRolls");
+    expect(parsed.character.equipment.cap).not.toHaveProperty("sockets");
+    const data = { itemsById: { 1: {
+      id: 1, name: "舊帽", level: 1, typeName: "HELMET", slotHint: null, stats: { str: 3 }, strongPathId: null,
+    } }, enhancementsByPath: {}, passives: [] };
+    const before = computePanel(parsed.character, data);
+    c.equipment.cap.randomRolls = []; c.equipment.cap.sockets = [];
+    expect(computePanel(c, data)).toEqual(before);
+    expect(before.attributes.str.value).toBe(6);
+  });
+
+  it("新欄位可 round-trip 及深複製；配方／區間等語意留給引擎驗證", () => {
+    const c = createDefaultCharacter();
+    c.equipment.cap = { itemId: 55216, enhancementLevel: 0, manualBonuses: {},
+      randomRolls: [{ attribute: "命中", value: 85 }],
+      sockets: [null, { recipeId: 10742, stat: "atk", value: 10 }],
+    };
+    const saved = JSON.parse(JSON.stringify(store(c)));
+    expect(parseCharacterStore(saved)).toEqual({ ok: true, store: saved });
+    const copy = duplicateCharacter(c);
+    copy.equipment.cap!.randomRolls![0].value = 50;
+    copy.equipment.cap!.sockets![1]!.value = 20;
+    expect(c.equipment.cap.randomRolls![0].value).toBe(85);
+    expect(c.equipment.cap.sockets![1]!.value).toBe(10);
+  });
+
+  it.each([
+    { randomRolls: null }, { randomRolls: {} }, { randomRolls: new Array(1) }, { randomRolls: [null] },
+    { randomRolls: [{ attribute: "", value: 1 }] }, { randomRolls: [{ attribute: 1, value: 1 }] },
+    ...[undefined, "1", NaN, Infinity, 1.5].map((value) => ({ randomRolls: [{ attribute: "命中", value }] })),
+    { sockets: null }, { sockets: {} }, { sockets: new Array(1) }, { sockets: [undefined] },
+    { sockets: [{ recipeId: 0, stat: "hp", value: 1 }] },
+    { sockets: [{ recipeId: 1, stat: "extra", value: 1 }] },
+    ...[undefined, "1", NaN, Infinity, 1.5].map((value) => ({ sockets: [{ recipeId: 1, stat: "hp", value }] })),
+  ])("拒絕損壞的新欄位且不修補原存檔 %#", (bad) => {
+    const c = createDefaultCharacter();
+    const raw = { ...c, equipment: { ...c.equipment,
+      cap: { itemId: 1, enhancementLevel: 0, manualBonuses: {}, ...bad },
+    } };
+    const before = structuredClone(raw);
+    expect(parseCharacter(raw)).toEqual({ ok: false, reason: "corrupt" });
+    expect(parseCharacterStore({ version: 1, activeCharacterId: c.id, characters: [raw] }))
+      .toEqual({ ok: false, reason: "corrupt" });
+    expect(raw).toEqual(before);
+  });
+
   it("creates independent level-one defaults with all equipment slots", () => {
     const character = createDefaultCharacter();
     expect(character).toMatchObject({

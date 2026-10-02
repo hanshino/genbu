@@ -45,8 +45,41 @@ export type SubSectClan = (typeof SUB_SECT_CLANS)[number];
 export interface EquippedItem {
   itemId: number;
   enhancementLevel: number;
-  /** 鑲嵌與隨機屬性的合計，不含道具本身與強化。 */
+  /** 舊版手動合計（鑲嵌＋隨機），仍會計入；新存檔改用 randomRolls / sockets，UI 可清除。 */
   manualBonuses: PanelBonus;
+  /** 遊戲中實際出現的隨機素質；只列出勾選的，attribute 為 SimRandomOption.attribute。 */
+  randomRolls?: RandomRoll[];
+  /** 長度 ≤ SimItem.socketCount；null 為空槽。 */
+  sockets?: (SocketFill | null)[];
+}
+
+export interface RandomRoll {
+  attribute: string;
+  value: number;
+}
+
+export interface SocketFill {
+  recipeId: number;
+  /** 配方實際抽中的屬性（多屬性配方由玩家選）。 */
+  stat: StatKey;
+  value: number;
+}
+
+/** 合法區間，閉區間 [min, max]；同屬性可有多段（取聯集）。 */
+export type ValueRange = [number, number];
+
+export interface SimRandomOption {
+  /** item_rand.attribute 原文（中文），作為 RandomRoll.attribute。 */
+  attribute: string;
+  stat: StatKey;
+  ranges: ValueRange[];
+}
+
+export interface SocketRecipe {
+  id: number;
+  name: string;
+  /** 可能的結果；不含「無效果」。 */
+  effects: Array<{ stat: StatKey; ranges: ValueRange[] }>;
 }
 
 export interface CharacterV1 {
@@ -91,6 +124,12 @@ export interface SimItem {
   /** weight 是道具重量，計算時加入負重上限。 */
   stats: PanelBonus;
   strongPathId: number | null;
+  /** 省略或空陣列表示沒有隨機素質。 */
+  randomOptions?: SimRandomOption[];
+  /** items.compound_number（0–3，遊戲不能擴槽）。 */
+  socketCount?: number;
+  /** compounds 裝備類別 1–5（盾為 3）；null 表示沒有可插配方。 */
+  socketCategory?: number | null;
 }
 
 export interface EnhancementPath {
@@ -128,6 +167,9 @@ export interface GameData {
   passives: PassiveDef[];
   /** 收藏值門檻，由小到大排序；舊資料未提供時不開放自動換算。 */
   collectionThresholds?: CollectionThreshold[];
+  socketRecipes?: Record<number, SocketRecipe>;
+  /** 裝備類別 → 可插配方 id。 */
+  socketRecipeIdsByCategory?: Record<number, number[]>;
 }
 
 export interface CollectionThreshold {
@@ -142,6 +184,8 @@ export interface StatBreakdown {
     | "equipment"
     | "enhancement"
     | "equipManual"
+    | "equipRandom"
+    | "socket"
     | "passive"
     | "collection"
     | "hero"

@@ -24,7 +24,9 @@ import {
   type StatBreakdown,
   type StatKey,
   type StatValue,
+  type ValueRange,
 } from "@/lib/types/stat-sim";
+import { itemAttributeNames } from "@/lib/constants/i18n";
 
 export { pointCost };
 
@@ -128,6 +130,10 @@ function estimate(stat: StatValue, reason: string): void {
   if (!stat.estimateReasons.includes(reason)) stat.estimateReasons.push(reason);
 }
 
+function inRanges(value: number, ranges: ValueRange[]): boolean {
+  return Number.isSafeInteger(value) && ranges.some(([min, max]) => value >= min && value <= max);
+}
+
 export function computePanel(character: CharacterV1, data: GameData): PanelResult {
   const sect = SECTS[character.sectId];
   if (!sect) throw new RangeError("v1 未支援此主門派");
@@ -202,6 +208,16 @@ export function computePanel(character: CharacterV1, data: GameData): PanelResul
       issue("missing-item", `找不到裝備資料：${equipped.itemId}`, equipped.itemId, true);
     } else {
       addBonus(item.stats, "equipment", item.name, item.id, accept);
+      const seenAttributes = new Set<string>();
+      for (const roll of equipped.randomRolls ?? []) {
+        const option = item.randomOptions?.find((option) => option.attribute === roll.attribute);
+        if (!option || seenAttributes.has(roll.attribute) || !inRanges(roll.value, option.ranges)) {
+          issue("invalid-random-roll", `${item.name}的隨機素質「${roll.attribute}」重複、不支援或數值不在合法整數區間，未計入`, item.id, true);
+          continue;
+        }
+        seenAttributes.add(roll.attribute);
+        addBonus({ [option.stat]: roll.value }, "equipRandom", `${item.name} 隨機素質`, item.id, accept);
+      }
       const level = equipped.enhancementLevel;
       if (!Number.isSafeInteger(level) || level < 0) {
         issue("invalid-enhancement-level", `${item.name}的強化等級不合法`, item.id, true);
@@ -214,6 +230,29 @@ export function computePanel(character: CharacterV1, data: GameData): PanelResul
         } else {
           addBonus(path.levels[level], "enhancement", `${item.name} +${level}`, item.id, accept);
         }
+      }
+      for (const [index, fill] of (equipped.sockets ?? []).entries()) {
+        const label = `${item.name} 第 ${index + 1} 槽`;
+        if (index >= (item.socketCount ?? 0)) {
+          issue("invalid-socket-index", `${label}超過固定插槽數 ${item.socketCount ?? 0}，未計入`, item.id, true);
+          continue;
+        }
+        if (fill === null) continue;
+        const recipe = data.socketRecipes?.[fill.recipeId];
+        if (!recipe) {
+          issue("missing-socket-recipe", `${label}找不到插槽配方 ${fill.recipeId}，未計入`, item.id, true);
+          continue;
+        }
+        if (item.socketCategory == null || !data.socketRecipeIdsByCategory?.[item.socketCategory]?.includes(fill.recipeId)) {
+          issue("invalid-socket-category", `${label}不能使用「${recipe.name}」：裝備類別不符，未計入`, item.id, true);
+          continue;
+        }
+        const effect = recipe.effects.find((effect) => effect.stat === fill.stat);
+        if (!effect || !inRanges(fill.value, effect.ranges)) {
+          issue("invalid-socket-effect", `${label}「${recipe.name}」的${itemAttributeNames[fill.stat] ?? fill.stat}不支援或數值不在合法整數區間，未計入`, item.id, true);
+          continue;
+        }
+        addBonus({ [fill.stat]: fill.value }, "socket", `${label} ${recipe.name}`, recipe.id, accept);
       }
     }
     addBonus(equipped.manualBonuses, "equipManual", `${item?.name ?? equipped.itemId} 手動加值`, equipped.itemId, accept);

@@ -1,12 +1,16 @@
 // 僅供 server 使用，與其他 queries 一樣透過 readonly db.ts 存取 SQLite。
 import { getDb } from "@/lib/db";
 import { HELP_PASSIVES, WEAPON_TYPE_NAMES } from "@/configs/stat-sim-passives";
-import { BONUS_TO_ATTR_KEY } from "@/lib/queries/compound";
+import {
+  BONUS_TO_ATTR_KEY, getEquipmentSlotForType, mergeBonus, parseMaterialItems, parseModProb,
+  type CompoundOutput,
+} from "@/lib/queries/compound";
+import { labelToKey } from "@/lib/scoring/attribute-alias";
 import { getItemIconMap } from "@/lib/queries/images";
 import {
   EQUIP_SLOTS, STAT_KEYS, SUB_SECT_CLANS,
   type EquipSlot, type GameData, type PanelBonus, type PassiveDef,
-  type SimItem, type StatKey, type UiControl, type UiEquipSlot, type UiWindowLayout,
+  type SimItem, type StatKey, type UiControl, type UiEquipSlot, type UiWindowLayout, type ValueRange,
 } from "@/lib/types/stat-sim";
 
 const ITEM_ALIASES: Partial<Record<StatKey, string>> = {
@@ -99,12 +103,27 @@ function addBonus(target: PanelBonus, bonus: PanelBonus) {
   }
 }
 
+/** 整數閉區間取聯集；保留不連續區段，不把洞補成合法值。 */
+export function mergeRanges(ranges: ValueRange[]): ValueRange[] {
+  const merged: ValueRange[] = [];
+  for (const [min, max] of [...ranges].sort((a, b) => a[0] - b[0])) {
+    const last = merged.at(-1);
+    if (last && min <= last[1] + 1) last[1] = Math.max(last[1], max);
+    else merged.push([min, max]);
+  }
+  return merged;
+}
+
+function isStatKey(key: string | null | undefined): key is StatKey {
+  return (STAT_KEYS as readonly (string | null | undefined)[]).includes(key);
+}
+
 /** 一次載入 client 引擎所需的純 JSON；圖片與技能均為批次查詢，沒有逐道具查 DB。 */
 export function getStatSimData(): GameData {
   const db = getDb();
   const items = db.prepare(`
     SELECT id, name, base_lv AS level, type_name AS typeName, equip_slot,
-           strong_equipment AS strongPathId,
+           strong_equipment AS strongPathId, compound_number AS socketCount,
            ${STAT_KEYS.map((key) => `${ITEM_STATS[key]} AS ${key}`).join(", ")}
     FROM items WHERE type_name IN (${EQUIPMENT_TYPES.map(() => "?").join(",")})
       AND (equip_slot IN (${Object.keys(SLOT_HINTS).map(() => "?").join(",")})
@@ -129,7 +148,57 @@ export function getStatSimData(): GameData {
       id: row.id, name: row.name, level: row.level ?? 0, typeName: row.typeName,
       slotHint: SLOT_HINTS[row.equip_slot ?? ""] ?? TYPE_HINTS[row.typeName ?? ""] ?? null,
       iconUrl: icons.get(row.id)?.url ?? null, stats, strongPathId,
+      // ponytail: 0 槽省略 optional 欄位，避免每件無槽裝備增加 payload。
+      ...(row.socketCount ? {
+        socketCount: row.socketCount, socketCategory: getEquipmentSlotForType(row.typeName),
+      } : {}),
     };
+  }
+
+  for (const row of db.prepare("SELECT id, attribute, min, max FROM item_rand ORDER BY id, attribute, min, max")
+    .all() as Array<{ id: string; attribute: string; min: number; max: number }>) {
+    const item = itemsById[Number(row.id)];
+    const stat = labelToKey(row.attribute);
+    if (!item || !isStatKey(stat) || (row.min === 0 && row.max === 0) ||
+        !Number.isSafeInteger(row.min) || !Number.isSafeInteger(row.max) || row.min > row.max) continue;
+    const options = item.randomOptions ??= [];
+    let option = options.find((option) => option.attribute === row.attribute);
+    if (!option) {
+      option = { attribute: row.attribute, stat, ranges: [] };
+      options.push(option);
+    }
+    option.ranges.push([row.min, row.max]);
+  }
+  for (const item of Object.values(itemsById)) {
+    for (const option of item.randomOptions ?? []) option.ranges = mergeRanges(option.ranges);
+  }
+
+  const socketRecipes: NonNullable<GameData["socketRecipes"]> = {};
+  const socketRecipeIdsByCategory: NonNullable<GameData["socketRecipeIdsByCategory"]> = {};
+  for (const row of db.prepare(`SELECT id, name, material_items, mod_prob FROM compounds
+    WHERE type = 'ITEM_COMPOUND_EQUIPMENT' ORDER BY id`).all() as Array<{
+      id: number; name: string | null; material_items: string | null; mod_prob: string | null;
+    }>) {
+    const categories = [...new Set(parseMaterialItems(row.material_items).map(({ id }) => id)
+      .filter((id) => Number.isInteger(id) && id >= 1 && id <= 5))];
+    if (!categories.length) continue;
+    const outputs: CompoundOutput[] = parseModProb(row.mod_prob).filter((p) =>
+      isStatKey(BONUS_TO_ATTR_KEY[p.type]) && (p.prob ?? 0) > 0 &&
+      Number.isSafeInteger(p.min) && Number.isSafeInteger(p.max) && p.min! <= p.max!,
+    ).map((p) => ({
+      rawType: p.type, kind: "bonus", label: p.type, itemId: null,
+      min: p.min, max: p.max, prob: p.prob!,
+    }));
+    const effects = [...new Set(outputs.map((o) => o.rawType))].flatMap((type) => {
+      const merged = mergeBonus(outputs, type);
+      if (!merged) return [];
+      // mergeBonus 的 min/max 是外包區間；實際可選值還要取聯集，不能填平缺口。
+      return [{ stat: BONUS_TO_ATTR_KEY[type] as StatKey, ranges: mergeRanges(outputs
+        .filter((o) => o.rawType === type).map((o): ValueRange => [o.min!, o.max!])) }];
+    });
+    if (!effects.length) continue;
+    socketRecipes[row.id] = { id: row.id, name: row.name ?? `配方 ${row.id}`, effects };
+    for (const category of categories) (socketRecipeIdsByCategory[category] ??= []).push(row.id);
   }
 
   const formulas = new Map((db.prepare("SELECT id, bonus_type, bonus_value FROM strong_formula")
@@ -235,7 +304,7 @@ export function getStatSimData(): GameData {
   const collectionThresholds = db.prepare(`
     SELECT value, magic_id AS magicId, level FROM collect_book_bonuses ORDER BY value, magic_id, level
   `).all() as NonNullable<GameData["collectionThresholds"]>;
-  return { itemsById, enhancementsByPath, passives, collectionThresholds };
+  return { itemsById, enhancementsByPath, passives, collectionThresholds, socketRecipes, socketRecipeIdsByCategory };
 }
 
 /** 保留原始 control 座標/field，不以有錯字的 comment 推斷數值用途。 */

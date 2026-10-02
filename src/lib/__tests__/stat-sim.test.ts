@@ -7,7 +7,7 @@ import {
 } from "@/lib/stat-sim";
 import {
   ATTRIBUTE_KEYS, EQUIP_SLOTS,
-  type Attributes, type CharacterV1, type GameData, type PanelBonus,
+  type Attributes, type CharacterV1, type EquippedItem, type GameData, type PanelBonus,
   type PanelResult, type PassiveDef, type SectId, type SimItem,
 } from "@/lib/types/stat-sim";
 
@@ -218,6 +218,80 @@ describe("配點與轉生 §9", () => {
 });
 
 describe("加成、條件與資料完整性", () => {
+  function rolledFixture() {
+    const c = character(); const data = emptyData();
+    data.itemsById[1] = {
+      ...item(1, "HELMET", { str: 2 }), strongPathId: 5, socketCount: 2, socketCategory: 2,
+      randomOptions: [{ attribute: "外功", stat: "str", ranges: [[1, 3], [8, 10]] }],
+    };
+    data.enhancementsByPath[5] = { maxLevel: 1, levels: [{}, { str: 3 }] };
+    data.socketRecipes = {
+      10: { id: 10, name: "測試魂珠", effects: [{ stat: "str", ranges: [[2, 4], [8, 10]] }] },
+      11: { id: 11, name: "武器魂珠", effects: [{ stat: "str", ranges: [[2, 4]] }] },
+    };
+    data.socketRecipeIdsByCategory = { 1: [11], 2: [10] };
+    c.equipment.cap = { itemId: 1, enhancementLevel: 1, manualBonuses: { str: 4 } };
+    return { c, data, equipped: c.equipment.cap };
+  }
+
+  it("隨機／插槽六圍先進公式，保留固定→隨機→強化→插槽→舊手動順序與含裝扣除", () => {
+    const { c, data, equipped } = rolledFixture();
+    equipped.randomRolls = [{ attribute: "外功", value: 3 }];
+    equipped.sockets = [null, { recipeId: 10, stat: "str", value: 4 }];
+    const before = structuredClone({ c, data });
+    const panel = computePanel(c, data);
+    expect(panel.attributes.str.value).toBe(17);
+    expect(panel.attributes.str.breakdown.map((r) => r.source)).toEqual([
+      "attribute", "equipment", "equipRandom", "enhancement", "socket", "equipManual",
+    ]);
+    expect(panel.attributes.str.breakdown).toContainEqual({
+      source: "socket", label: "測試裝備 1 第 2 槽 測試魂珠", amount: 4, refId: 10,
+    });
+    expect(panel.attributes.str.breakdown).toContainEqual({
+      source: "equipRandom", label: "測試裝備 1 隨機素質", amount: 3, refId: 1,
+    });
+    const equivalent = character({ attributes: { ...c.attributes, str: 17 } });
+    expect(panel.stats.atk.value).toBe(computePanel(equivalent, emptyData()).stats.atk.value);
+    expect(bareFromEquipped(30, panel.attributes.str.value! - c.attributes.str)).toBe(14);
+    expect(panel.points.totalCost).toBe(0);
+    expect(panel.issues).toEqual([]);
+    expect({ c, data }).toEqual(before);
+    expectBreakdowns(panel);
+  });
+
+  it.each<[string, Partial<EquippedItem>, string]>([
+    ...[0, 4, 11, 1.5, NaN, Infinity].map((value): [string, Partial<EquippedItem>, string] => [
+      `隨機值 ${value}`, { randomRolls: [{ attribute: "外功", value }] }, "invalid-random-roll",
+    ]),
+    ["未知隨機屬性", { randomRolls: [{ attribute: "額外", value: 1 }] }, "invalid-random-roll"],
+    ...[1, 5, 11, 2.5, NaN, Infinity].map((value): [string, Partial<EquippedItem>, string] => [
+      `插槽值 ${value}`, { sockets: [{ recipeId: 10, stat: "str", value }] }, "invalid-socket-effect",
+    ]),
+    ["配方不存在", { sockets: [{ recipeId: 999, stat: "str", value: 2 }] }, "missing-socket-recipe"],
+    ["配方錯誤類別", { sockets: [{ recipeId: 11, stat: "str", value: 2 }] }, "invalid-socket-category"],
+    ["配方沒有此效果", { sockets: [{ recipeId: 10, stat: "hp", value: 2 }] }, "invalid-socket-effect"],
+    ["超出固定槽數", { sockets: [null, null, { recipeId: 10, stat: "str", value: 2 }] }, "invalid-socket-index"],
+    ["空槽也不能擴槽", { sockets: [null, null, null] }, "invalid-socket-index"],
+  ])("%s 回報 error，不計入也不 clamp", (_label, invalid, code) => {
+    const { c, data, equipped } = rolledFixture();
+    const base = computePanel(c, data);
+    Object.assign(equipped, invalid);
+    const panel = computePanel(c, data);
+    expect(panel.attributes.str.value).toBe(base.attributes.str.value);
+    expect(panel.stats.atk.value).toBe(base.stats.atk.value);
+    expect(panel.issues).toEqual([expect.objectContaining({ code, severity: "error" })]);
+    expectBreakdowns(panel);
+  });
+
+  it("重複隨機素質只計第一次合法值；不同插槽可使用同配方", () => {
+    const { c, data, equipped } = rolledFixture();
+    equipped.randomRolls = [{ attribute: "外功", value: 1 }, { attribute: "外功", value: 3 }];
+    equipped.sockets = [{ recipeId: 10, stat: "str", value: 2 }, { recipeId: 10, stat: "str", value: 8 }];
+    const panel = computePanel(c, data);
+    expect(panel.attributes.str.value).toBe(21);
+    expect(panel.issues).toEqual([expect.objectContaining({ code: "invalid-random-roll", severity: "error" })]);
+  });
+
   it("惡人谷護勁對 P + 1.5W 整體取 floor", () => {
     expect(SECTS[2].mdef(3, 5)).toBe(10);
     expect(SECTS[2].mdef(3, 6)).toBe(12);

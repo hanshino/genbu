@@ -2,12 +2,125 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { getDb } from "@/lib/db";
 import { HELP_PASSIVES, WEAPON_TYPE_NAMES } from "@/configs/stat-sim-passives";
 import { STAT_KEYS, type GameData } from "@/lib/types/stat-sim";
-import { getStatSimData, getStatSimWindows } from "../stat-sim";
+import { getStatSimData, getStatSimWindows, mergeRanges } from "../stat-sim";
+import { BONUS_TO_ATTR_KEY, getEquipmentSlotForType, parseMaterialItems, parseModProb } from "../compound";
+import { labelToKey } from "@/lib/scoring/attribute-alias";
+import { createDefaultCharacter } from "@/lib/stat-character";
+import { computePanel } from "@/lib/stat-sim";
 import { equipmentFields } from "@/components/stat-sim/window-layout";
 
 describe("stat-sim — 真實遊戲資料", () => {
   let data: GameData;
   beforeAll(() => { data = getStatSimData(); });
+
+  it("區間聯集合併重複、重疊與相鄰，但保留缺口且不改輸入", () => {
+    const ranges: [number, number][] = [[8, 10], [1, 3], [1, 1], [3, 4], [5, 6], [12, 12]];
+    const before = structuredClone(ranges);
+    expect(mergeRanges(ranges)).toEqual([[1, 6], [8, 10], [12, 12]]);
+    expect(ranges).toEqual(before);
+    expect(mergeRanges([])).toEqual([]);
+    expect(data.itemsById[20001].randomOptions?.find((o) => o.attribute === "物攻")?.ranges).toEqual([[1, 3]]);
+  });
+
+  it("隨機素質映射、零值與非面板列過濾；55216 的真實區間與 0 槽", () => {
+    const aliases = {
+      拆招: "uncanny_dodge", 閃躲: "dodge", 重擊: "critical", 真氣: "mp", 體力: "hp",
+      防禦: "def", 護勁: "mdef", 內勁: "matk", 物攻: "atk", 命中: "hit",
+      外功: "str", 內力: "pow", 根骨: "vit", 身法: "agi", 技巧: "dex", 玄學: "wis",
+    };
+    for (const [label, key] of Object.entries(aliases)) expect(labelToKey(label)).toBe(key);
+    const cap = data.itemsById[55216];
+    expect(cap.name).toBe("蔚藍聖龍盔");
+    expect(cap.socketCount ?? 0).toBe(0);
+    expect(cap.randomOptions).toHaveLength(5);
+    expect(cap.randomOptions).toEqual(expect.arrayContaining([
+      { attribute: "命中", stat: "hit", ranges: [[50, 85]] },
+      { attribute: "防禦", stat: "def", ranges: [[55, 165]] },
+      { attribute: "護勁", stat: "mdef", ranges: [[55, 135]] },
+      { attribute: "體力", stat: "hp", ranges: [[1550, 3100]] },
+      { attribute: "真氣", stat: "mp", ranges: [[1100, 2200]] },
+    ]));
+    const rows = getDb().prepare("SELECT id, attribute, min, max FROM item_rand").all() as
+      Array<{ id: string; attribute: string; min: number; max: number }>;
+    let omitted = 0;
+    for (const row of rows) {
+      const item = data.itemsById[Number(row.id)];
+      if (!item) continue;
+      const key = labelToKey(row.attribute);
+      if (!(STAT_KEYS as readonly (string | null)[]).includes(key)) {
+        expect(item.randomOptions?.some((o) => o.attribute === row.attribute) ?? false).toBe(false);
+        omitted++;
+      }
+      if (!rows.some((r) => r.id === row.id && r.attribute === row.attribute && (r.min !== 0 || r.max !== 0))) {
+        expect(item.randomOptions?.some((o) => o.attribute === row.attribute) ?? false).toBe(false);
+      }
+    }
+    expect(omitted).toBeGreaterThan(0);
+    for (const item of Object.values(data.itemsById)) {
+      for (const option of item.randomOptions ?? []) {
+        const source = rows.filter((r) => Number(r.id) === item.id && r.attribute === option.attribute &&
+          (r.min !== 0 || r.max !== 0));
+        expect(option.ranges).toEqual(mergeRanges(source.map((r) => [r.min, r.max])));
+      }
+    }
+    const c = createDefaultCharacter();
+    c.equipment.cap = { itemId: 55216, enhancementLevel: 0, manualBonuses: {} };
+    const base = computePanel(c, data);
+    c.equipment.cap.randomRolls = [{ attribute: "命中", value: 85 }, { attribute: "體力", value: 1550 }];
+    c.equipment.cap.sockets = [{ recipeId: 10742, stat: "atk", value: 10 }];
+    const panel = computePanel(c, data);
+    expect(panel.stats.hit.value).toBe(base.stats.hit.value! + 85);
+    expect(panel.stats.hp.value).toBe(base.stats.hp.value! + 1550);
+    expect(panel.stats.def.value).toBe(base.stats.def.value); // 未勾選的不能自動加滿
+    expect(panel.stats.atk.value).toBe(base.stats.atk.value);
+    expect(panel.issues).toContainEqual(expect.objectContaining({ code: "invalid-socket-index", severity: "error" }));
+  });
+
+  it("插槽配方共用字典只收 EQUIPMENT 面板效果，類別含盾=3", () => {
+    expect(data.socketRecipes![10742]).toEqual({
+      id: 10742, name: "吉魂珠強化", effects: [{ stat: "atk", ranges: [[10, 30]] }],
+    });
+    expect(data.socketRecipeIdsByCategory![1]).toContain(10742);
+    expect(data.socketRecipeIdsByCategory![3]).not.toContain(10742);
+    const shields = Object.values(data.itemsById).filter((i) => i.typeName === "SHIELD" && i.socketCount);
+    expect(shields.length).toBeGreaterThan(0);
+    for (const shield of shields) expect(shield.socketCategory).toBe(3);
+    const c = createDefaultCharacter();
+    c.equipment.left = { itemId: shields[0].id, enhancementLevel: 0, manualBonuses: {} };
+    const base = computePanel(c, data);
+    const recipe = data.socketRecipeIdsByCategory![3].map((id) => data.socketRecipes![id])
+      .find((r) => r.effects.some((effect) => effect.stat === "def"))!;
+    const value = recipe.effects.find((effect) => effect.stat === "def")!.ranges[0][0];
+    c.equipment.left.sockets = [{ recipeId: recipe.id, stat: "def", value }];
+    expect(computePanel(c, data).stats.def.value).toBe(base.stats.def.value! + value);
+    expect(computePanel(c, data).issues).toEqual([]);
+    const counts = getDb().prepare("SELECT id, compound_number FROM items").all() as Array<{ id: number; compound_number: number }>;
+    for (const row of counts) {
+      const item = data.itemsById[row.id];
+      if (!item) continue;
+      expect(item.socketCount ?? 0).toBe(row.compound_number ?? 0);
+      if (item.socketCount) expect(item.socketCategory).toBe(getEquipmentSlotForType(item.typeName));
+    }
+    const rows = getDb().prepare("SELECT id, type, material_items, mod_prob FROM compounds").all() as
+      Array<{ id: number; type: string; material_items: string; mod_prob: string }>;
+    for (const row of rows) {
+      const effects = parseModProb(row.mod_prob).filter((p) =>
+        (STAT_KEYS as readonly string[]).includes(BONUS_TO_ATTR_KEY[p.type]) && (p.prob ?? 0) > 0);
+      const recipe = data.socketRecipes![row.id];
+      if (row.type !== "ITEM_COMPOUND_EQUIPMENT" || !effects.length) {
+        expect(recipe).toBeUndefined();
+        continue;
+      }
+      expect(recipe).toBeDefined();
+      for (const [category, ids] of Object.entries(data.socketRecipeIdsByCategory!)) {
+        expect(ids.includes(row.id)).toBe(parseMaterialItems(row.material_items).some((m) => m.id === Number(category)));
+      }
+      for (const effect of recipe.effects) {
+        expect(effect.ranges).toEqual(mergeRanges(effects.filter((p) => BONUS_TO_ATTR_KEY[p.type] === effect.stat)
+          .map((p) => [p.min!, p.max!])));
+      }
+    }
+  });
 
   it("160 帽 +5 只取當級 common；解鎖 bonus 累加且跨級保留", () => {
     const cap = data.itemsById[50401]; // 血龍魔尊冠 Lv160，path 132

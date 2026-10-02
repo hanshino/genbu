@@ -108,9 +108,11 @@ DB 欄位都在 `items`：`hp mp str pow vit dex agi wis atk matk extra_def magi
 - genbu 已有 `src/lib/queries/compound.ts` 的 `BONUS_TO_ATTR_KEY`，可以共用。
 - 只實測過 +5；更高等級是照同一規則推的，例如 Lv198 麒麟的 +16 雙劍也吻合。
 
-**鑲嵌（真元 / 魂石）**：`compounds` 中 type 為 `ITEM_COMPOUND_EQUIPMENT` / `ITEM_COMPOUND_ORNAMENT` 的配方。效果是隨機區間，要讓使用者選數值。
+**插槽（真元 / 魂石 / 魂珠）**：槽數取 `items.compound_number`（0–3，不可擴槽）。只收 `compounds.type = ITEM_COMPOUND_EQUIPMENT`，`material_items` 的類別 1–5 決定適用裝備（盾為 3）；排除 ORNAMENT / CREATEITEM 配方、無效果及非面板效果。配方以共用字典傳給 client，每槽記錄實際抽中的單一屬性與整數值，不以機率期望值代替。
 
-**隨機屬性**：`item_rand` 只有機率表，同一件裝備每件數值不同，要讓使用者輸入。
+**隨機屬性**：`item_rand.attribute` 透過 `labelToKey` 映射；非面板屬性及 `min=max=0` 列略過。同件同屬性區間取聯集（重疊／相鄰合併，保留缺口），玩家只填實際抽到的子集，同屬性不重複計入。55216「蔚藍聖龍盔」有命中 50–85、防禦 55–165、護勁 55–135、體力 1550–3100、真氣 1100–2200，但固定 0 槽。
+
+引擎順序：固定值 → 隨機素質 → `+N` → 插槽 → 舊版 `manualBonuses`；其中六圍全部先進公式。非法屬性、非整數／越界值、錯誤配方類別或超出槽數皆回報 error 且不計入，不 clamp。舊存檔省略 `randomRolls` / `sockets` 時數值不變；舊手動合計仍保留，改填明細時須自行清除重複的手動值。含裝轉裸值使用 `computePanel.attributes − 裸值`，因此也會扣除隨機／插槽六圍。
 
 ## 6. 被動技能
 
