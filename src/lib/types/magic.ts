@@ -47,6 +47,8 @@ export interface Magic {
   exclude: number | null;
   pet_id: number | null;
   confine_state: number | null;
+  cd_time: number | null;
+  trigger_id: number | null;
 }
 
 // 列表頁投影：每個 skill 一列，依 (id, name) 分組。

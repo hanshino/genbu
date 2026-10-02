@@ -94,6 +94,7 @@ const groups: FeatureGroup[] = [
       { title: "175 北斗七星", description: "輸入數字，算出七顆星的開關", href: "/tools/175" },
       { title: "180 神武禁地", description: "輸入總和與封印數字，列出所有排法", href: "/tools/180" },
       { title: "易容閣", description: "試穿外觀、坐騎與染髮，可分享連結", href: "/tools/salon" },
+      { title: "經脈模擬器", description: "還沒 180 等也能先試打通、規劃配點", href: "/tools/meridian" },
     ],
   },
 ];

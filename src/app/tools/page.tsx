@@ -24,6 +24,12 @@ export default function ToolsHubPage() {
           description="依屬性反查可用的真元、魂珠與魂石強化配方，附單次機率與期望消耗顆數。"
         />
         <ToolCard
+          href="/tools/meridian"
+          title="經脈模擬器"
+          subtitle="體驗打通與規劃配點"
+          description="還沒到 180 等也能先試：擲骰打通看要花多少丹田，或直接配好一套看屬性總和。"
+        />
+        <ToolCard
           href="/tools/160"
           title="160 副本"
           subtitle="迷霧九宮格"
