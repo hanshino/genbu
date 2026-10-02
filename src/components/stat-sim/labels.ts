@@ -10,6 +10,7 @@ import {
   type SectId,
   type StatValue,
   type SubSectClan,
+  type ValueRange,
 } from "@/lib/types/stat-sim";
 
 export type ViewKey = AttributeKey | PanelStatKey;
@@ -77,6 +78,17 @@ export function formatBonus(bonus: PanelBonus): string {
   return STAT_KEYS.filter((key) => bonus[key])
     .map((key) => `${STAT_LABELS[key]} ${signed(bonus[key]!)}`)
     .join("、");
+}
+
+/** 「50–85」；相連或重疊的區段合併，其餘用「、」分開。 */
+export function formatRanges(ranges: ValueRange[]): string {
+  const merged: ValueRange[] = [];
+  for (const [a, b] of [...ranges].sort((x, y) => x[0] - y[0] || x[1] - y[1])) {
+    const last = merged.at(-1);
+    if (last && a <= last[1] + 1) last[1] = Math.max(last[1], b);
+    else merged.push([a, b]);
+  }
+  return merged.map(([a, b]) => (a === b ? `${a}` : `${a}–${b}`)).join("、");
 }
 
 /** 最高可學等級：magic_learn.char_level ≤ 角色等級；缺學習資料（-1）的等級不算。 */

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import {
   CircleAlertIcon,
   DicesIcon,
@@ -35,7 +35,16 @@ import {
   type ValueRange,
 } from "@/lib/types/stat-sim";
 import { cn } from "@/lib/utils";
-import { STAT_LABELS, fmt, formatBonus, selectOnFocus, signed, typeLabel } from "./labels";
+import {
+  STAT_LABELS,
+  fmt,
+  formatBonus,
+  formatRanges,
+  selectOnFocus,
+  signed,
+  typeLabel,
+} from "./labels";
+import { RecipeCombobox } from "./recipe-combobox";
 
 /* ---------- 編輯中的草稿：輸入框保留字串，套用時才轉成 EquippedItem ---------- */
 
@@ -69,17 +78,6 @@ const inRanges = (v: number, ranges: ValueRange[]) =>
   Number.isInteger(v) && ranges.some(([a, b]) => v >= a && v <= b);
 const rangeText = ([a, b]: ValueRange) => (a === b ? `${a}` : `${a}–${b}`);
 const sortRanges = (ranges: ValueRange[]) => [...ranges].sort((x, y) => x[0] - y[0] || x[1] - y[1]);
-
-/** 「50–85」；相連或重疊的區段合併，其餘用「、」分開。 */
-export function formatRanges(ranges: ValueRange[]): string {
-  const merged: ValueRange[] = [];
-  for (const [a, b] of sortRanges(ranges)) {
-    const last = merged.at(-1);
-    if (last && a <= last[1] + 1) last[1] = Math.max(last[1], b);
-    else merged.push([a, b]);
-  }
-  return merged.map(rangeText).join("、");
-}
 
 const effectOf = (recipe: SocketRecipe, stat: StatKey) =>
   recipe.effects.find((e) => e.stat === stat) ?? recipe.effects[0];
@@ -195,7 +193,7 @@ export function ItemEditor({ idBase, item, data, draft, ev, onChange }: Props) {
   const enhanceBonus = path?.levels[draft.enhancementLevel] ?? {};
   const options = item.randomOptions ?? [];
   const socketCount = item.socketCount ?? 0;
-  const recipes = recipesFor(item, data);
+  const recipes = useMemo(() => recipesFor(item, data), [item, data]);
   const legacy = formatBonus(draft.manualBonuses);
   const checkedCount = options.filter((o) => draft.rolls[o.attribute] !== undefined).length;
   const [rollMin, rollMax] = item.randomCount ?? [];
@@ -441,32 +439,16 @@ export function ItemEditor({ idBase, item, data, draft, ev, onChange }: Props) {
                       <GemIcon className="size-3.5 shrink-0" aria-hidden />
                       {label}
                     </span>
-                    <Select
-                      value={recipe ? String(recipe.id) : "empty"}
+                    <RecipeCombobox
+                      label={label}
+                      recipes={recipes}
+                      value={recipe}
                       disabled={!recipes.length}
-                      onValueChange={(v) => {
-                        const next = recipes.find((r) => String(r.id) === v);
+                      onChange={(next) => {
+                        if ((next?.id ?? null) === (fill?.recipeId ?? null)) return;
                         setSocket(i, next ? fillFor(next, next.effects[0].stat) : null);
                       }}
-                    >
-                      <SelectTrigger className="w-full" aria-label={`${label}配方`}>
-                        <SelectValue>
-                          {(v: unknown) =>
-                            v === "empty"
-                              ? "空槽"
-                              : (recipes.find((r) => String(r.id) === v)?.name ?? "空槽")
-                          }
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="empty">空槽</SelectItem>
-                        {recipes.map((r) => (
-                          <SelectItem key={r.id} value={String(r.id)}>
-                            {r.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                   </div>
 
                   {recipe && effect && (

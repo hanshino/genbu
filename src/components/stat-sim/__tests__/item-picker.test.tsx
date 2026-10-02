@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ItemPicker } from "../item-picker";
 import {
@@ -88,8 +88,15 @@ const data: GameData = {
         { stat: "def", ranges: [[5, 9]] },
       ],
     },
+    13: { id: 13, name: "獵人小真元強化", effects: [{ stat: "hit", ranges: [[7, 7]] }] },
+    14: { id: 14, name: "赤血巨蠍強化裝備", effects: [{ stat: "atk", ranges: [[30, 30]] }] },
+    15: { id: 15, name: "牛魔人強化裝備", effects: [{ stat: "atk", ranges: [[21, 21]] }] },
+    16: { id: 16, name: "藍頸熊強化裝備", effects: [{ stat: "atk", ranges: [[15, 15]] }] },
+    17: { id: 17, name: "幽靈侍衛強化裝備", effects: [{ stat: "def", ranges: [[11, 11]] }] },
+    // 不在這個類別：舊存檔仍要能顯示
+    90: { id: 90, name: "絕版魂石", effects: [{ stat: "hit", ranges: [[3, 3]] }] },
   },
-  socketRecipeIdsByCategory: { 1: [10, 11, 12] },
+  socketRecipeIdsByCategory: { 1: [10, 11, 12, 13, 14, 15, 16, 17] },
 };
 
 function setup(cap: EquippedItem | null) {
@@ -115,7 +122,24 @@ function setup(cap: EquippedItem | null) {
     await user.click(screen.getByRole("combobox", { name: combobox }));
     await user.click(await screen.findByRole("option", { name: option }));
   };
-  return { user, onApply, onClose, pick, applied: () => onApply.mock.lastCall?.[1] };
+  /** 打開第 N 槽的配方選單，回傳 popup 內的查詢工具。 */
+  const openRecipes = async (slot: string) => {
+    await user.click(screen.getByRole("combobox", { name: `${slot}配方` }));
+    return within(await screen.findByLabelText(`${slot}配方清單`));
+  };
+  const pickRecipe = async (slot: string, stem: string) => {
+    const pop = await openRecipes(slot);
+    await user.click(pop.getByRole("option", { name: new RegExp(`^${stem}`) }));
+  };
+  return {
+    user,
+    onApply,
+    onClose,
+    pick,
+    openRecipes,
+    pickRecipe,
+    applied: () => onApply.mock.lastCall?.[1],
+  };
 }
 
 const fresh = (extra: Partial<EquippedItem> = {}): EquippedItem => ({
@@ -157,15 +181,15 @@ describe("ItemPicker 裝備編輯", () => {
   });
 
   it("插槽：固定效果唯讀、隨機填值顯示檔位、多屬性先選屬性，合計列出來源", async () => {
-    const { user, pick, applied } = setup(
+    const { user, pickRecipe, applied } = setup(
       fresh({ randomRolls: [{ attribute: "命中", value: 72 }] }),
     );
     expect(screen.getByText("第 1 槽")).toBeInTheDocument();
-    await pick("第 1 槽配方", "獵人強化裝備");
+    await pickRecipe("第 1 槽", "獵人");
     expect(screen.queryByRole("textbox", { name: "第 1 槽數值" })).not.toBeInTheDocument();
     expect(screen.getByText("+7")).toBeInTheDocument();
 
-    await pick("第 2 槽配方", "吉魂珠強化");
+    await pickRecipe("第 2 槽", "吉魂珠");
     const value = screen.getByRole("textbox", { name: "第 2 槽數值" });
     expect(value).toHaveValue("10");
     await user.clear(value);
@@ -187,8 +211,8 @@ describe("ItemPicker 裝備編輯", () => {
   });
 
   it("多屬性配方：先選屬性，換屬性會重填該屬性的最小值", async () => {
-    const { pick, applied, user } = setup(fresh());
-    await pick("第 1 槽配方", "玄武魂珠強化");
+    const { pick, pickRecipe, applied, user } = setup(fresh());
+    await pickRecipe("第 1 槽", "玄武魂珠");
     expect(screen.getByRole("textbox", { name: "第 1 槽數值" })).toHaveValue("10");
     await pick("第 1 槽屬性", "防禦");
     expect(screen.getByRole("textbox", { name: "第 1 槽數值" })).toHaveValue("5");
@@ -262,5 +286,100 @@ describe("ItemPicker 裝備編輯", () => {
     await user.click(screen.getByRole("button", { name: "取消" }));
     expect(onClose).toHaveBeenCalled();
     expect(onApply).not.toHaveBeenCalled();
+  });
+});
+
+describe("插槽配方選單", () => {
+  it("同怪物、效果相同的配方合併成一筆，舊存檔的配方 id 也能顯示", async () => {
+    const { openRecipes } = setup(
+      fresh({
+        sockets: [
+          { recipeId: 13, stat: "hit", value: 7 },
+          { recipeId: 90, stat: "hit", value: 3 },
+        ],
+      }),
+    );
+    expect(screen.getByRole("combobox", { name: "第 1 槽配方" })).toHaveTextContent(
+      "獵人· 命中 +7",
+    );
+    expect(screen.getByRole("combobox", { name: "第 2 槽配方" })).toHaveTextContent("絕版魂石");
+
+    const pop = await openRecipes("第 1 槽");
+    const hunter = pop.getByRole("option", { name: /^獵人/ });
+    expect(hunter).toHaveTextContent("小真元強化／強化裝備");
+    expect(hunter).toHaveAttribute("aria-selected", "true");
+    expect(pop.getByRole("option", { name: /^赤血巨蠍/ })).toHaveTextContent("僅強化裝備");
+    expect(pop.getByRole("option", { name: /^吉魂珠/ })).toHaveTextContent(
+      "魂珠強化 數值隨機物攻 10–30", // 全形空白會被正規化,
+    );
+    expect(pop.getByTestId("recipe-count")).toHaveTextContent("全部 · 7 筆");
+    expect(pop.getByText("效果一樣的配方已合併")).toBeInTheDocument();
+    expect(pop.getAllByRole("option")[0]).toHaveTextContent("空槽不插配方");
+  });
+
+  it("屬性 chip 篩選後依數值由高到低，隨機配方用最小值排", async () => {
+    const { openRecipes, user } = setup(fresh());
+    const pop = await openRecipes("第 1 槽");
+    const chips = within(pop.getByRole("group", { name: "屬性篩選" }));
+    expect(chips.getAllByRole("button").map((b) => b.textContent)).toEqual([
+      "全部",
+      "物攻",
+      "命中",
+      "防禦",
+    ]);
+    await user.click(chips.getByRole("button", { name: "物攻" }));
+    expect(chips.getByRole("button", { name: "物攻" })).toHaveAttribute("aria-pressed", "true");
+    expect(pop.getByTestId("recipe-count")).toHaveTextContent("物攻 · 5 筆");
+    const order = pop.getAllByRole("option").map((o) => o.textContent);
+    expect(order.slice(1, 4)).toEqual([
+      "赤血巨蠍僅強化裝備物攻 +30",
+      "牛魔人僅強化裝備物攻 +21",
+      "藍頸熊僅強化裝備物攻 +15",
+    ]);
+    expect(order.slice(4).every((t) => /^(吉魂珠|玄武魂珠)/.test(t ?? ""))).toBe(true);
+  });
+
+  it("搜尋怪物名稱或屬性；查無結果時保留搜尋框與 chip", async () => {
+    const { openRecipes, user } = setup(fresh());
+    const pop = await openRecipes("第 1 槽");
+    const search = pop.getByRole("combobox", { name: "搜尋配方" });
+    await user.type(search, "幽靈");
+    expect(pop.getAllByRole("option").map((o) => o.textContent)).toEqual([
+      "空槽不插配方",
+      "幽靈侍衛僅強化裝備防禦 +11",
+    ]);
+    expect(pop.getByTestId("recipe-count")).toHaveTextContent("「幽靈」 · 1 筆");
+
+    await user.clear(search);
+    await user.type(search, "防禦");
+    expect(
+      pop
+        .getAllByRole("option")
+        .slice(1)
+        .map((o) => o.textContent?.slice(0, 4)),
+    ).toEqual(expect.arrayContaining(["幽靈侍衛", "玄武魂珠"]));
+
+    await user.clear(search);
+    await user.type(search, "麒麟");
+    expect(pop.getByText("找不到符合的配方，換個關鍵字或把屬性改回「全部」。")).toBeInTheDocument();
+    expect(pop.queryAllByRole("option")).toHaveLength(0);
+    expect(pop.getByRole("group", { name: "屬性篩選" })).toBeInTheDocument();
+    expect(search).toBeInTheDocument();
+  });
+
+  it("鍵盤：方向鍵移動、Enter 選取、Esc 關閉；合併列存第一筆配方 id", async () => {
+    const { openRecipes, user, applied } = setup(fresh());
+    await openRecipes("第 1 槽");
+    await user.keyboard("獵人{ArrowDown}{ArrowDown}{Enter}");
+    await waitFor(() => expect(screen.queryByLabelText("第 1 槽配方清單")).not.toBeInTheDocument());
+    expect(screen.getByRole("combobox", { name: "第 1 槽配方" })).toHaveTextContent("獵人");
+
+    await openRecipes("第 2 槽");
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByLabelText("第 2 槽配方清單")).not.toBeInTheDocument());
+    expect(screen.getByRole("dialog")).toBeInTheDocument(); // Esc 只關選單，不關整個視窗
+
+    await user.click(screen.getByRole("button", { name: "套用" }));
+    expect(applied()?.sockets).toEqual([{ recipeId: 10, stat: "hit", value: 7 }, null]);
   });
 });
