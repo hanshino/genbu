@@ -76,6 +76,41 @@ payload = base64url( deflate-raw( UTF-8( JSON ) ) )，不補 '='
 | `skills` | key 是十進位字串。tthol-reader 不做任何篩選。 |
 | `panel` | 選填，可以整個省略或只給部分欄位。 |
 
+### v1 選填擴充欄位（2026-10-03 補）
+
+這些欄位是之後補的，**舊版匯入端看到不認得的欄位會直接忽略**。genbu 的 validator 只會挑出已知欄位，所以加了這些欄位不用升版。只有 `equipment.*.stats` 是嚴格檢查，新資料**不能**放進 `stats`。
+
+```jsonc
+{
+  "panel": { …, "run_speed": 17 },   // HP +60，= 5 + 坐騎 / 飾品的 run_speed，跟 genbu 引擎的 run_speed 同一個定義
+  "appearance": {                     // 紙娃娃用；讀不到時整個省略
+    "gender": "m",                    // "m" / "f"；由 read_appearance 判斷，讀不到時改用髮型 id 判斷（29001.. 男，29051.. 女）
+    "hairItem": 29005,                // HP −0x30，基本髮型的 item id
+    "hairColor": 1,                   // HP −0x2C，染色 0..10
+    "head": 100005,                   // HP +0x224，實際畫出來的頭部 doll sequence（含外裝）
+    "cap": 101018                     // HP +0x228，帽子 sequence；沒畫帽子時省略
+  },
+  "statuses": {                       // 生效中的狀態，都是 status.group（不是 status id），只取 count 範圍內的
+    "buffs":   [31, 32, 51],          // HP +0x288 count / +0x28C int32[]，只有「契 / 盾 / 陣 / 符」類
+    "debuffs": [19]                   // HP +0x4C4 count / +0x4C8 int32[]
+  },
+  "equipment": {
+    "right": {
+      …,
+      "damage": { "min": 1168, "max": 1222, "pmin": 0, "pmax": 0 },  // 實例 +0x1B0+0x38..0x3E；非 0 才列，pmin/pmax 標籤照 DB 欄位順序，未證實
+      "zhenjie": 1912602754,          // 實例 +0x218 的真解 u32 原始值；0 時省略。格式見 tthol_data zhenjie_investigation.md §2
+      "refineLeft": 0                 // 實例 +0x220，剩餘煉化次數（u8）
+    }
+  }
+}
+```
+
+用途：
+- **`statuses`**：讓對照卡說得出差值是哪個 buff 造成的。tthol_data `stat_formula_investigation.md`「輔助 buff」有實測公式，例如激攻靈壇物攻 +236、幻甲靈壇防禦 / 護勁 +150、冰心靈訣命中 +246。但**屬性丹和默念類 buff（冰心靈訣 group 2）兩個陣列都不會記錄**，所以「陣列空了」不代表沒有 buff，還是要搭配六圍殘差一起判斷。
+- **`appearance`**：裝備欄目前的剪影可以換成易容閣的 `DollPreview`。`gender` 也可以拿來檢查 `items.sex` 限制。
+- **`damage` / `zhenjie`**：只有傷害計算會用到，面板不受影響，v1 引擎可以先不讀。
+- **`refineLeft`**：純資訊，例如顯示「還能鑲 N 次」。
+
 ### 數值 key 對照（`stats` / `panel` 都適用，已換成 genbu 的 `StatKey`）
 
 | tthol-memory（items 欄位） | genbu StatKey |
