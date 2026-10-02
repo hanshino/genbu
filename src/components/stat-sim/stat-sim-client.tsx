@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
-  CircleAlertIcon,
+  InfoIcon,
   RotateCcwIcon,
   SparklesIcon,
   TriangleAlertIcon,
@@ -263,10 +263,10 @@ export function StatSimClient({ data, windows }: Props) {
           {drifted && (
             <div
               role="status"
-              className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/[0.06] px-3 py-2 text-sm"
+              className="flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-sm"
             >
               <span className="flex min-w-0 flex-1 basis-full items-center gap-2 sm:basis-auto">
-                <CircleAlertIcon className="size-4 shrink-0 text-primary" aria-hidden />
+                <InfoIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                 裝備變了，要維持剛才填的含裝數值嗎？
               </span>
               <Button size="sm" onClick={keepEquipped}>
@@ -274,7 +274,7 @@ export function StatSimClient({ data, windows }: Props) {
               </Button>
               <Button
                 size="sm"
-                variant="ghost"
+                variant="outline"
                 onClick={() => {
                   setEditError(null);
                   setSnapshot(null);

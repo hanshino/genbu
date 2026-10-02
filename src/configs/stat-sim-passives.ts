@@ -48,9 +48,8 @@ export const HELP_PASSIVES: Record<number, HelpPassive> = {
   51: { weaponReq: ["ROD"], cumulative: levels("def", [20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100]) },
   53: { cumulative: levels("hp", [30, 50, 70, 90, 120, 150, 180, 220, 260, 300]) },
   180: {
-    // Lv5–9 沒寫 HP 值，不推測延伸；Lv10 按原文記錄，但疑似誤貼。
-    cumulative: [{}, { hp: 3000 }, { hp: 6000 }, { hp: 9000 }, { hp: 12000 }, {}, {}, {}, {}, {}, { hp: 300 }],
-    note: "嫁衣神功 Lv5–9 說明未提供 HP 加成，尚未計入；Lv10 原文為強筋健骨 +300，疑似誤貼，需實測確認。只有 Lv1–4 有學習資料。",
+    // 遊戲中只到 Lv4（使用者確認）；help 的 Lv5–10 是殘留文字，不採用。
+    cumulative: [{}, { hp: 3000 }, { hp: 6000 }, { hp: 9000 }, { hp: 12000 }],
   },
   265: { weaponReq: ["GREAT_SWORD"], cumulative: levels("atk", [24, 27, 30, 33, 37, 41, 45, 50, 55, 60, 65, 70, 75, 80, 85]) },
   601: { cumulative: levels("mp", [200]) },
