@@ -16,7 +16,7 @@ export const SECTS: Record<SectId, SectFormula> = {
   2: {
     name: "惡人谷", mainClan: "CLASS_BAD", hpA: 0.6, hpK: 2.1,
     mp: { level: 5, base: 40, pow: 5, wis: 7 },
-    mdef: (p, w) => p + 1.5 * w,
+    mdef: (p, w) => floorStat(p + 1.5 * w),
   },
   4: {
     name: "移花宮", mainClan: "CLASS_FLOWER", hpA: 0.45, hpK: 1.8,

@@ -732,6 +732,9 @@ describe("schema smoke — 經脈", () => {
 
 describe("schema smoke — 屬性模擬器", () => {
   it.each([
+    "SELECT enabled, reward_kind, reward_id, reward_amount FROM achievements LIMIT 1",
+    "SELECT value, magic_id, level FROM collect_book_bonuses LIMIT 1",
+    'SELECT "window", equip_slot, label, ctrl_id, x, y, width, height FROM ui_equip_slots LIMIT 1',
     "SELECT id, name, base_lv, type_name, equip_slot, strong_equipment, hp, mp, str, pow, vit, agi, dex, wis, atk, matk, extra_def, magic_def, hit, dodge, critical_hit, uncanny_dodge, attack_speed, run_speed, weight FROM items LIMIT 1",
     "SELECT id, level, name, clan, help FROM magic LIMIT 1",
     "SELECT item_id, kind, url, width, height FROM item_images LIMIT 1",

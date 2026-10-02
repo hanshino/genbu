@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { CircleAlertIcon, LayersIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { SECTS } from "@/configs/stat-sim";
 import { WEAPON_TYPE_NAMES } from "@/configs/stat-sim-passives";
+import { collectionLevels } from "@/lib/stat-sim";
 import type { CharacterV1, GameData, PassiveDef } from "@/lib/types/stat-sim";
 import { cn } from "@/lib/utils";
 import { BonusRows } from "./bonus-rows";
@@ -88,6 +90,9 @@ export function PassivesTab({
 }) {
   const groups = buildGroups(character, data.passives, weaponTypes);
   const collection = data.passives.filter((p) => p.group === "collection");
+  const achievements = data.passives.filter((p) => p.group === "achievement");
+  const [collectionValue, setCollectionValue] = useState("");
+  const achievementMax = (p: PassiveDef) => Math.min(p.maxLevel, p.obtainableMax ?? 0);
   const setLevel = (id: number, lv: number) =>
     update((c) => ({ ...c, passiveLevels: { ...c.passiveLevels, [id]: lv } }));
   const fill = (rows: Row[]) =>
@@ -159,17 +164,57 @@ export function PassivesTab({
         </CardContent>
       </Card>
 
-      <Card>
+      {(["collection", "achievement"] as const).map((group) => (
+      <Card key={group} aria-label={group === "collection" ? "收藏" : "成就"}>
         <CardHeader className="border-b">
-          <CardTitle className="font-heading">收藏</CardTitle>
+          <CardTitle className="flex items-center gap-2 font-heading">
+            {group === "collection" ? "收藏" : "成就"}
+            {group === "achievement" && (
+              <Button size="xs" variant="outline" className="ml-auto" onClick={() => update((c) => ({
+                ...c,
+                passiveLevels: {
+                  ...c.passiveLevels,
+                  ...Object.fromEntries(achievements.map((p) => [p.id, achievementMax(p)])),
+                },
+              }))}>
+                全滿
+              </Button>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent className="@container">
           <p className="mb-3 text-xs text-muted-foreground">
-            目前沒有「收藏等級 → 技能等級」的對照表，請照遊戲裡各項收藏技能的等級逐項填。
+            {group === "collection"
+              ? "輸入收藏值可套用各項技能等級，也可逐項調整；只儲存技能等級，收藏值不另存。"
+              : "依已啟用成就的獎勵總和設定上限；查無取得來源的技能上限為 0，既有等級仍保留供核對。"}
           </p>
+          {group === "collection" && (
+          <div className="mb-3 flex items-center gap-3">
+            <label htmlFor="sim-collection-value" className="text-xs font-medium text-muted-foreground">
+              收藏值
+            </label>
+            <Input
+              id="sim-collection-value" type="number" inputMode="numeric" min={0} step={1}
+              className="h-8 w-32 text-right font-mono" value={collectionValue}
+              disabled={!data.collectionThresholds?.length}
+              onChange={(e) => {
+                const text = e.target.value;
+                setCollectionValue(text);
+                const n = Number(text);
+                if (text.trim() !== "" && Number.isSafeInteger(n) && n >= 0) {
+                  update((c) => ({
+                    ...c,
+                    passiveLevels: { ...c.passiveLevels, ...collectionLevels(n, data.collectionThresholds ?? []) },
+                  }));
+                }
+              }}
+            />
+          </div>
+          )}
           <div className="grid gap-2 @md:grid-cols-2">
-            {collection.map((p) => {
+            {(group === "collection" ? collection : achievements).map((p) => {
               const lv = character.passiveLevels[p.id] ?? 0;
+              const max = group === "achievement" ? achievementMax(p) : p.maxLevel;
               return (
                 <div
                   key={p.id}
@@ -177,12 +222,26 @@ export function PassivesTab({
                 >
                   <SkillIcon url={p.iconUrl} size={28} />
                   <div className="min-w-0">
-                    <div className="truncate text-sm">{p.name}</div>
+                    <div className="truncate text-sm" title={p.name}>{p.name}</div>
                     <div className="truncate text-[11px] text-muted-foreground">
-                      {lv > 0 ? formatBonus(p.cumulative[lv] ?? {}) : `最高 Lv${p.maxLevel}`}
+                      {lv > 0 ? formatBonus(p.cumulative[lv] ?? {}) : `最高 Lv${max}`}
                     </div>
                   </div>
-                  <Input
+                  {group === "achievement" ? (
+                  <Select value={String(lv)} onValueChange={(value) => value != null && setLevel(p.id, Number(value))}>
+                    <SelectTrigger size="sm" className="h-7 w-full min-w-0 px-2 font-mono" aria-label={`${p.name}等級`}>
+                      <SelectValue>{(v: unknown) => `Lv${String(v)}`}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lv > max && (
+                        <SelectItem value={String(lv)} disabled>Lv{lv}（超過目前可取得上限）</SelectItem>
+                      )}
+                      {Array.from({ length: max + 1 }, (_, i) => max - i).map((n) => (
+                        <SelectItem key={n} value={String(n)}>Lv{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  ) : <Input
                     type="number"
                     inputMode="numeric"
                     min={0}
@@ -192,16 +251,19 @@ export function PassivesTab({
                     value={lv}
                     onChange={(e) => {
                       const n = Number(e.target.value);
-                      if (Number.isSafeInteger(n))
+                      if (Number.isSafeInteger(n)) {
+                        setCollectionValue("");
                         setLevel(p.id, Math.max(0, Math.min(p.maxLevel, n)));
+                      }
                     }}
-                  />
+                  />}
                 </div>
               );
             })}
           </div>
         </CardContent>
       </Card>
+      ))}
 
       <Card>
         <CardHeader className="border-b">

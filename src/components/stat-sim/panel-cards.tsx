@@ -119,7 +119,7 @@ export function CostBandCard({ character, panel }: { character: CharacterV1; pan
     <section className={cn(box, "px-4 py-3")} aria-label="配點檢查">
       <h3 className="mb-1 font-heading text-xs tracking-[0.1em] text-muted-foreground">配點檢查</h3>
       <p className="mb-2 text-xs text-muted-foreground">
-        對照遊戲裡「外功+」等欄位的成本：成本對不上，代表裝備或含裝數值填錯了。
+        對照遊戲裡「外功+」等欄位的成本：成本對不上，請檢查裝備、被動、手動加成與含裝數值。
       </p>
       <div className="flex flex-wrap gap-1.5">
         {ATTRIBUTE_KEYS.map((key) => {

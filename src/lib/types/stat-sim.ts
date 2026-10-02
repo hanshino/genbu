@@ -61,7 +61,7 @@ export interface CharacterV1 {
   rebirthPoints: number;
   /** 輸入輔助：最多四筆，每筆 100–140；編輯後換算並同步 rebirthPoints。 */
   rebirthLevels?: number[];
-  /** 不含裝六圍，每項從 1 起；含裝輸入須先扣除裝備加成。 */
+  /** 裸六圍，每項從 1 起；含裝輸入須先扣除所有非裸值加成（含被動）。 */
   attributes: Attributes;
   equipment: Record<EquipSlot, EquippedItem | null>;
   /** magic id → 等級，含收藏 1151–1159；未列出的技能視為 0 級。 */
@@ -102,10 +102,12 @@ export interface EnhancementPath {
 export interface PassiveDef {
   id: number;
   name: string;
-  group: "main" | "sub" | "common" | "guild" | "collection";
+  group: "main" | "sub" | "common" | "guild" | "collection" | "achievement";
   /** magic.clan 的 CLASS_*；通用技能統一為 null，天外天為 CLASS_SKY。 */
   clan: string | null;
   maxLevel: number;
+  /** 已啟用成就的獎勵等級總和；0 表示目前查無取得來源，不更改既有存檔。 */
+  obtainableMax?: number;
   /** 索引即技能等級，0 為 0；缺少學習資料填 -1，不可用於「全滿」。 */
   learnLevels: number[];
   iconUrl: string | null;
@@ -124,6 +126,14 @@ export interface GameData {
   enhancementsByPath: Record<number, EnhancementPath>;
   /** 包含收藏；經脈不列入，避免重複計算。 */
   passives: PassiveDef[];
+  /** 收藏值門檻，由小到大排序；舊資料未提供時不開放自動換算。 */
+  collectionThresholds?: CollectionThreshold[];
+}
+
+export interface CollectionThreshold {
+  value: number;
+  magicId: number;
+  level: number;
 }
 
 export interface StatBreakdown {
@@ -203,4 +213,16 @@ export interface UiWindowLayout {
   height: number;
   backgroundUrl: string;
   controls: UiControl[];
+  /** ui_equip_slots 的權威位置，不由 controls.comment 推測。 */
+  equipSlots?: UiEquipSlot[];
+}
+
+export interface UiEquipSlot {
+  slot: EquipSlot;
+  label: string;
+  ctrlId: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }

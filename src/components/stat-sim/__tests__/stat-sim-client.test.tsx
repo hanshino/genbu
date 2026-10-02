@@ -39,6 +39,7 @@ const equipment: UiWindowLayout = {
   width: 200,
   height: 318,
   backgroundUrl: "/eq.png",
+  equipSlots: [{ slot: "cap", label: "帽子", ctrlId: 292, x: 36, y: 26, width: 40, height: 40 }],
   controls: [
     ctrl({
       ctrlId: 292,
@@ -84,6 +85,48 @@ const data: GameData = {
 beforeEach(() => localStorage.clear());
 
 describe("StatSimClient", () => {
+  it("成就全滿／選級、收藏值換算與含裝輸入扣掉被動加成", async () => {
+    const user = userEvent.setup();
+    const reward = (id: number, name: string, group: "achievement" | "collection") => ({
+      id, name, group, clan: null, maxLevel: 3, obtainableMax: group === "achievement" ? 2 : undefined,
+      learnLevels: [0, -1, -1, -1], iconUrl: null,
+      cumulative: [{}, { str: 1 }, { str: 2 }, { str: 3 }],
+    });
+    const rewards: GameData = { ...data,
+      passives: [...data.passives, reward(1189, "成就外功", "achievement"), reward(1151, "收藏體力", "collection")],
+      collectionThresholds: [{ value: 50, magicId: 1151, level: 1 }, { value: 100, magicId: 1151, level: 2 }],
+    };
+    render(<StatSimClient data={rewards} windows={{ attribute, equipment }} />);
+    await screen.findByTestId("source-total");
+    await user.click(screen.getByRole("tab", { name: /被動與加成/ }));
+    const achievement = screen.getByLabelText("成就");
+    await user.click(within(achievement).getByRole("button", { name: "全滿" }));
+    expect(screen.getByRole("button", { name: /^外功 3/ })).toBeInTheDocument();
+    screen.getByRole("combobox", { name: "成就外功等級" }).focus();
+    await user.keyboard("{ArrowDown}");
+    await screen.findByRole("option", { name: "Lv1" });
+    expect(screen.queryByRole("option", { name: "Lv3" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("option", { name: "Lv1" }));
+    expect(screen.getByRole("button", { name: /^外功 2/ })).toBeInTheDocument();
+    const value = screen.getByRole("spinbutton", { name: "收藏值" });
+    await user.type(value, "100");
+    expect(screen.getByRole("spinbutton", { name: "收藏體力等級" })).toHaveValue(2);
+    expect(screen.getByRole("button", { name: /^外功 4/ })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^外功 4/ }));
+    const attr = screen.getByRole("textbox", { name: "輸入含裝外功" });
+    await user.clear(attr); await user.type(attr, "10{Enter}");
+    const saved = () => JSON.parse(localStorage.getItem("genbu.characters")!).characters[0];
+    expect(saved().attributes.str).toBe(7); // 10 − 成就1 − 收藏2
+    expect(saved().passiveLevels).toMatchObject({ 1189: 1, 1151: 2 });
+    await user.clear(value); await user.type(value, "0");
+    expect(saved().passiveLevels[1151]).toBe(0);
+    const perSkill = screen.getByRole("spinbutton", { name: "收藏體力等級" });
+    await user.clear(perSkill); await user.type(perSkill, "1");
+    expect(value).toHaveValue(null);
+    expect(saved().passiveLevels[1151]).toBe(1);
+    expect(saved()).not.toHaveProperty("collectionValue");
+  });
+
   it("加點、換裝、點被動都會即時更新面板", async () => {
     const user = userEvent.setup();
     render(<StatSimClient data={data} windows={{ attribute, equipment }} />);

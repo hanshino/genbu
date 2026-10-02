@@ -97,7 +97,7 @@ export function StatSimClient({ data, windows }: Props) {
     if (!Number.isSafeInteger(bare) || bare < 1) {
       setEditError(
         gearMode
-          ? `含裝${label} ${typed} 扣掉裝備的 ${bonus} 後是 ${bare}，不含裝至少要 1，請檢查裝備有沒有填對。`
+          ? `含裝${label} ${typed} 扣掉裝備、被動與手動加成的 ${bonus} 後是 ${bare}，不含裝至少要 1，請檢查加成有沒有填對。`
           : `不含裝${label}至少要 1。`,
       );
       return;
@@ -149,6 +149,7 @@ export function StatSimClient({ data, windows }: Props) {
             </TabsContent>
             <TabsContent value="passive">
               <PassivesTab
+                key={active.id}
                 character={active}
                 data={data}
                 weaponTypes={weaponTypes}

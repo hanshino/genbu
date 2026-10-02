@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ATTACK_SPEED_TABLE, SECTS } from "@/configs/stat-sim";
 import { MAGIC_CLAN_LABELS } from "@/lib/constants/magic-clan";
 import {
-  bareFromEquipped, computePanel, costBandForNextCost, inferRebirthPoints,
+  bareFromEquipped, collectionLevels, computePanel, costBandForNextCost, inferRebirthPoints,
   levelPoints, nextCost, pointCost, rebirthReward,
 } from "@/lib/stat-sim";
 import {
@@ -98,7 +98,7 @@ describe("面板公式 §7", () => {
     expect(Math.floor(19910.9 + 4200.9)).toBe(24111);
   });
 
-  it.each<[SectId, number]>([[2, 10.5], [4, 9], [8, 11], [512, 9], [2048, 11], [4096, 10], [8192, 15]])(
+  it.each<[SectId, number]>([[2, 10], [4, 9], [8, 11], [512, 9], [2048, 11], [4096, 10], [8192, 15]])(
     "門派 %i 護勁遵守個別取整位置", (sectId, expected) => {
       const c = character({ sectId });
       c.attributes.pow = 3; c.attributes.wis = 5;
@@ -218,6 +218,47 @@ describe("配點與轉生 §9", () => {
 });
 
 describe("加成、條件與資料完整性", () => {
+  it("惡人谷護勁對 P + 1.5W 整體取 floor", () => {
+    expect(SECTS[2].mdef(3, 5)).toBe(10);
+    expect(SECTS[2].mdef(3, 6)).toBe(12);
+  });
+
+  it("成就與其他被動六圍先進公式，累積值只算一次，英雄六圍仍最後加", () => {
+    const c = character(); const data = emptyData();
+    const bonus = { str: 9, pow: 10, vit: 11, agi: 24, dex: 24, wis: 19 };
+    data.passives = [passive(1189, 2, bonus, { group: "achievement", obtainableMax: 0 }),
+      passive(53, 1, { str: 2 }, { weaponReq: ["SWORD"] })];
+    c.passiveLevels = { 1189: 2, 53: 1, 1150: 9 };
+    c.manual.hero = { str: 100 };
+    const p = computePanel(c, data);
+    const equivalent = character({ attributes: { str: 10, pow: 11, vit: 12, agi: 25, dex: 25, wis: 20 } });
+    expect(p.stats).toEqual(computePanel(equivalent, emptyData()).stats);
+    expect(p.attributes.str.value).toBe(110);
+    expect(p.attributes.str.breakdown).toContainEqual({ source: "passive", refId: 1189, label: "測試技能 1189 Lv2", amount: 9 });
+    expect(p.points.totalCost).toBe(0);
+    expect(p.issues.map((i) => i.code)).toEqual(["unobtainable-passive-level"]);
+    expect(bareFromEquipped(p.attributes.str.value!, p.attributes.str.value! - c.attributes.str)).toBe(1);
+    expectBreakdowns(p);
+    data.itemsById[1] = item(1, "SWORD");
+    c.equipment.right = { itemId: 1, enhancementLevel: 0, manualBonuses: {} };
+    expect(computePanel(c, data).stats.atk.value).toBe(38); // floor(3×12 + .4×7)
+  });
+
+  it("收藏值套用門檻最高等級，降值清零九項且不依賴資料順序", () => {
+    const thresholds = [
+      { value: 450, magicId: 1151, level: 2 }, { value: 100, magicId: 1152, level: 1 },
+      { value: 50, magicId: 1151, level: 1 }, { value: 500, magicId: 1159, level: 1 },
+    ];
+    const snapshot = structuredClone(thresholds);
+    expect(Object.values(collectionLevels(49, thresholds))).toEqual(Array(9).fill(0));
+    expect(collectionLevels(50, thresholds)[1151]).toBe(1);
+    expect(collectionLevels(449, thresholds)[1151]).toBe(1);
+    expect(collectionLevels(450, thresholds)).toMatchObject({ 1151: 2, 1152: 1, 1159: 0 });
+    expect(collectionLevels(500, thresholds)[1159]).toBe(1);
+    expect(collectionLevels(0, thresholds)[1159]).toBe(0);
+    expect(thresholds).toEqual(snapshot);
+    for (const n of [-1, 1.5, NaN, Infinity]) expect(() => collectionLevels(n, thresholds)).toThrow(RangeError);
+  });
   it("強化取總值、不重複累加；裝備六圍進公式，英雄／陣法最後加", () => {
     const c = character(); const data = emptyData();
     data.itemsById[1] = { ...item(1, "STING", { str: 2, atk: 10 }), strongPathId: 5 };

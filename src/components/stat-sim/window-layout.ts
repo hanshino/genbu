@@ -135,19 +135,6 @@ export function attributeFields(win: UiWindowLayout): AttrField[] {
   return fields;
 }
 
-const SLOT_BY_COMMENT: [string, EquipSlot][] = [
-  ["帽子", "cap"],
-  ["衣服", "body"],
-  ["鞋子", "foot"],
-  ["右手", "right"],
-  ["左手", "left"],
-  ["背部", "wing"],
-  ["坐騎", "horse"],
-  ["飾品1", "ornament1"],
-  ["飾品2", "ornament2"],
-  ["飾品3", "ornament3"],
-];
-
 export interface EquipFields {
   slots: { slot: EquipSlot; box: Box }[];
   /** 預備欄切換（accoutrements_B），v1 不開放。 */
@@ -159,7 +146,7 @@ export interface EquipFields {
   dollAnchor: { x: number; y: number } | null;
 }
 
-/** 裝備格只能從 BUTTON 的 comment 判斷部位（這 10 格沒有標籤）。 */
+/** 裝備格使用 ui_equip_slots；預備／外裝切換仍由原控制項取得。 */
 export function equipmentFields(win: UiWindowLayout): EquipFields {
   const buttons = win.controls.filter((c) => c.class === "BUTTON");
   const find = (suffix: string) => {
@@ -169,10 +156,9 @@ export function equipmentFields(win: UiWindowLayout): EquipFields {
   const title = win.controls.find((c) => c.class === "STATIC" && !c.title && !c.field);
   const anchor = win.controls.find((c) => c.class === "BASE" && c.width === 1 && c.height === 1);
   return {
-    slots: SLOT_BY_COMMENT.flatMap(([suffix, slot]) => {
-      const c = buttons.find((b) => b.comment?.endsWith(`-${suffix}`));
-      return c ? [{ slot, box: boxOf(c) }] : [];
-    }),
+    slots: (win.equipSlots ?? []).map((c) => ({
+      slot: c.slot, box: { x: c.x, y: c.y, w: c.width, h: c.height },
+    })),
     page: find("chang page"),
     extra: find("-accoutrements"),
     title: title ? boxOf(title) : null,

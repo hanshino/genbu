@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db";
 import { HELP_PASSIVES, WEAPON_TYPE_NAMES } from "@/configs/stat-sim-passives";
 import { STAT_KEYS, type GameData } from "@/lib/types/stat-sim";
 import { getStatSimData, getStatSimWindows } from "../stat-sim";
+import { equipmentFields } from "@/components/stat-sim/window-layout";
 
 describe("stat-sim — 真實遊戲資料", () => {
   let data: GameData;
@@ -31,7 +32,10 @@ describe("stat-sim — 真實遊戲資料", () => {
       expect(item.typeName).not.toBeNull();
       expect(item.slotHint).not.toBeNull();
       expect(Object.keys(item.stats).every((key) => (STAT_KEYS as readonly string[]).includes(key))).toBe(true);
-      if (item.typeName === "ORNAMENT") expect(item.slotHint).toEqual(["ornament1", "ornament2", "ornament3"]);
+      if (item.typeName === "ORNAMENT") {
+        const row = db.prepare("SELECT equip_slot FROM items WHERE id=?").get(item.id) as { equip_slot: string };
+        expect(item.slotHint).toEqual([`ornament${row.equip_slot.at(-1)}`]);
+      }
       if (item.strongPathId !== null) expect(data.enhancementsByPath[item.strongPathId]).toBeDefined();
     }
     const cap = db.prepare("SELECT extra_def, magic_def, critical_hit, run_speed, weight FROM items WHERE id=50401")
@@ -65,6 +69,41 @@ describe("stat-sim — 真實遊戲資料", () => {
     expect(data.passives.find((passive) => passive.id === 1189)?.cumulative[2]).toEqual({ str: 2 });
     expect(data.passives.filter((passive) => passive.group === "collection").map((passive) => passive.id))
       .toEqual([1151, 1152, 1153, 1154, 1155, 1156, 1157, 1158, 1159]);
+  });
+
+  it("隱藏測試技能；成就技能獨立分組，取得上限只計 enabled=1 的 skill 獎勵", () => {
+    const db = getDb();
+    expect(data.passives.some((p) => p.id === 1150)).toBe(false);
+    const achievements = data.passives.filter((p) => p.group === "achievement");
+    expect(achievements.map((p) => p.id)).toEqual(Array.from({ length: 22 }, (_, i) => 1181 + i));
+    for (const p of achievements) {
+      const row = db.prepare("SELECT COALESCE(SUM(reward_amount), 0) AS total FROM achievements WHERE reward_kind='skill' AND enabled=1 AND reward_id=?")
+        .get(p.id) as { total: number };
+      expect(p.obtainableMax).toBe(row.total);
+      expect(p.obtainableMax).toBeLessThanOrEqual(p.maxLevel);
+    }
+    expect(achievements.find((p) => p.id === 1181)?.obtainableMax).toBe(12);
+    for (const id of [1189, 1190, 1191, 1192, 1193, 1194]) {
+      expect(achievements.find((p) => p.id === id)?.obtainableMax).toBe(0);
+    }
+    const rows = db.prepare(`SELECT DISTINCT magic_id FROM magic_stats
+      WHERE stat IN ('Str','Pow','Vit','Dex','Agi','Wis') AND magic_id NOT IN
+      (SELECT magic_id FROM magic_learn WHERE is_meridian=1 UNION SELECT magic_id FROM magic_meridians)
+      ORDER BY magic_id`).all();
+    expect(rows).toEqual([1189, 1190, 1191, 1192, 1193, 1194].map((magic_id) => ({ magic_id })));
+    for (const [i, key] of ["str", "pow", "vit", "dex", "agi", "wis"].entries()) {
+      expect(achievements.find((p) => p.id === 1189 + i)?.cumulative[2]).toEqual({ [key]: 2 });
+    }
+  });
+
+  it("收藏門檻按值排序並對應有效的收藏技能等級", () => {
+    expect(data.collectionThresholds).toEqual(getDb().prepare("SELECT value, magic_id AS magicId, level FROM collect_book_bonuses ORDER BY value, magic_id, level").all());
+    expect(data.collectionThresholds?.[0]).toEqual({ value: 50, magicId: 1151, level: 1 });
+    for (const row of data.collectionThresholds!) {
+      const p = data.passives.find((p) => p.id === row.magicId)!;
+      expect(p.group).toBe("collection");
+      expect(row.level).toBeLessThanOrEqual(p.maxLevel);
+    }
   });
 
   it("京門 1060 Lv2 HP=2400、提托 1010 Lv4 負重=3200，但兩者屬經脈必須排除", () => {
@@ -148,6 +187,16 @@ describe("stat-sim — 真實遊戲資料", () => {
 });
 
 describe("stat-sim — 遊戲視窗座標", () => {
+  it("裝備十格完全由 ui_equip_slots 對應，不受 BUTTON 註解與座標影響", () => {
+    const { equipment } = getStatSimWindows();
+    const rows = getDb().prepare("SELECT label, ctrl_id AS ctrlId, x, y, width, height FROM ui_equip_slots WHERE window='accoutrements_A' ORDER BY ctrl_id").all();
+    expect(equipment.equipSlots).toHaveLength(10);
+    expect(equipment.equipSlots!.map(({ slot, ...row }) => { expect(slot).toBeTruthy(); return row; })).toEqual(rows);
+    const before = equipmentFields(equipment).slots;
+    equipment.controls = equipment.controls.map((c) => ({ ...c, comment: "錯誤註解", x: 0, y: 0 }));
+    expect(equipmentFields(equipment).slots).toEqual(before);
+    expect(before.find((s) => s.slot === "right")?.box).toEqual({ x: 8, y: 72, w: 40, h: 40 });
+  });
   it("Attribute 9 個面板值與 6 個六圍值，使用座標而非 comment 配對", () => {
     const { attribute, equipment } = getStatSimWindows();
     expect([attribute.window, attribute.width, attribute.height]).toEqual(["Attribute", 400, 162]);

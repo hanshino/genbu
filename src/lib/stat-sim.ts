@@ -15,6 +15,7 @@ import {
   STAT_KEYS,
   type AttributeKey,
   type CharacterV1,
+  type CollectionThreshold,
   type GameData,
   type Issue,
   type PanelBonus,
@@ -51,11 +52,25 @@ export function nextCost(v: number): number {
 }
 
 /** 保留負值讓呼叫端提示裝備填錯，不偷偷截成 1。 */
-export function bareFromEquipped(equippedValue: number, equipmentAttrBonus: number): number {
-  if (!Number.isFinite(equippedValue) || !Number.isFinite(equipmentAttrBonus)) {
-    throw new RangeError("含裝屬性與裝備加成必須是有限數值");
+export function bareFromEquipped(equippedValue: number, nonBareAttrBonus: number): number {
+  if (!Number.isFinite(equippedValue) || !Number.isFinite(nonBareAttrBonus)) {
+    throw new RangeError("含裝屬性與非裸值加成必須是有限數值");
   }
-  return equippedValue - equipmentAttrBonus;
+  return equippedValue - nonBareAttrBonus;
+}
+
+/** 回傳全部九項，降收藏值時也會清除未達門檻的舊等級；不改動其他技能。 */
+export function collectionLevels(value: number, thresholds: readonly CollectionThreshold[]): Record<number, number> {
+  requireInteger(value, 0, "收藏值");
+  const levels: Record<number, number> = Object.fromEntries(
+    Array.from({ length: 9 }, (_, i) => [1151 + i, 0]),
+  );
+  for (const row of thresholds) {
+    if (row.magicId >= 1151 && row.magicId <= 1159 && row.value <= value) {
+      levels[row.magicId] = Math.max(levels[row.magicId], row.level);
+    }
+  }
+  return levels;
 }
 
 export function costBandForNextCost(cost: number): { min: number; max: number } {
@@ -77,8 +92,8 @@ function rebirthReason(level: number, points: number): string | null {
     (level > 140 ? points >= 40 : points === 0 || points >= 10);
   if (valid) return null;
   return level > 140
-    ? "等級超過 140 必為四轉，轉生點數總和須為 40–140 的整數，請檢查裝備與配點"
-    : "轉生點數總和須為 0 或 10–140 的整數，請檢查裝備與配點";
+    ? "等級超過 140 必為四轉，轉生點數總和須為 40–140 的整數，請檢查裝備、被動、手動加成與配點"
+    : "轉生點數總和須為 0 或 10–140 的整數，請檢查裝備、被動、手動加成與配點";
 }
 
 export function inferRebirthPoints(input: {
@@ -204,7 +219,37 @@ export function computePanel(character: CharacterV1, data: GameData): PanelResul
     addBonus(equipped.manualBonuses, "equipManual", `${item?.name ?? equipped.itemId} 手動加值`, equipped.itemId, accept);
   }
 
-  // 只有不含裝屬性＋裝備六圍進公式；被動與英雄／陣法在公式之後才加。
+  const passives = new Map(data.passives.map((passive) => [passive.id, passive]));
+  for (const [id, level] of Object.entries(character.passiveLevels)) {
+    if (level === 0 || Number(id) === 1150) continue;
+    const passive = passives.get(Number(id));
+    if (!passive) {
+      issue("missing-passive", `找不到被動技能資料：${id}`, Number(id), true);
+      continue;
+    }
+    if (!Number.isSafeInteger(level) || level < 0 || level > passive.maxLevel || !passive.cumulative[level]) {
+      issue("invalid-passive-level", `${passive.name}缺少 Lv${level} 資料`, passive.id, true);
+      continue;
+    }
+    if (passive.obtainableMax != null && level > passive.obtainableMax) {
+      issue("unobtainable-passive-level", `${passive.name}超過目前成就可取得的 Lv${passive.obtainableMax}，請確認來源`, passive.id);
+    }
+    if ((passive.group === "main" && passive.clan !== sect.mainClan) ||
+        (passive.group === "sub" && !character.subSects.some((clan) => clan === passive.clan))) {
+      issue("inactive-passive-clan", `${passive.name}不屬於目前主／副門派，未計入`, passive.id);
+      continue;
+    }
+    const weaponOK = !passive.weaponReq || passive.weaponReq.some((type) => weaponTypes.includes(type));
+    addBonus(passive.cumulative[level], passive.group === "collection" ? "collection" : "passive",
+      `${passive.name} Lv${level}`, passive.id,
+      (key) => weaponOK || (passive.weaponReqStats != null && !passive.weaponReqStats.includes(key)));
+    if (passive.id === 777 && hands.length > 0 && !weaponTypes.includes("STAFF") &&
+        hands.some((item) => !item.typeName || !RANGED_WEAPON_TYPES.includes(item.typeName))) {
+      estimate(values.matk, "禁術修練對目前武器的內勁生效條件未確認");
+    }
+  }
+
+  // 裝備與被動六圍先進公式；英雄／陣法仍只在最後加，不放大。
   const s = values.str.value!, p = values.pow.value!, v = values.vit.value!;
   const a = values.agi.value!, d = values.dex.value!, w = values.wis.value!;
   const lv = character.level;
@@ -243,32 +288,6 @@ export function computePanel(character: CharacterV1, data: GameData): PanelResul
     estimate(values.hp, "麒麟體力等級係數僅以 Lv198 單點推算");
   }
 
-  const passives = new Map(data.passives.map((passive) => [passive.id, passive]));
-  for (const [id, level] of Object.entries(character.passiveLevels)) {
-    if (level === 0) continue;
-    const passive = passives.get(Number(id));
-    if (!passive) {
-      issue("missing-passive", `找不到被動技能資料：${id}`, Number(id), true);
-      continue;
-    }
-    if (!Number.isSafeInteger(level) || level < 0 || level > passive.maxLevel || !passive.cumulative[level]) {
-      issue("invalid-passive-level", `${passive.name}缺少 Lv${level} 資料`, passive.id, true);
-      continue;
-    }
-    if ((passive.group === "main" && passive.clan !== sect.mainClan) ||
-        (passive.group === "sub" && !character.subSects.some((clan) => clan === passive.clan))) {
-      issue("inactive-passive-clan", `${passive.name}不屬於目前主／副門派，未計入`, passive.id);
-      continue;
-    }
-    const weaponOK = !passive.weaponReq || passive.weaponReq.some((type) => weaponTypes.includes(type));
-    addBonus(passive.cumulative[level], passive.group === "collection" ? "collection" : "passive",
-      `${passive.name} Lv${level}`, passive.id,
-      (key) => weaponOK || (passive.weaponReqStats != null && !passive.weaponReqStats.includes(key)));
-    if (passive.id === 777 && hands.length > 0 && !weaponTypes.includes("STAFF") &&
-        hands.some((item) => !item.typeName || !RANGED_WEAPON_TYPES.includes(item.typeName))) {
-      estimate(values.matk, "禁術修練對目前武器的內勁生效條件未確認");
-    }
-  }
   addBonus(character.manual.hero, "hero", "英雄手動加值");
   addBonus(character.manual.formation, "formation", "陣法手動加值");
   if (weaponTypes.some((type) => RANGED_WEAPON_TYPES.includes(type))) {

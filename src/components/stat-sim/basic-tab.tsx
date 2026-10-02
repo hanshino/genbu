@@ -261,7 +261,7 @@ function Rebirth({ character, update }: { character: CharacterV1; update: Update
       ) : (
         <div className="mt-4">
           <p className="mb-3 text-xs text-muted-foreground">
-            先在右邊屬性視窗切到「含裝」，照遊戲裡的數字填好六圍，裝備也要先填完、填對，推算才準。
+            先填好裝備、被動（含成就）與手動加成，再在屬性視窗切到「含裝」，照遊戲裡的數字填六圍，扣除所有加成後推算才準。
           </p>
           <ul className="space-y-1.5">
             <Check done label="等級" meta={`Lv${character.level}`} />
@@ -283,7 +283,7 @@ function Rebirth({ character, update }: { character: CharacterV1; update: Update
               label="六圍（不含裝）"
               meta={Object.values(character.attributes).join(" / ")}
             />
-            <Check done={worn > 0} label="裝備已填" meta={`${worn} / ${EQUIP_SLOTS.length} 件`} />
+            <Check done={worn > 0} label="裝備已填（請另確認被動與手動加成）" meta={`${worn} / ${EQUIP_SLOTS.length} 件`} />
           </ul>
 
           <div

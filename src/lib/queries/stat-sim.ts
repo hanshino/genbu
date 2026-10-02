@@ -4,9 +4,9 @@ import { HELP_PASSIVES, WEAPON_TYPE_NAMES } from "@/configs/stat-sim-passives";
 import { BONUS_TO_ATTR_KEY } from "@/lib/queries/compound";
 import { getItemIconMap } from "@/lib/queries/images";
 import {
-  STAT_KEYS, SUB_SECT_CLANS,
+  EQUIP_SLOTS, STAT_KEYS, SUB_SECT_CLANS,
   type EquipSlot, type GameData, type PanelBonus, type PassiveDef,
-  type SimItem, type StatKey, type UiControl, type UiWindowLayout,
+  type SimItem, type StatKey, type UiControl, type UiEquipSlot, type UiWindowLayout,
 } from "@/lib/types/stat-sim";
 
 const ITEM_ALIASES: Partial<Record<StatKey, string>> = {
@@ -16,13 +16,14 @@ const ITEM_STATS = Object.fromEntries(
   STAT_KEYS.map((key) => [key, ITEM_ALIASES[key] ?? key]),
 ) as Record<StatKey, string>;
 
+const EQUIP_SLOT_CODES: Record<string, EquipSlot> = {
+  CAP: "cap", BODY: "body", FOOT: "foot", WING: "wing", HORSE: "horse",
+  HAND_R: "right", HAND_L: "left",
+  ORNAMENT_1: "ornament1", ORNAMENT_2: "ornament2", ORNAMENT_3: "ornament3",
+};
 const SLOT_HINTS: Record<string, EquipSlot[]> = {
-  CAP: ["cap"], BODY: ["body"], FOOT: ["foot"], WING: ["wing"], HORSE: ["horse"],
-  HAND_R: ["right"], HAND_L: ["left"], "HAND_L,HAND_R": ["right", "left"],
-  HANDS: ["right", "left"],
-  ORNAMENT_1: ["ornament1", "ornament2", "ornament3"],
-  ORNAMENT_2: ["ornament1", "ornament2", "ornament3"],
-  ORNAMENT_3: ["ornament1", "ornament2", "ornament3"],
+  ...Object.fromEntries(Object.entries(EQUIP_SLOT_CODES).map(([code, slot]) => [code, [slot]])),
+  "HAND_L,HAND_R": ["right", "left"], HANDS: ["right", "left"],
 };
 
 const EQUIPMENT_TYPES = [...WEAPON_TYPE_NAMES, "HELMET", "ARMOR", "BOOT", "WING", "HORSE", "ORNAMENT"];
@@ -154,7 +155,7 @@ export function getStatSimData(): GameData {
   const helpIds = Object.keys(HELP_PASSIVES).map(Number);
   const skillRows = db.prepare(`
     SELECT id, name, NULLIF(clan, '') AS clan, level FROM magic
-    WHERE ${NON_MERIDIAN} AND (
+    WHERE id != 1150 AND ${NON_MERIDIAN} AND (
       id IN (SELECT magic_id FROM magic_stats WHERE flag IS NULL OR flag != 'AFFECT_RATIO')
       OR id IN (${helpIds.map(() => "?").join(",")})
     ) ORDER BY id, level
@@ -180,6 +181,11 @@ export function getStatSimData(): GameData {
     bySkill.set(row.magic_id, rows);
   }
 
+  // enabled 為整數旗標（1 = 啟用）；不把停用或 NULL 的成就算進取得上限。
+  const obtainable = new Map((db.prepare(`
+    SELECT reward_id, SUM(reward_amount) AS total FROM achievements
+    WHERE enabled = 1 AND reward_kind = 'skill' GROUP BY reward_id
+  `).all() as Array<{ reward_id: number; total: number }>).map((row) => [row.reward_id, row.total]));
   const passives: PassiveDef[] = [];
   for (const row of metadata.values()) {
     const help = HELP_PASSIVES[row.id];
@@ -203,6 +209,7 @@ export function getStatSimData(): GameData {
       }
     }
     const group: PassiveDef["group"] = row.id >= 1151 && row.id <= 1159 ? "collection"
+      : row.id >= 1181 && row.id <= 1202 ? "achievement"
       : row.clan === "CLASS_GUILD" ? "guild"
       : (SUB_SECT_CLANS as readonly string[]).includes(row.clan ?? "") ? "sub"
       : row.clan === null ? "common" : "main";
@@ -212,6 +219,7 @@ export function getStatSimData(): GameData {
     ].filter(Boolean);
     passives.push({
       id: row.id, name: row.name, clan: row.clan, group, maxLevel: row.level,
+      ...(group === "achievement" ? { obtainableMax: obtainable.get(row.id) ?? 0 } : {}),
       learnLevels: [0, ...Array.from({ length: row.level }, (_, i) => learns.get(`${row.id}:${i + 1}`) ?? -1)],
       iconUrl: skillIcons.get(row.id) ?? null, cumulative,
       ...(help?.weaponReq ? { weaponReq: [...help.weaponReq] } : {}),
@@ -222,7 +230,10 @@ export function getStatSimData(): GameData {
   for (const id of helpIds) {
     if (!metadata.has(id)) throw new Error(`查無 help 被動技能 ${id}，或該技能已被改成經脈`);
   }
-  return { itemsById, enhancementsByPath, passives };
+  const collectionThresholds = db.prepare(`
+    SELECT value, magic_id AS magicId, level FROM collect_book_bonuses ORDER BY value, magic_id, level
+  `).all() as NonNullable<GameData["collectionThresholds"]>;
+  return { itemsById, enhancementsByPath, passives, collectionThresholds };
 }
 
 /** 保留原始 control 座標/field，不以有錯字的 comment 推斷數值用途。 */
@@ -257,5 +268,18 @@ export function getStatSimWindows(): { attribute: UiWindowLayout; equipment: UiW
   const attribute = byWindow.get("Attribute");
   const equipment = byWindow.get("accoutrements_A");
   if (!attribute || !equipment) throw new Error("查無屬性或裝備視窗資料");
+  const slots = db.prepare(`
+    SELECT equip_slot, label, ctrl_id AS ctrlId, x, y, width, height
+    FROM ui_equip_slots WHERE "window" = 'accoutrements_A' ORDER BY ctrl_id
+  `).all() as Array<Omit<UiEquipSlot, "slot"> & { equip_slot: string }>;
+  equipment.equipSlots = slots.map(({ equip_slot, ...row }) => {
+    const slot = EQUIP_SLOT_CODES[equip_slot];
+    if (!slot) throw new Error(`未知裝備欄代碼：${equip_slot}`);
+    return { ...row, slot };
+  });
+  if (slots.length !== EQUIP_SLOTS.length ||
+      new Set(equipment.equipSlots.map((row) => row.slot)).size !== EQUIP_SLOTS.length) {
+    throw new Error("ui_equip_slots 缺少或重複裝備欄位");
+  }
   return { attribute, equipment };
 }
