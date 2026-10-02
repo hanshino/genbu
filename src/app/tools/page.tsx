@@ -30,6 +30,12 @@ export default function ToolsHubPage() {
           description="還沒到 180 等也能先試：擲骰打通看要花多少丹田，或直接配好一套看屬性總和。"
         />
         <ToolCard
+          href="/tools/stat-sim"
+          title="屬性模擬器"
+          subtitle="角色面板與配裝"
+          description="選門派、等級、轉生，填配點、裝備與被動，算出跟遊戲一致的角色面板，每一項都列出來源。"
+        />
+        <ToolCard
           href="/tools/160"
           title="160 副本"
           subtitle="迷霧九宮格"

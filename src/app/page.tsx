@@ -95,6 +95,7 @@ const groups: FeatureGroup[] = [
       { title: "180 神武禁地", description: "輸入總和與封印數字，列出所有排法", href: "/tools/180" },
       { title: "易容閣", description: "試穿外觀、坐騎與染髮，可分享連結", href: "/tools/salon" },
       { title: "經脈模擬器", description: "還沒 180 等也能先試打通、規劃配點", href: "/tools/meridian" },
+      { title: "屬性模擬器", description: "填配點、裝備與被動，算出角色面板", href: "/tools/stat-sim" },
     ],
   },
 ];

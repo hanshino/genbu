@@ -52,6 +52,7 @@ const navGroups: NavGroup[] = [
       { href: "/tools/180", label: "180 神武禁地" },
       { href: "/tools/salon", label: "易容閣" },
       { href: "/tools/meridian", label: "經脈模擬器" },
+      { href: "/tools/stat-sim", label: "屬性模擬器" },
     ],
   },
   {
