@@ -236,3 +236,74 @@ export function attemptBreak(
   };
   return { state: next, outcome: ok ? "success" : "fail" };
 }
+
+/* ---------- 保存與分享 ---------- */
+
+/** 只列等級高於 INITIAL_LEVELS 的穴位，依 id 排序：`930.20,955.20` */
+export function encodePlan(levels: MeridianLevels): string {
+  return Object.entries(levels)
+    .map(([id, level]) => [Number(id), level] as const)
+    .filter(([id, level]) => Number.isInteger(level) && level > levelOf(INITIAL_LEVELS, id))
+    .sort((a, b) => a[0] - b[0])
+    .map(([id, level]) => `${id}.${level}`)
+    .join(",");
+}
+
+/**
+ * 解析 encodePlan 的字串（網址 ?p= 或 localStorage）。壞字串／未知 id 直接丟掉，等級夾在
+ * INITIAL..maxLevel，最後從 INITIAL_LEVELS 依 id 用 raiseTo 重建：前置不足會自動補齊，結果一定合法。
+ */
+export function decodePlan(idx: Map<number, MeridianPoint>, raw: unknown): MeridianLevels {
+  let levels: MeridianLevels = { ...INITIAL_LEVELS };
+  // ponytail: 55 穴位 × "id.lv," 不會超過 1KB，超長就當垃圾
+  if (typeof raw !== "string" || raw.length > 2000) return levels;
+  const wanted = new Map<number, number>();
+  for (const part of raw.split(",")) {
+    const m = /^(\d{1,6})\.(\d{1,3})$/.exec(part.trim());
+    const point = m ? idx.get(Number(m[1])) : undefined;
+    if (!m || !point) continue;
+    const level = Math.min(point.maxLevel, Number(m[2]));
+    wanted.set(point.id, Math.max(wanted.get(point.id) ?? 0, level));
+  }
+  for (const [id, level] of [...wanted].sort((a, b) => a[0] - b[0])) {
+    if (level <= levelOf(levels, id)) continue;
+    try {
+      levels = raiseTo(idx, levels, id, level);
+    } catch {
+      // 資料有前置循環才會到這裡；略過這一筆
+    }
+  }
+  return levels;
+}
+
+const nonNegInt = (v: unknown, fallback = 0) =>
+  typeof v === "number" && Number.isSafeInteger(v) && v >= 0 ? v : fallback;
+
+/** 從 localStorage 讀回的物件還原 PlayState；levels 存成 encodePlan 字串。不是物件就回 null。 */
+export function restorePlayState(idx: Map<number, MeridianPoint>, raw: unknown): PlayState | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const o = raw as Record<string, unknown>;
+  const log = (Array.isArray(o.log) ? o.log : [])
+    .filter((e): e is PlayLogEntry => {
+      if (!e || typeof e !== "object") return false;
+      const x = e as Record<string, unknown>;
+      const point = typeof x.id === "number" ? idx.get(x.id) : undefined;
+      return !!point && typeof x.level === "number" && Number.isInteger(x.level)
+        && x.level >= 1 && x.level <= point.maxLevel && typeof x.ok === "boolean"
+        && typeof x.guaranteed === "boolean" && nonNegInt(x.cost, -1) >= 0;
+    })
+    .slice(0, 50)
+    .map(({ id, level, ok, cost, guaranteed }) => ({ id, level, ok, cost, guaranteed }));
+  return {
+    levels: decodePlan(idx, o.levels),
+    dantian: nonNegInt(o.dantian),
+    qi: Math.min(QI_MAX, nonNegInt(o.qi)),
+    spentDantian: nonNegInt(o.spentDantian),
+    spentExp: typeof o.spentExp === "number" && Number.isFinite(o.spentExp) && o.spentExp >= 0 ? o.spentExp : 0,
+    converted: nonNegInt(o.converted),
+    attempts: nonNegInt(o.attempts),
+    successes: nonNegInt(o.successes),
+    failures: nonNegInt(o.failures),
+    log,
+  };
+}

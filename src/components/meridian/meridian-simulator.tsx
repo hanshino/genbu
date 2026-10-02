@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { MinusIcon, PlusIcon, RotateCcwIcon, ZapIcon } from "lucide-react";
+import { CheckIcon, LinkIcon, MinusIcon, PlusIcon, RotateCcwIcon, ZapIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,8 @@ import {
   attemptBreak,
   convertExp,
   costBetween,
+  decodePlan,
+  encodePlan,
   expDiscount,
   fillAll,
   indexPoints,
@@ -25,6 +27,7 @@ import {
   missingPrereqs,
   probBonus,
   raiseTo,
+  restorePlayState,
   sumStats,
   type PlayState,
 } from "@/lib/meridian-sim";
@@ -42,6 +45,27 @@ const BLOCK_MSG: Record<string, string> = {
   dantian: "丹田不夠",
   quest: "這一級要靠任務取得",
 };
+
+const STORAGE_KEY = "genbu:meridian:v1";
+
+/** localStorage 存的格式；levels 一律存成 encodePlan 字串，讀回時交給 decodePlan 合法化。 */
+interface Saved {
+  mode: Mode;
+  chan: number;
+  sel: number;
+  start: number;
+  plan: string;
+  play: Omit<PlayState, "levels"> & { levels: string };
+}
+
+function readSaved(): Partial<Record<keyof Saved, unknown>> {
+  try {
+    const o: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
+    return o && typeof o === "object" && !Array.isArray(o) ? o : {};
+  } catch {
+    return {}; // JSON 壞掉或無痕模式擋 storage：當作沒存過
+  }
+}
 
 const clampInt = (v: string, min: number, max: number) =>
   Math.max(min, Math.min(max, Math.floor(Number(v) || 0)));
@@ -68,6 +92,69 @@ export function MeridianSimulator({ data }: { data: MeridianData }) {
   const [plan, setPlan] = useState<MeridianLevels>(INITIAL_LEVELS);
   const [fx, setFx] = useState<Fx>(null);
   const [toast, setToast] = useState({ msg: "", show: false, n: 0 });
+  const [loaded, setLoaded] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // SSR 先用預設值渲染，mount 後才讀 localStorage／?p=，避免 hydration mismatch
+  useEffect(() => {
+    const saved = readSaved();
+    const restored = restorePlayState(idx, saved.play);
+    const start = Number(saved.start);
+    const url = new URL(window.location.href);
+    const shared = url.searchParams.get("p");
+    // 分享連結優先於本機存檔的 plan
+    const nextPlan = decodePlan(idx, shared ?? saved.plan);
+    const nextMode: Mode = shared != null || saved.mode === "plan" ? "plan" : "play";
+    const firstShared = Number(encodePlan(nextPlan).split(".")[0]);
+    const point = idx.get(shared != null && firstShared ? firstShared : Number(saved.sel));
+    const chanNo =
+      point?.channelNo ?? (byChannel.has(Number(saved.chan)) ? Number(saved.chan) : null);
+    if (shared != null) {
+      // 載入後拿掉 ?p=，之後的改動交給 localStorage，重新整理不會被連結蓋回去
+      url.searchParams.delete("p");
+      window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    }
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional SSR-safe hydration from localStorage
+    if (restored) setPlay(restored);
+    if (Number.isSafeInteger(start) && start >= 0 && start <= 65535) setStartInput(String(start));
+    setPlan(nextPlan);
+    setMode(nextMode);
+    if (chanNo != null) {
+      setChan(chanNo);
+      setSelId(point?.id ?? byChannel.get(chanNo)![0].id);
+    }
+    setLoaded(true);
+  }, [idx, byChannel]);
+
+  useEffect(() => {
+    if (!loaded) return; // 還沒讀完就寫，會把存檔蓋成預設值
+    const saved: Saved = {
+      mode,
+      chan,
+      sel: selId,
+      start: clampInt(startInput, 0, 65535),
+      plan: encodePlan(plan),
+      play: { ...play, levels: encodePlan(play.levels) },
+    };
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    } catch {
+      // 容量滿或無痕模式：不保存也能玩
+    }
+  }, [loaded, mode, chan, selId, startInput, plan, play]);
+
+  const planCode = encodePlan(plan);
+  const share = async () => {
+    const url = `${window.location.origin}/tools/meridian?p=${planCode}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      window.prompt("複製以下連結", url);
+    }
+  };
 
   useEffect(() => {
     if (!toast.show) return;
@@ -590,6 +677,16 @@ export function MeridianSimulator({ data }: { data: MeridianData }) {
                   平均是把每一級的「花費 ÷
                   基本成功率」加起來，沒有算天突、膻中的加成，也沒算氣海保底，所以實際跑起來通常會比這個數字低一些。
                 </Hint>
+                <Separator className="my-3.5" />
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                  <Button variant="outline" size="sm" disabled={!planCode} onClick={share}>
+                    {copied ? <CheckIcon aria-hidden /> : <LinkIcon aria-hidden />}
+                    {copied ? "已複製連結" : "複製分享連結"}
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {planCode ? "朋友打開就會看到這套配點。" : "先配幾個穴位才能分享。"}
+                  </span>
+                </div>
               </CardContent>
             </Card>
 

@@ -6,6 +6,7 @@ import {
   formatStat, indexPoints, levelOf, missingPrereqs, raiseTo, lowerTo, fillAll,
   sumStats, probBonus, expDiscount, expPerDantian, effectiveProb, costBetween,
   waterIconId, initialPlayState, convertExp, attemptBreak,
+  encodePlan, decodePlan, restorePlayState,
 } from "../meridian-sim";
 
 const data = getMeridianData();
@@ -213,5 +214,81 @@ describe("格式與氣海水球", () => {
     [99, 1301], [100, 1302], [101, 1302],
   ])("氣海 %i → icon %i", (qi, icon) => {
     expect(waterIconId(qi)).toBe(icon);
+  });
+});
+
+describe("保存與分享連結", () => {
+  it("encode 只列高於初始的穴位並依 id 排序；round-trip 一致", () => {
+    expect(encodePlan(INITIAL_LEVELS)).toBe("");
+    expect(encodePlan({ 955: 2, 855: 3, 930: 0 })).toBe("855.3,955.2");
+    const full = fillAll(idx);
+    const raw = encodePlan(full);
+    expect(raw.split(",").map((x) => Number(x.split(".")[0]))).toEqual(
+      [...data.points].map((p) => p.id).sort((a, b) => a - b),
+    );
+    expect(decodePlan(idx, raw)).toEqual(full);
+    for (const point of data.points) {
+      const one = raiseTo(idx, INITIAL_LEVELS, point.id, point.maxLevel);
+      expect(decodePlan(idx, encodePlan(one))).toEqual(one);
+    }
+  });
+
+  it.each([undefined, null, 42, {}, "", "abc", ",,,", "855", "855.x", ".3", "855.-1", "1e3.2", "x".repeat(3000)])(
+    "壞輸入 %j → 初始配置",
+    (raw) => {
+      expect(decodePlan(idx, raw)).toEqual(INITIAL_LEVELS);
+    },
+  );
+
+  it("未知 id 丟掉、超過上限夾到 maxLevel、承漿至少 1", () => {
+    const p855 = idx.get(855)!;
+    expect(decodePlan(idx, "999999.3,1.1")).toEqual(INITIAL_LEVELS);
+    expect(decodePlan(idx, "855.999")).toEqual({ 855: p855.maxLevel });
+    expect(decodePlan(idx, "855.0")).toEqual(INITIAL_LEVELS);
+    expect(decodePlan(idx, "855.2,oops,855.4")).toEqual({ 855: 4 });
+  });
+
+  it("前置不足時用 raiseTo 自動補齊，結果合法", () => {
+    let found = 0;
+    for (const point of data.points) {
+      for (const lv of point.levels) {
+        const missing = missingPrereqs(idx, INITIAL_LEVELS, point.id, lv.level)
+          .filter((r) => r.id !== point.id);
+        if (!missing.length) continue;
+        const decoded = decodePlan(idx, `${point.id}.${lv.level}`);
+        expect(levelOf(decoded, point.id)).toBe(lv.level);
+        for (const r of missing) expect(levelOf(decoded, r.id)).toBeGreaterThanOrEqual(r.level);
+        expectLegal(decoded);
+        found++;
+      }
+    }
+    expect(found).toBeGreaterThan(0);
+  });
+
+  it("restorePlayState：非物件回 null，欄位壞掉用預設，log 過濾且最多 50", () => {
+    expect(restorePlayState(idx, null)).toBeNull();
+    expect(restorePlayState(idx, "x")).toBeNull();
+    expect(restorePlayState(idx, [])).toBeNull();
+    expect(restorePlayState(idx, {})).toEqual(initialPlayState(0));
+
+    const entry = { id: 855, level: 2, ok: true, cost: 5, guaranteed: false };
+    const restored = restorePlayState(idx, {
+      levels: "855.3,999999.1", dantian: 120, qi: 500, spentDantian: -3, spentExp: 1e8,
+      converted: 1.5, attempts: 7, successes: 2, failures: "5",
+      log: [
+        ...Array.from({ length: 60 }, () => entry),
+        { ...entry, id: 999999 }, { ...entry, level: 99 }, { ...entry, ok: "yes" }, null,
+      ],
+    })!;
+    expect(restored.levels).toEqual({ 855: 3 });
+    expect(restored).toMatchObject({
+      dantian: 120, qi: QI_MAX, spentDantian: 0, spentExp: 1e8,
+      converted: 0, attempts: 7, successes: 2, failures: 0,
+    });
+    expect(restored.log).toHaveLength(50);
+    expect(restored.log[0]).toEqual(entry);
+
+    const bad = restorePlayState(idx, { log: [{ ...entry, id: 999999 }, { ...entry, level: 99 }] })!;
+    expect(bad.log).toEqual([]);
   });
 });
