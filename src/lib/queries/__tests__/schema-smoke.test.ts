@@ -102,6 +102,7 @@ import {
   getMissionsAtStage,
 } from "../stages";
 import { getStatusById } from "../status";
+import { getMeridianData } from "../meridian";
 import type { Item } from "@/lib/types/item";
 import type { CompoundRow } from "@/lib/types/compound";
 
@@ -691,6 +692,13 @@ describe("schema smoke — 任務對話上游解析表", () => {
     "doll_slot_rules",
     "doll_slots",
     "doll_hair_colors",
+    "magic_learn",
+    "magic_prereqs",
+    "magic_meridians",
+    "magic_stats",
+    "meridian_channels",
+    "ui_images",
+    "char_levels",
   ];
 
   it.each(TABLES)("表 %s 存在", (table) => {
@@ -705,6 +713,19 @@ describe("schema smoke — 任務對話上游解析表", () => {
     const db = getDb();
     const row = db.prepare("SELECT name FROM sqlite_master WHERE type = 'view' AND name = ?").get(view);
     expect(row).toBeDefined();
+  });
+});
+
+describe("schema smoke — 經脈", () => {
+  it("getMeridianData 實際 prepare 查詢", () => {
+    expect(() => getMeridianData()).not.toThrow();
+  });
+
+  it("magic 新欄位與角色經驗表欄位", () => {
+    const db = getDb();
+    expect(() => db.prepare("SELECT cd_time, trigger_id FROM magic LIMIT 1").get()).not.toThrow();
+    expect(() => db.prepare("SELECT level, exp, str, pow, vit, agi, dex, wis FROM char_levels LIMIT 1").get())
+      .not.toThrow();
   });
 });
 
