@@ -4,7 +4,7 @@ import { useState } from "react";
 import { CircleAlertIcon, LayersIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -19,7 +19,7 @@ import { collectionLevels } from "@/lib/stat-sim";
 import type { CharacterV1, GameData, PassiveDef } from "@/lib/types/stat-sim";
 import { cn } from "@/lib/utils";
 import { BonusRows } from "./bonus-rows";
-import { SUB_SECT_LABELS, formatBonus, maxLearnable, typeLabel } from "./labels";
+import { SUB_SECT_LABELS, formatBonus, maxLearnable, selectOnFocus, typeLabel } from "./labels";
 
 type Update = (fn: (c: CharacterV1) => CharacterV1) => void;
 
@@ -164,106 +164,160 @@ export function PassivesTab({
         </CardContent>
       </Card>
 
-      {(["collection", "achievement"] as const).map((group) => (
-      <Card key={group} aria-label={group === "collection" ? "收藏" : "成就"}>
-        <CardHeader className="border-b">
-          <CardTitle className="flex items-center gap-2 font-heading">
-            {group === "collection" ? "收藏" : "成就"}
-            {group === "achievement" && (
-              <Button size="xs" variant="outline" className="ml-auto" onClick={() => update((c) => ({
-                ...c,
-                passiveLevels: {
-                  ...c.passiveLevels,
-                  ...Object.fromEntries(achievements.map((p) => [p.id, achievementMax(p)])),
-                },
-              }))}>
-                全滿
-              </Button>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="@container">
-          <p className="mb-3 text-xs text-muted-foreground">
-            {group === "collection"
-              ? "輸入收藏值可套用各項技能等級，也可逐項調整；只儲存技能等級，收藏值不另存。"
-              : "依已啟用成就的獎勵總和設定上限；查無取得來源的技能上限為 0，既有等級仍保留供核對。"}
-          </p>
-          {group === "collection" && (
-          <div className="mb-3 flex items-center gap-3">
-            <label htmlFor="sim-collection-value" className="text-xs font-medium text-muted-foreground">
-              收藏值
-            </label>
-            <Input
-              id="sim-collection-value" type="number" inputMode="numeric" min={0} step={1}
-              className="h-8 w-32 text-right font-mono" value={collectionValue}
-              disabled={!data.collectionThresholds?.length}
-              onChange={(e) => {
-                const text = e.target.value;
-                setCollectionValue(text);
-                const n = Number(text);
-                if (text.trim() !== "" && Number.isSafeInteger(n) && n >= 0) {
-                  update((c) => ({
-                    ...c,
-                    passiveLevels: { ...c.passiveLevels, ...collectionLevels(n, data.collectionThresholds ?? []) },
-                  }));
-                }
-              }}
-            />
-          </div>
-          )}
-          <div className="grid gap-2 @md:grid-cols-2">
-            {(group === "collection" ? collection : achievements).map((p) => {
-              const lv = character.passiveLevels[p.id] ?? 0;
-              const max = group === "achievement" ? achievementMax(p) : p.maxLevel;
-              return (
-                <div
-                  key={p.id}
-                  className="grid grid-cols-[28px_minmax(0,1fr)_72px] items-center gap-2 rounded-lg border border-border/60 px-2.5 py-1.5"
-                >
-                  <SkillIcon url={p.iconUrl} size={28} />
-                  <div className="min-w-0">
-                    <div className="truncate text-sm" title={p.name}>{p.name}</div>
-                    <div className="truncate text-[11px] text-muted-foreground">
-                      {lv > 0 ? formatBonus(p.cumulative[lv] ?? {}) : `最高 Lv${max}`}
-                    </div>
-                  </div>
-                  {group === "achievement" ? (
-                  <Select value={String(lv)} onValueChange={(value) => value != null && setLevel(p.id, Number(value))}>
-                    <SelectTrigger size="sm" className="h-7 w-full min-w-0 px-2 font-mono" aria-label={`${p.name}等級`}>
-                      <SelectValue>{(v: unknown) => `Lv${String(v)}`}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {lv > max && (
-                        <SelectItem value={String(lv)} disabled>Lv{lv}（超過目前可取得上限）</SelectItem>
-                      )}
-                      {Array.from({ length: max + 1 }, (_, i) => max - i).map((n) => (
-                        <SelectItem key={n} value={String(n)}>Lv{n}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  ) : <Input
+      {(["collection", "achievement"] as const).map((group) => {
+        const rows = group === "collection" ? collection : achievements;
+        const title = group === "collection" ? "收藏" : "成就";
+        return (
+          <Card key={group} aria-label={title}>
+            <CardHeader className="border-b">
+              <CardTitle className="font-heading">{title}</CardTitle>
+              {group === "achievement" && (
+                <CardAction>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={() =>
+                      update((c) => ({
+                        ...c,
+                        passiveLevels: {
+                          ...c.passiveLevels,
+                          ...Object.fromEntries(achievements.map((p) => [p.id, achievementMax(p)])),
+                        },
+                      }))
+                    }
+                  >
+                    全滿
+                  </Button>
+                </CardAction>
+              )}
+            </CardHeader>
+            <CardContent className="@container space-y-3">
+              <p className="text-xs text-muted-foreground">
+                {group === "collection"
+                  ? "輸入收藏值會自動帶入各項等級，也可以逐項調整。收藏值本身不會存檔。"
+                  : "上限是目前已開放成就的獎勵總和；查不到取得方式的項目上限為 0。"}
+              </p>
+              {group === "collection" && (
+                <div className="flex items-center gap-3">
+                  <label
+                    htmlFor="sim-collection-value"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
+                    收藏值
+                  </label>
+                  <Input
+                    id="sim-collection-value"
                     type="number"
                     inputMode="numeric"
                     min={0}
-                    max={p.maxLevel}
-                    aria-label={`${p.name}等級`}
-                    className="h-7 text-right font-mono"
-                    value={lv}
+                    step={1}
+                    className="h-8 w-32 text-right font-mono"
+                    value={collectionValue}
+                    disabled={!data.collectionThresholds?.length}
+                    onFocus={selectOnFocus}
                     onChange={(e) => {
-                      const n = Number(e.target.value);
-                      if (Number.isSafeInteger(n)) {
-                        setCollectionValue("");
-                        setLevel(p.id, Math.max(0, Math.min(p.maxLevel, n)));
+                      const text = e.target.value;
+                      setCollectionValue(text);
+                      const n = Number(text);
+                      if (text.trim() !== "" && Number.isSafeInteger(n) && n >= 0) {
+                        update((c) => ({
+                          ...c,
+                          passiveLevels: {
+                            ...c.passiveLevels,
+                            ...collectionLevels(n, data.collectionThresholds ?? []),
+                          },
+                        }));
                       }
                     }}
-                  />}
+                  />
                 </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-      ))}
+              )}
+              {/* 跟上面技能組同一套樣式：外框 + 細分隔線，寬度夠時排兩欄 */}
+              <div className="grid gap-px overflow-hidden rounded-lg border border-border/60 bg-border/60 @md:grid-cols-2">
+                {rows.map((p) => {
+                  const lv = character.passiveLevels[p.id] ?? 0;
+                  const max = group === "achievement" ? achievementMax(p) : p.maxLevel;
+                  const unavailable = group === "achievement" && max === 0 && lv === 0;
+                  return (
+                    <div
+                      key={p.id}
+                      className={cn(
+                        "grid grid-cols-[28px_minmax(0,1fr)_76px] items-center gap-2.5 bg-card px-3 py-2",
+                        unavailable && "bg-muted/40",
+                      )}
+                    >
+                      <span className={cn(unavailable && "opacity-45")}>
+                        <SkillIcon url={p.iconUrl} size={28} />
+                      </span>
+                      <div className={cn("min-w-0", unavailable && "opacity-60")}>
+                        <div className="truncate text-sm font-medium" title={p.name}>
+                          {p.name}
+                        </div>
+                        <div className="truncate text-[11px] text-muted-foreground">
+                          {lv > 0
+                            ? formatBonus(p.cumulative[lv] ?? {})
+                            : unavailable
+                              ? "查不到取得方式"
+                              : `最高 Lv${max}`}
+                          {/* 成就有兩組同名技能，附上技能編號才分得出來 */}
+                          {group === "achievement" && (
+                            <span className="ml-1.5 font-mono opacity-70">#{p.id}</span>
+                          )}
+                        </div>
+                      </div>
+                      {group === "achievement" ? (
+                        <Select
+                          value={String(lv)}
+                          disabled={unavailable}
+                          onValueChange={(value) => value != null && setLevel(p.id, Number(value))}
+                        >
+                          <SelectTrigger
+                            size="sm"
+                            className="w-full min-w-0 bg-card px-2"
+                            aria-label={`${p.name}等級`}
+                          >
+                            <SelectValue>{(v: unknown) => `Lv${String(v)}`}</SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {lv > max && (
+                              <SelectItem value={String(lv)} disabled>
+                                Lv{lv}（超過目前可取得上限）
+                              </SelectItem>
+                            )}
+                            {Array.from({ length: max + 1 }, (_, i) => max - i).map((n) => (
+                              <SelectItem key={n} value={String(n)}>
+                                Lv{n}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min={0}
+                          max={p.maxLevel}
+                          aria-label={`${p.name}等級`}
+                          className="h-7 text-right font-mono"
+                          value={lv}
+                          onFocus={selectOnFocus}
+                          onChange={(e) => {
+                            const n = Number(e.target.value);
+                            if (Number.isSafeInteger(n)) {
+                              setCollectionValue("");
+                              setLevel(p.id, Math.max(0, Math.min(p.maxLevel, n)));
+                            }
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
 
       <Card>
         <CardHeader className="border-b">

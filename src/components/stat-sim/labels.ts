@@ -62,6 +62,9 @@ export const SLOT_LABELS: Record<EquipSlot, string> = {
   ornament3: "飾品三",
 };
 
+/** 小數字欄位：點進去就全選，可以直接覆蓋，也能再移動游標修改。 */
+export const selectOnFocus = (e: { currentTarget: HTMLInputElement }) => e.currentTarget.select();
+
 const nf = new Intl.NumberFormat("zh-TW");
 export const fmt = (n: number) => nf.format(n);
 export const signed = (n: number) => (n >= 0 ? `+${fmt(n)}` : `−${fmt(-n)}`);

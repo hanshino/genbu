@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { STAT_KEYS, type PanelBonus, type StatKey } from "@/lib/types/stat-sim";
-import { STAT_LABELS } from "./labels";
+import { STAT_LABELS, selectOnFocus } from "./labels";
 
 /** 「屬性 + 數值」的手動加值列；鑲嵌、隨機屬性、英雄、陣法共用。 */
 export function BonusRows({
@@ -58,6 +58,7 @@ export function BonusRows({
             </SelectContent>
           </Select>
           <Input
+            onFocus={selectOnFocus}
             // 數值改完（離開欄位）才寫回，打字中的「-」不會被吃掉
             key={`${key}:${value[key]}`}
             type="number"

@@ -19,7 +19,7 @@ import { SECTS } from "@/configs/stat-sim";
 import { inferRebirthPoints, levelPoints, rebirthReward } from "@/lib/stat-sim";
 import { EQUIP_SLOTS, SUB_SECT_CLANS, type CharacterV1, type SectId } from "@/lib/types/stat-sim";
 import { cn } from "@/lib/utils";
-import { SECT_OPTIONS, SUB_SECT_LABELS, fmt } from "./labels";
+import { SECT_OPTIONS, SUB_SECT_LABELS, fmt, selectOnFocus } from "./labels";
 
 type Update = (fn: (c: CharacterV1) => CharacterV1) => void;
 
@@ -95,6 +95,7 @@ function LevelField({ character, update }: { character: CharacterV1; update: Upd
   return (
     <Field label="等級" htmlFor="sim-level">
       <Input
+        onFocus={selectOnFocus}
         id="sim-level"
         type="number"
         inputMode="numeric"
@@ -269,6 +270,7 @@ function Rebirth({ character, update }: { character: CharacterV1; update: Update
               <Mark done={left != null && Number.isSafeInteger(left) && left >= 0} />
               <label htmlFor="sim-game-left">遊戲中的剩餘屬性點</label>
               <Input
+                onFocus={selectOnFocus}
                 id="sim-game-left"
                 type="number"
                 inputMode="numeric"
@@ -283,7 +285,11 @@ function Rebirth({ character, update }: { character: CharacterV1; update: Update
               label="六圍（不含裝）"
               meta={Object.values(character.attributes).join(" / ")}
             />
-            <Check done={worn > 0} label="裝備已填（請另確認被動與手動加成）" meta={`${worn} / ${EQUIP_SLOTS.length} 件`} />
+            <Check
+              done={worn > 0}
+              label="裝備已填（請另確認被動與手動加成）"
+              meta={`${worn} / ${EQUIP_SLOTS.length} 件`}
+            />
           </ul>
 
           <div

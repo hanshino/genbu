@@ -157,7 +157,8 @@ export function equipmentFields(win: UiWindowLayout): EquipFields {
   const anchor = win.controls.find((c) => c.class === "BASE" && c.width === 1 && c.height === 1);
   return {
     slots: (win.equipSlots ?? []).map((c) => ({
-      slot: c.slot, box: { x: c.x, y: c.y, w: c.width, h: c.height },
+      slot: c.slot,
+      box: { x: c.x, y: c.y, w: c.width, h: c.height },
     })),
     page: find("chang page"),
     extra: find("-accoutrements"),

@@ -4,7 +4,7 @@ import { useState, type CSSProperties } from "react";
 import { SECTS } from "@/configs/stat-sim";
 import type { CharacterV1, PanelResult, StatValue, UiWindowLayout } from "@/lib/types/stat-sim";
 import { cn } from "@/lib/utils";
-import { STAT_LABELS, fmt, type ViewKey } from "./labels";
+import { STAT_LABELS, fmt, selectOnFocus, type ViewKey } from "./labels";
 import styles from "./stat-sim.module.css";
 import { place, type AttrField } from "./window-layout";
 
@@ -106,6 +106,7 @@ export function AttributeWindow({
                   <span key={i} className={cn(styles.f, styles.v)} style={place(f.box, f.color)}>
                     <input
                       autoFocus
+                      onFocus={selectOnFocus}
                       inputMode="numeric"
                       className={styles.edit}
                       aria-label={`輸入${gearMode ? "含裝" : "不含裝"}${label}`}

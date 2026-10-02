@@ -88,13 +88,27 @@ describe("StatSimClient", () => {
   it("成就全滿／選級、收藏值換算與含裝輸入扣掉被動加成", async () => {
     const user = userEvent.setup();
     const reward = (id: number, name: string, group: "achievement" | "collection") => ({
-      id, name, group, clan: null, maxLevel: 3, obtainableMax: group === "achievement" ? 2 : undefined,
-      learnLevels: [0, -1, -1, -1], iconUrl: null,
+      id,
+      name,
+      group,
+      clan: null,
+      maxLevel: 3,
+      obtainableMax: group === "achievement" ? 2 : undefined,
+      learnLevels: [0, -1, -1, -1],
+      iconUrl: null,
       cumulative: [{}, { str: 1 }, { str: 2 }, { str: 3 }],
     });
-    const rewards: GameData = { ...data,
-      passives: [...data.passives, reward(1189, "成就外功", "achievement"), reward(1151, "收藏體力", "collection")],
-      collectionThresholds: [{ value: 50, magicId: 1151, level: 1 }, { value: 100, magicId: 1151, level: 2 }],
+    const rewards: GameData = {
+      ...data,
+      passives: [
+        ...data.passives,
+        reward(1189, "成就外功", "achievement"),
+        reward(1151, "收藏體力", "collection"),
+      ],
+      collectionThresholds: [
+        { value: 50, magicId: 1151, level: 1 },
+        { value: 100, magicId: 1151, level: 2 },
+      ],
     };
     render(<StatSimClient data={rewards} windows={{ attribute, equipment }} />);
     await screen.findByTestId("source-total");
@@ -114,14 +128,17 @@ describe("StatSimClient", () => {
     expect(screen.getByRole("button", { name: /^外功 4/ })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /^外功 4/ }));
     const attr = screen.getByRole("textbox", { name: "輸入含裝外功" });
-    await user.clear(attr); await user.type(attr, "10{Enter}");
+    await user.clear(attr);
+    await user.type(attr, "10{Enter}");
     const saved = () => JSON.parse(localStorage.getItem("genbu.characters")!).characters[0];
     expect(saved().attributes.str).toBe(7); // 10 − 成就1 − 收藏2
     expect(saved().passiveLevels).toMatchObject({ 1189: 1, 1151: 2 });
-    await user.clear(value); await user.type(value, "0");
+    await user.clear(value);
+    await user.type(value, "0");
     expect(saved().passiveLevels[1151]).toBe(0);
     const perSkill = screen.getByRole("spinbutton", { name: "收藏體力等級" });
-    await user.clear(perSkill); await user.type(perSkill, "1");
+    await user.clear(perSkill);
+    await user.type(perSkill, "1");
     expect(value).toHaveValue(null);
     expect(saved().passiveLevels[1151]).toBe(1);
     expect(saved()).not.toHaveProperty("collectionValue");
@@ -161,5 +178,60 @@ describe("StatSimClient", () => {
       enhancementLevel: 0,
       manualBonuses: {},
     });
+  });
+
+  it("含裝模式換裝後可選擇維持剛才填的含裝數值，或照新裝備計算", async () => {
+    const user = userEvent.setup();
+    render(<StatSimClient data={data} windows={{ attribute, equipment }} />);
+    await screen.findByTestId("source-total");
+    expect(screen.getByText("請先填好裝備，再照遊戲角色視窗填六圍。")).toBeInTheDocument();
+    const saved = () => JSON.parse(localStorage.getItem("genbu.characters")!).characters[0];
+
+    // 點數值就全選，直接打字覆蓋
+    await user.click(screen.getByRole("button", { name: /^外功 1/ }));
+    const input = screen.getByRole<HTMLInputElement>("textbox", { name: "輸入含裝外功" });
+    expect([input.selectionStart, input.selectionEnd]).toEqual([0, 1]);
+    await user.keyboard("7{Enter}");
+    expect(saved().attributes.str).toBe(7);
+
+    const equipHat = async (button: "套用" | "卸下") => {
+      await user.click(screen.getByRole("button", { name: /^帽子：/ }));
+      const dialog = await screen.findByRole("dialog");
+      if (button === "套用")
+        await user.click(within(dialog).getByRole("option", { name: "測試帽" }));
+      await user.click(within(dialog).getByRole("button", { name: button }));
+    };
+
+    // 帽子 +5 外功：含裝變 12，跳提示；維持 → 不含裝 7 − 5 = 2，含裝回到 7
+    await equipHat("套用");
+    expect(await screen.findByText("裝備變了，要維持剛才填的含裝數值嗎？")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "維持含裝數值" }));
+    expect(saved().attributes.str).toBe(2);
+    expect(screen.getByRole("button", { name: /^外功 7/ })).toBeInTheDocument();
+    expect(screen.queryByText("裝備變了，要維持剛才填的含裝數值嗎？")).not.toBeInTheDocument();
+
+    // 卸下帽子再跳一次；照新裝備計算 → 不含裝維持 2
+    await equipHat("卸下");
+    await user.click(await screen.findByRole("button", { name: "照新裝備計算" }));
+    expect(screen.queryByText("裝備變了，要維持剛才填的含裝數值嗎？")).not.toBeInTheDocument();
+    expect(saved().attributes.str).toBe(2);
+    expect(screen.getByRole("button", { name: /^外功 2/ })).toBeInTheDocument();
+  });
+
+  it("新裝備的六圍超過填的含裝值時不能維持，改顯示錯誤", async () => {
+    const user = userEvent.setup();
+    render(<StatSimClient data={data} windows={{ attribute, equipment }} />);
+    await screen.findByTestId("source-total");
+    await user.click(screen.getByRole("button", { name: /^外功 1/ }));
+    await user.keyboard("3{Enter}");
+    await user.click(screen.getByRole("button", { name: /^帽子：/ }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("option", { name: "測試帽" }));
+    await user.click(within(dialog).getByRole("button", { name: "套用" }));
+    await user.click(await screen.findByRole("button", { name: "維持含裝數值" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("換算後不含裝會小於 1");
+    expect(JSON.parse(localStorage.getItem("genbu.characters")!).characters[0].attributes.str).toBe(
+      3,
+    );
   });
 });

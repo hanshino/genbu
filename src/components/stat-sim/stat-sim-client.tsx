@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
+  CircleAlertIcon,
   RotateCcwIcon,
   SparklesIcon,
   TriangleAlertIcon,
@@ -13,14 +14,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCharacters } from "@/lib/hooks/use-characters";
 import { bareFromEquipped, computePanel } from "@/lib/stat-sim";
-import type {
-  AttributeKey,
-  CharacterV1,
-  EquipSlot,
-  EquippedItem,
-  GameData,
-  PanelResult,
-  UiWindowLayout,
+import {
+  ATTRIBUTE_KEYS,
+  type Attributes,
+  type AttributeKey,
+  type CharacterV1,
+  type EquipSlot,
+  type EquippedItem,
+  type GameData,
+  type PanelResult,
+  type UiWindowLayout,
 } from "@/lib/types/stat-sim";
 import { AttributeWindow } from "./attribute-window";
 import { BasicTab } from "./basic-tab";
@@ -37,6 +40,13 @@ interface Props {
   windows: { attribute: UiWindowLayout; equipment: UiWindowLayout };
 }
 
+/** 玩家在含裝模式填過的六圍（含裝值），只放在畫面狀態，不存檔；沒填過的項目不列。 */
+interface GearSnapshot {
+  charId: string;
+  bare: Attributes;
+  equipped: Partial<Attributes>;
+}
+
 type Computed = { panel: PanelResult; error: null } | { panel: null; error: string };
 
 export function StatSimClient({ data, windows }: Props) {
@@ -47,6 +57,7 @@ export function StatSimClient({ data, windows }: Props) {
   const [gearMode, setGearMode] = useState(true);
   const [picking, setPicking] = useState<EquipSlot | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
+  const [snapshot, setSnapshot] = useState<GearSnapshot | null>(null);
 
   const attrFields = useMemo(() => attributeFields(windows.attribute), [windows.attribute]);
   const eqFields = useMemo(() => equipmentFields(windows.equipment), [windows.equipment]);
@@ -82,17 +93,60 @@ export function StatSimClient({ data, windows }: Props) {
     if (active) store.update(active.id, fn);
   };
 
-  const addPoint = (key: AttributeKey) => {
-    if (!panel || panel.points.remaining < panel.points.nextCost[key]) return;
+  // 裝備、被動、手動加成給的六圍（含裝 − 不含裝）
+  const bonusOf = (key: AttributeKey) =>
+    active ? (panel?.attributes[key].value ?? active.attributes[key]) - active.attributes[key] : 0;
+
+  /** 玩家改了某一項六圍：含裝模式下記住填過的含裝值，之後裝備變了才能提示要不要維持。 */
+  const setAttr = (key: AttributeKey, value: number) => {
+    if (!active) return;
+    const bare = { ...active.attributes, [key]: value };
+    const kept = snapshot?.charId === active.id ? snapshot.equipped : {};
     setEditError(null);
-    update((c) => ({ ...c, attributes: { ...c.attributes, [key]: c.attributes[key] + 1 } }));
+    setSnapshot(
+      gearMode
+        ? { charId: active.id, bare, equipped: { ...kept, [key]: value + bonusOf(key) } }
+        : null,
+    );
+    update((c) => ({ ...c, attributes: bare }));
+  };
+  const entered = snapshot ? ATTRIBUTE_KEYS.filter((k) => snapshot.equipped[k] != null) : [];
+
+  // 六圍沒被玩家動過、含裝值卻變了 = 裝備或被動改了
+  const drifted =
+    gearMode &&
+    !!panel &&
+    !!active &&
+    snapshot?.charId === active.id &&
+    ATTRIBUTE_KEYS.every((k) => snapshot.bare[k] === active.attributes[k]) &&
+    entered.some((k) => panel.attributes[k].value !== snapshot.equipped[k]);
+
+  const keepEquipped = () => {
+    if (!snapshot || !active) return;
+    const bare = { ...active.attributes };
+    for (const k of entered) bare[k] = snapshot.equipped[k]! - bonusOf(k);
+    const bad = entered.filter((k) => !Number.isSafeInteger(bare[k]) || bare[k] < 1);
+    if (bad.length) {
+      setEditError(
+        `新裝備給的${bad.map((k) => STAT_LABELS[k]).join("、")}已經超過剛才填的含裝數值，換算後不含裝會小於 1，沒辦法維持。`,
+      );
+      return;
+    }
+    setEditError(null);
+    setSnapshot({ ...snapshot, bare });
+    update((c) => ({ ...c, attributes: bare }));
+  };
+
+  const addPoint = (key: AttributeKey) => {
+    if (!active || !panel || panel.points.remaining < panel.points.nextCost[key]) return;
+    setAttr(key, active.attributes[key] + 1);
   };
 
   const editAttr = (key: AttributeKey, typed: number) => {
     if (!active) return;
     const label = STAT_LABELS[key];
     // 含裝值 − 裝備（與被動、手動）給的六圍 = 不含裝值
-    const bonus = (panel?.attributes[key].value ?? active.attributes[key]) - active.attributes[key];
+    const bonus = bonusOf(key);
     const bare = gearMode ? bareFromEquipped(typed, bonus) : typed;
     if (!Number.isSafeInteger(bare) || bare < 1) {
       setEditError(
@@ -102,8 +156,7 @@ export function StatSimClient({ data, windows }: Props) {
       );
       return;
     }
-    setEditError(null);
-    update((c) => ({ ...c, attributes: { ...c.attributes, [key]: bare } }));
+    setAttr(key, bare);
   };
 
   const applyEquip = (slot: EquipSlot, value: EquippedItem | null) => {
@@ -191,6 +244,7 @@ export function StatSimClient({ data, windows }: Props) {
               variant="ghost"
               onClick={() => {
                 setEditError(null);
+                setSnapshot(null);
                 update((c) => ({
                   ...c,
                   attributes: { str: 1, pow: 1, vit: 1, agi: 1, dex: 1, wis: 1 },
@@ -201,9 +255,35 @@ export function StatSimClient({ data, windows }: Props) {
               重設配點
             </Button>
             <span className="text-xs text-muted-foreground max-sm:basis-full">
-              點六圍數字可直接輸入，按「+」加 1 點。
+              {gearMode
+                ? "請先填好裝備，再照遊戲角色視窗填六圍。"
+                : "點六圍數字可直接輸入，按「+」加 1 點。"}
             </span>
           </div>
+          {drifted && (
+            <div
+              role="status"
+              className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/[0.06] px-3 py-2 text-sm"
+            >
+              <span className="flex min-w-0 flex-1 basis-full items-center gap-2 sm:basis-auto">
+                <CircleAlertIcon className="size-4 shrink-0 text-primary" aria-hidden />
+                裝備變了，要維持剛才填的含裝數值嗎？
+              </span>
+              <Button size="sm" onClick={keepEquipped}>
+                維持含裝數值
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setEditError(null);
+                  setSnapshot(null);
+                }}
+              >
+                照新裝備計算
+              </Button>
+            </div>
+          )}
           {editError && (
             <p role="alert" className="text-xs text-destructive">
               {editError}
