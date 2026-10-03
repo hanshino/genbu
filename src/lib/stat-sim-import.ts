@@ -97,8 +97,8 @@ function unexplainedHp(payload: ImportPayloadV1, character: CharacterV1, data: G
   const game = payload.panel;
   const gameHp = game?.stats?.hp;
   if (!game || gameHp === undefined) return 0;
-  // 經脈會把所有欄位標成估計值；比對時先拿掉，其他資料缺漏的估計原因照樣擋下。
-  const result = computePanel({ ...character, meridianPlan: null }, data);
+  // 沒有經脈資料時經脈會把所有欄位標成估計值，比對時先拿掉；其他資料缺漏的估計原因照樣擋下。
+  const result = computePanel(data.meridians ? character : { ...character, meridianPlan: null }, data);
   const hp = result.stats.hp;
   if (hp.value === null || hp.estimated || gameHp <= hp.value) return 0;
   let matched = 0;

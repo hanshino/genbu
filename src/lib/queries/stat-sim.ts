@@ -335,11 +335,38 @@ export function getStatSimData(): GameData {
   `).all() as NonNullable<GameData["collectionThresholds"]>;
   const meridianIds = (db.prepare("SELECT DISTINCT magic_id FROM magic_meridians ORDER BY magic_id")
     .all() as Array<{ magic_id: number }>).map((row) => row.magic_id);
+  // magic_stats 是每級增量；HP/MP 當前值、回復、抗性與敵方減防不在面板上，直接略過。
+  const meridianRows = db.prepare(`
+    SELECT id, name, MAX(level) AS level FROM magic
+    WHERE id IN (SELECT magic_id FROM magic_meridians) GROUP BY id
+  `).all() as Array<{ id: number; name: string; level: number }>;
+  const meridianDeltas = new Map(meridianRows.map((row) =>
+    [row.id, Array.from({ length: row.level + 1 }, (): PanelBonus => ({}))]));
+  for (const row of db.prepare(`
+    SELECT magic_id, level, stat, value FROM magic_stats
+    WHERE magic_id IN (SELECT magic_id FROM magic_meridians) AND (flag IS NULL OR flag != 'AFFECT_RATIO')
+  `).all() as Array<{ magic_id: number; level: number; stat: string; value: number }>) {
+    const key = MAGIC_STATS[row.stat];
+    if (!key) continue;
+    const delta = meridianDeltas.get(row.magic_id)?.[row.level];
+    if (!delta) throw new Error(`經脈 ${row.magic_id}：magic_stats 等級 ${row.level} 越界`);
+    addBonus(delta, { [key]: row.value });
+  }
+  const meridians: NonNullable<GameData["meridians"]> = Object.fromEntries(meridianRows.map((row) => {
+    const deltas = meridianDeltas.get(row.id)!;
+    const cumulative: PanelBonus[] = [{}];
+    for (let level = 1; level <= row.level; level++) {
+      const total = { ...cumulative[level - 1] };
+      addBonus(total, deltas[level]);
+      cumulative.push(total);
+    }
+    return [row.id, { name: row.name, cumulative }];
+  }));
   const subSectSkills = Object.fromEntries((db.prepare(`
     SELECT DISTINCT id, clan FROM magic WHERE clan IN (${SUB_SECT_CLANS.map(() => "?").join(",")}) ORDER BY id
   `).all(...SUB_SECT_CLANS) as Array<{ id: number; clan: SubSectClan }>).map((row) => [row.id, row.clan]));
   return {
-    itemsById, enhancementsByPath, passives, meridianIds, subSectSkills, collectionThresholds,
+    itemsById, enhancementsByPath, passives, meridianIds, meridians, subSectSkills, collectionThresholds,
     socketRecipes, socketRecipeIdsByCategory,
   };
 }

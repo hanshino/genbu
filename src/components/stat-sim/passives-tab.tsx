@@ -325,7 +325,7 @@ export function PassivesTab({
           <CardTitle className="font-heading">英雄 / 陣法 / 其他手動加值</CardTitle>
         </CardHeader>
         <CardContent className="@container space-y-4">
-          {character.meridianPlan && (
+          {character.meridianPlan && !data.meridians && (
             <p className="flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1.5 text-xs text-muted-foreground">
               <CircleAlertIcon className="size-3.5 shrink-0" aria-hidden />
               這隻角色有經脈配點，但經脈加成尚未計入面板。

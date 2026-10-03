@@ -475,6 +475,27 @@ describe("加成、條件與資料完整性", () => {
     data.enhancementsByPath[7] = { maxLevel: 1, levels: [{}, {}] };
     expect(computePanel(c, data).issues.map((i) => i.code)).toContain("missing-enhancement-level");
   });
+  it("有經脈資料時，經脈加成計入面板，六圍會進屬性公式", () => {
+    const data = emptyData();
+    data.meridians = {
+      860: { name: "廉泉", cumulative: [{}, { vit: 1 }, { vit: 2 }] },
+      870: { name: "華蓋", cumulative: [{}, { wis: 1 }] },
+      901: { name: "京門", cumulative: [{}, { hp: 1200 }] },
+    };
+    const base = computePanel(character(), data);
+    const p = computePanel(character({ meridianPlan: "860.2,870.1,901.1" }), data);
+    expect(p.attributes.vit.value).toBe(base.attributes.vit.value! + 2);
+    expect(p.attributes.wis.value).toBe(base.attributes.wis.value! + 1);
+    expect(p.attributes.vit.breakdown).toContainEqual({ source: "meridian", label: "經脈 廉泉 Lv2", amount: 2, refId: 860 });
+    expect(p.stats.hp.value! - base.stats.hp.value!).toBeGreaterThan(1200);
+    expect(p.issues.map((i) => i.code)).not.toContain("meridian-not-included");
+    expect(p.stats.hp.estimated).toBe(false);
+    expectBreakdowns(p);
+
+    const bad = computePanel(character({ meridianPlan: "860.9,abc" }), data);
+    expect(bad.issues.filter((i) => i.code === "invalid-meridian")).toHaveLength(2);
+    expect(bad.attributes.vit.value).toBe(base.attributes.vit.value);
+  });
   it("損壞的強化／被動／非有限加值不造成 NaN", () => {
     const c = character(); const data = emptyData();
     data.itemsById[1] = item(1, "STING", { hp: NaN });

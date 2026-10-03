@@ -220,6 +220,8 @@ export interface GameData {
   passives: PassiveDef[];
   /** 經脈穴位 magic id，來自 magic_meridians；匯入時用來辨識經脈技能。 */
   meridianIds: number[];
+  /** 經脈 magic id → 名稱與各級總加成（索引即等級，0 為 {}）；舊資料沒有時經脈仍標為估計。 */
+  meridians?: Record<number, { name: string; cumulative: PanelBonus[] }>;
   /** 副門派全部技能（含不影響面板、不在 passives 的）magic id → clan；匯入時用來判斷副門派。 */
   subSectSkills?: Record<number, SubSectClan>;
   /** 收藏值門檻，由小到大排序；舊資料未提供時不開放自動換算。 */
@@ -245,6 +247,7 @@ export interface StatBreakdown {
     | "socket"
     | "passive"
     | "collection"
+    | "meridian"
     | "hero"
     | "formation"
     | "manualOther"

@@ -124,7 +124,7 @@ DB 欄位都在 `items`：`hp mp str pow vit dex agi wis atk matk extra_def magi
 - `flag = 'AFFECT_RATIO'` 的列是百分比，實測沒有用到，先排除。
 - **收藏**（`COLLECTBOOKBONUS.INI`）的獎勵就是技能 1151～1159（體力 / 真氣 / 物攻 / 內勁 / 防禦 / 護勁 / 命中 / 閃躲 …）。`collect_book_bonuses(value, magic_id, level)` 已提供收藏值門檻對應，可自動換算並保留逐項編輯。
 - **成就**技能 1181～1202 獨立分組；1189～1194 的 Str / Pow / Vit / Dex / Agi / Wis 先加入六圍，再計算衍生值。取得上限使用已啟用成就的技能獎勵總和；目前 1189～1194 查無取得來源。
-- **經脈**點也在 `magic_stats` 裡，例如 855..1125，見 `meridian.ts`。
+- **經脈**點也在 `magic_stats` 裡，例如 855..1125，見 `meridian.ts`。一樣每級疊加；六圍加成先進屬性公式，例如廉泉 Lv1 的 +1 根骨也會讓體力和防禦跟著變。`AFFECT_MAX_NUMBER` 的 HPMAX / MPMAX 就是體力 / 真氣上限。
 
 ```sql
 SELECT stat, SUM(value) FROM magic_stats
