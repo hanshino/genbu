@@ -34,6 +34,7 @@ const data: GameData = {
     55001: weapon(55001, "SWORD", { name: "龍躍鳳鳴劍", damage: [945, 970] }),
     55004: weapon(55004, "PUNCHER", { name: "龍躍鳳鳴手套", pdamage: [1096, 1114] }),
     55002: weapon(55002, "STING", { damage: [860, 878] }),
+    55003: weapon(55003, "BLADE", { damage: [900, 920] }),
     55005: weapon(55005, "WHISK", { damage: [800, 820], pdamage: [1000, 1025] }),
     55006: weapon(55006, "BOW", { damage: [993, 1019] }),
     9: weapon(9, "SHIELD"),
@@ -62,12 +63,13 @@ function skill(
 
 const 千瘡百孔 = skill(702, 4, 2, [1650, 0, 0, 0]);
 const 毒舌亂神 = skill(703, 6, 2, [1300, 450, 150, 0]);
+const 血殺屠刀 = skill(705, 3, 1, [3000, 200, 0, 0]);
 const 裂空劍法 = skill(715, 3, 3, [1950, 200, 0, 0], "CLASS_FLOWER");
 const 落英紛飛 = skill(714, 7, 3, [430, 0, 8, 100], "CLASS_FLOWER");
 const 醉月劍法 = skill(716, 8, 3, [2700, 1100, 230, 70], "CLASS_FLOWER");
 const 蓮蒼掌 = skill(709, 4, 4, [1500, 0, 0, 0], "CLASS_FLOWER");
 const 未知類型 = skill(9001, 17, 3, [1500, 0, 0, 0], "CLASS_FLOWER");
-const SKILLS = [千瘡百孔, 毒舌亂神, 裂空劍法, 落英紛飛, 醉月劍法, 蓮蒼掌, 未知類型];
+const SKILLS = [千瘡百孔, 毒舌亂神, 血殺屠刀, 裂空劍法, 落英紛飛, 醉月劍法, 蓮蒼掌, 未知類型];
 
 function run(c: CharacterV1, target: DamageMonster, skillLevels?: Record<number, number>) {
   return computeDamage({ character: c, data, panel: computePanel(c, data), monster: target, skills: SKILLS, skillLevels });
@@ -147,7 +149,7 @@ describe("技能", () => {
     expect(row.variants[0].perHit.min).toBe(hitDamage(19.5, 3277, 855, 94));
   });
 
-  it("拳腳類（移花宮掌法）與未實測的 func_dmg 標尚未支援", () => {
+  it("掌法類與未實測的 func_dmg 標尚未支援", () => {
     const skills = run(sword, monster(71, 94)).skills;
     expect(skills.find((s) => s.skill.id === 709)!.support).toBe("unsupported");
     expect(skills.find((s) => s.skill.id === 9001)!.reasons[0]).toContain("func_dmg 17");
@@ -157,7 +159,7 @@ describe("技能", () => {
 
   it("只列主門派與已選副門派的技能", () => {
     expect(skillsForCharacter(character({ sectId: 4 }), SKILLS).map((s) => s.id)).toEqual([715, 714, 716, 709, 9001]);
-    expect(skillsForCharacter(character({ sectId: 2 }), SKILLS).map((s) => s.id)).toEqual([702, 703]);
+    expect(skillsForCharacter(character({ sectId: 2 }), SKILLS).map((s) => s.id)).toEqual([702, 703, 705]);
   });
 });
 
@@ -174,7 +176,8 @@ describe("武器分級", () => {
     expect(result.normal).toEqual({
       min: hitDamage(1, 2860, 750, 50), max: hitDamage(1, 2878, 750, 50),
     });
-    expect(result.skills.find((s) => s.skill.id === 715)!.support).toBe("presumed");
+    // 劍法要右手拿劍，匕首放不出來。
+    expect(result.skills.find((s) => s.skill.id === 715)!.wrongWeapon).toBe("「劍法」要右手拿劍才能使用");
   });
 
   it("拂塵、手甲、雙持都尚未支援，不算出數字", () => {
@@ -189,6 +192,37 @@ describe("武器分級", () => {
   it("無視防禦技能拿劍時尚未支援", () => {
     const c = equip(withPanel(character({ sectId: 2 }), 2000, 1000), 55001);
     expect(run(c, monster(50, 50)).skills.find((s) => s.skill.id === 703)!.support).toBe("unsupported");
+  });
+});
+
+describe("技能類型要配對的武器", () => {
+  const bad = withPanel(character({ sectId: 2 }), 2000, 1616);
+
+  it("惡人谷拿手套：刀法放不出來，不算數字；詐招照算", () => {
+    const skills = run(equip(bad, 55004), monster(86, 127)).skills;
+    const blade = skills.find((s) => s.skill.id === 705)!;
+    expect(blade.wrongWeapon).toBe("「刀法」要右手拿刀才能使用");
+    expect(blade.support).toBe("unsupported");
+    expect(blade.variants).toEqual([]);
+    expect(skills.find((s) => s.skill.id === 702)!.support).toBe("verified");
+  });
+
+  it("惡人谷拿刀：刀法照物攻推定；詐招拿刀只能推定", () => {
+    const skills = run(equip(bad, 55003), monster(86, 127)).skills;
+    const blade = skills.find((s) => s.skill.id === 705)!;
+    expect(blade.wrongWeapon).toBeUndefined();
+    expect(blade.support).toBe("presumed");
+    expect(blade.variants[0].perHit.min).toBe(hitDamage(30, 2900, 930, 127));
+    expect(skills.find((s) => s.skill.id === 702)!.reasons).toContain("詐招只實測過拳套與空手");
+  });
+
+  it("只看右手：刀拿在左手也放不出刀法；掌法空手可以、拿劍不行", () => {
+    expect(run(equip(bad, null, 55003), monster(50, 50)).skills.find((s) => s.skill.id === 705)!.wrongWeapon)
+      .toBeDefined();
+    const flower = withPanel(character({ sectId: 4 }), 2000, 1000);
+    expect(run(flower, monster(50, 50)).skills.find((s) => s.skill.id === 709)!.wrongWeapon).toBeUndefined();
+    expect(run(equip(flower, 55001), monster(50, 50)).skills.find((s) => s.skill.id === 709)!.wrongWeapon)
+      .toBe("「掌法」要空手或右手拿手套才能使用");
   });
 });
 

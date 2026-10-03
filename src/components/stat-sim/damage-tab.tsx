@@ -350,6 +350,35 @@ function skillSummary(row: SkillDamage): string {
   return row.hits > 1 ? `${round(perHit)} × ${row.hits} 段` : round(perHit);
 }
 
+/** 算不出數字的招式，收起來列出名稱與原因。 */
+function ReasonList({ title, rows }: { title: string; rows: SkillDamage[] }) {
+  if (rows.length === 0) return null;
+  return (
+    <Collapsible className="border-t border-border/60">
+      <CollapsibleTrigger className="group flex items-center gap-2 px-4 py-2.5 text-xs text-muted-foreground hover:bg-muted/50">
+        <ChevronRightIcon
+          className="size-3.5 transition-transform group-data-[panel-open]:rotate-90"
+          aria-hidden
+        />
+        {title}（{rows.length}）
+      </CollapsibleTrigger>
+      <CollapsiblePanel>
+        <ul className="space-y-2 px-4 pb-3 text-xs">
+          {rows.map((row) => (
+            <li key={row.skill.id} className="flex items-start gap-2">
+              <SkillIcon url={row.skill.iconUrl} />
+              <div className="min-w-0">
+                <div className="text-sm">{row.skill.name}</div>
+                <div className="text-muted-foreground">{row.reasons.join("；")}</div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </CollapsiblePanel>
+    </Collapsible>
+  );
+}
+
 export function DamageTab({
   character,
   data,
@@ -453,12 +482,15 @@ export function DamageTab({
 
   const computable = result?.skills.filter((s) => s.variants.length > 0) ?? [];
   // 只是等級不夠的招留在「低階與還學不到」，調高等級就能算。
+  // 右手武器不對的招遊戲裡放不出來，跟「還沒實測」分開列。
+  const wrongWeapon = result?.skills.filter((s) => s.wrongWeapon) ?? [];
   const unsupported =
     result?.skills.filter(
-      (s) => s.support === "unsupported" && !s.reasons.includes(LEVEL_TOO_LOW),
+      (s) =>
+        s.support === "unsupported" && !s.wrongWeapon && !s.reasons.includes(LEVEL_TOO_LOW),
     ) ?? [];
   const { top, lower } = groupFamilies(
-    result?.skills.filter((s) => !unsupported.includes(s)) ?? [],
+    result?.skills.filter((s) => !unsupported.includes(s) && !wrongWeapon.includes(s)) ?? [],
   );
   const ranked = top
     .filter((s) => s.variants.length > 0)
@@ -587,30 +619,8 @@ export function DamageTab({
                 </CollapsiblePanel>
               </Collapsible>
             )}
-            {unsupported.length > 0 && (
-              <Collapsible className="border-t border-border/60">
-                <CollapsibleTrigger className="group flex items-center gap-2 px-4 py-2.5 text-xs text-muted-foreground hover:bg-muted/50">
-                  <ChevronRightIcon
-                    className="size-3.5 transition-transform group-data-[panel-open]:rotate-90"
-                    aria-hidden
-                  />
-                  尚未支援的招式（{unsupported.length}）
-                </CollapsibleTrigger>
-                <CollapsiblePanel>
-                  <ul className="space-y-2 px-4 pb-3 text-xs">
-                    {unsupported.map((row) => (
-                      <li key={row.skill.id} className="flex items-start gap-2">
-                        <SkillIcon url={row.skill.iconUrl} />
-                        <div className="min-w-0">
-                          <div className="text-sm">{row.skill.name}</div>
-                          <div className="text-muted-foreground">{row.reasons.join("；")}</div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </CollapsiblePanel>
-              </Collapsible>
-            )}
+            <ReasonList title="換武器才能用" rows={wrongWeapon} />
+            <ReasonList title="尚未支援的招式" rows={unsupported} />
           </section>
 
           <section className={box} aria-label="連段試算">

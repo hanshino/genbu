@@ -42,6 +42,26 @@ export const UNARMED_RULE: WeaponRule = { support: "verified", ...PHYSICAL };
 /** 實測過的 func_dmg；其他類型（17、50、51…）完全沒有觀察。 */
 export const VERIFIED_FUNC_DMG: readonly number[] = [3, 4, 6, 7, 8];
 
+/**
+ * skill_type → 右手要拿的武器（null 是空手）；不在表上的類型（詐招、毒、醫、機關、身法、符陣）不限武器。
+ * tthol_data 靜態分析客戶端得到（0x421010 施法前檢查）：只看右手，不符就跳「你必須裝備適當的武器才能使用這個技能」，封包不送。
+ * 自創武功（649–654）另有「本門武器」放行，這裡不處理。
+ */
+export const SKILL_TYPE_WEAPONS: Record<number, { right: readonly (string | null)[]; left?: string }> = {
+  1: { right: ["BLADE"] },
+  3: { right: ["SWORD"] },
+  4: { right: [null, "PUNCHER"] },
+  7: { right: ["STING"] },
+  9: { right: ["BOW"], left: "HIDDEN_WEAPON" },
+  10: { right: ["GREAT_SWORD"] },
+  12: { right: ["ROD"] },
+  13: { right: [null, "BOXING"] },
+  17: { right: ["WHISK"] },
+  18: { right: ["STAFF"] },
+  19: { right: ["CLAW"] },
+  20: { right: ["HAMMER"] },
+};
+
 /** 詐招配拳套、劍法配劍實測過；刀、刺、倭刀、棍是物理武器招式，照普攻的 B / D 推定。 */
 export const SKILL_TYPE_SUPPORT: Record<number, Exclude<DamageSupport, "unsupported">> = {
   2: "verified",
@@ -54,7 +74,7 @@ export const SKILL_TYPE_SUPPORT: Record<number, Exclude<DamageSupport, "unsuppor
 
 /** docs/game-setting-codes.md §4；18–20 是推斷名稱。 */
 export const SKILL_TYPE_LABELS: Record<number, string> = {
-  1: "刀法", 2: "詐招", 3: "劍法", 4: "拳腳", 5: "毒術", 6: "醫療", 7: "刺", 8: "機關術",
+  1: "刀法", 2: "詐招", 3: "劍法", 4: "掌法", 5: "毒術", 6: "醫療", 7: "刺", 8: "機關術",
   9: "暗器", 10: "倭刀", 11: "忍術", 12: "棍法", 13: "拳套", 14: "氣／符陣", 16: "咒術",
   17: "拂塵", 18: "禁術", 19: "靈種", 20: "劍陣",
 };

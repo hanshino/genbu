@@ -3,6 +3,7 @@ import {
   SECT_SKILL_CLANS,
   SKILL_TYPE_LABELS,
   SKILL_TYPE_SUPPORT,
+  SKILL_TYPE_WEAPONS,
   SUPPORT_RANK,
   UNARMED_RULE,
   VERIFIED_FUNC_DMG,
@@ -66,6 +67,8 @@ export interface SkillDamage extends Gate {
   variants: SkillVariant[];
   /** 這個等級施放一次的真氣。 */
   mp: number;
+  /** 目前右手武器放不出這招時，寫要換什麼武器；這種招一定是 unsupported。 */
+  wrongWeapon?: string;
 }
 
 export interface DamageResult {
@@ -168,6 +171,22 @@ export function defaultSkillLevel(skill: DamageSkillDef, character: CharacterV1)
   return 0;
 }
 
+/** 遊戲只看右手（暗器另要左手），不符就放不出來；回傳要換的武器，符合為 null。 */
+export function weaponRequirement(skill: DamageSkillDef, character: CharacterV1, data: GameData): string | null {
+  const need = skill.skillType == null ? undefined : SKILL_TYPE_WEAPONS[skill.skillType];
+  if (!need) return null;
+  const typeOf = (slot: "right" | "left") => {
+    const equipped = character.equipment[slot];
+    return equipped ? data.itemsById[equipped.itemId]?.typeName ?? "" : null;
+  };
+  if (need.right.includes(typeOf("right")) && (!need.left || typeOf("left") === need.left)) return null;
+  const weapons = need.right.flatMap((type) => (type == null ? [] : [typeLabel(type)])).join("或");
+  const hands = need.left ? `右手拿${weapons}、左手拿${typeLabel(need.left)}`
+    : need.right.includes(null) ? `空手或右手拿${weapons}` : `右手拿${weapons}`;
+  const typeName = SKILL_TYPE_LABELS[skill.skillType!] ?? String(skill.skillType);
+  return `「${typeName}」要${hands}才能使用`;
+}
+
 /** 主門派加上已選副門派的傷害技能。 */
 export function skillsForCharacter(character: CharacterV1, skills: DamageSkillDef[]): DamageSkillDef[] {
   const clans = new Set<string>([...(SECT_SKILL_CLANS[character.sectId] ?? []), ...character.subSects]);
@@ -185,6 +204,9 @@ function skillGate(skill: DamageSkillDef, weapon: WeaponProfile): Gate {
   else if (typeSupport === "presumed") {
     gates.push({ support: "presumed", reasons: [`「${typeName}」類技能尚未實測，照普攻的攻擊與防禦推定`] });
   }
+  if (skill.skillType === 2 && weapon.typeName != null && weapon.typeName !== "PUNCHER") {
+    gates.push({ support: "presumed", reasons: ["詐招只實測過拳套與空手"] });
+  }
   if (skill.funcDmg === 6 && weapon.typeName != null && weapon.typeName !== "PUNCHER") {
     gates.push(unsupported("無視防禦類技能只實測過拳套與空手"));
   }
@@ -198,9 +220,11 @@ function computeSkill(
   panel: PanelResult,
   k: number,
   defense: number,
+  wrongWeapon: string | null,
 ): SkillDamage {
   const maxLevel = skill.levels.length - 1;
   const base = { skill, level, maxLevel, hits: 1, variants: [] as SkillVariant[], mp: skill.levels[level]?.mp ?? 0 };
+  if (wrongWeapon) return { ...base, ...unsupported(wrongWeapon), wrongWeapon };
   if (weapon.support === "unsupported" || !weapon.weaponDamage || weapon.attack == null) {
     return { ...base, ...unsupported("目前的武器無法試算") };
   }
@@ -275,7 +299,8 @@ export function computeDamage(input: {
     critical = rangeOf((b) => hitDamage(2, b, k, defense), B);
   }
   const results = skillsForCharacter(character, skills).map((skill) =>
-    computeSkill(skill, skillLevels[skill.id] ?? defaultSkillLevel(skill, character), weapon, panel, k, defense));
+    computeSkill(skill, skillLevels[skill.id] ?? defaultSkillLevel(skill, character), weapon, panel, k, defense,
+      weaponRequirement(skill, character, data)));
   results.sort((a, b) => SUPPORT_RANK[a.support] - SUPPORT_RANK[b.support] || a.skill.id - b.skill.id);
   return { weapon, monster, k, defense, caveats, normal, critical, skills: results };
 }
