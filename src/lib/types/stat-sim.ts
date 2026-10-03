@@ -134,6 +134,47 @@ export interface SimItem {
   randomCount?: [number, number];
   /** compounds 裝備類別 1–5（盾為 3）；null 表示沒有可插配方。 */
   socketCategory?: number | null;
+  /** items.damage_min/max；強化、真解不改變，0..0 時省略。 */
+  damage?: [number, number];
+  /** items.pdamage_min/max（內勁武器傷害，例如拳套）；0..0 時省略。 */
+  pdamage?: [number, number];
+}
+
+/** magic 的單一等級傷害參數，欄位照 func_dmg_p1..p4 原值（未除以 100）。 */
+export interface DamageSkillLevel {
+  p1: number;
+  p2: number;
+  p3: number;
+  p4: number;
+  /** magic_learn.char_level；缺少學習資料為 -1。 */
+  learnLevel: number;
+}
+
+export interface DamageSkillDef {
+  id: number;
+  /** 最高等級的名稱。 */
+  name: string;
+  clan: string | null;
+  skillType: number | null;
+  funcDmg: number;
+  iconUrl: string | null;
+  /** 索引即等級，0 為 null。 */
+  levels: (DamageSkillLevel | null)[];
+}
+
+/** 傷害分頁打開時才載入（/api/stat-sim/damage），不放進首頁的 GameData。 */
+export interface DamageData {
+  skills: DamageSkillDef[];
+  monsters: DamageMonster[];
+}
+
+/** 傷害試算的目標怪物（npc.is_monster = 1）。 */
+export interface DamageMonster {
+  id: number;
+  name: string;
+  level: number;
+  extraDef: number;
+  magicDef: number;
 }
 
 export interface EnhancementPath {

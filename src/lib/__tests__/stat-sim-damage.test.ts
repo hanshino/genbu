@@ -1,0 +1,237 @@
+import { describe, expect, it } from "vitest";
+import { computePanel } from "@/lib/stat-sim";
+import {
+  computeDamage, computeMarginal, defaultSkillLevel, hitDamage, ignoreDefenseDamage, skillsForCharacter,
+} from "@/lib/stat-sim-damage";
+import {
+  EQUIP_SLOTS,
+  type CharacterV1, type DamageMonster, type DamageSkillDef, type GameData, type SimItem,
+} from "@/lib/types/stat-sim";
+
+// 數值全部來自 tthol_data scripts/damage_capture_investigation.md 的封包實測。
+
+function character(overrides: Partial<CharacterV1> = {}): CharacterV1 {
+  return {
+    version: 1, id: "test", name: "測試角色", sectId: 2, subSects: [], level: 192,
+    rebirthPoints: 140, attributes: { str: 1, pow: 1, vit: 1, agi: 1, dex: 1, wis: 1 },
+    equipment: Object.fromEntries(EQUIP_SLOTS.map((slot) => [slot, null])) as CharacterV1["equipment"],
+    passiveLevels: {}, meridianPlan: null, manual: { hero: {}, formation: {} }, ...overrides,
+  };
+}
+
+/** 六圍全 1 時面板物攻、內勁都是 3，用「其他手動加值」補到實測面板值。 */
+function withPanel(c: CharacterV1, atk: number, matk: number): CharacterV1 {
+  return { ...c, manual: { ...c.manual, other: { atk: atk - 3, matk: matk - 3 } } };
+}
+
+function weapon(id: number, typeName: string, extra: Partial<SimItem> = {}): SimItem {
+  return { id, name: `武器 ${id}`, typeName, level: 1, slotHint: null, stats: {}, strongPathId: null, ...extra };
+}
+
+const data: GameData = {
+  itemsById: {
+    55001: weapon(55001, "SWORD", { name: "龍躍鳳鳴劍", damage: [945, 970] }),
+    55004: weapon(55004, "PUNCHER", { name: "龍躍鳳鳴手套", pdamage: [1096, 1114] }),
+    55002: weapon(55002, "STING", { damage: [860, 878] }),
+    55005: weapon(55005, "WHISK", { damage: [800, 820], pdamage: [1000, 1025] }),
+    55006: weapon(55006, "BOW", { damage: [993, 1019] }),
+    9: weapon(9, "SHIELD"),
+  },
+  enhancementsByPath: {}, passives: [], meridianIds: [],
+};
+
+function equip(c: CharacterV1, right: number | null, left: number | null = null): CharacterV1 {
+  const slot = (id: number | null) => (id == null ? null : { itemId: id, enhancementLevel: 0, manualBonuses: {} });
+  return { ...c, equipment: { ...c.equipment, right: slot(right), left: slot(left) } };
+}
+
+const monster = (level: number, extraDef: number, magicDef = extraDef): DamageMonster =>
+  ({ id: level * 1000 + extraDef, name: `Lv${level} 怪`, level, extraDef, magicDef });
+
+function skill(id: number, funcDmg: number, skillType: number, p: [number, number, number, number], clan = "CLASS_BAD"):
+  DamageSkillDef {
+  return {
+    id, name: `技能 ${id}`, clan, skillType, funcDmg, iconUrl: null,
+    levels: [null, ...Array.from({ length: 19 }, () => ({ p1: 100, p2: 0, p3: 0, p4: 0, learnLevel: 100 })),
+      { p1: p[0], p2: p[1], p3: p[2], p4: p[3], learnLevel: 150 }],
+  };
+}
+
+const 千瘡百孔 = skill(702, 4, 2, [1650, 0, 0, 0]);
+const 毒舌亂神 = skill(703, 6, 2, [1300, 450, 150, 0]);
+const 裂空劍法 = skill(715, 3, 3, [1950, 200, 0, 0], "CLASS_FLOWER");
+const 落英紛飛 = skill(714, 7, 3, [430, 0, 8, 100], "CLASS_FLOWER");
+const 醉月劍法 = skill(716, 8, 3, [2700, 1100, 230, 70], "CLASS_FLOWER");
+const 蓮蒼掌 = skill(709, 4, 4, [1500, 0, 0, 0], "CLASS_FLOWER");
+const 未知類型 = skill(9001, 17, 3, [1500, 0, 0, 0], "CLASS_FLOWER");
+const SKILLS = [千瘡百孔, 毒舌亂神, 裂空劍法, 落英紛飛, 醉月劍法, 蓮蒼掌, 未知類型];
+
+function run(c: CharacterV1, target: DamageMonster, skillLevels?: Record<number, number>) {
+  return computeDamage({ character: c, data, panel: computePanel(c, data), monster: target, skills: SKILLS, skillLevels });
+}
+
+describe("主公式 ⌊m·B·K/(K+D)⌋ − ⌊D/2⌋", () => {
+  it("空手物攻 155 打吹箭客（Lv37，防 29）：普攻 134、重擊 283，沒有亂數", () => {
+    const result = run(withPanel(character(), 155, 1212), monster(37, 29));
+    expect(result.weapon.label).toBe("空手");
+    expect(result.k).toBe(685);
+    expect(result.normal).toEqual({ min: 134, max: 134 });
+    expect(result.critical).toEqual({ min: 283, max: 283 });
+  });
+
+  it("拳套內勁 1616 + pdamage 1096..1114 打墮落劍客（Lv91，139）：2298..2314，跟實測區間一樣", () => {
+    const result = run(equip(withPanel(character(), 275, 1616), 55004), monster(91, 139));
+    expect(result.normal).toEqual({ min: 2298, max: 2314 });
+  });
+
+  it("幽靈女俠（Lv94，146）：2284..2299，跟實測區間一樣", () => {
+    const result = run(equip(withPanel(character(), 275, 1616), 55004), monster(94, 146));
+    expect(result.normal).toEqual({ min: 2284, max: 2299 });
+  });
+
+  it("拳套打 magic_def：搗藥君 extra_def 96 / magic_def 126，平均落在實測 2339 附近", () => {
+    const result = run(equip(withPanel(character(), 275, 1616), 55004), monster(90, 96, 126));
+    expect(result.defense).toBe(126);
+    expect(result.normal).toEqual({ min: 2331, max: 2347 });
+  });
+
+  it("重擊是乘法部分加倍、D/2 只扣一次，不是普攻 × 2", () => {
+    expect(hitDamage(2, 155, 685, 29)).toBe(283);
+    expect(hitDamage(1, 155, 685, 29) * 2).toBe(268);
+  });
+});
+
+describe("技能", () => {
+  const puncher = equip(withPanel(character(), 275, 1616), 55004);
+
+  it("千瘡百孔（func_dmg 4，16.5 倍）打血玫瑰（Lv86，127）：實測 39322..39554 落在預測區間內", () => {
+    const row = run(puncher, monster(86, 127)).skills.find((s) => s.skill.id === 702)!;
+    expect(row.support).toBe("verified");
+    const { min, max } = row.variants[0].perHit;
+    expect(min).toBeLessThanOrEqual(39322);
+    expect(max).toBeGreaterThanOrEqual(39554);
+  });
+
+  it("毒舌亂神（func_dmg 6）四個實測點全部精確，跟怪的防禦無關", () => {
+    expect(ignoreDefenseDamage(1300, 450, 150, 1212, 155)).toBe(16438);
+    expect(ignoreDefenseDamage(1300, 450, 150, 1298, 155)).toBe(17556);
+    const unarmed = run(withPanel(character(), 155, 1212), monster(37, 29)).skills.find((s) => s.skill.id === 703)!;
+    expect(unarmed.variants[0].perHit).toEqual({ min: 16438, max: 16438 });
+    for (const target of [monster(86, 127), monster(37, 29)]) {
+      const row = run(puncher, target).skills.find((s) => s.skill.id === 703)!;
+      expect(row.variants[0].perHit).toEqual({ min: 36118, max: 36352 });
+    }
+  });
+
+  const sword = equip(withPanel(character({ sectId: 4 }), 2332, 100), 55001);
+
+  it("落英紛飛（func_dmg 7）：段數 = p3，每段各扣 ⌊D/2⌋", () => {
+    const row = run(sword, monster(71, 94)).skills.find((s) => s.skill.id === 714)!;
+    expect(row.hits).toBe(8);
+    expect(row.variants[0].perHit.min).toBe(hitDamage(4.3, 2332 + 945, 855, 94));
+  });
+
+  it("醉月劍法（func_dmg 8）：p4% 機率用 p1，否則用 p2，兩種都列出", () => {
+    const row = run(sword, monster(71, 94)).skills.find((s) => s.skill.id === 716)!;
+    expect(row.variants.map((v) => v.chance)).toEqual([70, 30]);
+    expect(row.variants[0].perHit.min).toBe(hitDamage(27, 3277, 855, 94));
+    expect(row.variants[1].perHit.min).toBe(hitDamage(11, 3277, 855, 94));
+  });
+
+  it("裂空劍法（func_dmg 3）跟 func_dmg 4 一樣是單段 p1 倍", () => {
+    const row = run(sword, monster(71, 94)).skills.find((s) => s.skill.id === 715)!;
+    expect(row.support).toBe("verified");
+    expect(row.variants[0].perHit.min).toBe(hitDamage(19.5, 3277, 855, 94));
+  });
+
+  it("拳腳類（移花宮掌法）與未實測的 func_dmg 標尚未支援", () => {
+    const skills = run(sword, monster(71, 94)).skills;
+    expect(skills.find((s) => s.skill.id === 709)!.support).toBe("unsupported");
+    expect(skills.find((s) => s.skill.id === 9001)!.reasons[0]).toContain("func_dmg 17");
+    // 尚未支援的排在後面
+    expect(skills.at(-1)!.support).toBe("unsupported");
+  });
+
+  it("只列主門派與已選副門派的技能", () => {
+    expect(skillsForCharacter(character({ sectId: 4 }), SKILLS).map((s) => s.id)).toEqual([715, 714, 716, 709, 9001]);
+    expect(skillsForCharacter(character({ sectId: 2 }), SKILLS).map((s) => s.id)).toEqual([702, 703]);
+  });
+});
+
+describe("武器分級", () => {
+  const base = withPanel(character({ sectId: 4 }), 2000, 1000);
+
+  it("盾不算武器：劍 + 盾照劍算", () => {
+    expect(run(equip(base, 55001, 9), monster(50, 50)).weapon.support).toBe("verified");
+  });
+
+  it("匕首照劍推定", () => {
+    const result = run(equip(base, 55002), monster(50, 50));
+    expect(result.weapon.support).toBe("presumed");
+    expect(result.normal).toEqual({
+      min: hitDamage(1, 2860, 750, 50), max: hitDamage(1, 2878, 750, 50),
+    });
+    expect(result.skills.find((s) => s.skill.id === 715)!.support).toBe("presumed");
+  });
+
+  it("拂塵、手甲、雙持都尚未支援，不算出數字", () => {
+    for (const c of [equip(base, 55005), equip(base, 55006), equip(base, 55001, 55002)]) {
+      const result = run(c, monster(50, 50));
+      expect(result.weapon.support).toBe("unsupported");
+      expect(result.normal).toBeNull();
+      expect(result.skills.every((s) => s.support === "unsupported")).toBe(true);
+    }
+  });
+
+  it("無視防禦技能拿劍時尚未支援", () => {
+    const c = equip(withPanel(character({ sectId: 2 }), 2000, 1000), 55001);
+    expect(run(c, monster(50, 50)).skills.find((s) => s.skill.id === 703)!.support).toBe("unsupported");
+  });
+});
+
+describe("提醒與預設", () => {
+  it("怪物 Lv > 101 或防禦 > 310 時註記", () => {
+    const sword = equip(withPanel(character({ sectId: 4 }), 2000, 1000), 55001);
+    expect(run(sword, monster(90, 200)).caveats).toEqual([]);
+    expect(run(sword, monster(195, 1133)).caveats).toHaveLength(2);
+  });
+
+  it("技能等級：有轉生取最高級，沒轉生取學得到的最高級", () => {
+    expect(defaultSkillLevel(千瘡百孔, character({ level: 120, rebirthPoints: 40 }))).toBe(20);
+    expect(defaultSkillLevel(千瘡百孔, character({ level: 120, rebirthPoints: 0 }))).toBe(19);
+    expect(defaultSkillLevel(千瘡百孔, character({ level: 90, rebirthPoints: 0 }))).toBe(0);
+    const row = run(withPanel(character({ level: 90, rebirthPoints: 0 }), 155, 1212), monster(37, 29))
+      .skills.find((s) => s.skill.id === 702)!;
+    expect(row.reasons).toEqual(["目前等級還學不到這招"]);
+  });
+
+  it("玩家調整的技能等級優先", () => {
+    const c = equip(withPanel(character(), 275, 1616), 55004);
+    const row = run(c, monster(86, 127), { 702: 5 }).skills.find((s) => s.skill.id === 702)!;
+    expect(row.level).toBe(5);
+    expect(row.variants[0].perHit.min).toBe(hitDamage(1, 2712, 930, 127));
+  });
+});
+
+describe("邊際效益", () => {
+  const input = (c: CharacterV1) =>
+    ({ character: c, data, panel: computePanel(c, data), monster: monster(71, 94), skills: SKILLS });
+
+  it("拿劍：外功 +1 普攻變多，根骨 +1 不變", () => {
+    const rows = computeMarginal(input(equip(withPanel(character({ sectId: 4 }), 2000, 1000), 55001)));
+    const byKey = Object.fromEntries(rows.map((row) => [row.key, row]));
+    expect(byKey.str.normal).toBeGreaterThan(0);
+    expect(byKey.vit.normal).toBe(0);
+    expect(byKey.pow.normal).toBe(0);
+    expect(byKey.str.skills[715]).toBeGreaterThan(byKey.str.normal!);
+    expect(byKey.str.nextCost).toBe(1);
+  });
+
+  it("拿拳套：內力 +1 才有效，外功只影響無視防禦技能", () => {
+    const rows = computeMarginal(input(equip(withPanel(character(), 275, 1616), 55004)));
+    const byKey = Object.fromEntries(rows.map((row) => [row.key, row]));
+    expect(byKey.pow.normal).toBeGreaterThan(0);
+    expect(byKey.str.normal).toBe(0);
+    expect(byKey.str.skills[703]).toBeGreaterThan(0);
+  });
+});
