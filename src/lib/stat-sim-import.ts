@@ -69,6 +69,11 @@ export function assembleImport(
   const meridians = Object.fromEntries(data.meridianIds.flatMap((id) =>
     payload.skills[id] === undefined ? [] : [[id, payload.skills[id]]]));
   character.meridianPlan = encodePlan(meridians) || null;
+  const passiveIds = new Set(data.passives.map((passive) => passive.id));
+  const meridianIds = new Set(data.meridianIds);
+  const learned = Object.entries(payload.skills).filter(([id, level]) =>
+    level > 0 && !passiveIds.has(Number(id)) && !meridianIds.has(Number(id)));
+  if (learned.length > 0) character.learnedSkills = Object.fromEntries(learned);
   for (const slot of EQUIP_SLOTS) {
     const entry = payload.equipment[slot];
     if (!entry) continue;

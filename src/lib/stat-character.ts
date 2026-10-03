@@ -123,6 +123,10 @@ export function parseCharacter(raw: unknown): { ok: true; character: CharacterV1
       ([id, level]) => integer(Number(id), 1) && String(Number(id)) === id && integer(level, 0),
     ) ||
     (raw.meridianPlan !== null && typeof raw.meridianPlan !== "string") ||
+    (raw.learnedSkills !== undefined && (!isRecord(raw.learnedSkills) ||
+      !Object.entries(raw.learnedSkills).every(
+        ([id, level]) => integer(Number(id), 1) && String(Number(id)) === id && integer(level, 0),
+      ))) ||
     !isRecord(raw.manual) ||
     !bonus(raw.manual.hero) ||
     !bonus(raw.manual.formation) ||

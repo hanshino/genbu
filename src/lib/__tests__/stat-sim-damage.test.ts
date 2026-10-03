@@ -226,6 +226,23 @@ describe("技能類型要配對的武器", () => {
   });
 });
 
+describe("沒有門派的招", () => {
+  const 五虎斷魂刀 = { ...skill(508, 3, 1, [680, 0, 0, 0], ""), clan: null };
+
+  it("只有匯入時學過才列，等級用學到的", () => {
+    const c = equip(withPanel(character({ sectId: 2 }), 2000, 1000), 55003);
+    const target = monster(50, 50);
+    const list = (ch: CharacterV1) => computeDamage({
+      character: ch, data, panel: computePanel(ch, data), monster: target, skills: [...SKILLS, 五虎斷魂刀],
+    }).skills.find((s) => s.skill.id === 508);
+    expect(list(c)).toBeUndefined();
+    const row = list({ ...c, learnedSkills: { 508: 7 } })!;
+    expect(row.level).toBe(7);
+    expect(row.variants).toHaveLength(1);
+    expect(defaultSkillLevel(五虎斷魂刀, { ...c, learnedSkills: { 508: 99 } })).toBe(20);
+  });
+});
+
 describe("提醒與預設", () => {
   it("怪物 Lv > 101 或防禦 > 310 時註記", () => {
     const sword = equip(withPanel(character({ sectId: 4 }), 2000, 1000), 55001);

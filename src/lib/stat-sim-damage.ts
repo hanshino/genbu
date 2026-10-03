@@ -161,6 +161,9 @@ const rangeOf = (f: (base: number) => number, base: DamageRange): DamageRange =>
 /** 沒轉生：取角色等級學得到的最高級；有轉生：等級會歸 1 但技能保留，取最高級。 */
 export function defaultSkillLevel(skill: DamageSkillDef, character: CharacterV1): number {
   const maxLevel = skill.levels.length - 1;
+  // 沒有門派的招只會從匯入來，直接用學到的等級。
+  const learned = skill.clan == null ? character.learnedSkills?.[skill.id] : undefined;
+  if (learned != null) return Math.min(learned, maxLevel);
   if (character.rebirthPoints > 0) return maxLevel;
   const levels = skill.levels.slice(1);
   if (levels.every((level) => !level || level.learnLevel < 0)) return maxLevel;
@@ -187,10 +190,12 @@ export function weaponRequirement(skill: DamageSkillDef, character: CharacterV1,
   return `「${typeName}」要${hands}才能使用`;
 }
 
-/** 主門派加上已選副門派的傷害技能。 */
+/** 主門派加上已選副門派的傷害技能；沒有門派的招（副門派進階、NPC 絕學）要匯入時學過才列。 */
 export function skillsForCharacter(character: CharacterV1, skills: DamageSkillDef[]): DamageSkillDef[] {
   const clans = new Set<string>([...(SECT_SKILL_CLANS[character.sectId] ?? []), ...character.subSects]);
-  return skills.filter((skill) => skill.clan != null && clans.has(skill.clan));
+  return skills.filter((skill) => skill.clan == null
+    ? (character.learnedSkills?.[skill.id] ?? 0) > 0
+    : clans.has(skill.clan));
 }
 
 function skillGate(skill: DamageSkillDef, weapon: WeaponProfile): Gate {

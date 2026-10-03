@@ -99,8 +99,10 @@ export interface CharacterV1 {
   equipment: Record<EquipSlot, EquippedItem | null>;
   /** magic id → 等級，含收藏 1151–1159；未列出的技能視為 0 級。 */
   passiveLevels: Record<number, number>;
-  /** 保留 encodePlan 字串；v1 不計入，非空時由引擎回報提示。 */
+  /** 經脈模擬器的 encodePlan 字串；有經脈資料時計入面板。 */
   meridianPlan: string | null;
+  /** 匯入時記下的技能等級（不含被動、經脈）；傷害分頁靠它列出沒有門派的招。舊存檔與手動角色沒有。 */
+  learnedSkills?: Record<number, number>;
   /** 直接加到最終值，不經六圍公式放大。other 是讀不到來源的加成（如伺服器端給角色的體力）；舊存檔沒有。 */
   manual: { hero: PanelBonus; formation: PanelBonus; other?: PanelBonus };
 }
