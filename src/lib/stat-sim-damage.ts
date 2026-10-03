@@ -67,6 +67,8 @@ export interface SkillDamage extends Gate {
   variants: SkillVariant[];
   /** 這個等級施放一次的真氣。 */
   mp: number;
+  /** 這個等級的出手間隔 ms；資料沒有為 0。 */
+  interval: number;
   /** 目前右手武器放不出這招時，寫要換什麼武器；這種招一定是 unsupported。 */
   wrongWeapon?: string;
   /** 玩家自己加的招（不在自動列出的清單裡）。 */
@@ -244,7 +246,10 @@ function computeSkill(
   wrongWeapon: string | null,
 ): SkillDamage {
   const maxLevel = skill.levels.length - 1;
-  const base = { skill, level, maxLevel, hits: 1, variants: [] as SkillVariant[], mp: skill.levels[level]?.mp ?? 0 };
+  const base = {
+    skill, level, maxLevel, hits: 1, variants: [] as SkillVariant[],
+    mp: skill.levels[level]?.mp ?? 0, interval: skill.levels[level]?.interval ?? 0,
+  };
   if (wrongWeapon) return { ...base, ...unsupported(wrongWeapon), wrongWeapon };
   if (weapon.support === "unsupported" || !weapon.weaponDamage || weapon.attack == null) {
     return { ...base, ...unsupported("目前的武器無法試算") };
@@ -366,6 +371,34 @@ export function groupFamilies(skills: SkillDamage[]): { top: SkillDamage[]; lowe
 }
 
 export type NormalMode = "normal" | "critical";
+
+/**
+ * 出手時間的假設。技能間隔取 magic 的「間隔時間」（tthol_data 從 tooltip 確認單位是 ms），
+ * 但實際連放是不是就這麼快還沒實測；普攻間隔沒有公式，讓玩家自己填。
+ */
+export interface Timing {
+  /** 普攻每下的間隔 ms。 */
+  normalInterval: number;
+  /** 每次出手額外多等的 ms（動作、網路延遲）。 */
+  extraDelay: number;
+}
+export const DEFAULT_TIMING: Timing = { normalInterval: 700, extraDelay: 0 };
+
+/** 施放一次要花的秒數；資料沒有間隔時為 null，不能當 0（會變成無限快）。 */
+export function castSeconds(skill: SkillDamage, timing: Timing): number | null {
+  return skill.interval > 0 ? (skill.interval + Math.max(0, timing.extraDelay)) / 1000 : null;
+}
+
+export function normalSeconds(timing: Timing): number | null {
+  return timing.normalInterval > 0 ? (timing.normalInterval + Math.max(0, timing.extraDelay)) / 1000 : null;
+}
+
+/** 一直連放這招的每秒期望輸出；算不出來為 null。 */
+export function perSecond(skill: SkillDamage, timing: Timing): number | null {
+  const expected = expectedPerCast(skill);
+  const seconds = castSeconds(skill, timing);
+  return expected == null || seconds == null ? null : expected / seconds;
+}
 /** 連段：key 為 "normal" 或技能 id，值為一輪裡的次數。 */
 export type ComboCounts = Record<string, number>;
 
@@ -376,6 +409,8 @@ export interface ComboLine {
   range: DamageRange;
   expected: number;
   mp: number;
+  /** 這一列花的秒數；間隔未知為 null。 */
+  seconds: number | null;
 }
 
 export interface ComboResult {
@@ -388,30 +423,45 @@ export interface ComboResult {
   remaining: number;
   /** 打完要幾輪（期望值）；一輪期望是 0 時為 null。 */
   rounds: number | null;
+  /** 一輪的秒數；有任何一招間隔未知就是 null。 */
+  seconds: number | null;
+  /** 每秒期望輸出、打完秒數、每秒真氣；seconds 是 null 時都是 null。 */
+  perSecond: number | null;
+  killSeconds: number | null;
+  mpPerSecond: number | null;
 }
 
 /** 一輪連段的總傷害；只算得出數字的招會計入，尚未支援的略過。 */
-export function computeCombo(result: DamageResult, counts: ComboCounts, normalMode: NormalMode): ComboResult {
+export function computeCombo(
+  result: DamageResult, counts: ComboCounts, normalMode: NormalMode, timing: Timing = DEFAULT_TIMING,
+): ComboResult {
   const lines: ComboLine[] = [];
   for (const [key, count] of Object.entries(counts)) {
     if (!(count > 0)) continue;
     if (key === "normal") {
       if (!result.normal || !result.critical) continue;
       const per = normalMode === "critical" ? result.critical : result.normal;
+      const seconds = normalSeconds(timing);
       lines.push({ key, count, mp: 0, expected: mid(per) * count,
-        range: { min: result.normal.min * count, max: result.critical.max * count } });
+        range: { min: result.normal.min * count, max: result.critical.max * count },
+        seconds: seconds == null ? null : seconds * count });
       continue;
     }
     const skill = result.skills.find((s) => String(s.skill.id) === key);
     const expected = skill ? expectedPerCast(skill) : null;
     const range = skill ? castRange(skill) : null;
     if (!skill || expected == null || !range) continue;
+    const seconds = castSeconds(skill, timing);
     lines.push({ key, count, mp: skill.mp * count, expected: expected * count,
-      range: { min: range.min * count, max: range.max * count } });
+      range: { min: range.min * count, max: range.max * count },
+      seconds: seconds == null ? null : seconds * count });
   }
   const sum = (f: (line: ComboLine) => number) => lines.reduce((acc, line) => acc + f(line), 0);
   const expected = sum((l) => l.expected);
   const hp = result.monster.hp;
+  const known = lines.length > 0 && lines.every((l) => l.seconds != null);
+  const seconds = known ? sum((l) => l.seconds!) : null;
+  const dps = seconds ? expected / seconds : null;
   return {
     lines,
     total: { min: sum((l) => l.range.min), max: sum((l) => l.range.max), expected },
@@ -420,6 +470,10 @@ export function computeCombo(result: DamageResult, counts: ComboCounts, normalMo
     progress: hp > 0 ? Math.min(1, expected / hp) : 0,
     remaining: Math.max(0, hp - expected),
     rounds: expected > 0 ? hp / expected : null,
+    seconds,
+    perSecond: dps,
+    killSeconds: dps ? hp / dps : null,
+    mpPerSecond: seconds ? sum((l) => l.mp) / seconds : null,
   };
 }
 

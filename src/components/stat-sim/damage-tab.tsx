@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
 import {
   Combobox,
   ComboboxCollection,
@@ -35,18 +36,23 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { SKILL_TYPE_LABELS, type DamageSupport } from "@/configs/stat-sim-damage";
 import { MAGIC_CLAN_LABELS } from "@/lib/constants/magic-clan";
 import {
+  castSeconds,
   computeCombo,
   computeDamage,
   computeMarginal,
+  DEFAULT_TIMING,
   expectedPerCast,
   groupFamilies,
   isPlayerSkill,
   LEVEL_TOO_LOW,
+  normalSeconds,
+  perSecond,
   requiredWeapon,
   type ComboCounts,
   type DamageRange,
   type NormalMode,
   type SkillDamage,
+  type Timing,
 } from "@/lib/stat-sim-damage";
 import type {
   CharacterV1,
@@ -88,14 +94,22 @@ interface SavedCombo {
   normalMode: NormalMode;
   /** 玩家從「加入其他招式」加的技能 id，依加入順序。 */
   picked: number[];
+  /** 排行依每次施放或每秒輸出排序。 */
+  rankMode: RankMode;
+  timing: Timing;
 }
+type RankMode = "cast" | "second";
 const EMPTY_COMBO: SavedCombo = {
   counts: {},
   order: [],
   levels: {},
   normalMode: "normal",
   picked: [],
+  rankMode: "second",
+  timing: DEFAULT_TIMING,
 };
+const validMs = (value: unknown, fallback: number) =>
+  typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : fallback;
 
 /** 連段跟著角色存在這台瀏覽器；讀不到（無痕、封鎖）就從空的開始。 */
 function readCombo(characterId: string): SavedCombo {
@@ -111,6 +125,11 @@ function readCombo(characterId: string): SavedCombo {
       levels: parsed.levels ?? {},
       normalMode: parsed.normalMode === "critical" ? "critical" : "normal",
       picked: Array.isArray(parsed.picked) ? parsed.picked.filter(Number.isInteger) : [],
+      rankMode: parsed.rankMode === "cast" ? "cast" : "second",
+      timing: {
+        normalInterval: validMs(parsed.timing?.normalInterval, DEFAULT_TIMING.normalInterval),
+        extraDelay: validMs(parsed.timing?.extraDelay, DEFAULT_TIMING.extraDelay),
+      },
     };
   } catch {
     return EMPTY_COMBO;
@@ -298,11 +317,15 @@ function RankRow({
   badge,
   onAdd,
   onRemove,
+  unit,
 }: {
   icon: string | null;
   name: string;
   sub?: React.ReactNode;
-  value: number;
+  /** 算不出來（例如間隔未知）為 null，顯示「—」。 */
+  value: number | null;
+  /** 數字後面的單位，例如「/秒」。 */
+  unit?: string;
   ratio: number;
   badge?: React.ReactNode;
   onAdd: () => void;
@@ -310,7 +333,7 @@ function RankRow({
   onRemove?: () => void;
 }) {
   return (
-    <li className="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_3.5rem_2rem] items-center gap-2.5 border-t border-border/60 px-4 py-2">
+    <li className="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_4.5rem_2rem] items-center gap-2.5 border-t border-border/60 px-4 py-2">
       <div className="flex min-w-0 items-center gap-2">
         <SkillIcon url={icon} />
         <div className="min-w-0">
@@ -328,7 +351,10 @@ function RankRow({
           style={{ width: `${Math.max(1, ratio * 100)}%` }}
         />
       </div>
-      <span className="text-right font-mono">{compact(value)}</span>
+      <span className="text-right font-mono whitespace-nowrap">
+        {value == null ? "—" : compact(value)}
+        {value != null && unit && <span className="text-xs text-muted-foreground">{unit}</span>}
+      </span>
       <AddButton name={name} onAdd={onAdd} />
     </li>
   );
@@ -376,6 +402,46 @@ function Stepper({
     </div>
   );
 }
+
+/** 秒數輸入：打字中允許「0.」這種中間狀態，合法時才回報。 */
+function SecondsInput({
+  label,
+  ms,
+  unit,
+  onChange,
+}: {
+  label: string;
+  ms: number;
+  unit: "秒" | "毫秒";
+  onChange: (ms: number) => void;
+}) {
+  const toText = (value: number) => String(unit === "秒" ? value / 1000 : value);
+  const [text, setText] = useState(toText(ms));
+  return (
+    <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      {label}
+      <Input
+        type="number"
+        inputMode="decimal"
+        min={0}
+        step={unit === "秒" ? 0.05 : 10}
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value);
+          const n = Number(e.target.value);
+          if (e.target.value !== "" && Number.isFinite(n) && n >= 0) {
+            onChange(Math.round(unit === "秒" ? n * 1000 : n));
+          }
+        }}
+        onBlur={() => setText(toText(ms))}
+        className="h-7 w-16 px-2 font-mono text-foreground"
+      />
+      {unit}
+    </label>
+  );
+}
+
+const seconds = (n: number) => `${n < 100 ? n.toFixed(1) : fmt(Math.round(n))} 秒`;
 
 function skillSummary(row: SkillDamage): string {
   const v = row.variants;
@@ -613,8 +679,8 @@ export function DamageTab({
     [input, playerSkills],
   );
   const comboResult = useMemo(
-    () => (result ? computeCombo(result, combo.counts, combo.normalMode) : null),
-    [result, combo.counts, combo.normalMode],
+    () => (result ? computeCombo(result, combo.counts, combo.normalMode, combo.timing) : null),
+    [result, combo.counts, combo.normalMode, combo.timing],
   );
   const marginal = useMemo(
     () => (input ? computeMarginal(input, combo.counts, combo.normalMode) : null),
@@ -650,11 +716,34 @@ export function DamageTab({
   const { top, lower } = groupFamilies(
     result?.skills.filter((s) => !unsupported.includes(s) && !wrongWeapon.includes(s)) ?? [],
   );
+  const { rankMode, timing } = combo;
+  const rankValue = (s: SkillDamage) =>
+    rankMode === "second" ? perSecond(s, timing) : expectedPerCast(s);
+  // 間隔未知的招算不出每秒，排在最後。
   const ranked = top
     .filter((s) => s.variants.length > 0)
-    .sort((a, b) => expectedPerCast(b)! - expectedPerCast(a)!);
+    .sort((a, b) => (rankValue(b) ?? -1) - (rankValue(a) ?? -1));
   const normalMid = result?.normal ? (result.normal.min + result.normal.max) / 2 : null;
-  const best = Math.max(normalMid ?? 0, ...ranked.map((s) => expectedPerCast(s)!));
+  const normalEvery = normalSeconds(timing);
+  const normalValue =
+    normalMid == null
+      ? null
+      : rankMode === "cast"
+        ? normalMid
+        : normalEvery == null
+          ? null
+          : normalMid / normalEvery;
+  const best = Math.max(normalValue ?? 0, ...ranked.map((s) => rankValue(s) ?? 0), 1);
+  const unit = rankMode === "second" ? "/秒" : undefined;
+  const setTiming = (patch: Partial<Timing>) =>
+    updateCombo((prev) => ({ ...prev, timing: { ...prev.timing, ...patch } }));
+  const castSub = (s: SkillDamage) => {
+    const every = castSeconds(s, timing);
+    if (rankMode === "cast") return `Lv${s.level}`;
+    return every == null
+      ? `Lv${s.level}・間隔未知`
+      : `${compact(expectedPerCast(s)!)} ÷ ${every.toFixed(2)} 秒`;
+  };
   const comboKeys = combo.order.filter(
     (key) => key === NORMAL || computable.some((s) => String(s.skill.id) === key),
   );
@@ -689,13 +778,27 @@ export function DamageTab({
             <header className={head}>
               <SwordsIcon className="size-4 self-center text-muted-foreground" aria-hidden />
               <h2 className="font-heading text-sm font-semibold">招式排行</h2>
-              <span className="text-xs text-muted-foreground">每次施放</span>
-              <span className="ml-auto truncate text-xs text-muted-foreground">
-                {result.weapon.label}
-              </span>
-              <SupportBadge support={result.weapon.support} />
+              <ToggleGroup
+                aria-label="排行依據"
+                className="ml-auto self-center"
+                value={[rankMode]}
+                onValueChange={(v) =>
+                  v[0] && updateCombo((prev) => ({ ...prev, rankMode: v[0] as RankMode }))
+                }
+              >
+                <ToggleGroupItem value="cast" size="sm">
+                  每次施放
+                </ToggleGroupItem>
+                <ToggleGroupItem value="second" size="sm">
+                  每秒輸出
+                </ToggleGroupItem>
+              </ToggleGroup>
             </header>
             <div className="space-y-1 px-4 pt-2.5 pb-2">
+              <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="truncate">{result.weapon.label}</span>
+                <SupportBadge support={result.weapon.support} />
+              </p>
               {result.weapon.rule && result.weapon.attack != null && (
                 <p className="text-xs text-muted-foreground">
                   {result.weapon.rule.attack === "atk" ? "物攻" : "內勁"}{" "}
@@ -713,6 +816,22 @@ export function DamageTab({
                   {text}
                 </p>
               ))}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
+                <ClockIcon className="size-3.5 text-muted-foreground" aria-hidden />
+                <SecondsInput
+                  label="普攻間隔"
+                  ms={timing.normalInterval}
+                  unit="秒"
+                  onChange={(ms) => setTiming({ normalInterval: ms })}
+                />
+                <SecondsInput
+                  label="每次出手多等"
+                  ms={timing.extraDelay}
+                  unit="毫秒"
+                  onChange={(ms) => setTiming({ extraDelay: ms })}
+                />
+                <SupportBadge support="presumed" />
+              </div>
             </div>
             <ul>
               {ranked.map((row) => (
@@ -720,9 +839,10 @@ export function DamageTab({
                   key={row.skill.id}
                   icon={row.skill.iconUrl}
                   name={row.skill.name}
-                  sub={`Lv${row.level}`}
-                  value={expectedPerCast(row)!}
-                  ratio={expectedPerCast(row)! / best}
+                  sub={castSub(row)}
+                  value={rankValue(row)}
+                  unit={unit}
+                  ratio={(rankValue(row) ?? 0) / best}
                   badge={
                     <>
                       {row.picked && <PickedBadge />}
@@ -737,13 +857,24 @@ export function DamageTab({
                 <RankRow
                   icon={null}
                   name="普攻"
-                  sub={`重擊 ${round((result.critical.min + result.critical.max) / 2)}`}
-                  value={normalMid}
-                  ratio={normalMid / best}
+                  sub={
+                    rankMode === "second" && normalEvery != null
+                      ? `${compact(normalMid)} ÷ ${normalEvery.toFixed(2)} 秒`
+                      : `重擊 ${round((result.critical.min + result.critical.max) / 2)}`
+                  }
+                  value={normalValue}
+                  unit={unit}
+                  ratio={(normalValue ?? 0) / best}
                   onAdd={() => add(NORMAL)}
                 />
               )}
             </ul>
+            {rankMode === "second" && (
+              <p className="flex items-start gap-1.5 border-t border-border/60 px-4 py-2.5 text-xs leading-relaxed text-muted-foreground">
+                <InfoIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                間隔取遊戲標示的「間隔時間」，實際連放可能更慢（動作、網路延遲），還沒實測。延遲大時把「每次出手多等」調高，間隔短的招優勢會變小。
+              </p>
+            )}
             {result.weapon.support === "unsupported" && (
               <p className="px-4 pb-3 text-xs text-muted-foreground">目前的武器無法試算。</p>
             )}
@@ -799,10 +930,10 @@ export function DamageTab({
             />
           </section>
 
-          <section className={box} aria-label="連段試算">
+          <section className={box} aria-label="循環試算">
             <header className={head}>
-              <h2 className="font-heading text-sm font-semibold">連段試算</h2>
-              <span className="text-xs text-muted-foreground">一輪的內容</span>
+              <h2 className="font-heading text-sm font-semibold">循環試算</h2>
+              <span className="text-xs text-muted-foreground">一直重複這一輪</span>
               {comboKeys.length > 0 && (
                 <Button
                   size="xs"
@@ -817,7 +948,7 @@ export function DamageTab({
             {comboKeys.length === 0 ? (
               <p className="px-4 py-6 text-center text-xs text-muted-foreground">
                 按排行旁的 <PlusIcon className="inline size-3.5 align-[-2px]" aria-label="加號" />{" "}
-                把招式加進來，算一輪打多少、幾輪打完。
+                把招式加進來，算每秒輸出、幾秒打完，以及每加 1 點屬性每秒多打多少。
               </p>
             ) : (
               <>
@@ -847,6 +978,13 @@ export function DamageTab({
                                 <span className="font-mono">{skillSummary(row)}</span>
                               </div>
                             ) : null}
+                            {line && (
+                              <div className="font-mono text-xs text-muted-foreground">
+                                {line.seconds == null
+                                  ? "間隔未知"
+                                  : `${(line.seconds / count).toFixed(2)} 秒 × ${count} = ${seconds(line.seconds)}`}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <Stepper name={name} count={count} onChange={(n) => setCount(key, n)} />
@@ -881,68 +1019,63 @@ export function DamageTab({
                 {comboResult && comboResult.lines.length > 0 && (
                   <div className="space-y-3 border-t border-border bg-muted/20 px-4 py-3.5">
                     <div className="flex items-baseline gap-2">
-                      <span className="font-semibold">一輪期望</span>
+                      <span className="font-semibold">每秒輸出</span>
+                      <SupportBadge support="presumed" />
                       <span className="ml-auto font-mono text-xl font-medium">
-                        {round(comboResult.total.expected)}
+                        {comboResult.perSecond == null ? "—" : round(comboResult.perSecond)}
                       </span>
                     </div>
                     <p className="-mt-2 text-right font-mono text-xs text-muted-foreground">
-                      最差 {fmt(comboResult.total.min)}～最好 {fmt(comboResult.total.max)}
+                      {comboResult.seconds == null
+                        ? "有招式的間隔資料不明，算不出秒數"
+                        : `一輪 ${seconds(comboResult.seconds)}`}
+                      ・期望 {round(comboResult.total.expected)}（{fmt(comboResult.total.min)}～
+                      <wbr />
+                      {fmt(comboResult.total.max)}）
                     </p>
-                    <div className="space-y-1">
-                      <div
-                        role="meter"
-                        aria-label="一輪打掉的血量"
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={Math.round(comboResult.progress * 100)}
-                        className="h-2.5 overflow-hidden rounded-full bg-muted"
-                      >
-                        <div
-                          className="h-full rounded-full bg-primary"
-                          style={{ width: `${comboResult.progress * 100}%` }}
-                        />
-                      </div>
-                      <div className="flex text-xs text-muted-foreground">
-                        <span>打掉 {Math.round(comboResult.progress * 100)}%</span>
-                        <span className="ml-auto">
-                          剩 <span className="font-mono">{round(comboResult.remaining)}</span>
-                        </span>
-                      </div>
-                    </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="rounded-lg bg-card px-3 py-2 ring-1 ring-foreground/10">
                         <div className="text-xs text-muted-foreground">打完需要</div>
                         <div>
                           <span className="font-mono text-lg font-medium">
-                            {comboResult.rounds == null
+                            {comboResult.killSeconds == null
                               ? "—"
-                              : comboResult.rounds < 10
-                                ? comboResult.rounds.toFixed(1)
-                                : fmt(Math.ceil(comboResult.rounds))}
+                              : seconds(comboResult.killSeconds).replace(" 秒", "")}
                           </span>{" "}
-                          輪
+                          秒
+                          {comboResult.rounds != null && (
+                            <span className="text-xs text-muted-foreground">
+                              （約{" "}
+                              {comboResult.rounds < 10
+                                ? comboResult.rounds.toFixed(1)
+                                : fmt(Math.ceil(comboResult.rounds))}{" "}
+                              輪）
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="rounded-lg bg-card px-3 py-2 ring-1 ring-foreground/10">
-                        <div className="text-xs text-muted-foreground">一輪真氣</div>
+                        <div className="text-xs text-muted-foreground">真氣每秒用掉</div>
                         <div>
-                          <span
-                            className={cn(
-                              "font-mono text-lg font-medium",
-                              panel?.stats.mp.value != null &&
-                                comboResult.mp > panel.stats.mp.value &&
-                                "text-destructive",
-                            )}
-                          >
-                            {fmt(comboResult.mp)}
+                          <span className="font-mono text-lg font-medium">
+                            {comboResult.mpPerSecond == null ? "—" : round(comboResult.mpPerSecond)}
                           </span>
-                          {panel?.stats.mp.value != null && (
-                            <span className="font-mono text-xs text-muted-foreground">
-                              {" "}
-                              ／ {fmt(panel.stats.mp.value)}
-                            </span>
-                          )}
+                          {comboResult.mpPerSecond != null &&
+                            comboResult.mpPerSecond > 0 &&
+                            panel?.stats.mp.value != null && (
+                              <span
+                                className={cn(
+                                  "text-xs text-muted-foreground",
+                                  comboResult.killSeconds != null &&
+                                    panel.stats.mp.value / comboResult.mpPerSecond <
+                                      comboResult.killSeconds &&
+                                    "text-destructive",
+                                )}
+                              >
+                                {" "}
+                                滿真氣撐 {seconds(panel.stats.mp.value / comboResult.mpPerSecond)}
+                              </span>
+                            )}
                         </div>
                       </div>
                     </div>
@@ -951,25 +1084,45 @@ export function DamageTab({
 
                 {marginal && (
                   <div className="space-y-1.5 border-t border-border/60 px-4 py-3">
-                    <div className="text-[13px] font-medium">再加 1 點，這一輪多</div>
+                    <div className="text-[13px] font-medium">
+                      再加 1 點，{comboResult?.seconds ? "每秒多打" : "這一輪多"}
+                    </div>
                     {marginal
                       .filter((m) => m.key === attack || (m.combo ?? 0) !== 0)
-                      .map((m) => (
-                        <div key={m.key} className="flex items-baseline gap-2 text-[13px]">
-                          <span>{STAT_LABELS[m.key]}</span>
-                          <span className="font-mono text-xs text-muted-foreground">
-                            成本 {m.nextCost}
-                          </span>
-                          <span className="ml-auto font-mono font-medium text-primary">
-                            {m.combo == null ? "—" : `+${round(m.combo)}`}
-                            {m.combo != null && comboResult && comboResult.total.expected > 0 && (
-                              <span className="text-xs font-normal text-muted-foreground">
-                                （+{((m.combo / comboResult.total.expected) * 100).toFixed(2)}%）
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      ))}
+                      .map((m) => {
+                        // 加點不改變出手間隔，所以每秒多打 = 一輪多打 ÷ 一輪秒數。
+                        const gain =
+                          m.combo == null
+                            ? null
+                            : comboResult?.seconds
+                              ? m.combo / comboResult.seconds
+                              : m.combo;
+                        const base = comboResult?.seconds
+                          ? comboResult.perSecond
+                          : comboResult?.total.expected;
+                        return (
+                          <div
+                            key={m.key}
+                            className="grid grid-cols-[3rem_1fr_auto] items-baseline gap-x-2 text-[13px]"
+                          >
+                            <span>{STAT_LABELS[m.key]}</span>
+                            <span className="font-mono text-xs text-muted-foreground">
+                              成本 {m.nextCost}
+                              {gain != null && m.nextCost > 1 && (
+                                <>・每花 1 點 +{round(gain / m.nextCost)}</>
+                              )}
+                            </span>
+                            <span className="text-right font-mono font-medium text-primary">
+                              {gain == null ? "—" : `+${round(gain)}`}
+                              {gain != null && base ? (
+                                <span className="text-xs font-normal text-muted-foreground">
+                                  （+{((gain / base) * 100).toFixed(2)}%）
+                                </span>
+                              ) : null}
+                            </span>
+                          </div>
+                        );
+                      })}
                     <p className="flex items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
                       <InfoIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
                       {marginal
@@ -985,26 +1138,10 @@ export function DamageTab({
             )}
           </section>
 
-          <section
-            className="flex items-center gap-2.5 rounded-xl border border-dashed border-border px-4 py-3"
-            aria-label="DPS（之後開放）"
-          >
-            <ClockIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-            <div className="min-w-0 flex-1">
-              <div className="text-[13px] font-medium text-muted-foreground">DPS・打完要幾秒</div>
-              <div className="text-xs text-muted-foreground">
-                要先實測招式硬直（stun）和普攻間隔
-              </div>
-            </div>
-            <Badge variant="outline" className="border-dashed text-muted-foreground">
-              之後開放
-            </Badge>
-          </section>
-
           <p className="text-xs leading-relaxed text-muted-foreground">
             公式來自封包逐下實測：傷害 ≈ 倍率 × (攻擊 + 武器) × K ÷ (K + 防禦) − 防禦 ÷ 2，K = 5 ×
             怪物等級 +
-            500。機率觸發的招式取期望值。同一種怪的不同隻之間會差幾點。武器真解對技能的影響還沒測過。
+            500。機率觸發的招式取期望值。每秒輸出用技能的「間隔時間」推算，還沒實測。同一種怪的不同隻之間會差幾點。武器真解對技能的影響還沒測過。
           </p>
         </>
       )}

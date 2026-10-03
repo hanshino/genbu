@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { computePanel } from "@/lib/stat-sim";
 import {
-  computeCombo, computeDamage, computeMarginal, defaultSkillLevel, expectedPerCast, groupFamilies, hitDamage,
+  castSeconds, computeCombo, computeDamage, DEFAULT_TIMING, perSecond, computeMarginal, defaultSkillLevel, expectedPerCast, groupFamilies, hitDamage,
   ignoreDefenseDamage, isPlayerSkill, requiredWeapon, skillsForCharacter,
 } from "@/lib/stat-sim-damage";
 import {
@@ -53,11 +53,13 @@ const monster = (level: number, extraDef: number, magicDef = extraDef): DamageMo
 function skill(
   id: number, funcDmg: number, skillType: number, p: [number, number, number, number], clan = "CLASS_BAD",
   upgradesFrom?: number,
+  interval = 400,
 ): DamageSkillDef {
   return {
     id, name: `技能 ${id}`, clan, skillType, funcDmg, iconUrl: null, upgradesFrom,
-    levels: [null, ...Array.from({ length: 19 }, () => ({ p1: 100, p2: 0, p3: 0, p4: 0, mp: 30, learnLevel: 100 })),
-      { p1: p[0], p2: p[1], p3: p[2], p4: p[3], mp: 45, learnLevel: 150 }],
+    levels: [null, ...Array.from({ length: 19 }, () =>
+      ({ p1: 100, p2: 0, p3: 0, p4: 0, mp: 30, learnLevel: 100, interval })),
+    { p1: p[0], p2: p[1], p3: p[2], p4: p[3], mp: 45, learnLevel: 150, interval }],
   };
 }
 
@@ -240,6 +242,36 @@ describe("沒有門派的招", () => {
     expect(row.level).toBe(7);
     expect(row.variants).toHaveLength(1);
     expect(defaultSkillLevel(五虎斷魂刀, { ...c, learnedSkills: { 508: 99 } })).toBe(20);
+  });
+});
+
+describe("每秒輸出", () => {
+  const 千瘡 = skill(702, 4, 2, [1650, 0, 0, 0], "CLASS_BAD", undefined, 200);
+  const 沒間隔 = skill(704, 4, 2, [1650, 0, 0, 0], "CLASS_BAD", undefined, 0);
+  const c = equip(withPanel(character({ sectId: 2 }), 275, 1616), 55004);
+  const result = computeDamage({
+    character: c, data, panel: computePanel(c, data), monster: monster(86, 127), skills: [千瘡, 毒舌亂神, 沒間隔],
+  });
+  const row = (id: number) => result.skills.find((s) => s.skill.id === id)!;
+
+  it("間隔 0.2 秒的招每秒輸出是每次傷害 × 5；多等的延遲加在每次出手上", () => {
+    expect(castSeconds(row(702), DEFAULT_TIMING)).toBe(0.2);
+    expect(perSecond(row(702), DEFAULT_TIMING)).toBeCloseTo(expectedPerCast(row(702))! * 5);
+    expect(castSeconds(row(702), { normalInterval: 700, extraDelay: 50 })).toBe(0.25);
+  });
+
+  it("資料沒有間隔的招算不出每秒輸出，不當成 0 秒", () => {
+    expect(castSeconds(row(704), DEFAULT_TIMING)).toBeNull();
+    expect(perSecond(row(704), DEFAULT_TIMING)).toBeNull();
+    expect(computeCombo(result, { 704: 1, 702: 1 }, "normal").perSecond).toBeNull();
+  });
+
+  it("循環：秒數照各招間隔加總，算出每秒輸出、打完秒數與每秒真氣", () => {
+    const combo = computeCombo(result, { 703: 5, 702: 10, normal: 2 }, "normal");
+    expect(combo.seconds).toBeCloseTo(5 * 0.4 + 10 * 0.2 + 2 * 0.7);
+    expect(combo.perSecond).toBeCloseTo(combo.total.expected / combo.seconds!);
+    expect(combo.killSeconds).toBeCloseTo(1_000_000 / combo.perSecond!);
+    expect(combo.mpPerSecond).toBeCloseTo((5 * 45 + 10 * 45) / combo.seconds!);
   });
 });
 

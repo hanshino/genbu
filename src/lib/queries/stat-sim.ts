@@ -385,11 +385,13 @@ function getDamageSkills(): DamageSkillDef[] {
     .all() as Array<{ magic_id: number; url: string }>).map((row) => [row.magic_id, row.url]));
   const rows = db.prepare(`
     SELECT id, level, name, NULLIF(clan, '') AS clan, skill_type AS skillType, func_dmg AS funcDmg,
-           func_dmg_p1 AS p1, func_dmg_p2 AS p2, func_dmg_p3 AS p3, func_dmg_p4 AS p4, spend_mp AS mp
+           func_dmg_p1 AS p1, func_dmg_p2 AS p2, func_dmg_p3 AS p3, func_dmg_p4 AS p4, spend_mp AS mp,
+           MAX(IFNULL(stun, 0), IFNULL(recharge_time, 0)) AS interval
     FROM magic WHERE func_dmg > 0 ORDER BY id, level
   `).all() as Array<{
     id: number; level: number; name: string; clan: string | null; skillType: number | null; funcDmg: number;
     p1: number | null; p2: number | null; p3: number | null; p4: number | null; mp: number | null;
+    interval: number;
   }>;
   const skills = new Map<number, DamageSkillDef>();
   for (const row of rows) {
@@ -401,7 +403,7 @@ function getDamageSkills(): DamageSkillDef[] {
     Object.assign(skill, { name: row.name, clan: row.clan, skillType: row.skillType, funcDmg: row.funcDmg });
     skill.levels[row.level] = {
       p1: row.p1 ?? 0, p2: row.p2 ?? 0, p3: row.p3 ?? 0, p4: row.p4 ?? 0, mp: row.mp ?? 0,
-      learnLevel: learns.get(`${row.id}:${row.level}`) ?? -1,
+      learnLevel: learns.get(`${row.id}:${row.level}`) ?? -1, interval: row.interval,
     };
     skills.set(row.id, skill);
   }

@@ -152,6 +152,8 @@ export interface DamageSkillLevel {
   mp: number;
   /** magic_learn.char_level；缺少學習資料為 -1。 */
   learnLevel: number;
+  /** 出手間隔 ms：max(stun「間隔時間」, recharge_time「施放時間」)；兩欄都沒有為 0。 */
+  interval: number;
 }
 
 export interface DamageSkillDef {
