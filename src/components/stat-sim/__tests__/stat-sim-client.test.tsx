@@ -1,8 +1,13 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { StrictMode } from "react";
+import { Blob as NodeBlob } from "node:buffer";
+import { deflateRawSync } from "node:zlib";
+import { CompressionStream, DecompressionStream } from "node:stream/web";
 import userEvent from "@testing-library/user-event";
 import { StatSimClient } from "../stat-sim-client";
 import type { GameData, UiControl, UiWindowLayout } from "@/lib/types/stat-sim";
+import { EQUIP_SLOTS } from "@/lib/types/stat-sim";
 
 const ctrl = (
   c: Partial<UiControl> & Pick<UiControl, "ctrlId" | "class" | "x" | "y" | "width" | "height">,
@@ -67,6 +72,7 @@ const data: GameData = {
     },
   },
   enhancementsByPath: {},
+  meridianIds: [],
   passives: [
     // 惡人谷（預設角色）的主門派技能，Lv1 就能學滿
     {
@@ -82,9 +88,81 @@ const data: GameData = {
   ],
 };
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  window.history.replaceState(null, "", "/tools/stat-sim");
+});
+afterEach(() => vi.unstubAllGlobals());
+
+function importCode() {
+  vi.stubGlobal("Blob", NodeBlob);
+  vi.stubGlobal("CompressionStream", CompressionStream);
+  vi.stubGlobal("DecompressionStream", DecompressionStream);
+  return `TTHOL1.${deflateRawSync(JSON.stringify({
+    v: 1, app: "proto", at: "2026-10-03T00:00:00Z", name: "匯入測試", sect: 2,
+    level: 1, bare: { str: 1, pow: 1, vit: 1, agi: 1, dex: 1, wis: 1 }, remainingPoints: 6,
+    equipment: Object.fromEntries(EQUIP_SLOTS.map((slot) => [slot, null])),
+    skills: { 13: 1, 855: 3 }, panel: { attributes: { str: 1 }, hp: 100 },
+  })).toString("base64url")}`;
+}
 
 describe("StatSimClient", () => {
+  it("匯入新增一隻角色、顯示結果與面板對照，切換角色時隱藏", async () => {
+    const code = importCode();
+    const user = userEvent.setup();
+    render(<StatSimClient data={{ ...data, meridianIds: [855] }} windows={{ attribute, equipment }} />);
+    await screen.findByTestId("source-total");
+    await user.click(screen.getByRole("button", { name: "匯入" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByLabelText("貼上匯入字串"), { target: { value: code } });
+    await user.click(within(dialog).getByRole("button", { name: "匯入" }));
+    await screen.findByRole("region", { name: "匯入結果" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "遊戲當時面板 vs 目前模擬" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "在經脈模擬器開啟" })).toHaveAttribute("href", "/tools/meridian?p=855.3");
+    const saved = JSON.parse(localStorage.getItem("genbu.characters")!);
+    expect(saved.characters).toHaveLength(2);
+    expect(saved.activeCharacterId).toBe(saved.characters[1].id);
+    expect(saved.characters[1].name).toBe("匯入測試");
+    await user.click(screen.getByRole("button", { name: /新角色.*Lv1/ }));
+    expect(screen.queryByRole("region", { name: "匯入結果" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "遊戲當時面板 vs 目前模擬" })).not.toBeInTheDocument();
+  });
+
+  it("StrictMode hash 匯入只執行一次，清除 fragment 並保留 path/query", async () => {
+    const code = importCode();
+    window.history.replaceState(null, "", `/tools/stat-sim?keep=1#import=${code}`);
+    render(<StrictMode><StatSimClient data={data} windows={{ attribute, equipment }} /></StrictMode>);
+    await screen.findByRole("region", { name: "匯入結果" });
+    await waitFor(() => expect(JSON.parse(localStorage.getItem("genbu.characters")!).characters).toHaveLength(2));
+    expect(window.location.hash).toBe("");
+    expect(window.location.pathname + window.location.search).toBe("/tools/stat-sim?keep=1");
+  });
+
+  it("匯入失敗時保留原角色與輸入內容", async () => {
+    const user = userEvent.setup();
+    render(<StatSimClient data={data} windows={{ attribute, equipment }} />);
+    await screen.findByTestId("source-total");
+    const before = localStorage.getItem("genbu.characters");
+    await user.click(screen.getByRole("button", { name: "匯入" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByLabelText("貼上匯入字串"), { target: { value: "TTHOL2.invalid" } });
+    await user.click(within(dialog).getByRole("button", { name: "匯入" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("格式版本是 v2，請更新網站");
+    expect(screen.getByLabelText("貼上匯入字串")).toHaveValue("TTHOL2.invalid");
+    expect(localStorage.getItem("genbu.characters")).toBe(before);
+  });
+
+  it("hash 匯入失敗時開啟預填對話框，空清單不新增角色", async () => {
+    localStorage.setItem("genbu.characters", JSON.stringify({ version: 1, activeCharacterId: null, characters: [] }));
+    window.history.replaceState(null, "", "/tools/stat-sim#import=TTHOL2.invalid");
+    render(<StatSimClient data={data} windows={{ attribute, equipment }} />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("格式版本是 v2");
+    expect(screen.getByRole<HTMLTextAreaElement>("textbox", { name: "貼上匯入字串" }).value).toContain("#import=TTHOL2.invalid");
+    expect(window.location.hash).toBe("");
+    expect(JSON.parse(localStorage.getItem("genbu.characters")!).characters).toHaveLength(0);
+  });
+
   it("成就全滿／選級、收藏值換算與含裝輸入扣掉被動加成", async () => {
     const user = userEvent.setup();
     const reward = (id: number, name: string, group: "achievement" | "collection") => ({

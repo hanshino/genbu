@@ -101,8 +101,8 @@ export interface CharacterV1 {
   passiveLevels: Record<number, number>;
   /** 保留 encodePlan 字串；v1 不計入，非空時由引擎回報提示。 */
   meridianPlan: string | null;
-  /** 直接加到最終值，不經六圍公式放大。 */
-  manual: { hero: PanelBonus; formation: PanelBonus };
+  /** 直接加到最終值，不經六圍公式放大。other 是讀不到來源的加成（如伺服器端給角色的體力）；舊存檔沒有。 */
+  manual: { hero: PanelBonus; formation: PanelBonus; other?: PanelBonus };
 }
 
 export interface CharacterStore {
@@ -144,7 +144,10 @@ export interface EnhancementPath {
 
 export interface PassiveDef {
   id: number;
+  /** 最高可用等級的名稱；各級名稱不同時（嫁衣神功一重～四重、進階劍修練）另見 levelNames。 */
   name: string;
+  /** 索引即等級，0 為空字串；只有各級名稱不同時才有。顯示用 passiveName()。 */
+  levelNames?: string[];
   group: "main" | "sub" | "common" | "guild" | "collection" | "achievement";
   /** magic.clan 的 CLASS_*；通用技能統一為 null，天外天為 CLASS_SKY。 */
   clan: string | null;
@@ -169,6 +172,10 @@ export interface GameData {
   enhancementsByPath: Record<number, EnhancementPath>;
   /** 包含收藏；經脈不列入，避免重複計算。 */
   passives: PassiveDef[];
+  /** 經脈穴位 magic id，來自 magic_meridians；匯入時用來辨識經脈技能。 */
+  meridianIds: number[];
+  /** 副門派全部技能（含不影響面板、不在 passives 的）magic id → clan；匯入時用來判斷副門派。 */
+  subSectSkills?: Record<number, SubSectClan>;
   /** 收藏值門檻，由小到大排序；舊資料未提供時不開放自動換算。 */
   collectionThresholds?: CollectionThreshold[];
   socketRecipes?: Record<number, SocketRecipe>;
@@ -194,6 +201,7 @@ export interface StatBreakdown {
     | "collection"
     | "hero"
     | "formation"
+    | "manualOther"
     | "base";
   refId?: number | string;
   label: string;

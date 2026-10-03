@@ -24,7 +24,7 @@ describe("stat-character", () => {
     expect(parsed.character.equipment.cap).not.toHaveProperty("sockets");
     const data = { itemsById: { 1: {
       id: 1, name: "舊帽", level: 1, typeName: "HELMET", slotHint: null, stats: { str: 3 }, strongPathId: null,
-    } }, enhancementsByPath: {}, passives: [] };
+    } }, enhancementsByPath: {}, passives: [], meridianIds: [] };
     const before = computePanel(parsed.character, data);
     c.equipment.cap.randomRolls = []; c.equipment.cap.sockets = [];
     expect(computePanel(c, data)).toEqual(before);
@@ -86,6 +86,14 @@ describe("stat-character", () => {
     expect(second).toMatchObject({ name: "麒麟", sectId: 8192 });
     expect(second.id).not.toBe(character.id);
     expect(parseCharacter(character)).toEqual({ ok: true, character });
+  });
+
+  it("manual.other 選填：舊存檔沒有也能讀，有的話須是合法加值", () => {
+    const c = createDefaultCharacter();
+    expect(parseCharacter({ ...c, manual: { ...c.manual, other: { hp: 1000 } } }).ok).toBe(true);
+    for (const other of [null, { hp: "1" }, { extra: 1 }, [1]]) {
+      expect(parseCharacter({ ...c, manual: { ...c.manual, other } })).toEqual({ ok: false, reason: "corrupt" });
+    }
   });
 
   it("uses an id fallback when randomUUID is unavailable", () => {

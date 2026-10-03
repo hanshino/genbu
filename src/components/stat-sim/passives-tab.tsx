@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { SECTS } from "@/configs/stat-sim";
 import { WEAPON_TYPE_NAMES } from "@/configs/stat-sim-passives";
-import { collectionLevels } from "@/lib/stat-sim";
+import { collectionLevels, passiveName } from "@/lib/stat-sim";
 import type { CharacterV1, GameData, PassiveDef } from "@/lib/types/stat-sim";
 import { cn } from "@/lib/utils";
 import { BonusRows } from "./bonus-rows";
@@ -53,7 +53,8 @@ function buildGroups(
     return { passive, inactive: !clanOK ? clanReason : fullMiss ? "武器不符" : null, weaponMiss };
   };
   const main = passives
-    .filter((p) => p.group === "main" && (p.clan === mainClan || level(p) > 0))
+    // 入門弟子技能（怒擊）轉職後不計入面板，舊匯入留著等級也不列出來。
+    .filter((p) => p.group === "main" && p.clan !== "CLASS_CHILD" && (p.clan === mainClan || level(p) > 0))
     .map((p) => row(p, p.clan === mainClan, "不是目前的主門派"));
   const sub = passives
     .filter(
@@ -250,8 +251,8 @@ export function PassivesTab({
                         <SkillIcon url={p.iconUrl} size={28} />
                       </span>
                       <div className={cn("min-w-0", unavailable && "opacity-60")}>
-                        <div className="truncate text-sm font-medium" title={p.name}>
-                          {p.name}
+                        <div className="truncate text-sm font-medium" title={passiveName(p, lv)}>
+                          {passiveName(p, lv)}
                         </div>
                         <div className="truncate text-[11px] text-muted-foreground">
                           {lv > 0
@@ -321,7 +322,7 @@ export function PassivesTab({
 
       <Card>
         <CardHeader className="border-b">
-          <CardTitle className="font-heading">英雄 / 陣法手動加值</CardTitle>
+          <CardTitle className="font-heading">英雄 / 陣法 / 其他手動加值</CardTitle>
         </CardHeader>
         <CardContent className="@container space-y-4">
           {character.meridianPlan && (
@@ -332,16 +333,15 @@ export function PassivesTab({
           )}
           <p className="text-xs text-muted-foreground">
             直接加在最終數值上，不經過六圍公式放大。陣法效果還沒建檔，請填遊戲裡實測的數字。
+            「其他」放找不到來源的加成，例如伺服器端給角色的體力。
           </p>
-          <div className="grid gap-4 @lg:grid-cols-2">
-            {(["hero", "formation"] as const).map((k) => (
+          <div className="grid gap-4 @lg:grid-cols-2 @3xl:grid-cols-3">
+            {MANUAL_GROUPS.map(([k, label]) => (
               <div key={k}>
-                <p className="mb-2 text-xs font-medium text-muted-foreground">
-                  {k === "hero" ? "英雄" : "陣法"}
-                </p>
+                <p className="mb-2 text-xs font-medium text-muted-foreground">{label}</p>
                 <BonusRows
-                  label={k === "hero" ? "英雄" : "陣法"}
-                  value={character.manual[k]}
+                  label={label}
+                  value={character.manual[k] ?? {}}
                   onChange={(bonus) =>
                     update((c) => ({ ...c, manual: { ...c.manual, [k]: bonus } }))
                   }
@@ -354,6 +354,12 @@ export function PassivesTab({
     </div>
   );
 }
+
+const MANUAL_GROUPS = [
+  ["hero", "英雄"],
+  ["formation", "陣法"],
+  ["other", "其他"],
+] as const;
 
 const ANY_WEAPON = WEAPON_TYPE_NAMES.filter((t) => t !== "SHIELD");
 /** 「任何武器」在資料裡是列出全部武器類型，顯示時收成一句。 */
@@ -408,7 +414,7 @@ function PassiveRow({
         <SkillIcon url={p.iconUrl} size={32} />
       </span>
       <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-sm font-medium">
-        <span className={cn(inactive && "opacity-45")}>{p.name}</span>
+        <span className={cn(inactive && "opacity-45")}>{passiveName(p, level)}</span>
         {p.weaponReq && (
           <Badge variant={weaponMiss ? "destructive" : "secondary"} className="font-normal">
             需裝備 {weaponReqText(p.weaponReq)}

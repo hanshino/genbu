@@ -2,6 +2,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildCurationPrompt,
+  buildCurationSchema,
   normalizeCuration,
   curateWithClaude,
   curationToAiLayer,
@@ -35,10 +36,17 @@ describe("buildCurationPrompt", () => {
     expect(user).toContain("售價");
   });
 
-  it("system 指示使用機器鍵於 table 欄", () => {
-    const { system } = buildCurationPrompt(digest);
-    expect(system).toContain("機器鍵");
-    expect(system).toMatch(/items|npc/); // 舉例的機器鍵
+});
+
+describe("buildCurationSchema", () => {
+  it("table 欄限定為 digest 機器鍵", () => {
+    const s = buildCurationSchema(["items", "npc"]);
+    expect(s.properties.tables.items.properties.table).toEqual({ type: "string", enum: ["items", "npc"] });
+  });
+
+  it("無表時退回 string（空 enum 非合法 schema）", () => {
+    const s = buildCurationSchema([]);
+    expect(s.properties.tables.items.properties.table).toEqual({ type: "string" });
   });
 });
 
@@ -80,6 +88,7 @@ describe("curateWithClaude", () => {
     const c = await curateWithClaude(digest, { client: fake, model: "claude-opus-4-8" });
     expect(seen!.model).toBe("claude-opus-4-8");
     expect(seen!.user).toContain("端午禮盒");
+    expect(seen!.schema).toEqual(buildCurationSchema(["items"])); // schema 帶入 digest 的機器鍵
     expect(c.highlights).toEqual(["端午活動上線"]);
     expect(c.tables).toEqual([{ table: "items", mode: "summary", note: "售價批量調整" }]); // ghost 濾掉
   });

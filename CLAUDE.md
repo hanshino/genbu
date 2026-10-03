@@ -55,10 +55,9 @@ npm run lint      # ESLint
 
 Before writing any custom markup for a UI element, go through this decision order:
 
-1. **Check `src/components/ui/`** for an existing shadcn primitive. Current inventory:
-   `Button`, `Badge`, `Card`, `Input`, `Select`, `Separator`, `Table` family, `Tabs`.
-2. **Check `@base-ui/react`** (already installed via shadcn) for primitives not yet wrapped:
-   `Popover`, `Menu`, `Dialog`, `Tooltip`, `Collapsible`, `Checkbox`, `Switch`, etc.
+1. **Check `src/components/ui/`** for an existing shadcn primitive (list the directory; it grows).
+2. **Check `@base-ui/react`** (already installed via shadcn) for primitives not wrapped there yet
+   (e.g. `Menu`, `Switch`).
    Wrap them as shadcn components under `src/components/ui/` so they're reusable.
 3. **Check `lucide-react`** for icons — never use Unicode glyphs (`×`, `▾`, `✓`) or emojis.
 4. **Only hand-roll if** (a) no shadcn primitive fits AND (b) no base-ui primitive fits,
@@ -71,9 +70,6 @@ Rule of thumb: if you catch yourself writing `<table>`, `<ul class="...dropdown.
 `<span class="...pill/chip...">`, or `<button>×</button>` by hand — stop and go back to
 step 1. These have shadcn/base-ui equivalents.
 
-## Phase Plan
+## Roadmaps
 
-1. **Phase 1** — Foundation + Item Query (project init, homepage, item list/detail)
-2. **Phase 2** — Equipment Comparison (mount/back ranking, weighted comparison tool)
-3. **Phase 3** — Skills & Monsters (skill browser, monster query with drops)
-4. **Phase 4** — Dungeon Puzzle Tools (160/175/180 interactive solvers)
+Plans and roadmaps live in `docs/plans/` and `docs/roadmaps/`.

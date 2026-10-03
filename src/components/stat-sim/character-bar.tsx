@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { SECTS } from "@/configs/stat-sim";
 import type { useCharacters } from "@/lib/hooks/use-characters";
+import { ImportButton } from "./import-dialog";
 
 type Store = ReturnType<typeof useCharacters>;
 
@@ -32,7 +33,7 @@ const LOAD_ERRORS = {
   "storage-failed": "瀏覽器不允許讀取本機儲存（可能是無痕模式或停用網站資料），修改不會被保存。",
 } as const;
 
-export function CharacterBar({ store }: { store: Store }) {
+export function CharacterBar({ store, onImport }: { store: Store; onImport: () => void }) {
   const { active } = store;
   const [renaming, setRenaming] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -96,6 +97,7 @@ export function CharacterBar({ store }: { store: Store }) {
             <PlusIcon />
             新增
           </Button>
+          <ImportButton disabled={!store.loaded} onClick={onImport} />
           <Button
             size="sm"
             variant="outline"

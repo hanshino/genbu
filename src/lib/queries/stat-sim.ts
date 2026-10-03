@@ -9,7 +9,7 @@ import { labelToKey } from "@/lib/scoring/attribute-alias";
 import { getItemIconMap } from "@/lib/queries/images";
 import {
   EQUIP_SLOTS, STAT_KEYS, SUB_SECT_CLANS,
-  type EquipSlot, type GameData, type PanelBonus, type PassiveDef,
+  type EquipSlot, type GameData, type PanelBonus, type PassiveDef, type SubSectClan,
   type SimItem, type StatKey, type UiControl, type UiEquipSlot, type UiWindowLayout, type ValueRange,
 } from "@/lib/types/stat-sim";
 
@@ -246,7 +246,13 @@ export function getStatSimData(): GameData {
     ) ORDER BY id, level
   `).all(...helpIds) as Array<{ id: number; name: string; clan: string | null; level: number }>;
   // 最後一筆即 max-level 的 name/clan，不用 GROUP BY 的任意列。
-  const metadata = new Map(skillRows.map((row) => [row.id, row]));
+  const metadata = new Map(skillRows.map((row) => [row.id, { ...row }]));
+  const levelNames = new Map<number, string[]>();
+  for (const row of skillRows) {
+    const names = levelNames.get(row.id) ?? [""];
+    names[row.level] = row.name;
+    levelNames.set(row.id, names);
+  }
   const learns = new Map((db.prepare("SELECT magic_id, level, char_level FROM magic_learn")
     .all() as Array<{ magic_id: number; level: number; char_level: number | null }>)
     .map((row) => [`${row.magic_id}:${row.level}`, row.char_level]));
@@ -279,6 +285,9 @@ export function getStatSimData(): GameData {
       throw new Error(`技能 ${row.id}：help 手抄表超過 DB 最高等級`);
     }
     if (help) row.level = help.cumulative.length - 1;
+    const names = Array.from({ length: row.level + 1 }, (_, level) => level === 0 ? "" : levelNames.get(row.id)?.[level] ?? row.name);
+    const named = new Set(names.slice(1)).size > 1;
+    if (named) row.name = names[row.level];
     const cumulative: PanelBonus[] = help ? help.cumulative.map((bonus) => ({ ...bonus })) : [{}];
     const unknown = new Set<string>();
     if (!help) {
@@ -305,7 +314,7 @@ export function getStatSimData(): GameData {
       row.clan === "CLASS_CHILD" ? "入門弟子技能，不屬於 v1 支援的主門派；保留原 clan，不列為通用。" : undefined,
     ].filter(Boolean);
     passives.push({
-      id: row.id, name: row.name, clan: row.clan, group, maxLevel: row.level,
+      id: row.id, name: row.name, ...(named ? { levelNames: names } : {}), clan: row.clan, group, maxLevel: row.level,
       ...(group === "achievement" ? { obtainableMax: obtainable.get(row.id) ?? 0 } : {}),
       learnLevels: [0, ...Array.from({ length: row.level }, (_, i) => learns.get(`${row.id}:${i + 1}`) ?? -1)],
       iconUrl: skillIcons.get(row.id) ?? null, cumulative,
@@ -320,7 +329,15 @@ export function getStatSimData(): GameData {
   const collectionThresholds = db.prepare(`
     SELECT value, magic_id AS magicId, level FROM collect_book_bonuses ORDER BY value, magic_id, level
   `).all() as NonNullable<GameData["collectionThresholds"]>;
-  return { itemsById, enhancementsByPath, passives, collectionThresholds, socketRecipes, socketRecipeIdsByCategory };
+  const meridianIds = (db.prepare("SELECT DISTINCT magic_id FROM magic_meridians ORDER BY magic_id")
+    .all() as Array<{ magic_id: number }>).map((row) => row.magic_id);
+  const subSectSkills = Object.fromEntries((db.prepare(`
+    SELECT DISTINCT id, clan FROM magic WHERE clan IN (${SUB_SECT_CLANS.map(() => "?").join(",")}) ORDER BY id
+  `).all(...SUB_SECT_CLANS) as Array<{ id: number; clan: SubSectClan }>).map((row) => [row.id, row.clan]));
+  return {
+    itemsById, enhancementsByPath, passives, meridianIds, subSectSkills, collectionThresholds,
+    socketRecipes, socketRecipeIdsByCategory,
+  };
 }
 
 /** 保留原始 control 座標/field，不以有錯字的 comment 推斷數值用途。 */

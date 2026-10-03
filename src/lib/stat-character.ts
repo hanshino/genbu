@@ -125,7 +125,8 @@ export function parseCharacter(raw: unknown): { ok: true; character: CharacterV1
     (raw.meridianPlan !== null && typeof raw.meridianPlan !== "string") ||
     !isRecord(raw.manual) ||
     !bonus(raw.manual.hero) ||
-    !bonus(raw.manual.formation)
+    !bonus(raw.manual.formation) ||
+    (raw.manual.other !== undefined && !bonus(raw.manual.other))
   )
     return { ok: false, reason: "corrupt" };
   return { ok: true, character: raw as unknown as CharacterV1 };

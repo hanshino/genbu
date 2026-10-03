@@ -11,7 +11,7 @@ import {
   type PanelResult, type PassiveDef, type SectId, type SimItem,
 } from "@/lib/types/stat-sim";
 
-const emptyData = (): GameData => ({ itemsById: {}, enhancementsByPath: {}, passives: [] });
+const emptyData = (): GameData => ({ itemsById: {}, enhancementsByPath: {}, passives: [], meridianIds: [] });
 function character(overrides: Partial<CharacterV1> = {}): CharacterV1 {
   return {
     version: 1, id: "test", name: "測試角色", sectId: 8, subSects: [], level: 1,
@@ -369,6 +369,13 @@ describe("加成、條件與資料完整性", () => {
     expect(p.stats.atk.value).toBe(32 + 10 + 8 + 7 + 2 + 3);
     expect(p.stats.atk.breakdown.map((row) => row.source)).toEqual(["equipment", "enhancement", "equipManual", "attribute", "hero", "formation"]);
     expectBreakdowns(p);
+    c.manual.other = { hp: 1000, str: 1 };
+    const other = computePanel(c, data);
+    expect(other.stats.hp.value).toBe(p.stats.hp.value! + 1000);
+    expect(other.attributes.str.value).toBe(311);
+    expect(other.stats.atk.value).toBe(p.stats.atk.value);
+    expect(other.stats.hp.breakdown.at(-1)).toMatchObject({ source: "manualOther", amount: 1000 });
+    expectBreakdowns(other);
   });
   it("武器條件可由左手符合，weaponReqStats 只限制指定屬性", () => {
     const c = character(); const data = emptyData();
@@ -401,6 +408,16 @@ describe("加成、條件與資料完整性", () => {
     const p = computePanel(c, data);
     expect(p.stats.atk.value).toBe(936 + 859 + 40);
     expect(p.issues.filter((i) => i.code === "inactive-passive-clan")).toHaveLength(4);
+    // 入門弟子技能轉職後必定不生效，不計入也不提示。
+    data.passives.push(passive(4, 1, { atk: 50 }, { group: "main", clan: "CLASS_CHILD" }));
+    c.passiveLevels[4] = 1;
+    const child = computePanel(c, data);
+    expect(child.stats.atk.value).toBe(936 + 859 + 40);
+    expect(child.issues.filter((i) => i.code === "inactive-passive-clan")).toHaveLength(4);
+    // 各級名稱不同時，breakdown 用目前等級的名稱。
+    data.passives.push(passive(9, 2, { hp: 7 }, { name: "測試二重", levelNames: ["", "測試一重", "測試二重"] }));
+    c.passiveLevels[9] = 2;
+    expect(computePanel(c, data).stats.hp.breakdown.find((row) => row.refId === 9)?.label).toBe("測試二重 Lv2");
     data.passives.find((p) => p.id === 180)!.learnLevels[4] = 200;
     expect(p.stats.hp.breakdown.some((row) => row.refId === 180)).toBe(true);
     expect(computePanel(c, data).stats.hp.breakdown.some((row) => row.refId === 180)).toBe(true);
