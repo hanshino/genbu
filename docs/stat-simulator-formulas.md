@@ -301,8 +301,9 @@ help 被動       嫁衣神功四重 HP +12000；鍛體 Lv10 物攻 +120；劍�
 
 ## 附：傷害公式（選做）
 
-用封包逐下擷取實測：`傷害 ≈ m·(物攻 + 武器傷害)·K/(K + 防禦) − 防禦/2`。
+用封包逐下擷取實測：`傷害 ≈ m·B·K/(K + D) − D/2`。
 
-- m = 1 普攻、2 爆擊、技能用其 p1/100。
-- K 跟怪物等級有關（Lv67～80 約 810～875，Lv22 約 626），規律還沒擬合。
-- 詳見 tthol_data `scripts/damage_capture_investigation.md`。
+- B = 物攻 + 武器傷害、D = 怪的 extra_def；拳套是內勁武器，B = 內勁 + 武器傷害、D = magic_def。
+- m = 1 普攻、2 重擊（D/2 只扣一次）、技能用其 p1/100。
+- K = 5 × 怪物等級 + 500（Lv22～101 驗證）。
+- 詳見 tthol_data `scripts/damage_capture_investigation.md`；genbu 的實作計畫見 `docs/plans/2026-10-03-stat-sim-damage.md`。
