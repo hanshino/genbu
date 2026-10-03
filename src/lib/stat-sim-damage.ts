@@ -69,6 +69,8 @@ export interface SkillDamage extends Gate {
   mp: number;
   /** 目前右手武器放不出這招時，寫要換什麼武器；這種招一定是 unsupported。 */
   wrongWeapon?: string;
+  /** 玩家自己加的招（不在自動列出的清單裡）。 */
+  picked?: boolean;
 }
 
 export interface DamageResult {
@@ -174,6 +176,15 @@ export function defaultSkillLevel(skill: DamageSkillDef, character: CharacterV1)
   return 0;
 }
 
+/** 這招要的武器的短名稱（「刀」「空手或手套」「手甲＋暗器」）；不限武器為 null。 */
+export function requiredWeapon(skill: DamageSkillDef): string | null {
+  const need = skill.skillType == null ? undefined : SKILL_TYPE_WEAPONS[skill.skillType];
+  if (!need) return null;
+  const weapons = need.right.flatMap((type) => (type == null ? [] : [typeLabel(type)])).join("或");
+  if (need.left) return `${weapons}＋${typeLabel(need.left)}`;
+  return need.right.includes(null) ? `空手或${weapons}` : weapons;
+}
+
 /** 遊戲只看右手（暗器另要左手），不符就放不出來；回傳要換的武器，符合為 null。 */
 export function weaponRequirement(skill: DamageSkillDef, character: CharacterV1, data: GameData): string | null {
   const need = skill.skillType == null ? undefined : SKILL_TYPE_WEAPONS[skill.skillType];
@@ -188,6 +199,11 @@ export function weaponRequirement(skill: DamageSkillDef, character: CharacterV1,
     : need.right.includes(null) ? `空手或右手拿${weapons}` : `右手拿${weapons}`;
   const typeName = SKILL_TYPE_LABELS[skill.skillType!] ?? String(skill.skillType);
   return `「${typeName}」要${hands}才能使用`;
+}
+
+/** 玩家學得到的招（有學習等級資料）；寵物、道具、怪物用的招沒有，不給玩家搜尋。 */
+export function isPlayerSkill(skill: DamageSkillDef): boolean {
+  return skill.levels.some((level) => level != null && level.learnLevel >= 0);
 }
 
 /** 主門派加上已選副門派的傷害技能；沒有門派的招（副門派進階、NPC 絕學）要匯入時學過才列。 */
@@ -281,8 +297,10 @@ export function computeDamage(input: {
   skills: DamageSkillDef[];
   /** 玩家調整過的技能等級；沒調的用 defaultSkillLevel。 */
   skillLevels?: Record<number, number>;
+  /** 玩家自己加的招；已經自動列出的會略過。 */
+  pickedSkills?: number[];
 }): DamageResult {
-  const { character, data, panel, monster, skills, skillLevels = {} } = input;
+  const { character, data, panel, monster, skills, skillLevels = {}, pickedSkills = [] } = input;
   const weapon = resolveWeapon(character, data, panel);
   const k = monsterK(monster.level);
   const defense = weapon.rule?.defense === "magicDef" ? monster.magicDef : monster.extraDef;
@@ -303,9 +321,14 @@ export function computeDamage(input: {
     normal = rangeOf((b) => hitDamage(1, b, k, defense), B);
     critical = rangeOf((b) => hitDamage(2, b, k, defense), B);
   }
-  const results = skillsForCharacter(character, skills).map((skill) =>
-    computeSkill(skill, skillLevels[skill.id] ?? defaultSkillLevel(skill, character), weapon, panel, k, defense,
-      weaponRequirement(skill, character, data)));
+  const auto = skillsForCharacter(character, skills);
+  const autoIds = new Set(auto.map((skill) => skill.id));
+  const picked = new Set(pickedSkills.filter((id) => !autoIds.has(id)));
+  const results = [...auto, ...skills.filter((skill) => picked.has(skill.id))].map((skill) => {
+    const row = computeSkill(skill, skillLevels[skill.id] ?? defaultSkillLevel(skill, character), weapon, panel, k,
+      defense, weaponRequirement(skill, character, data));
+    return picked.has(skill.id) ? { ...row, picked: true } : row;
+  });
   results.sort((a, b) => SUPPORT_RANK[a.support] - SUPPORT_RANK[b.support] || a.skill.id - b.skill.id);
   return { weapon, monster, k, defense, caveats, normal, critical, skills: results };
 }

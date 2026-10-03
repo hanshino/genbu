@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { computePanel } from "@/lib/stat-sim";
 import {
   computeCombo, computeDamage, computeMarginal, defaultSkillLevel, expectedPerCast, groupFamilies, hitDamage,
-  ignoreDefenseDamage, skillsForCharacter,
+  ignoreDefenseDamage, isPlayerSkill, requiredWeapon, skillsForCharacter,
 } from "@/lib/stat-sim-damage";
 import {
   EQUIP_SLOTS,
@@ -240,6 +240,32 @@ describe("沒有門派的招", () => {
     expect(row.level).toBe(7);
     expect(row.variants).toHaveLength(1);
     expect(defaultSkillLevel(五虎斷魂刀, { ...c, learnedSkills: { 508: 99 } })).toBe(20);
+  });
+});
+
+describe("自選招式", () => {
+  const bad = equip(withPanel(character({ sectId: 2 }), 2000, 1616), 55004);
+  const pickRun = (pickedSkills: number[]) => computeDamage({
+    character: bad, data, panel: computePanel(bad, data), monster: monster(50, 50), skills: SKILLS, pickedSkills,
+  }).skills;
+
+  it("別派的招加進來照規則分區並標記；已自動列出的不重複、不標記", () => {
+    const skills = pickRun([715, 702, 99999]);
+    const sword = skills.find((s) => s.skill.id === 715)!;
+    expect(sword.picked).toBe(true);
+    expect(sword.wrongWeapon).toBe("「劍法」要右手拿劍才能使用");
+    expect(skills.filter((s) => s.skill.id === 702)).toHaveLength(1);
+    expect(skills.find((s) => s.skill.id === 702)!.picked).toBeUndefined();
+    expect(skills.some((s) => s.skill.id === 99999)).toBe(false);
+  });
+
+  it("要換的武器短名稱；寵物、道具招沒有學習等級，不給搜尋", () => {
+    expect(requiredWeapon(血殺屠刀)).toBe("刀");
+    expect(requiredWeapon(蓮蒼掌)).toBe("空手或手套");
+    expect(requiredWeapon(千瘡百孔)).toBeNull();
+    expect(isPlayerSkill(血殺屠刀)).toBe(true);
+    const pet = { ...血殺屠刀, levels: 血殺屠刀.levels.map((l) => l && { ...l, learnLevel: -1 }) };
+    expect(isPlayerSkill(pet)).toBe(false);
   });
 });
 

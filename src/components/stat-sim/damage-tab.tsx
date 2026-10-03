@@ -10,6 +10,7 @@ import {
   PlusIcon,
   SwordIcon,
   SwordsIcon,
+  XIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,14 +32,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { DamageSupport } from "@/configs/stat-sim-damage";
+import { SKILL_TYPE_LABELS, type DamageSupport } from "@/configs/stat-sim-damage";
+import { MAGIC_CLAN_LABELS } from "@/lib/constants/magic-clan";
 import {
   computeCombo,
   computeDamage,
   computeMarginal,
   expectedPerCast,
   groupFamilies,
+  isPlayerSkill,
   LEVEL_TOO_LOW,
+  requiredWeapon,
   type ComboCounts,
   type DamageRange,
   type NormalMode,
@@ -48,6 +52,7 @@ import type {
   CharacterV1,
   DamageData,
   DamageMonster,
+  DamageSkillDef,
   GameData,
   PanelResult,
 } from "@/lib/types/stat-sim";
@@ -81,8 +86,16 @@ interface SavedCombo {
   order: string[];
   levels: Record<number, number>;
   normalMode: NormalMode;
+  /** 玩家從「加入其他招式」加的技能 id，依加入順序。 */
+  picked: number[];
 }
-const EMPTY_COMBO: SavedCombo = { counts: {}, order: [], levels: {}, normalMode: "normal" };
+const EMPTY_COMBO: SavedCombo = {
+  counts: {},
+  order: [],
+  levels: {},
+  normalMode: "normal",
+  picked: [],
+};
 
 /** 連段跟著角色存在這台瀏覽器；讀不到（無痕、封鎖）就從空的開始。 */
 function readCombo(characterId: string): SavedCombo {
@@ -97,6 +110,7 @@ function readCombo(characterId: string): SavedCombo {
       order: [...order, ...Object.keys(counts).filter((key) => !order.includes(key))],
       levels: parsed.levels ?? {},
       normalMode: parsed.normalMode === "critical" ? "critical" : "normal",
+      picked: Array.isArray(parsed.picked) ? parsed.picked.filter(Number.isInteger) : [],
     };
   } catch {
     return EMPTY_COMBO;
@@ -256,6 +270,24 @@ function AddButton({ name, onAdd }: { name: string; onAdd: () => void }) {
   );
 }
 
+function PickedBadge() {
+  return <Badge variant="secondary">自選</Badge>;
+}
+
+function RemoveButton({ name, onRemove }: { name: string; onRemove: () => void }) {
+  return (
+    <Button
+      size="icon-xs"
+      variant="ghost"
+      className="shrink-0 text-muted-foreground"
+      aria-label={`移除自選招式：${name}`}
+      onClick={onRemove}
+    >
+      <XIcon />
+    </Button>
+  );
+}
+
 /** 排行的一列：圖示、名稱、長條、每次施放的期望傷害、加入連段。 */
 function RankRow({
   icon,
@@ -265,6 +297,7 @@ function RankRow({
   ratio,
   badge,
   onAdd,
+  onRemove,
 }: {
   icon: string | null;
   name: string;
@@ -273,6 +306,8 @@ function RankRow({
   ratio: number;
   badge?: React.ReactNode;
   onAdd: () => void;
+  /** 自選的招才有。 */
+  onRemove?: () => void;
 }) {
   return (
     <li className="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_3.5rem_2rem] items-center gap-2.5 border-t border-border/60 px-4 py-2">
@@ -285,6 +320,7 @@ function RankRow({
           </div>
           {sub && <div className="truncate text-xs text-muted-foreground">{sub}</div>}
         </div>
+        {onRemove && <RemoveButton name={name} onRemove={onRemove} />}
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden>
         <div
@@ -351,7 +387,15 @@ function skillSummary(row: SkillDamage): string {
 }
 
 /** 算不出數字的招式，收起來列出名稱與原因。 */
-function ReasonList({ title, rows }: { title: string; rows: SkillDamage[] }) {
+function ReasonList({
+  title,
+  rows,
+  onRemove,
+}: {
+  title: string;
+  rows: SkillDamage[];
+  onRemove: (id: number) => void;
+}) {
   if (rows.length === 0) return null;
   return (
     <Collapsible className="border-t border-border/60">
@@ -367,15 +411,98 @@ function ReasonList({ title, rows }: { title: string; rows: SkillDamage[] }) {
           {rows.map((row) => (
             <li key={row.skill.id} className="flex items-start gap-2">
               <SkillIcon url={row.skill.iconUrl} />
-              <div className="min-w-0">
-                <div className="text-sm">{row.skill.name}</div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-sm">
+                  {row.skill.name}
+                  {row.picked && <PickedBadge />}
+                </div>
                 <div className="text-muted-foreground">{row.reasons.join("；")}</div>
               </div>
+              {row.picked && (
+                <RemoveButton name={row.skill.name} onRemove={() => onRemove(row.skill.id)} />
+              )}
             </li>
           ))}
         </ul>
       </CollapsiblePanel>
     </Collapsible>
+  );
+}
+
+/** 搜尋結果右邊的狀態：加進來會落在哪一區。 */
+function pickStatus(row: SkillDamage | undefined, listed: boolean): string {
+  if (listed) return "已列出";
+  if (!row) return "尚未支援";
+  if (row.wrongWeapon) return `要換${requiredWeapon(row.skill) ?? "武器"}`;
+  if (row.variants.length > 0) return `約 ${compact(expectedPerCast(row)!)}`;
+  if (row.reasons.includes(LEVEL_TOO_LOW)) return "還學不到";
+  return "尚未支援";
+}
+
+function SkillPicker({
+  skills,
+  listed,
+  preview,
+  onPick,
+}: {
+  skills: DamageSkillDef[];
+  /** 已經在表上（自動列出或已自選）的技能 id。 */
+  listed: Set<number>;
+  preview: Map<number, SkillDamage>;
+  onPick: (id: number) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(() => {
+    const q = query.trim();
+    return q ? skills.filter((skill) => skill.name.includes(q)).slice(0, MAX_RESULTS) : [];
+  }, [skills, query]);
+  return (
+    <div className="space-y-1.5 border-t border-border/60 px-4 py-3">
+      <p className="text-xs font-medium">加入其他招式</p>
+      <Combobox
+        items={filtered}
+        filter={null}
+        value={null}
+        itemToStringLabel={(skill: DamageSkillDef) => skill.name}
+        inputValue={query}
+        onInputValueChange={setQuery}
+        onValueChange={(picked) => {
+          if (!picked) return;
+          onPick((picked as DamageSkillDef).id);
+          setQuery("");
+        }}
+      >
+        <ComboboxInput className="w-full" placeholder="搜尋招式名稱…" aria-label="加入其他招式" />
+        <ComboboxContent>
+          <ComboboxEmpty>
+            {query.trim() ? `查無符合「${query.trim()}」的招式` : "輸入招式名稱開始搜尋"}
+          </ComboboxEmpty>
+          <ComboboxList>
+            <ComboboxCollection>
+              {(skill: DamageSkillDef) => (
+                <ComboboxItem key={skill.id} value={skill} disabled={listed.has(skill.id)}>
+                  <SkillIcon url={skill.iconUrl} />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate">{skill.name}</div>
+                    <div className="truncate text-xs text-muted-foreground">
+                      {(skill.skillType != null && SKILL_TYPE_LABELS[skill.skillType]) ||
+                        "類型未知"}
+                      ・{skill.clan ? (MAGIC_CLAN_LABELS[skill.clan] ?? skill.clan) : "無門派"}
+                    </div>
+                  </div>
+                  <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                    {pickStatus(preview.get(skill.id), listed.has(skill.id))}
+                  </span>
+                </ComboboxItem>
+              )}
+            </ComboboxCollection>
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+      <p className="text-xs text-muted-foreground">
+        右邊是加進來之後的結果：算得出來的進排行，武器不對的進「換武器才能用」。
+      </p>
+    </div>
   );
 }
 
@@ -433,6 +560,23 @@ export function DamageTab({
   const add = (key: string) => setCount(key, (combo.counts[key] ?? 0) + 1);
   const setLevel = (id: number, level: number) =>
     updateCombo((prev) => ({ ...prev, levels: { ...prev.levels, [id]: level } }));
+  const pick = (id: number) =>
+    updateCombo((prev) =>
+      prev.picked.includes(id) ? prev : { ...prev, picked: [...prev.picked, id] },
+    );
+  // 移除自選招時，連段裡的這招也一起拿掉。
+  const unpick = (id: number) =>
+    updateCombo((prev) => {
+      const key = String(id);
+      const counts = { ...prev.counts };
+      delete counts[key];
+      return {
+        ...prev,
+        counts,
+        order: prev.order.filter((k) => k !== key),
+        picked: prev.picked.filter((p) => p !== id),
+      };
+    });
 
   const monster = useMemo(
     () => damageData?.monsters.find((m) => m.id === monsterId) ?? null,
@@ -448,11 +592,26 @@ export function DamageTab({
             monster,
             skills: damageData.skills,
             skillLevels: combo.levels,
+            pickedSkills: combo.picked,
           }
         : null,
-    [character, data, panel, monster, damageData, combo.levels],
+    [character, data, panel, monster, damageData, combo.levels, combo.picked],
   );
   const result = useMemo(() => (input ? computeDamage(input) : null), [input]);
+  const playerSkills = useMemo(() => damageData?.skills.filter(isPlayerSkill) ?? [], [damageData]);
+  // 搜尋結果的預覽：把全部玩家招當成自選算一次，就知道每招加進來會落在哪一區。
+  const preview = useMemo(
+    () =>
+      input
+        ? new Map(
+            computeDamage({
+              ...input,
+              pickedSkills: playerSkills.map((skill) => skill.id),
+            }).skills.map((row): [number, SkillDamage] => [row.skill.id, row]),
+          )
+        : new Map<number, SkillDamage>(),
+    [input, playerSkills],
+  );
   const comboResult = useMemo(
     () => (result ? computeCombo(result, combo.counts, combo.normalMode) : null),
     [result, combo.counts, combo.normalMode],
@@ -486,8 +645,7 @@ export function DamageTab({
   const wrongWeapon = result?.skills.filter((s) => s.wrongWeapon) ?? [];
   const unsupported =
     result?.skills.filter(
-      (s) =>
-        s.support === "unsupported" && !s.wrongWeapon && !s.reasons.includes(LEVEL_TOO_LOW),
+      (s) => s.support === "unsupported" && !s.wrongWeapon && !s.reasons.includes(LEVEL_TOO_LOW),
     ) ?? [];
   const { top, lower } = groupFamilies(
     result?.skills.filter((s) => !unsupported.includes(s) && !wrongWeapon.includes(s)) ?? [],
@@ -565,8 +723,14 @@ export function DamageTab({
                   sub={`Lv${row.level}`}
                   value={expectedPerCast(row)!}
                   ratio={expectedPerCast(row)! / best}
-                  badge={row.support === "presumed" && <SupportBadge support="presumed" />}
+                  badge={
+                    <>
+                      {row.picked && <PickedBadge />}
+                      {row.support === "presumed" && <SupportBadge support="presumed" />}
+                    </>
+                  }
                   onAdd={() => add(String(row.skill.id))}
+                  onRemove={row.picked ? () => unpick(row.skill.id) : undefined}
                 />
               ))}
               {normalMid != null && result.critical && (
@@ -601,6 +765,12 @@ export function DamageTab({
                       >
                         <SkillIcon url={row.skill.iconUrl} />
                         <span className="min-w-0 flex-1 truncate">{row.skill.name}</span>
+                        {row.picked && (
+                          <RemoveButton
+                            name={row.skill.name}
+                            onRemove={() => unpick(row.skill.id)}
+                          />
+                        )}
                         <LevelSelect row={row} onLevel={(lv) => setLevel(row.skill.id, lv)} />
                         <span className="w-14 text-right font-mono text-xs text-muted-foreground">
                           {row.variants.length > 0 ? compact(expectedPerCast(row)!) : "—"}
@@ -619,8 +789,14 @@ export function DamageTab({
                 </CollapsiblePanel>
               </Collapsible>
             )}
-            <ReasonList title="換武器才能用" rows={wrongWeapon} />
-            <ReasonList title="尚未支援的招式" rows={unsupported} />
+            <ReasonList title="換武器才能用" rows={wrongWeapon} onRemove={unpick} />
+            <ReasonList title="尚未支援的招式" rows={unsupported} onRemove={unpick} />
+            <SkillPicker
+              skills={playerSkills}
+              listed={new Set(result.skills.map((row) => row.skill.id))}
+              preview={preview}
+              onPick={pick}
+            />
           </section>
 
           <section className={box} aria-label="連段試算">
