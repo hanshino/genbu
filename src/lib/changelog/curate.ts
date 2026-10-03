@@ -12,27 +12,30 @@ export interface CurationClient {
 }
 
 // Claude structured output schema（json_schema；動態鍵不友善，故 tables 用陣列）。
-export const CURATION_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["highlights", "tables"],
-  properties: {
-    highlights: { type: "array", items: { type: "string" }, maxItems: MAX_HIGHLIGHTS },
-    tables: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["table", "mode"],
-        properties: {
-          table: { type: "string" },
-          mode: { type: "string", enum: ["detail", "summary"] },
-          note: { type: "string" },
+// table 用 enum 限定為 digest 的機器鍵，模型無從填中文標籤（空 enum 不是合法 schema，故無表時退回 string）。
+export function buildCurationSchema(knownTables: string[]) {
+  return {
+    type: "object",
+    additionalProperties: false,
+    required: ["highlights", "tables"],
+    properties: {
+      highlights: { type: "array", items: { type: "string" }, maxItems: MAX_HIGHLIGHTS },
+      tables: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["table", "mode"],
+          properties: {
+            table: knownTables.length > 0 ? { type: "string", enum: knownTables } : { type: "string" },
+            mode: { type: "string", enum: ["detail", "summary"] },
+            note: { type: "string" },
+          },
         },
       },
     },
-  },
-} as const;
+  };
+}
 
 const SYSTEM_PROMPT = [
   "你在為武林同萌傳（TTHOL）玩家寫「更新日誌」，用繁體中文（zh-tw）、遊戲圈口語。",
@@ -42,8 +45,7 @@ const SYSTEM_PROMPT = [
   "把「保留N」「敬請期待」之類佔位符被填入，理解為『新內容上線』而非單純修改。",
   "禮盒／道具說明點名的內容物，照說明轉述（如「開箱可得…」），不得斷言那些內容物本身是新道具。",
   "系統性摺疊、售價批量、上千筆計數變更 → 收成一句，點出是建置調整而非玩法變更。",
-  "highlights 3–12 條，聚焦本版真正重點；tables 只列你想標成 summary 或特別要 detail 的表。",
-  "每個 tables 項目的 table 欄，務必填 digest 中該表的機器鍵（例如 items、npc），不可填中文標籤（例如 道具）。",
+  "highlights 只列本版真正的重點，小改版少列幾條即可；tables 只列你想標成 summary 或特別要 detail 的表。",
 ].join("\n");
 
 export function buildCurationPrompt(digest: AiDigest): { system: string; user: string } {
@@ -83,8 +85,9 @@ export async function curateWithClaude(
 ): Promise<AiCuration> {
   const model = opts.model ?? DEFAULT_MODEL;
   const { system, user } = buildCurationPrompt(digest);
-  const raw = await opts.client.curate({ model, system, user, schema: CURATION_SCHEMA });
-  return normalizeCuration(raw, digest.tables.map((t) => t.table));
+  const known = digest.tables.map((t) => t.table);
+  const raw = await opts.client.curate({ model, system, user, schema: buildCurationSchema(known) });
+  return normalizeCuration(raw, known);
 }
 
 export function curationToAiLayer(

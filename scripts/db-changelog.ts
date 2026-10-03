@@ -93,12 +93,17 @@ function anthropicClient(): CurationClient {
     async curate({ model, system, user, schema }) {
       const res = await anthropic.messages.create({
         model,
-        max_tokens: 4096,
+        // thinking 也吃 max_tokens；太小會把 JSON 截斷。
+        max_tokens: 16000,
         thinking: { type: "adaptive" },
         system,
         messages: [{ role: "user", content: user }],
         output_config: { effort: "medium", format: { type: "json_schema", schema: schema as Record<string, unknown> } },
       });
+      if (res.stop_reason === "refusal") {
+        throw new Error(`模型拒答（${res.stop_details?.category ?? "unknown"}）`);
+      }
+      if (res.stop_reason === "max_tokens") throw new Error("輸出被 max_tokens 截斷");
       const text = res.content
         .filter((b): b is Anthropic.TextBlock => b.type === "text")
         .map((b) => b.text)
@@ -108,24 +113,12 @@ function anthropicClient(): CurationClient {
   };
 }
 
-// 去掉模型常見的 ```json … ``` 圍籬，並容錯地取第一個 { 到最後一個 }，
-// 讓 CLI（無 json_schema 硬約束）的輸出仍能穩定 JSON.parse。
-function stripFence(text: string): string {
-  const t = text.trim();
-  const fenced = t.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
-  const body = (fenced ? fenced[1] : t).trim();
-  const start = body.indexOf("{");
-  const end = body.lastIndexOf("}");
-  return start >= 0 && end > start ? body.slice(start, end + 1) : body;
-}
-
 // CLI client：走本機 `claude -p`（Claude Code 訂閱登入身分），不需 ANTHROPIC_API_KEY。
 // system 以 --system-prompt 傳（shell:false → 多行參數不經 shell，無引號問題）；
-// user（含 digest）走 stdin；--output-format json 取外層 envelope.result，去圍籬後 JSON.parse。
-// schema 在此路徑不硬約束，靠系統提示 + stripFence + normalizeCuration 三層防禦。
+// user（含 digest）走 stdin；--json-schema 硬約束輸出，結果在 envelope.structured_output（物件）。
 function claudeCliClient(): CurationClient {
   return {
-    curate({ model, system, user }) {
+    curate({ model, system, user, schema }) {
       return new Promise((resolve, reject) => {
         // 關鍵：把 ANTHROPIC_API_KEY / AUTH_TOKEN 從子行程環境剝掉。否則 .env 載入的
         // 金鑰會被 claude 當成 API 金鑰、蓋過 claude.ai 訂閱登入 → 認證失敗。
@@ -142,10 +135,13 @@ function claudeCliClient(): CurationClient {
             "medium",
             "--output-format",
             "json",
+            "--json-schema",
+            JSON.stringify(schema),
             "--system-prompt",
-            system + "\n\n只輸出符合要求的 JSON 物件本身；不要 code fence、不要任何前後說明文字。",
+            system,
           ],
-          { cwd: PROJECT_ROOT, windowsHide: true, env },
+          // 不在專案目錄跑：避免 claude -p 載入本 repo 的 CLAUDE.md／hooks／skills 汙染策展。
+          { cwd: os.tmpdir(), windowsHide: true, env },
         );
         let out = "";
         let err = "";
@@ -159,24 +155,18 @@ function claudeCliClient(): CurationClient {
             reject(new Error(`claude -p 失敗（exit ${code}）：${(err || out).trim()}`));
             return;
           }
-          let envelope: { is_error?: boolean; subtype?: string; result?: unknown };
+          let envelope: { is_error?: boolean; subtype?: string; result?: unknown; structured_output?: unknown };
           try {
             envelope = JSON.parse(out);
           } catch {
             reject(new Error(`claude -p 輸出非預期 JSON envelope：${out.slice(0, 200)}`));
             return;
           }
-          if (envelope.is_error || typeof envelope.result !== "string") {
+          if (envelope.is_error || envelope.structured_output == null) {
             reject(new Error(`claude -p 回報錯誤：${envelope.subtype ?? String(envelope.result)}`));
             return;
           }
-          try {
-            resolve(JSON.parse(stripFence(envelope.result)));
-          } catch (e) {
-            reject(
-              new Error(`claude -p 策展輸出無法解析為 JSON：${e instanceof Error ? e.message : String(e)}`),
-            );
-          }
+          resolve(envelope.structured_output);
         });
         child.stdin.write(user);
         child.stdin.end();
