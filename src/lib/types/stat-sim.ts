@@ -146,6 +146,8 @@ export interface DamageSkillLevel {
   p2: number;
   p3: number;
   p4: number;
+  /** spend_mp，施放一次的真氣。 */
+  mp: number;
   /** magic_learn.char_level；缺少學習資料為 -1。 */
   learnLevel: number;
 }
@@ -160,6 +162,8 @@ export interface DamageSkillDef {
   iconUrl: string | null;
   /** 索引即等級，0 為 null。 */
   levels: (DamageSkillLevel | null)[];
+  /** 這招是哪一招傷害技能的進階（magic_prereqs Lv1 唯一的傷害技能前置）。 */
+  upgradesFrom?: number;
 }
 
 /** 傷害分頁打開時才載入（/api/stat-sim/damage），不放進首頁的 GameData。 */
@@ -173,6 +177,7 @@ export interface DamageMonster {
   id: number;
   name: string;
   level: number;
+  hp: number;
   extraDef: number;
   magicDef: number;
 }

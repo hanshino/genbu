@@ -64,6 +64,8 @@ export interface SkillDamage extends Gate {
   hits: number;
   /** support 為 unsupported 時是空陣列。 */
   variants: SkillVariant[];
+  /** 這個等級施放一次的真氣。 */
+  mp: number;
 }
 
 export interface DamageResult {
@@ -198,16 +200,17 @@ function computeSkill(
   defense: number,
 ): SkillDamage {
   const maxLevel = skill.levels.length - 1;
-  const base = { skill, level, maxLevel, hits: 1, variants: [] as SkillVariant[] };
+  const base = { skill, level, maxLevel, hits: 1, variants: [] as SkillVariant[], mp: skill.levels[level]?.mp ?? 0 };
   if (weapon.support === "unsupported" || !weapon.weaponDamage || weapon.attack == null) {
     return { ...base, ...unsupported("目前的武器無法試算") };
   }
+  // 先看能不能算，再看等級：尚未支援的招不管學不學得到都歸「尚未支援」。
+  const gate = skillGate(skill, weapon);
+  if (gate.support === "unsupported") return { ...base, ...gate };
   const params = skill.levels[level];
   if (level < 1 || !params) {
     return { ...base, ...unsupported(level < 1 ? LEVEL_TOO_LOW : `缺少 Lv${level} 的技能資料`) };
   }
-  const gate = skillGate(skill, weapon);
-  if (gate.support === "unsupported") return { ...base, ...gate };
   if (params.p1 <= 0) return { ...base, ...unsupported("技能倍率是 0，資料可能不完整") };
 
   const B: DamageRange = {
@@ -277,23 +280,118 @@ export function computeDamage(input: {
   return { weapon, monster, k, defense, caveats, normal, critical, skills: results };
 }
 
-const mid = (range: DamageRange | null | undefined) => (range ? (range.min + range.max) / 2 : null);
-const skillMid = (skill: SkillDamage | undefined) =>
-  skill?.variants[0] ? mid(skill.variants[0].perHit)! * skill.hits : null;
+const mid = (range: DamageRange) => (range.min + range.max) / 2;
+
+/** 每次施放的期望總傷害（含段數）；機率觸發類照 chance 加權。算不出來為 null。 */
+export function expectedPerCast(skill: SkillDamage): number | null {
+  if (skill.variants.length === 0) return null;
+  const perHit = skill.variants.length > 1
+    ? skill.variants.reduce((sum, v) => sum + (mid(v.perHit) * (v.chance ?? 0)) / 100, 0)
+    : mid(skill.variants[0].perHit);
+  return perHit * skill.hits;
+}
+
+/** 每次施放的最差～最好（含段數）。 */
+export function castRange(skill: SkillDamage): DamageRange | null {
+  if (skill.variants.length === 0) return null;
+  return {
+    min: Math.min(...skill.variants.map((v) => v.perHit.min)) * skill.hits,
+    max: Math.max(...skill.variants.map((v) => v.perHit.max)) * skill.hits,
+  };
+}
+
+/**
+ * 同一系列（落英繽紛 → 落英飛瓣 → 落英紛飛）只留學得到的最高階當主列；
+ * 被已學進階取代的低階、目前還學不到的招，放進 lower。
+ */
+export function groupFamilies(skills: SkillDamage[]): { top: SkillDamage[]; lower: SkillDamage[] } {
+  const superseded = new Set(
+    skills.filter((s) => s.level >= 1 && s.skill.upgradesFrom != null).map((s) => s.skill.upgradesFrom!),
+  );
+  const isTop = (s: SkillDamage) => s.level >= 1 && !superseded.has(s.skill.id);
+  return { top: skills.filter(isTop), lower: skills.filter((s) => !isTop(s)) };
+}
+
+export type NormalMode = "normal" | "critical";
+/** 連段：key 為 "normal" 或技能 id，值為一輪裡的次數。 */
+export type ComboCounts = Record<string, number>;
+
+export interface ComboLine {
+  key: string;
+  count: number;
+  /** 最差～最好（普攻的最好是全重擊）。 */
+  range: DamageRange;
+  expected: number;
+  mp: number;
+}
+
+export interface ComboResult {
+  lines: ComboLine[];
+  total: DamageRange & { expected: number };
+  mp: number;
+  hp: number;
+  /** 一輪打掉幾成，最多 1。 */
+  progress: number;
+  remaining: number;
+  /** 打完要幾輪（期望值）；一輪期望是 0 時為 null。 */
+  rounds: number | null;
+}
+
+/** 一輪連段的總傷害；只算得出數字的招會計入，尚未支援的略過。 */
+export function computeCombo(result: DamageResult, counts: ComboCounts, normalMode: NormalMode): ComboResult {
+  const lines: ComboLine[] = [];
+  for (const [key, count] of Object.entries(counts)) {
+    if (!(count > 0)) continue;
+    if (key === "normal") {
+      if (!result.normal || !result.critical) continue;
+      const per = normalMode === "critical" ? result.critical : result.normal;
+      lines.push({ key, count, mp: 0, expected: mid(per) * count,
+        range: { min: result.normal.min * count, max: result.critical.max * count } });
+      continue;
+    }
+    const skill = result.skills.find((s) => String(s.skill.id) === key);
+    const expected = skill ? expectedPerCast(skill) : null;
+    const range = skill ? castRange(skill) : null;
+    if (!skill || expected == null || !range) continue;
+    lines.push({ key, count, mp: skill.mp * count, expected: expected * count,
+      range: { min: range.min * count, max: range.max * count } });
+  }
+  const sum = (f: (line: ComboLine) => number) => lines.reduce((acc, line) => acc + f(line), 0);
+  const expected = sum((l) => l.expected);
+  const hp = result.monster.hp;
+  return {
+    lines,
+    total: { min: sum((l) => l.range.min), max: sum((l) => l.range.max), expected },
+    mp: sum((l) => l.mp),
+    hp,
+    progress: hp > 0 ? Math.min(1, expected / hp) : 0,
+    remaining: Math.max(0, hp - expected),
+    rounds: expected > 0 ? hp / expected : null,
+  };
+}
 
 export interface MarginalRow {
   key: AttributeKey;
   /** 再加 1 點要花的點數。 */
   nextCost: number;
-  /** 普攻每下多幾點（區間中點的差）；算不出來為 null。 */
+  /** 一輪連段的期望傷害多幾點；連段是空的或算不出來為 null。 */
+  combo: number | null;
+  /** 普攻（依 normalMode）每下多幾點。 */
   normal: number | null;
-  /** 技能 id → 第一種結果的總傷害（× 段數）多幾點。 */
-  skills: Record<number, number | null>;
 }
 
-/** 六圍各 +1 後重算面板與傷害，跟原本相減。 */
-export function computeMarginal(input: Parameters<typeof computeDamage>[0]): MarginalRow[] {
+/** 六圍各 +1 後重算面板、傷害與連段，跟原本相減。 */
+export function computeMarginal(
+  input: Parameters<typeof computeDamage>[0],
+  counts: ComboCounts = {},
+  normalMode: NormalMode = "normal",
+): MarginalRow[] {
   const before = computeDamage(input);
+  const beforeCombo = computeCombo(before, counts, normalMode);
+  const normalOf = (r: DamageResult) => {
+    const range = normalMode === "critical" ? r.critical : r.normal;
+    return range ? mid(range) : null;
+  };
   return ATTRIBUTE_KEYS.map((key) => {
     const character = {
       ...input.character,
@@ -305,16 +403,15 @@ export function computeMarginal(input: Parameters<typeof computeDamage>[0]): Mar
     } catch {
       // 等級、六圍不合法時面板算不出來，這一列顯示「—」。
     }
-    const diff = (a: number | null, b: number | null) => (a == null || b == null ? null : b - a);
-    const skills: Record<number, number | null> = {};
-    for (const skill of before.skills) {
-      skills[skill.skill.id] = diff(skillMid(skill), skillMid(after?.skills.find((s) => s.skill.id === skill.skill.id)));
-    }
+    const beforeNormal = normalOf(before);
+    const afterNormal = after ? normalOf(after) : null;
     return {
       key,
       nextCost: input.panel.points.nextCost[key],
-      normal: diff(mid(before.normal), mid(after?.normal)),
-      skills,
+      combo: after && beforeCombo.lines.length > 0
+        ? computeCombo(after, counts, normalMode).total.expected - beforeCombo.total.expected
+        : null,
+      normal: beforeNormal == null || afterNormal == null ? null : afterNormal - beforeNormal,
     };
   });
 }

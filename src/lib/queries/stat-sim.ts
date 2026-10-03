@@ -358,11 +358,11 @@ function getDamageSkills(): DamageSkillDef[] {
     .all() as Array<{ magic_id: number; url: string }>).map((row) => [row.magic_id, row.url]));
   const rows = db.prepare(`
     SELECT id, level, name, NULLIF(clan, '') AS clan, skill_type AS skillType, func_dmg AS funcDmg,
-           func_dmg_p1 AS p1, func_dmg_p2 AS p2, func_dmg_p3 AS p3, func_dmg_p4 AS p4
+           func_dmg_p1 AS p1, func_dmg_p2 AS p2, func_dmg_p3 AS p3, func_dmg_p4 AS p4, spend_mp AS mp
     FROM magic WHERE func_dmg > 0 ORDER BY id, level
   `).all() as Array<{
     id: number; level: number; name: string; clan: string | null; skillType: number | null; funcDmg: number;
-    p1: number | null; p2: number | null; p3: number | null; p4: number | null;
+    p1: number | null; p2: number | null; p3: number | null; p4: number | null; mp: number | null;
   }>;
   const skills = new Map<number, DamageSkillDef>();
   for (const row of rows) {
@@ -373,7 +373,7 @@ function getDamageSkills(): DamageSkillDef[] {
     };
     Object.assign(skill, { name: row.name, clan: row.clan, skillType: row.skillType, funcDmg: row.funcDmg });
     skill.levels[row.level] = {
-      p1: row.p1 ?? 0, p2: row.p2 ?? 0, p3: row.p3 ?? 0, p4: row.p4 ?? 0,
+      p1: row.p1 ?? 0, p2: row.p2 ?? 0, p3: row.p3 ?? 0, p4: row.p4 ?? 0, mp: row.mp ?? 0,
       learnLevel: learns.get(`${row.id}:${row.level}`) ?? -1,
     };
     skills.set(row.id, skill);
@@ -381,13 +381,24 @@ function getDamageSkills(): DamageSkillDef[] {
   for (const skill of skills.values()) {
     for (let i = 1; i < skill.levels.length; i++) skill.levels[i] ??= null;
   }
+  // 進階鏈：Lv1 的前置裡只有一招傷害技能時，這招就是它的進階（落英繽紛 → 落英飛瓣 → 落英紛飛）。
+  // 落月同時要求星雲劍法與落英繽紛，是新系列的起點，不算任何一招的進階。
+  const prereqs = new Map<number, number[]>();
+  for (const row of db.prepare("SELECT magic_id, req_magic_id FROM magic_prereqs WHERE level = 1")
+    .all() as Array<{ magic_id: number; req_magic_id: number }>) {
+    if (!skills.has(row.magic_id) || !skills.has(row.req_magic_id) || row.req_magic_id === row.magic_id) continue;
+    prereqs.set(row.magic_id, [...(prereqs.get(row.magic_id) ?? []), row.req_magic_id]);
+  }
+  for (const [id, reqs] of prereqs) {
+    if (reqs.length === 1) skills.get(id)!.upgradesFrom = reqs[0];
+  }
   return [...skills.values()];
 }
 
 /** 傷害試算的怪物清單；名稱前的 ▲ ● 保留，搜尋時用 includes 就能命中。 */
 function getDamageMonsters(): DamageMonster[] {
   return getDb().prepare(`
-    SELECT id, name, level, extra_def AS extraDef, magic_def AS magicDef
+    SELECT id, name, level, hp, extra_def AS extraDef, magic_def AS magicDef
     FROM npc WHERE is_monster = 1 AND name IS NOT NULL AND name != ''
     ORDER BY level, id
   `).all() as DamageMonster[];

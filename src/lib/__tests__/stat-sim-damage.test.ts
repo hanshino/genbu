@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { computePanel } from "@/lib/stat-sim";
 import {
-  computeDamage, computeMarginal, defaultSkillLevel, hitDamage, ignoreDefenseDamage, skillsForCharacter,
+  computeCombo, computeDamage, computeMarginal, defaultSkillLevel, expectedPerCast, groupFamilies, hitDamage,
+  ignoreDefenseDamage, skillsForCharacter,
 } from "@/lib/stat-sim-damage";
 import {
   EQUIP_SLOTS,
@@ -46,14 +47,16 @@ function equip(c: CharacterV1, right: number | null, left: number | null = null)
 }
 
 const monster = (level: number, extraDef: number, magicDef = extraDef): DamageMonster =>
-  ({ id: level * 1000 + extraDef, name: `Lv${level} 怪`, level, extraDef, magicDef });
+  ({ id: level * 1000 + extraDef, name: `Lv${level} 怪`, level, hp: 1_000_000, extraDef, magicDef });
 
-function skill(id: number, funcDmg: number, skillType: number, p: [number, number, number, number], clan = "CLASS_BAD"):
-  DamageSkillDef {
+function skill(
+  id: number, funcDmg: number, skillType: number, p: [number, number, number, number], clan = "CLASS_BAD",
+  upgradesFrom?: number,
+): DamageSkillDef {
   return {
-    id, name: `技能 ${id}`, clan, skillType, funcDmg, iconUrl: null,
-    levels: [null, ...Array.from({ length: 19 }, () => ({ p1: 100, p2: 0, p3: 0, p4: 0, learnLevel: 100 })),
-      { p1: p[0], p2: p[1], p3: p[2], p4: p[3], learnLevel: 150 }],
+    id, name: `技能 ${id}`, clan, skillType, funcDmg, iconUrl: null, upgradesFrom,
+    levels: [null, ...Array.from({ length: 19 }, () => ({ p1: 100, p2: 0, p3: 0, p4: 0, mp: 30, learnLevel: 100 })),
+      { p1: p[0], p2: p[1], p3: p[2], p4: p[3], mp: 45, learnLevel: 150 }],
   };
 }
 
@@ -213,6 +216,56 @@ describe("提醒與預設", () => {
   });
 });
 
+describe("系列與連段", () => {
+  const sword = equip(withPanel(character({ sectId: 4 }), 2332, 100), 55001);
+  const 落英繽紛 = skill(111, 4, 3, [500, 0, 0, 0], "CLASS_FLOWER");
+  const 落英飛瓣 = skill(355, 7, 3, [300, 0, 8, 100], "CLASS_FLOWER", 111);
+  const 進階 = skill(714, 7, 3, [430, 0, 8, 100], "CLASS_FLOWER", 355);
+  const family = [落英繽紛, 落英飛瓣, 進階];
+  const runWith = (skills: DamageSkillDef[], levels?: Record<number, number>) =>
+    computeDamage({ character: sword, data, panel: computePanel(sword, data), monster: monster(71, 94), skills,
+      skillLevels: levels });
+
+  it("同系列只留學得到的最高階，其餘收進 lower", () => {
+    const { top, lower } = groupFamilies(runWith(family).skills);
+    expect(top.map((s) => s.skill.id)).toEqual([714]);
+    expect(lower.map((s) => s.skill.id).sort()).toEqual([111, 355]);
+  });
+
+  it("最高階還學不到時，前一階留在主列", () => {
+    const { top, lower } = groupFamilies(runWith(family, { 714: 0 }).skills);
+    expect(top.map((s) => s.skill.id)).toEqual([355]);
+    expect(lower.map((s) => s.skill.id).sort()).toEqual([111, 714]);
+  });
+
+  it("機率觸發的期望值照 p4 加權，多段乘段數", () => {
+    const result = runWith([醉月劍法, 落英紛飛]);
+    const zui = result.skills.find((s) => s.skill.id === 716)!;
+    const [trig, miss] = zui.variants.map((v) => (v.perHit.min + v.perHit.max) / 2);
+    expect(expectedPerCast(zui)).toBeCloseTo(0.7 * trig + 0.3 * miss);
+    const luo = result.skills.find((s) => s.skill.id === 714)!;
+    expect(expectedPerCast(luo)).toBeCloseTo(((luo.variants[0].perHit.min + luo.variants[0].perHit.max) / 2) * 8);
+  });
+
+  it("連段：總傷害、真氣、普攻最好是全重擊，尚未支援的招略過", () => {
+    const result = runWith([醉月劍法, 蓮蒼掌]);
+    const combo = computeCombo(result, { 716: 2, normal: 3, 709: 5 }, "normal");
+    const zui = result.skills.find((s) => s.skill.id === 716)!;
+    expect(combo.lines.map((l) => l.key).sort()).toEqual(["716", "normal"]);
+    expect(combo.mp).toBe(90);
+    expect(combo.total.min).toBe(zui.variants[1].perHit.min * 2 + result.normal!.min * 3);
+    expect(combo.total.max).toBe(zui.variants[0].perHit.max * 2 + result.critical!.max * 3);
+    expect(combo.rounds).toBeCloseTo(1_000_000 / combo.total.expected);
+    expect(combo.remaining).toBeCloseTo(1_000_000 - combo.total.expected);
+  });
+
+  it("普攻全重擊模式的期望用重擊", () => {
+    const result = runWith([]);
+    const combo = computeCombo(result, { normal: 1 }, "critical");
+    expect(combo.total.expected).toBe((result.critical!.min + result.critical!.max) / 2);
+  });
+});
+
 describe("邊際效益", () => {
   const input = (c: CharacterV1) =>
     ({ character: c, data, panel: computePanel(c, data), monster: monster(71, 94), skills: SKILLS });
@@ -223,15 +276,27 @@ describe("邊際效益", () => {
     expect(byKey.str.normal).toBeGreaterThan(0);
     expect(byKey.vit.normal).toBe(0);
     expect(byKey.pow.normal).toBe(0);
-    expect(byKey.str.skills[715]).toBeGreaterThan(byKey.str.normal!);
     expect(byKey.str.nextCost).toBe(1);
+    // 連段是空的時沒有連段效益
+    expect(byKey.str.combo).toBeNull();
   });
 
   it("拿拳套：內力 +1 才有效，外功只影響無視防禦技能", () => {
-    const rows = computeMarginal(input(equip(withPanel(character(), 275, 1616), 55004)));
-    const byKey = Object.fromEntries(rows.map((row) => [row.key, row]));
+    const c = equip(withPanel(character(), 275, 1616), 55004);
+    const byKey = Object.fromEntries(computeMarginal(input(c)).map((row) => [row.key, row]));
     expect(byKey.pow.normal).toBeGreaterThan(0);
     expect(byKey.str.normal).toBe(0);
-    expect(byKey.str.skills[703]).toBeGreaterThan(0);
+    const combo = Object.fromEntries(computeMarginal(input(c), { 703: 1 }).map((row) => [row.key, row]));
+    expect(combo.str.combo).toBeGreaterThan(0);
+  });
+
+  it("連段效益 = 一輪期望傷害的差", () => {
+    const c = equip(withPanel(character({ sectId: 4 }), 2000, 1000), 55001);
+    const counts = { 715: 2, normal: 4 };
+    const row = computeMarginal(input(c), counts).find((r) => r.key === "str")!;
+    const before = computeCombo(computeDamage(input(c)), counts, "normal").total.expected;
+    const c2 = { ...c, attributes: { ...c.attributes, str: c.attributes.str + 1 } };
+    const after = computeCombo(computeDamage(input(c2)), counts, "normal").total.expected;
+    expect(row.combo).toBeCloseTo(after - before);
   });
 });
