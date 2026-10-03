@@ -6,7 +6,7 @@ import { getStatSimData, getStatSimWindows, mergeRanges } from "../stat-sim";
 import { BONUS_TO_ATTR_KEY, getEquipmentSlotForType, parseMaterialItems, parseModProb } from "../compound";
 import { labelToKey } from "@/lib/scoring/attribute-alias";
 import { createDefaultCharacter } from "@/lib/stat-character";
-import { computePanel } from "@/lib/stat-sim";
+import { computePanel, passiveName } from "@/lib/stat-sim";
 import { equipmentFields } from "@/components/stat-sim/window-layout";
 
 describe("stat-sim — 真實遊戲資料", () => {
@@ -330,10 +330,19 @@ describe("stat-sim — 真實遊戲資料", () => {
     expect(wedding.maxLevel).toBe(4);
     expect(wedding.learnLevels).toHaveLength(5);
     expect(wedding.note).toBeUndefined();
+    // DB 名稱逐級不同；名稱跟著遊戲上限四重，不用 DB 的十重。
+    expect(wedding.name).toBe("嫁衣神功四重");
+    expect(wedding.levelNames).toEqual(["", "嫁衣神功一重", "嫁衣神功二重", "嫁衣神功三重", "嫁衣神功四重"]);
+    expect(passiveName(wedding, 0)).toBe("嫁衣神功一重");
+    expect(passiveName(wedding, 4)).toBe("嫁衣神功四重");
   });
 
   it("分組、max-level 名稱/圖示、learnLevels 與未知 stat diagnostics", () => {
-    expect(data.passives.find((row) => row.id === 13)?.name).toBe("進階刀修練");
+    const blade = data.passives.find((row) => row.id === 13)!;
+    expect(blade.name).toBe("進階刀修練");
+    expect(passiveName(blade, 10)).toBe("刀修練");
+    expect(passiveName(blade, 11)).toBe("進階刀修練");
+    expect(data.passives.find((row) => row.id === 53)).not.toHaveProperty("levelNames");
     expect(data.passives.find((row) => row.id === 601)?.group).toBe("guild");
     expect(data.passives.find((row) => row.id === 750)?.group).toBe("sub");
     expect(data.passives.find((row) => row.id === 53)?.group).toBe("common");

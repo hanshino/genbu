@@ -144,7 +144,10 @@ export interface EnhancementPath {
 
 export interface PassiveDef {
   id: number;
+  /** 最高可用等級的名稱；各級名稱不同時（嫁衣神功一重～四重、進階劍修練）另見 levelNames。 */
   name: string;
+  /** 索引即等級，0 為空字串；只有各級名稱不同時才有。顯示用 passiveName()。 */
+  levelNames?: string[];
   group: "main" | "sub" | "common" | "guild" | "collection" | "achievement";
   /** magic.clan 的 CLASS_*；通用技能統一為 null，天外天為 CLASS_SKY。 */
   clan: string | null;

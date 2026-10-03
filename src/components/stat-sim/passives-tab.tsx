@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { SECTS } from "@/configs/stat-sim";
 import { WEAPON_TYPE_NAMES } from "@/configs/stat-sim-passives";
-import { collectionLevels } from "@/lib/stat-sim";
+import { collectionLevels, passiveName } from "@/lib/stat-sim";
 import type { CharacterV1, GameData, PassiveDef } from "@/lib/types/stat-sim";
 import { cn } from "@/lib/utils";
 import { BonusRows } from "./bonus-rows";
@@ -251,8 +251,8 @@ export function PassivesTab({
                         <SkillIcon url={p.iconUrl} size={28} />
                       </span>
                       <div className={cn("min-w-0", unavailable && "opacity-60")}>
-                        <div className="truncate text-sm font-medium" title={p.name}>
-                          {p.name}
+                        <div className="truncate text-sm font-medium" title={passiveName(p, lv)}>
+                          {passiveName(p, lv)}
                         </div>
                         <div className="truncate text-[11px] text-muted-foreground">
                           {lv > 0
@@ -414,7 +414,7 @@ function PassiveRow({
         <SkillIcon url={p.iconUrl} size={32} />
       </span>
       <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-sm font-medium">
-        <span className={cn(inactive && "opacity-45")}>{p.name}</span>
+        <span className={cn(inactive && "opacity-45")}>{passiveName(p, level)}</span>
         {p.weaponReq && (
           <Badge variant={weaponMiss ? "destructive" : "secondary"} className="font-normal">
             需裝備 {weaponReqText(p.weaponReq)}

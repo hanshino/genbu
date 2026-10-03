@@ -18,6 +18,7 @@ import {
   type CollectionThreshold,
   type GameData,
   type Issue,
+  type PassiveDef,
   type PanelBonus,
   type PanelResult,
   type RebirthInference,
@@ -34,6 +35,11 @@ function requireInteger(value: number, min: number, label: string): void {
   if (!Number.isSafeInteger(value) || value < min) {
     throw new RangeError(`${label}必須是大於等於 ${min} 的整數`);
   }
+}
+
+/** 依等級顯示技能名稱；0 級顯示第 1 級的名稱。 */
+export function passiveName(passive: PassiveDef, level: number): string {
+  return passive.levelNames?.[Math.max(level, 1)] || passive.name;
 }
 
 export function levelPoints(lv: number): number {
@@ -285,7 +291,7 @@ export function computePanel(character: CharacterV1, data: GameData): PanelResul
     }
     const weaponOK = !passive.weaponReq || passive.weaponReq.some((type) => weaponTypes.includes(type));
     addBonus(passive.cumulative[level], passive.group === "collection" ? "collection" : "passive",
-      `${passive.name} Lv${level}`, passive.id,
+      `${passiveName(passive, level)} Lv${level}`, passive.id,
       (key) => weaponOK || (passive.weaponReqStats != null && !passive.weaponReqStats.includes(key)));
     if (passive.id === 777 && hands.length > 0 && !weaponTypes.includes("STAFF") &&
         hands.some((item) => !item.typeName || !RANGED_WEAPON_TYPES.includes(item.typeName))) {

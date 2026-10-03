@@ -414,6 +414,10 @@ describe("加成、條件與資料完整性", () => {
     const child = computePanel(c, data);
     expect(child.stats.atk.value).toBe(936 + 859 + 40);
     expect(child.issues.filter((i) => i.code === "inactive-passive-clan")).toHaveLength(4);
+    // 各級名稱不同時，breakdown 用目前等級的名稱。
+    data.passives.push(passive(9, 2, { hp: 7 }, { name: "測試二重", levelNames: ["", "測試一重", "測試二重"] }));
+    c.passiveLevels[9] = 2;
+    expect(computePanel(c, data).stats.hp.breakdown.find((row) => row.refId === 9)?.label).toBe("測試二重 Lv2");
     data.passives.find((p) => p.id === 180)!.learnLevels[4] = 200;
     expect(p.stats.hp.breakdown.some((row) => row.refId === 180)).toBe(true);
     expect(computePanel(c, data).stats.hp.breakdown.some((row) => row.refId === 180)).toBe(true);
