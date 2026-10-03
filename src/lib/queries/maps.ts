@@ -4,6 +4,7 @@ import type { StageKind } from "@/lib/types/stage";
 import type { StageMonsterSpawn } from "@/lib/types/monster-spawn";
 import type { Point } from "@/lib/guide-steps";
 import { getNpcImageMap, type EntityImage } from "./images";
+import { computeHpRatios, isEliteRatio } from "@/lib/calc/elite";
 
 export interface StageMapImage {
   url: string;
@@ -831,22 +832,11 @@ export function getNpcPositionsForStage(
 }
 
 export interface StageMonsterMarker extends StageMonsterSpawn {
-  /** hp 顯著高於其他物種（判準見 buildMonsterMarkers 註解）；純顯示啟發式，非官方 boss 標記。 */
+  /** 菁英：hp 顯著高於其他物種（判準見 @/lib/calc/elite）；純顯示啟發式，非官方 boss 標記。 */
   highHp: boolean;
   /** candidate hp / 其他物種 hp 中位數；無法比較時為 null（不代表 0 倍）。 */
   hpRatio: number | null;
   points: { left: number; top: number }[];
-}
-
-function isFinitePositive(n: unknown): n is number {
-  return typeof n === "number" && Number.isFinite(n) && n > 0;
-}
-
-/** 標準算術中位數；偶數筆取中間兩筆的平均。輸入須已由呼叫端排序。 */
-function median(sortedAsc: number[]): number {
-  const mid = Math.floor(sortedAsc.length / 2);
-  if (sortedAsc.length % 2 === 1) return sortedAsc[mid];
-  return (sortedAsc[mid - 1] + sortedAsc[mid]) / 2;
 }
 
 function hasValidImageDims(image: StageMapImage | null): image is StageMapImage {
@@ -880,18 +870,14 @@ function pointsForPositions(
 }
 
 /**
- * 合併「怪物清單」與「原始刷怪座標」成地圖標記，並標出 HP 異常突出的物種。
+ * 合併「怪物清單」與「原始刷怪座標」成地圖標記，並標出菁英（HP 異常突出的物種）。
  *
  * points：無圖（image=null）或圖片尺寸不合法一律 []；有圖時只保留落在圖片範圍內
  * （0 <= x < width、0 <= y < height）的 finite 座標，並依 (x,y) 去重。points 為 []
  * 不影響 highHp/hpRatio 判斷（兩者判準只看 hp，不看有無座標）。
  *
- * highHp 判準（純顯示用啟發式，不代表官方 boss 標記）：
- * - 只看 finite 且 > 0 的 hp；每個 distinct npcId 只算一次（重複 row 不加權）。
- * - 需至少 2 個合格物種，且該物種自己 hp 也合格，否則 hpRatio=null、highHp=false。
- * - hpRatio = 該物種 hp / 其餘合格物種 hp 的標準算術中位數（偶數筆取中間兩筆平均）；
- *   hpRatio >= 10 才視為 highHp。
- * - 沒有絕對 hp 門檻、不看 drop_exp；單一合格物種永遠不會是 highHp。
+ * highHp（菁英）判準見 @/lib/calc/elite：hp 為本圖其他物種中位數的 10 倍以上；
+ * 這裡不看 drop_exp，本圖所有刷怪物種都一起比。
  */
 export function buildMonsterMarkers(
   monsters: StageMonsterSpawn[],
@@ -905,34 +891,15 @@ export function buildMonsterMarkers(
     else positionsByNpc.set(p.npcId, [p]);
   }
 
-  // distinct npcId → hp，只收 finite 且 > 0；重複的 npcId（理論上呼叫端不該有）只取第一筆，
-  // 確保後面的中位數計算「每個物種只算一次」而不是被 row 數加權。
-  const distinctHpByNpc = new Map<number, number>();
-  for (const m of monsters) {
-    if (isFinitePositive(m.hp) && !distinctHpByNpc.has(m.npcId)) {
-      distinctHpByNpc.set(m.npcId, m.hp);
-    }
-  }
-  const validSpeciesCount = distinctHpByNpc.size;
+  const ratios = computeHpRatios(monsters);
 
   return monsters.map((m) => {
     const points = hasValidImageDims(image)
       ? pointsForPositions(positionsByNpc.get(m.npcId) ?? [], image)
       : [];
 
-    let hpRatio: number | null = null;
-    let highHp = false;
-    const ownHp = distinctHpByNpc.get(m.npcId);
-    if (validSpeciesCount >= 2 && ownHp !== undefined) {
-      const others = [...distinctHpByNpc.entries()]
-        .filter(([npcId]) => npcId !== m.npcId)
-        .map(([, hp]) => hp)
-        .sort((a, b) => a - b);
-      if (others.length > 0) {
-        hpRatio = ownHp / median(others);
-        highHp = hpRatio >= 10;
-      }
-    }
+    const hpRatio = ratios.get(m.npcId) ?? null;
+    const highHp = isEliteRatio(hpRatio);
 
     return { ...m, highHp, hpRatio, points };
   });

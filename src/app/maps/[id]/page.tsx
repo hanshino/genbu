@@ -201,7 +201,7 @@ export default async function MapDetailPage({ params, searchParams }: PageProps)
   const npcPlacements = getNpcPlacementsForStage(stage.kind, stage.id);
   const portals = getPortalExits(stage.kind, stage.id);
   const monsterImages = getNpcImageMap(monsters.map((m) => m.npcId));
-  // 沒有地圖圖片就不必查座標；markers 仍要建，清單的高血量標示也靠它。
+  // 沒有地圖圖片就不必查座標；markers 仍要建，清單的菁英標示也靠它。
   const monsterMarkers = buildMonsterMarkers(
     monsters,
     mapImage ? getMonsterSpawnPositions(stage.kind, stage.id) : [],

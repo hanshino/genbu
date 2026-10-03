@@ -669,7 +669,7 @@ export function StageMapViewer({
       <span>
         地圖上的點是遊戲資料（GENERATOR.OBD）記錄的刷怪位置，不是怪物當下在哪；劇情或任務腳本叫出來的怪不在其中。
         {monstersE.some((e) => e.monster?.highHp) &&
-          "標「高血量」的怪，HP 是本圖其他怪物中位數的 10 倍以上，只是數字比較，不是遊戲裡的首領設定。"}
+          "標「菁英」的怪，HP 是本圖其他怪物中位數的 10 倍以上，只是數字比較，不是遊戲裡的首領設定。"}
         預設入口與登出點是遊戲設定的預設落點，不是完整的傳送路線。
         {portalsE.length > 0 && "傳點是踩上去就觸發的地圖傳送；透過 NPC 對話的傳送不在其中。"}
       </span>
@@ -946,9 +946,9 @@ function HighHpBadge({ monster }: { monster: MapMonster }) {
   const badge = (
     <Badge
       variant="outline"
-      className="h-4 rounded-sm border-primary/30 px-1 text-[11px] font-normal text-primary/85"
+      className="h-4 rounded-sm border-chart-4/60 bg-chart-4/10 px-1 text-[11px] font-normal text-chart-4"
     >
-      高血量
+      菁英
     </Badge>
   );
   if (monster.hpRatio == null) return badge;
@@ -1192,7 +1192,7 @@ function PointMarker({
               )}
               {m.highHp && m.hpRatio != null && (
                 <div className="text-xs text-muted-foreground">
-                  高血量：HP 約為本圖其他怪物中位數的 {formatRatio(m.hpRatio)} 倍
+                  菁英：HP 約為本圖其他怪物中位數的 {formatRatio(m.hpRatio)} 倍
                 </div>
               )}
               <Link
