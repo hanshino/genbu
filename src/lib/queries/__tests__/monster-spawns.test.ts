@@ -374,7 +374,7 @@ describe("level 0 / 未知等級", () => {
     const mem = new Database(":memory:");
     mem.exec(`
       CREATE TABLE stages (kind TEXT, id INTEGER, name TEXT, [group] INTEGER, min_level_require INTEGER);
-      CREATE TABLE npc (id INTEGER, name TEXT, level INTEGER, hp INTEGER);
+      CREATE TABLE npc (id INTEGER, name TEXT, level INTEGER, hp INTEGER, base_dodge INTEGER);
       CREATE TABLE monsters (id INTEGER, drop_exp INTEGER);
       CREATE TABLE monster_spawns (id INTEGER, stage_kind TEXT, stage_id INTEGER, npc_id INTEGER);
       CREATE TABLE npc_images (npc_id INTEGER, url TEXT, width INTEGER, height INTEGER);
@@ -384,8 +384,8 @@ describe("level 0 / 未知等級", () => {
       -- B: 只有 Lv0 未知怪 → 不得成為候選
       INSERT INTO stages VALUES ('stage', 2, '全未知地圖', 7, 1);
 
-      INSERT INTO npc VALUES (100, '有效怪', 80, 9000);
-      INSERT INTO npc VALUES (200, '未知等級怪', 0, 9000);
+      INSERT INTO npc VALUES (100, '有效怪', 80, 9000, 200);
+      INSERT INTO npc VALUES (200, '未知等級怪', 0, 9000, 200);
       INSERT INTO monsters VALUES (100, 5000), (200, 5000);
 
       INSERT INTO monster_spawns VALUES (1,'stage',1,100),(2,'stage',1,100),

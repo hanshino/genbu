@@ -17,7 +17,7 @@ const placements: NpcPlacement[] = [
   { placementId: 102, npcId: 6566, name: "珍品商人", rawX: 3960, rawY: 400, image: null },
 ];
 
-// 仿 208 極之淵：一隻高血量單點 + 一般怪 + 一隻無座標。
+// 仿 208 極之淵：一隻菁英單點 + 一般怪 + 一隻無座標。
 const monsters: MapMonster[] = [
   {
     npcId: 5901,
@@ -291,13 +291,13 @@ describe("<StageMapViewer>", () => {
     expect(screen.getByText("0/4 點")).toBeInTheDocument();
   });
 
-  it("點地圖上的怪物點會開啟資訊，含 Lv、HP、高血量倍數與詳情連結", async () => {
+  it("點地圖上的怪物點會開啟資訊，含 Lv、HP、菁英倍數與詳情連結", async () => {
     const user = userEvent.setup();
     renderFull();
     await user.click(within(figureOf()).getByRole("button", { name: "●影修羅 Lv 81" }));
     const detail = await screen.findByRole("link", { name: /^怪物資料/ });
     expect(detail).toHaveAttribute("href", "/monsters/5970");
-    expect(screen.getByText("高血量：HP 約為本圖其他怪物中位數的 120 倍")).toBeInTheDocument();
+    expect(screen.getByText("菁英：HP 約為本圖其他怪物中位數的 120 倍")).toBeInTheDocument();
     expect(screen.getByText("HP 1,182,004")).toBeInTheDocument();
   });
 

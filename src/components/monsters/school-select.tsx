@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -18,7 +19,16 @@ import {
 } from "@/lib/constants/skill-picks";
 
 // ?school=X 同步在 URL 上，重新整理 / 分享連結都保留選擇
-export function SchoolSelect({ value }: { value: SkillSchool }) {
+export function SchoolSelect({
+  value,
+  id,
+  className,
+}: {
+  value: SkillSchool;
+  id?: string;
+  /** 覆寫 trigger 尺寸（例：和旁邊的輸入框等高）。 */
+  className?: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
@@ -35,7 +45,11 @@ export function SchoolSelect({ value }: { value: SkillSchool }) {
 
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 w-[140px] sm:w-[160px]" aria-label="選擇流派">
+      <SelectTrigger
+        id={id}
+        className={cn("h-8 w-[140px] sm:w-[160px]", className)}
+        aria-label="選擇流派"
+      >
         <SelectValue>{(v: unknown) => String(v ?? value)}</SelectValue>
       </SelectTrigger>
       <SelectContent>

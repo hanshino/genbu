@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { getNpcImageMap } from "@/lib/queries/images";
 import { MAX_MONSTER_LEVEL, MIN_MONSTER_LEVEL } from "@/lib/constants/monster-level";
+import { computeHpRatios, isEliteRatio } from "@/lib/calc/elite";
 import type { StageKind } from "@/lib/types/stage";
 import type {
   MonsterStageSpawn,
@@ -144,8 +145,10 @@ const TRAINING_TARGET_JOIN = `
  *
  * 固定 3 個 query，不得逐 stage 或逐怪物查詢：
  *   1. aggregate 出地圖列（等級分布、刷怪點、集中度）
- *   2. batch 取所有候選 stage 的適配怪物
+ *   2. batch 取所有候選 stage 的完整怪物名單（菁英要和全圖比，不能只看窗口內）
  *   3. getNpcImageMap() 一次補立繪
+ *
+ * 回傳所有候選，不在這裡排除副本／任務地圖；分類見 training-classify.ts。
  */
 export function getTrainingSpots(playerLevel: number): TrainingSpot[] {
   if (
@@ -219,8 +222,8 @@ export function getTrainingSpots(playerLevel: number): TrainingSpot[] {
 
   if (rows.length === 0) return [];
 
-  // Query 2：一次取回所有候選 stage 的適配怪物。候選數上限是 stages 總數（718），
-  // 加上 2 個 level 參數仍遠低於 SQLite 999 變數上限，因此不需分塊。
+  // Query 2：一次取回所有候選 stage 的完整練功對象名單（不限等級）。候選數上限是 stages 總數（718），
+  // 加上 kind 參數仍遠低於 SQLite 999 變數上限，因此不需分塊。
   const stageIdsByKind = new Map<StageKind, number[]>();
   for (const row of rows) {
     const list = stageIdsByKind.get(row.stageKind);
@@ -240,40 +243,65 @@ export function getTrainingSpots(playerLevel: number): TrainingSpot[] {
               ms.stage_id   AS stageId,
               n.id          AS npcId,
               n.name        AS name,
-              n.level       AS level
+              n.level       AS level,
+              n.hp          AS hp,
+              n.base_dodge  AS dodge,
+              COUNT(*)      AS spawnPoints
        FROM monster_spawns ms${TRAINING_TARGET_JOIN}
-         AND n.level BETWEEN ? AND ?
          AND (${kindClauses.join(" OR ")})
        GROUP BY ms.stage_kind, ms.stage_id, n.id
        ORDER BY ms.stage_kind, ms.stage_id, n.level ASC, n.id ASC`,
     )
-    .all(levelMin, levelMax, ...stageParams) as Array<{
+    .all(...stageParams) as Array<{
     stageKind: StageKind;
     stageId: number;
     npcId: number;
     name: string | null;
-    level: number;
+    level: number | null;
+    hp: number | null;
+    dodge: number | null;
+    spawnPoints: number;
   }>;
 
   // Query 3：batch 立繪（getNpcImageMap 內部已分塊）。約 5% 怪物查無，image 為 null。
   const imageMap = getNpcImageMap(monsterRows.map((r) => r.npcId));
 
-  const monstersByStage = new Map<string, TrainingSpotMonster[]>();
+  const rosterByStage = new Map<string, typeof monsterRows>();
   for (const r of monsterRows) {
     const key = `${r.stageKind}:${r.stageId}`;
-    const monster: TrainingSpotMonster = {
-      npcId: r.npcId,
-      name: r.name ?? "",
-      level: r.level,
-      image: imageMap.get(r.npcId) ?? null,
-    };
-    const list = monstersByStage.get(key);
-    if (list) list.push(monster);
-    else monstersByStage.set(key, [monster]);
+    const list = rosterByStage.get(key);
+    if (list) list.push(r);
+    else rosterByStage.set(key, [r]);
   }
 
-  return rows.map((row) => ({
-    ...row,
-    suitableMonsters: monstersByStage.get(`${row.stageKind}:${row.stageId}`) ?? [],
-  }));
+  return rows.map((row) => {
+    const roster = rosterByStage.get(`${row.stageKind}:${row.stageId}`) ?? [];
+    // 菁英要和全圖練功對象比，不能只跟窗口內的怪比。
+    const ratios = computeHpRatios(roster);
+    const suitableMonsters: TrainingSpotMonster[] = [];
+    const otherElites: TrainingSpotMonster[] = [];
+    for (const r of roster) {
+      if (r.level === null || r.level < MIN_MONSTER_LEVEL || r.level > MAX_MONSTER_LEVEL) continue;
+      const hpRatio = ratios.get(r.npcId) ?? null;
+      const monster: TrainingSpotMonster = {
+        npcId: r.npcId,
+        name: r.name ?? "",
+        level: r.level,
+        image: imageMap.get(r.npcId) ?? null,
+        hp: r.hp,
+        dodge: r.dodge,
+        spawnPoints: r.spawnPoints,
+        hpRatio,
+        elite: isEliteRatio(hpRatio),
+      };
+      if (r.level >= levelMin && r.level <= levelMax) suitableMonsters.push(monster);
+      else if (monster.elite) otherElites.push(monster);
+    }
+    return {
+      ...row,
+      suitableMonsters,
+      onlyElite: suitableMonsters.length > 0 && suitableMonsters.every((m) => m.elite),
+      otherElites,
+    };
+  });
 }

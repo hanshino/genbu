@@ -55,8 +55,12 @@ export interface TrainingSpot {
   /** spawn-row weighted AVG(ABS(npc.level - playerLevel))，只作 tie-break。 */
   averageLevelDistance: number;
 
-  /** 適配窗口內的怪物預覽，供卡片立繪帶使用；依 level 遞增、id 遞增排序。 */
+  /** 適配窗口內的怪物，依 level 遞增、id 遞增排序。 */
   suitableMonsters: TrainingSpotMonster[];
+  /** 適配怪物全部都是菁英：這張圖只是因為菁英剛好落在等級範圍內才入選。 */
+  onlyElite: boolean;
+  /** 不在適配窗口內、但同樣刷在這張圖的菁英（提醒玩家有危險的怪）。 */
+  otherElites: TrainingSpotMonster[];
 }
 
 export interface TrainingSpotMonster {
@@ -65,4 +69,12 @@ export interface TrainingSpotMonster {
   level: number;
   /** 來自 npc_images；約 5% 怪物查無，UI 需有 fallback。 */
   image: EntityImage | null;
+  hp: number | null;
+  /** npc.base_dodge；算需撐命中用。 */
+  dodge: number | null;
+  /** 這隻怪在本圖的刷怪點數（重複 row 每筆都算）。 */
+  spawnPoints: number;
+  /** hp / 本圖其他練功對象 hp 中位數；無法比較時為 null。判準見 @/lib/calc/elite。 */
+  hpRatio: number | null;
+  elite: boolean;
 }
