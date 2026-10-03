@@ -66,6 +66,17 @@ describe("assembleImport", () => {
     expect(result.character.passiveLevels).toEqual({});
   });
 
+  it("記下學過的技能等級，不含被動、經脈與 0 級", () => {
+    const raw = payload();
+    raw.skills = { 13: 10, 373: 10, 508: 0, 860: 1 };
+    const passive = { id: 13, name: "被動", group: "common", clan: null, maxLevel: 10, learnLevels: [],
+      iconUrl: null, cumulative: [{}] } as PassiveDef;
+    const result = assembleImport(raw, { ...emptyData, passives: [passive], meridianIds: [860] }, { id: "test" }, []);
+    expect(result.character.learnedSkills).toEqual({ 373: 10 });
+    expect(parseCharacter(result.character).ok).toBe(true);
+    expect(assembleImport(payload(), emptyData, { id: "test" }, []).character).not.toHaveProperty("learnedSkills");
+  });
+
   describe("體力差值自動填入「其他」", () => {
     const exact = () => {
       const character = createDefaultCharacter();

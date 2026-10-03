@@ -99,8 +99,10 @@ export interface CharacterV1 {
   equipment: Record<EquipSlot, EquippedItem | null>;
   /** magic id → 等級，含收藏 1151–1159；未列出的技能視為 0 級。 */
   passiveLevels: Record<number, number>;
-  /** 保留 encodePlan 字串；v1 不計入，非空時由引擎回報提示。 */
+  /** 經脈模擬器的 encodePlan 字串；有經脈資料時計入面板。 */
   meridianPlan: string | null;
+  /** 匯入時記下的技能等級（不含被動、經脈）；傷害分頁靠它列出沒有門派的招。舊存檔與手動角色沒有。 */
+  learnedSkills?: Record<number, number>;
   /** 直接加到最終值，不經六圍公式放大。other 是讀不到來源的加成（如伺服器端給角色的體力）；舊存檔沒有。 */
   manual: { hero: PanelBonus; formation: PanelBonus; other?: PanelBonus };
 }
@@ -134,6 +136,54 @@ export interface SimItem {
   randomCount?: [number, number];
   /** compounds 裝備類別 1–5（盾為 3）；null 表示沒有可插配方。 */
   socketCategory?: number | null;
+  /** items.damage_min/max；強化、真解不改變，0..0 時省略。 */
+  damage?: [number, number];
+  /** items.pdamage_min/max（內勁武器傷害，例如拳套）；0..0 時省略。 */
+  pdamage?: [number, number];
+}
+
+/** magic 的單一等級傷害參數，欄位照 func_dmg_p1..p4 原值（未除以 100）。 */
+export interface DamageSkillLevel {
+  p1: number;
+  p2: number;
+  p3: number;
+  p4: number;
+  /** spend_mp，施放一次的真氣。 */
+  mp: number;
+  /** magic_learn.char_level；缺少學習資料為 -1。 */
+  learnLevel: number;
+  /** 出手間隔 ms：max(stun「間隔時間」, recharge_time「施放時間」)；兩欄都沒有為 0。 */
+  interval: number;
+}
+
+export interface DamageSkillDef {
+  id: number;
+  /** 最高等級的名稱。 */
+  name: string;
+  clan: string | null;
+  skillType: number | null;
+  funcDmg: number;
+  iconUrl: string | null;
+  /** 索引即等級，0 為 null。 */
+  levels: (DamageSkillLevel | null)[];
+  /** 這招是哪一招傷害技能的進階（magic_prereqs Lv1 唯一的傷害技能前置）。 */
+  upgradesFrom?: number;
+}
+
+/** 傷害分頁打開時才載入（/api/stat-sim/damage），不放進首頁的 GameData。 */
+export interface DamageData {
+  skills: DamageSkillDef[];
+  monsters: DamageMonster[];
+}
+
+/** 傷害試算的目標怪物（npc.is_monster = 1）。 */
+export interface DamageMonster {
+  id: number;
+  name: string;
+  level: number;
+  hp: number;
+  extraDef: number;
+  magicDef: number;
 }
 
 export interface EnhancementPath {
@@ -174,6 +224,8 @@ export interface GameData {
   passives: PassiveDef[];
   /** 經脈穴位 magic id，來自 magic_meridians；匯入時用來辨識經脈技能。 */
   meridianIds: number[];
+  /** 經脈 magic id → 名稱與各級總加成（索引即等級，0 為 {}）；舊資料沒有時經脈仍標為估計。 */
+  meridians?: Record<number, { name: string; cumulative: PanelBonus[] }>;
   /** 副門派全部技能（含不影響面板、不在 passives 的）magic id → clan；匯入時用來判斷副門派。 */
   subSectSkills?: Record<number, SubSectClan>;
   /** 收藏值門檻，由小到大排序；舊資料未提供時不開放自動換算。 */
@@ -199,6 +251,7 @@ export interface StatBreakdown {
     | "socket"
     | "passive"
     | "collection"
+    | "meridian"
     | "hero"
     | "formation"
     | "manualOther"

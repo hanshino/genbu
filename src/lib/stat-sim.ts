@@ -168,7 +168,7 @@ export function computePanel(character: CharacterV1, data: GameData): PanelResul
   } else if (ATTRIBUTE_KEYS.some((key) => character.attributes[key] + 1 >= ESTIMATED_POINT_FROM)) {
     issue("estimated-next-cost", "下一點屬性達 146，下一點成本為估計");
   }
-  if (character.meridianPlan) {
+  if (character.meridianPlan && !data.meridians) {
     issue("meridian-not-included", "經脈尚未計入");
     incompleteReasons.push("經脈尚未計入");
   }
@@ -299,7 +299,21 @@ export function computePanel(character: CharacterV1, data: GameData): PanelResul
     }
   }
 
-  // 裝備與被動六圍先進公式；英雄／陣法仍只在最後加，不放大。
+  // 規劃字串格式同經脈模擬器的 encodePlan（id.等級,…）。
+  if (character.meridianPlan && data.meridians) {
+    for (const part of character.meridianPlan.split(",")) {
+      const match = /^(\d+)\.(\d+)$/.exec(part.trim());
+      const meridian = match ? data.meridians[Number(match[1])] : undefined;
+      const level = Number(match?.[2]);
+      if (!match || !meridian || !meridian.cumulative[level]) {
+        issue("invalid-meridian", `經脈規劃有無法辨識的穴位「${part}」，未計入`, undefined, true);
+        continue;
+      }
+      addBonus(meridian.cumulative[level], "meridian", `經脈 ${meridian.name} Lv${level}`, Number(match[1]));
+    }
+  }
+
+  // 裝備、被動與經脈六圍先進公式；英雄／陣法仍只在最後加，不放大。
   const s = values.str.value!, p = values.pow.value!, v = values.vit.value!;
   const a = values.agi.value!, d = values.dex.value!, w = values.wis.value!;
   const lv = character.level;

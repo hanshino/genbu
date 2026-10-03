@@ -9,7 +9,7 @@ import { labelToKey } from "@/lib/scoring/attribute-alias";
 import { getItemIconMap } from "@/lib/queries/images";
 import {
   EQUIP_SLOTS, STAT_KEYS, SUB_SECT_CLANS,
-  type EquipSlot, type GameData, type PanelBonus, type PassiveDef, type SubSectClan,
+  type DamageData, type DamageMonster, type DamageSkillDef, type EquipSlot, type GameData, type PanelBonus, type PassiveDef, type SubSectClan,
   type SimItem, type StatKey, type UiControl, type UiEquipSlot, type UiWindowLayout, type ValueRange,
 } from "@/lib/types/stat-sim";
 
@@ -124,13 +124,15 @@ export function getStatSimData(): GameData {
   const items = db.prepare(`
     SELECT id, name, base_lv AS level, type_name AS typeName, equip_slot,
            strong_equipment AS strongPathId, compound_number AS socketCount,
+           damage_min, damage_max, pdamage_min, pdamage_max,
            ${STAT_KEYS.map((key) => `${ITEM_STATS[key]} AS ${key}`).join(", ")}
     FROM items WHERE type_name IN (${EQUIPMENT_TYPES.map(() => "?").join(",")})
       AND (equip_slot IN (${Object.keys(SLOT_HINTS).map(() => "?").join(",")})
            OR equip_slot IS NULL OR equip_slot = '')
     ORDER BY id
   `).all(...EQUIPMENT_TYPES, ...Object.keys(SLOT_HINTS)) as Array<
-    Omit<SimItem, "stats" | "slotHint"> & { equip_slot: string | null } & Record<StatKey, number | null>
+    Omit<SimItem, "stats" | "slotHint" | "damage" | "pdamage"> & { equip_slot: string | null } &
+    Record<StatKey | "damage_min" | "damage_max" | "pdamage_min" | "pdamage_max", number | null>
   >;
   // EXTRA_* 是外装、HEAD 是角色頭、type_name=null 是內建紙娃娃，均非這 10 格配裝。
   const icons = getItemIconMap(items.map((item) => item.id));
@@ -152,6 +154,8 @@ export function getStatSimData(): GameData {
       ...(row.socketCount ? {
         socketCount: row.socketCount, socketCategory: getEquipmentSlotForType(row.typeName),
       } : {}),
+      ...(row.damage_max ? { damage: [row.damage_min ?? 0, row.damage_max] as [number, number] } : {}),
+      ...(row.pdamage_max ? { pdamage: [row.pdamage_min ?? 0, row.pdamage_max] as [number, number] } : {}),
     };
   }
 
@@ -331,13 +335,102 @@ export function getStatSimData(): GameData {
   `).all() as NonNullable<GameData["collectionThresholds"]>;
   const meridianIds = (db.prepare("SELECT DISTINCT magic_id FROM magic_meridians ORDER BY magic_id")
     .all() as Array<{ magic_id: number }>).map((row) => row.magic_id);
+  // magic_stats 是每級增量；HP/MP 當前值、回復、抗性與敵方減防不在面板上，直接略過。
+  const meridianRows = db.prepare(`
+    SELECT id, name, MAX(level) AS level FROM magic
+    WHERE id IN (SELECT magic_id FROM magic_meridians) GROUP BY id
+  `).all() as Array<{ id: number; name: string; level: number }>;
+  const meridianDeltas = new Map(meridianRows.map((row) =>
+    [row.id, Array.from({ length: row.level + 1 }, (): PanelBonus => ({}))]));
+  for (const row of db.prepare(`
+    SELECT magic_id, level, stat, value FROM magic_stats
+    WHERE magic_id IN (SELECT magic_id FROM magic_meridians) AND (flag IS NULL OR flag != 'AFFECT_RATIO')
+  `).all() as Array<{ magic_id: number; level: number; stat: string; value: number }>) {
+    const key = MAGIC_STATS[row.stat];
+    if (!key) continue;
+    const delta = meridianDeltas.get(row.magic_id)?.[row.level];
+    if (!delta) throw new Error(`經脈 ${row.magic_id}：magic_stats 等級 ${row.level} 越界`);
+    addBonus(delta, { [key]: row.value });
+  }
+  const meridians: NonNullable<GameData["meridians"]> = Object.fromEntries(meridianRows.map((row) => {
+    const deltas = meridianDeltas.get(row.id)!;
+    const cumulative: PanelBonus[] = [{}];
+    for (let level = 1; level <= row.level; level++) {
+      const total = { ...cumulative[level - 1] };
+      addBonus(total, deltas[level]);
+      cumulative.push(total);
+    }
+    return [row.id, { name: row.name, cumulative }];
+  }));
   const subSectSkills = Object.fromEntries((db.prepare(`
     SELECT DISTINCT id, clan FROM magic WHERE clan IN (${SUB_SECT_CLANS.map(() => "?").join(",")}) ORDER BY id
   `).all(...SUB_SECT_CLANS) as Array<{ id: number; clan: SubSectClan }>).map((row) => [row.id, row.clan]));
   return {
-    itemsById, enhancementsByPath, passives, meridianIds, subSectSkills, collectionThresholds,
+    itemsById, enhancementsByPath, passives, meridianIds, meridians, subSectSkills, collectionThresholds,
     socketRecipes, socketRecipeIdsByCategory,
   };
+}
+
+/** 傷害試算用的主動技能（func_dmg > 0）與怪物清單。 */
+export function getDamageData(): DamageData {
+  return { skills: getDamageSkills(), monsters: getDamageMonsters() };
+}
+
+function getDamageSkills(): DamageSkillDef[] {
+  const db = getDb();
+  const learns = new Map((db.prepare("SELECT magic_id, level, char_level FROM magic_learn")
+    .all() as Array<{ magic_id: number; level: number; char_level: number | null }>)
+    .map((row) => [`${row.magic_id}:${row.level}`, row.char_level]));
+  const icons = new Map((db.prepare("SELECT magic_id, url FROM magic_images ORDER BY magic_id, level")
+    .all() as Array<{ magic_id: number; url: string }>).map((row) => [row.magic_id, row.url]));
+  const rows = db.prepare(`
+    SELECT id, level, name, NULLIF(clan, '') AS clan, skill_type AS skillType, func_dmg AS funcDmg,
+           func_dmg_p1 AS p1, func_dmg_p2 AS p2, func_dmg_p3 AS p3, func_dmg_p4 AS p4, spend_mp AS mp,
+           MAX(IFNULL(stun, 0), IFNULL(recharge_time, 0)) AS interval
+    FROM magic WHERE func_dmg > 0 ORDER BY id, level
+  `).all() as Array<{
+    id: number; level: number; name: string; clan: string | null; skillType: number | null; funcDmg: number;
+    p1: number | null; p2: number | null; p3: number | null; p4: number | null; mp: number | null;
+    interval: number;
+  }>;
+  const skills = new Map<number, DamageSkillDef>();
+  for (const row of rows) {
+    // 最後一筆即最高等級，名稱、func_dmg 取它。
+    const skill = skills.get(row.id) ?? {
+      id: row.id, name: row.name, clan: row.clan, skillType: row.skillType, funcDmg: row.funcDmg,
+      iconUrl: icons.get(row.id) ?? null, levels: [null],
+    };
+    Object.assign(skill, { name: row.name, clan: row.clan, skillType: row.skillType, funcDmg: row.funcDmg });
+    skill.levels[row.level] = {
+      p1: row.p1 ?? 0, p2: row.p2 ?? 0, p3: row.p3 ?? 0, p4: row.p4 ?? 0, mp: row.mp ?? 0,
+      learnLevel: learns.get(`${row.id}:${row.level}`) ?? -1, interval: row.interval,
+    };
+    skills.set(row.id, skill);
+  }
+  for (const skill of skills.values()) {
+    for (let i = 1; i < skill.levels.length; i++) skill.levels[i] ??= null;
+  }
+  // 進階鏈：Lv1 的前置裡只有一招傷害技能時，這招就是它的進階（落英繽紛 → 落英飛瓣 → 落英紛飛）。
+  // 落月同時要求星雲劍法與落英繽紛，是新系列的起點，不算任何一招的進階。
+  const prereqs = new Map<number, number[]>();
+  for (const row of db.prepare("SELECT magic_id, req_magic_id FROM magic_prereqs WHERE level = 1")
+    .all() as Array<{ magic_id: number; req_magic_id: number }>) {
+    if (!skills.has(row.magic_id) || !skills.has(row.req_magic_id) || row.req_magic_id === row.magic_id) continue;
+    prereqs.set(row.magic_id, [...(prereqs.get(row.magic_id) ?? []), row.req_magic_id]);
+  }
+  for (const [id, reqs] of prereqs) {
+    if (reqs.length === 1) skills.get(id)!.upgradesFrom = reqs[0];
+  }
+  return [...skills.values()];
+}
+
+/** 傷害試算的怪物清單；名稱前的 ▲ ● 保留，搜尋時用 includes 就能命中。 */
+function getDamageMonsters(): DamageMonster[] {
+  return getDb().prepare(`
+    SELECT id, name, level, hp, extra_def AS extraDef, magic_def AS magicDef
+    FROM npc WHERE is_monster = 1 AND name IS NOT NULL AND name != ''
+    ORDER BY level, id
+  `).all() as DamageMonster[];
 }
 
 /** 保留原始 control 座標/field，不以有錯字的 comment 推斷數值用途。 */

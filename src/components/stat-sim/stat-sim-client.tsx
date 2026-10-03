@@ -5,6 +5,7 @@ import {
   InfoIcon,
   RotateCcwIcon,
   SparklesIcon,
+  SwordsIcon,
   TriangleAlertIcon,
   UserIcon,
 } from "lucide-react";
@@ -32,6 +33,7 @@ import {
 import { AttributeWindow } from "./attribute-window";
 import { BasicTab } from "./basic-tab";
 import { CharacterBar } from "./character-bar";
+import { DamageTab } from "./damage-tab";
 import { EquipmentWindow } from "./equipment-window";
 import { ItemPicker } from "./item-picker";
 import { ImportDialog, ImportEmptyState, type ImportStatus } from "./import-dialog";
@@ -267,7 +269,7 @@ export function StatSimClient({ data, windows }: Props) {
           {imported && !imported.resultClosed && <ImportResultCard {...imported.result}
             onClose={() => closeImportCard("resultClosed")} />}
           <Tabs value={tab} onValueChange={(v) => setTab(String(v))} className="gap-4">
-            <TabsList className="grid h-10 w-full grid-cols-2">
+            <TabsList className="grid h-10 w-full grid-cols-3">
               <TabsTrigger value="basic">
                 <UserIcon />
                 基本
@@ -275,6 +277,10 @@ export function StatSimClient({ data, windows }: Props) {
               <TabsTrigger value="passive">
                 <SparklesIcon />
                 被動與加成
+              </TabsTrigger>
+              <TabsTrigger value="damage">
+                <SwordsIcon />
+                傷害
               </TabsTrigger>
             </TabsList>
             <TabsContent value="basic">
@@ -288,6 +294,9 @@ export function StatSimClient({ data, windows }: Props) {
                 weaponTypes={weaponTypes}
                 update={update}
               />
+            </TabsContent>
+            <TabsContent value="damage">
+              <DamageTab key={active.id} character={active} data={data} panel={panel} />
             </TabsContent>
           </Tabs>
         </div>
