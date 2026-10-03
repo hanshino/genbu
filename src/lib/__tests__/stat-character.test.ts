@@ -88,6 +88,14 @@ describe("stat-character", () => {
     expect(parseCharacter(character)).toEqual({ ok: true, character });
   });
 
+  it("manual.other 選填：舊存檔沒有也能讀，有的話須是合法加值", () => {
+    const c = createDefaultCharacter();
+    expect(parseCharacter({ ...c, manual: { ...c.manual, other: { hp: 1000 } } }).ok).toBe(true);
+    for (const other of [null, { hp: "1" }, { extra: 1 }, [1]]) {
+      expect(parseCharacter({ ...c, manual: { ...c.manual, other } })).toEqual({ ok: false, reason: "corrupt" });
+    }
+  });
+
   it("uses an id fallback when randomUUID is unavailable", () => {
     vi.stubGlobal("crypto", {});
     try {

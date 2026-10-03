@@ -321,7 +321,7 @@ export function PassivesTab({
 
       <Card>
         <CardHeader className="border-b">
-          <CardTitle className="font-heading">英雄 / 陣法手動加值</CardTitle>
+          <CardTitle className="font-heading">英雄 / 陣法 / 其他手動加值</CardTitle>
         </CardHeader>
         <CardContent className="@container space-y-4">
           {character.meridianPlan && (
@@ -332,16 +332,15 @@ export function PassivesTab({
           )}
           <p className="text-xs text-muted-foreground">
             直接加在最終數值上，不經過六圍公式放大。陣法效果還沒建檔，請填遊戲裡實測的數字。
+            「其他」放找不到來源的加成，例如伺服器端給角色的體力。
           </p>
-          <div className="grid gap-4 @lg:grid-cols-2">
-            {(["hero", "formation"] as const).map((k) => (
+          <div className="grid gap-4 @lg:grid-cols-2 @3xl:grid-cols-3">
+            {MANUAL_GROUPS.map(([k, label]) => (
               <div key={k}>
-                <p className="mb-2 text-xs font-medium text-muted-foreground">
-                  {k === "hero" ? "英雄" : "陣法"}
-                </p>
+                <p className="mb-2 text-xs font-medium text-muted-foreground">{label}</p>
                 <BonusRows
-                  label={k === "hero" ? "英雄" : "陣法"}
-                  value={character.manual[k]}
+                  label={label}
+                  value={character.manual[k] ?? {}}
                   onChange={(bonus) =>
                     update((c) => ({ ...c, manual: { ...c.manual, [k]: bonus } }))
                   }
@@ -354,6 +353,12 @@ export function PassivesTab({
     </div>
   );
 }
+
+const MANUAL_GROUPS = [
+  ["hero", "英雄"],
+  ["formation", "陣法"],
+  ["other", "其他"],
+] as const;
 
 const ANY_WEAPON = WEAPON_TYPE_NAMES.filter((t) => t !== "SHIELD");
 /** 「任何武器」在資料裡是列出全部武器類型，顯示時收成一句。 */

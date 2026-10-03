@@ -26,17 +26,22 @@ describe("assembleImport", () => {
   beforeAll(() => { data = getStatSimData(); });
 
   it.each([
-    ["止戰詩園-Lv190", { str: 79, pow: 11, vit: 1, agi: 186, dex: 31, wis: 40 }, null],
-    ["晨曦破空-Lv192", { str: 200, pow: 1, vit: 61, agi: 8, dex: 93, wis: 1 }, "855.3"],
-  ] as const)("實機樣本 %s：保留裸六圍，計算轉生與含裝六圍", async (name, expected, meridianPlan) => {
+    ["止戰詩園-Lv190", { str: 79, pow: 11, vit: 1, agi: 186, dex: 31, wis: 40 }, null,
+      ["CLASS_ISLE", "CLASS_GOD"], { hero: {}, formation: {} }],
+    // 天師技能（陣法研究等）不影響面板也要算副門派；體力差 1000 是伺服器端加成。
+    ["晨曦破空-Lv192", { str: 200, pow: 1, vit: 61, agi: 8, dex: 93, wis: 1 }, "855.3",
+      ["CLASS_GOD", "CLASS_MAGIC"], { hero: {}, formation: {}, other: { hp: 1000 } }],
+  ] as const)("實機樣本 %s：保留裸六圍，計算轉生與含裝六圍", async (name, expected, meridianPlan, subSects, manual) => {
     const raw = await decodeImport(readFileSync(`docs/plans/stat-sim-import-samples/${name}.txt`, "utf8"));
     const before = structuredClone(raw);
-    const { character, renamed } = assembleImport(raw, data, { id: name }, []);
+    const { character, renamed, diagnostics } = assembleImport(raw, data, { id: name }, []);
     expect(character.attributes).toEqual(raw.bare);
     expect(character.rebirthPoints).toBe(140);
     expect(character).not.toHaveProperty("rebirthLevels");
     expect(character.meridianPlan).toBe(meridianPlan);
-    expect(character.manual).toEqual({ hero: {}, formation: {} });
+    expect(character.manual).toEqual(manual);
+    expect(character.subSects).toEqual(subSects);
+    expect(diagnostics.some((d) => d.code === "other-hp-filled")).toBe("other" in manual);
     expect(parseCharacter(character).ok).toBe(true);
     expect(renamed).toBe(false);
     if (name === "晨曦破空-Lv192") expect(character.passiveLevels[1151]).toBe(1);
@@ -44,7 +49,58 @@ describe("assembleImport", () => {
     const actual = Object.fromEntries(Object.entries(result.attributes).map(([key, value]) => [key, value.value]));
     expect(actual).toEqual(expected);
     expect(actual).toEqual(raw.panel?.attributes);
+    expect(result.stats.hp.value).toBe(raw.panel?.stats?.hp);
+    expect(result.issues.map((issue) => issue.code)).not.toContain("inactive-passive-clan");
     expect(raw).toEqual(before);
+  });
+
+  it("副門派依全部技能的 clan 判斷，含不在 passives 裡的技能", () => {
+    const raw = payload();
+    raw.skills = { 31: 1, 32: 1, 40: 1, 41: 0 };
+    const result = assembleImport(raw, { ...emptyData, subSectSkills: {
+      31: "CLASS_MAGIC", 32: "CLASS_MAGIC", 40: "CLASS_GOD", 41: "CLASS_ISLE",
+    } }, { id: "test" }, []);
+    expect(result.character.subSects).toEqual(["CLASS_MAGIC", "CLASS_GOD"]);
+    expect(result.character.passiveLevels).toEqual({});
+  });
+
+  describe("體力差值自動填入「其他」", () => {
+    const exact = () => {
+      const character = createDefaultCharacter();
+      const result = computePanel(character, emptyData);
+      const raw = payload();
+      raw.panel = {
+        attributes: Object.fromEntries(Object.entries(result.attributes).map(([key, value]) => [key, value.value!])),
+        stats: { hp: result.stats.hp.value!, atk: result.stats.atk.value!, def: result.stats.def.value! },
+      };
+      return raw;
+    };
+
+    it("只有體力偏高、其他確定值全對時填入差值", () => {
+      const raw = exact();
+      raw.panel!.stats!.hp! += 1000;
+      const result = assembleImport(raw, emptyData, { id: "test" }, []);
+      expect(result.character.manual.other).toEqual({ hp: 1000 });
+      expect(result.diagnostics).toContainEqual(expect.objectContaining({
+        code: "other-hp-filled", severity: "info", stat: "hp", message: expect.stringContaining("1000"),
+      }));
+      expect(computePanel(result.character, emptyData).stats.hp.value).toBe(raw.panel!.stats!.hp);
+    });
+
+    it.each([
+      ["其他欄位也有差", (raw: ImportPayloadV1) => { raw.panel!.stats!.hp! += 1000; raw.panel!.stats!.atk! += 1; }],
+      ["六圍有差", (raw: ImportPayloadV1) => { raw.panel!.stats!.hp! += 1000; raw.panel!.attributes!.str! += 1; }],
+      ["體力比模擬低", (raw: ImportPayloadV1) => { raw.panel!.stats!.hp! -= 1000; }],
+      ["體力相同", () => {}],
+      ["沒有其他可比對的欄位", (raw: ImportPayloadV1) => { raw.panel = { stats: { hp: raw.panel!.stats!.hp! + 1000 } }; }],
+      ["沒有面板", (raw: ImportPayloadV1) => { delete raw.panel; }],
+    ] as const)("%s時不填", (_, mutate) => {
+      const raw = exact();
+      mutate(raw);
+      const result = assembleImport(raw, emptyData, { id: "test" }, []);
+      expect(result.character.manual).not.toHaveProperty("other");
+      expect(result.diagnostics.map((d) => d.code)).not.toContain("other-hp-filled");
+    });
   });
 
   it.each([
@@ -115,6 +171,7 @@ describe("buildCompareRows", () => {
     expect(rows.find((row) => row.key === "atk")).toMatchObject({
       sim: null, reason: "英雄／陣法、符類藥水或經脈；遠程物攻公式未定",
     });
+    expect(rows.find((row) => row.key === "hp")?.reason).toContain("伺服器端角色加成");
     expect(rows.find((row) => row.key === "attack_speed")?.reason).toBe("攻速換算未解");
     expect(rows.find((row) => row.key === "weight_cap")?.reason).toBe("已知誤差，生效中的藥水也會增加");
     expect(buildCompareRows({}, result)).toEqual([]);

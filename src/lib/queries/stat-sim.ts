@@ -9,7 +9,7 @@ import { labelToKey } from "@/lib/scoring/attribute-alias";
 import { getItemIconMap } from "@/lib/queries/images";
 import {
   EQUIP_SLOTS, STAT_KEYS, SUB_SECT_CLANS,
-  type EquipSlot, type GameData, type PanelBonus, type PassiveDef,
+  type EquipSlot, type GameData, type PanelBonus, type PassiveDef, type SubSectClan,
   type SimItem, type StatKey, type UiControl, type UiEquipSlot, type UiWindowLayout, type ValueRange,
 } from "@/lib/types/stat-sim";
 
@@ -322,7 +322,13 @@ export function getStatSimData(): GameData {
   `).all() as NonNullable<GameData["collectionThresholds"]>;
   const meridianIds = (db.prepare("SELECT DISTINCT magic_id FROM magic_meridians ORDER BY magic_id")
     .all() as Array<{ magic_id: number }>).map((row) => row.magic_id);
-  return { itemsById, enhancementsByPath, passives, meridianIds, collectionThresholds, socketRecipes, socketRecipeIdsByCategory };
+  const subSectSkills = Object.fromEntries((db.prepare(`
+    SELECT DISTINCT id, clan FROM magic WHERE clan IN (${SUB_SECT_CLANS.map(() => "?").join(",")}) ORDER BY id
+  `).all(...SUB_SECT_CLANS) as Array<{ id: number; clan: SubSectClan }>).map((row) => [row.id, row.clan]));
+  return {
+    itemsById, enhancementsByPath, passives, meridianIds, subSectSkills, collectionThresholds,
+    socketRecipes, socketRecipeIdsByCategory,
+  };
 }
 
 /** 保留原始 control 座標/field，不以有錯字的 comment 推斷數值用途。 */

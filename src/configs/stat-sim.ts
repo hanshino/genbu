@@ -76,7 +76,12 @@ export const REBIRTH_REWARDS = [
   29, 29, 30, 30, 31, 32, 32, 33, 34, 35,
 ] as const;
 
-/** 僅列 §4 已記載表值；缺項不是 185，須走估計 fallback。 */
+/**
+ * 僅列 §4 已記載表值；缺項不是 185，須走估計 fallback。
+ * 換算待解，實機資料點（面板含裝，模擬值為空手攻速＋武器攻速，兩筆都多 1）：
+ * - 天外天 Lv190 身法 186，倭刀 GREAT_SWORD（武器攻速 +1）：遊戲 14、模擬 15
+ * - 移花宮 Lv192 身法 8，劍 SWORD（+1）＋盾：遊戲 7、模擬 8
+ */
 export const ATTACK_SPEED_TABLE: Record<
   string,
   { default?: number; sects?: Partial<Record<SectId, number>> }

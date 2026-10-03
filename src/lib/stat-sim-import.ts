@@ -1,11 +1,11 @@
 import { SECTS } from "@/configs/stat-sim";
 import { encodePlan } from "./meridian-sim";
 import { createDefaultCharacter, parseCharacter } from "./stat-character";
-import { inferRebirthPoints } from "./stat-sim";
+import { computePanel, inferRebirthPoints } from "./stat-sim";
 import { decomposeEquipment } from "./stat-sim-import-equipment";
 import {
-  EQUIP_SLOTS, SUB_SECT_CLANS,
-  type CharacterV1, type GameData, type SectId,
+  ATTRIBUTE_KEYS, EQUIP_SLOTS, SUB_SECT_CLANS,
+  type CharacterV1, type GameData, type PanelStatKey, type SectId, type StatValue, type SubSectClan,
 } from "./types/stat-sim";
 import { ImportError, type ImportDiagnostic, type ImportPayloadV1 } from "./types/stat-sim-import";
 
@@ -48,10 +48,16 @@ export function assembleImport(
       message: `被動 ${passive.name} Lv${level} 超過上限，已改為 Lv${passive.maxLevel}`,
     });
   }
+  // 天師的陣法研究、靈甲等不影響面板，不在 passives 裡，所以優先看全部技能的 clan。
+  const learnedClans: SubSectClan[] = data.subSectSkills
+    ? Object.entries(payload.skills).flatMap(([id, level]) => {
+      const clan = data.subSectSkills![Number(id)];
+      return clan && level > 0 ? [clan] : [];
+    })
+    : data.passives.flatMap((passive) => passive.group === "sub" && SUB_SECT_CLANS.some((clan) => clan === passive.clan) &&
+      (character.passiveLevels[passive.id] ?? 0) > 0 ? [passive.clan as SubSectClan] : []);
   const clans = SUB_SECT_CLANS.map((clan) => ({
-    clan,
-    count: data.passives.filter((passive) => passive.group === "sub" && passive.clan === clan &&
-      (character.passiveLevels[passive.id] ?? 0) > 0).length,
+    clan, count: learnedClans.filter((learned) => learned === clan).length,
   })).filter(({ count }) => count > 0).sort((a, b) => b.count - a.count);
   character.subSects = clans.slice(0, 2).map(({ clan }) => clan);
   if (clans.length > 2) diagnostics.push({
@@ -71,5 +77,39 @@ export function assembleImport(
   }
   const parsed = parseCharacter(character);
   if (!parsed.ok) throw new ImportError("bad-format", "匯入角色資料不合法，請檢查配點、裝備與技能欄位");
+  const hpGap = unexplainedHp(payload, parsed.character, data);
+  if (hpGap > 0) {
+    parsed.character.manual.other = { hp: hpGap };
+    diagnostics.push({
+      code: "other-hp-filled", severity: "info", stat: "hp",
+      message: `體力比模擬多 ${hpGap}，其他數值都對得上，已填入「其他」手動加值（多半是伺服器端給角色的加成）`,
+    });
+  }
   return { character: parsed.character, renamed, diagnostics };
+}
+
+/**
+ * 遊戲面板只有體力比模擬高、其他確定值全部吻合時，回傳差值；否則 0。
+ * 估計值或無法計算的欄位（武器攻速、穿裝負重、遠程物攻）不當作反證，但至少要有一項其他欄位吻合。
+ */
+function unexplainedHp(payload: ImportPayloadV1, character: CharacterV1, data: GameData): number {
+  const game = payload.panel;
+  const gameHp = game?.stats?.hp;
+  if (!game || gameHp === undefined) return 0;
+  // 經脈會把所有欄位標成估計值；比對時先拿掉，其他資料缺漏的估計原因照樣擋下。
+  const result = computePanel({ ...character, meridianPlan: null }, data);
+  const hp = result.stats.hp;
+  if (hp.value === null || hp.estimated || gameHp <= hp.value) return 0;
+  let matched = 0;
+  const checks: Array<[number | undefined, StatValue]> = [
+    ...ATTRIBUTE_KEYS.map((key) => [game.attributes?.[key], result.attributes[key]] as [number | undefined, StatValue]),
+    ...Object.entries(game.stats ?? {}).flatMap(([key, value]) => key === "hp" ? [] :
+      [[value, result.stats[key as PanelStatKey]] as [number | undefined, StatValue]]),
+  ];
+  for (const [value, sim] of checks) {
+    if (value === undefined || !sim || sim.value === null || sim.estimated) continue;
+    if (value !== sim.value) return 0;
+    matched++;
+  }
+  return matched > 0 ? gameHp - hp.value : 0;
 }

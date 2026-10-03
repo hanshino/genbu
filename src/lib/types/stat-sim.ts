@@ -101,8 +101,8 @@ export interface CharacterV1 {
   passiveLevels: Record<number, number>;
   /** 保留 encodePlan 字串；v1 不計入，非空時由引擎回報提示。 */
   meridianPlan: string | null;
-  /** 直接加到最終值，不經六圍公式放大。 */
-  manual: { hero: PanelBonus; formation: PanelBonus };
+  /** 直接加到最終值，不經六圍公式放大。other 是讀不到來源的加成（如伺服器端給角色的體力）；舊存檔沒有。 */
+  manual: { hero: PanelBonus; formation: PanelBonus; other?: PanelBonus };
 }
 
 export interface CharacterStore {
@@ -171,6 +171,8 @@ export interface GameData {
   passives: PassiveDef[];
   /** 經脈穴位 magic id，來自 magic_meridians；匯入時用來辨識經脈技能。 */
   meridianIds: number[];
+  /** 副門派全部技能（含不影響面板、不在 passives 的）magic id → clan；匯入時用來判斷副門派。 */
+  subSectSkills?: Record<number, SubSectClan>;
   /** 收藏值門檻，由小到大排序；舊資料未提供時不開放自動換算。 */
   collectionThresholds?: CollectionThreshold[];
   socketRecipes?: Record<number, SocketRecipe>;
@@ -196,6 +198,7 @@ export interface StatBreakdown {
     | "collection"
     | "hero"
     | "formation"
+    | "manualOther"
     | "base";
   refId?: number | string;
   label: string;

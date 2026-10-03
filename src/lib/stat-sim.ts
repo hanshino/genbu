@@ -276,6 +276,8 @@ export function computePanel(character: CharacterV1, data: GameData): PanelResul
     if (passive.obtainableMax != null && level > passive.obtainableMax) {
       issue("unobtainable-passive-level", `${passive.name}超過目前成就可取得的 Lv${passive.obtainableMax}，請確認來源`, passive.id);
     }
+    // 入門弟子技能（如怒擊）轉職後必定不生效，不必每隻角色都提示。
+    if (passive.clan === "CLASS_CHILD") continue;
     if ((passive.group === "main" && passive.clan !== sect.mainClan) ||
         (passive.group === "sub" && !character.subSects.some((clan) => clan === passive.clan))) {
       issue("inactive-passive-clan", `${passive.name}不屬於目前主／副門派，未計入`, passive.id);
@@ -332,6 +334,7 @@ export function computePanel(character: CharacterV1, data: GameData): PanelResul
 
   addBonus(character.manual.hero, "hero", "英雄手動加值");
   addBonus(character.manual.formation, "formation", "陣法手動加值");
+  addBonus(character.manual.other ?? {}, "manualOther", "其他手動加值");
   if (weaponTypes.some((type) => RANGED_WEAPON_TYPES.includes(type))) {
     values.atk.value = null;
     estimate(values.atk, RANGED_UNSUPPORTED_REASON);

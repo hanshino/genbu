@@ -32,7 +32,9 @@ export function buildCompareRows(
       const reasons: string[] = [];
       if (sim === null || game !== sim) {
         if (["atk", "matk", "def", "mdef", "hp", "mp"].includes(key)) {
-          reasons.push("英雄／陣法、符類藥水或經脈");
+          reasons.push(key === "hp"
+            ? "英雄／陣法、符類藥水、經脈或伺服器端角色加成（可填在「其他」手動加值）"
+            : "英雄／陣法、符類藥水或經脈");
         }
         if (key === "weight_cap") reasons.push("已知誤差，生效中的藥水也會增加");
         if (key === "atk" && (weaponTypes.some((type) => ["BOW", "HIDDEN_WEAPON"].includes(type)) ||
