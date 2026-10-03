@@ -296,7 +296,7 @@ export function StatSimClient({ data, windows }: Props) {
               />
             </TabsContent>
             <TabsContent value="damage">
-              <DamageTab character={active} data={data} panel={panel} />
+              <DamageTab key={active.id} character={active} data={data} panel={panel} />
             </TabsContent>
           </Tabs>
         </div>

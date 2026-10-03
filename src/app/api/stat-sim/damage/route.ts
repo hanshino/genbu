@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
 import { getDamageData } from "@/lib/queries/stat-sim";
-import type { DamageData } from "@/lib/types/stat-sim";
 
 export const runtime = "nodejs";
-
-// DB 唯讀，換 DB 一定會重新部署，所以整份結果存在 module 裡就好。
-let cached: DamageData | null = null;
+// SQLite 是部署時另外掛載的，build 時不能去讀。
+export const dynamic = "force-dynamic";
 
 export function GET() {
   try {
-    cached ??= getDamageData();
-    return NextResponse.json(cached, {
+    // 跟首頁的 getStatSimData 一樣每次都查：DB 可能不經重新部署就換掉。
+    return NextResponse.json(getDamageData(), {
       headers: { "Cache-Control": "public, max-age=3600" },
     });
   } catch {

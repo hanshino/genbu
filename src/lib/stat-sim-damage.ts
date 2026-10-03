@@ -87,6 +87,9 @@ function worst(gates: Gate[]): Gate {
   return { support, reasons: gates.flatMap((gate) => gate.reasons) };
 }
 
+/** UI 用來判斷「調高等級就能算」的招式，留在表上不收起來。 */
+export const LEVEL_TOO_LOW = "目前等級還學不到這招";
+
 const ok: Gate = { support: "verified", reasons: [] };
 const unsupported = (reason: string): Gate => ({ support: "unsupported", reasons: [reason] });
 const typeLabel = (type: string) => ITEM_TYPE_LABELS[type] ?? type;
@@ -201,7 +204,7 @@ function computeSkill(
   }
   const params = skill.levels[level];
   if (level < 1 || !params) {
-    return { ...base, ...unsupported(level < 1 ? "目前等級還學不到這招" : `缺少 Lv${level} 的技能資料`) };
+    return { ...base, ...unsupported(level < 1 ? LEVEL_TOO_LOW : `缺少 Lv${level} 的技能資料`) };
   }
   const gate = skillGate(skill, weapon);
   if (gate.support === "unsupported") return { ...base, ...gate };

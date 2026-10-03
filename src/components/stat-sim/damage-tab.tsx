@@ -32,6 +32,7 @@ import type { DamageSupport } from "@/configs/stat-sim-damage";
 import {
   computeDamage,
   computeMarginal,
+  LEVEL_TOO_LOW,
   type DamageRange,
   type SkillDamage,
 } from "@/lib/stat-sim-damage";
@@ -222,8 +223,6 @@ function SkillRow({ row, onLevel }: { row: SkillDamage; onLevel: (level: number)
     </TableRow>
   );
 }
-
-const LEVEL_TOO_LOW = "目前等級還學不到這招";
 
 export function DamageTab({
   character,
@@ -450,7 +449,12 @@ export function DamageTab({
                     <TableHead className="pl-4">屬性</TableHead>
                     <TableHead className="text-right">下一點成本</TableHead>
                     <TableHead className="text-right">普攻</TableHead>
-                    {focus && <TableHead className="pr-4 text-right">{focus.skill.name}</TableHead>}
+                    {focus && (
+                      <TableHead className="pr-4 text-right">
+                        {focus.skill.name}
+                        {focus.variants.length > 1 && `（${focus.variants[0].label}）`}
+                      </TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody className="[&_td:first-child]:pl-4 [&_td:last-child]:pr-4">
