@@ -53,7 +53,8 @@ function buildGroups(
     return { passive, inactive: !clanOK ? clanReason : fullMiss ? "武器不符" : null, weaponMiss };
   };
   const main = passives
-    .filter((p) => p.group === "main" && (p.clan === mainClan || level(p) > 0))
+    // 入門弟子技能（怒擊）轉職後不計入面板，舊匯入留著等級也不列出來。
+    .filter((p) => p.group === "main" && p.clan !== "CLASS_CHILD" && (p.clan === mainClan || level(p) > 0))
     .map((p) => row(p, p.clan === mainClan, "不是目前的主門派"));
   const sub = passives
     .filter(

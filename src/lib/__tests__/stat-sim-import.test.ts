@@ -45,6 +45,8 @@ describe("assembleImport", () => {
     expect(parseCharacter(character).ok).toBe(true);
     expect(renamed).toBe(false);
     if (name === "晨曦破空-Lv192") expect(character.passiveLevels[1151]).toBe(1);
+    expect(raw.skills[4]).toBeGreaterThan(0);
+    expect(character.passiveLevels).not.toHaveProperty("4");
     const result = computePanel(character, data);
     const actual = Object.fromEntries(Object.entries(result.attributes).map(([key, value]) => [key, value.value]));
     expect(actual).toEqual(expected);

@@ -41,7 +41,8 @@ export function assembleImport(
 
   for (const passive of data.passives) {
     const level = payload.skills[passive.id];
-    if (level === undefined) continue;
+    // 入門弟子技能轉職後不計入面板，不帶進角色。
+    if (level === undefined || passive.clan === "CLASS_CHILD") continue;
     character.passiveLevels[passive.id] = Math.min(level, passive.maxLevel);
     if (level > passive.maxLevel) diagnostics.push({
       code: "passive-clamped", severity: "info",
