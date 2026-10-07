@@ -22,13 +22,13 @@ const CANDIDATE_FIELDS: readonly { key: keyof Magic; label: string }[] = [
   { key: "func_dmg", label: "傷害參數" },
   { key: "func_hit_p1", label: "命中率 (%)" },
   { key: "break_prob", label: "破招機率" },
-  { key: "stun", label: "僵直(ms)" },
+  { key: "stun", label: "間隔(ms)" },
   { key: "time", label: "持續(ms)" },
   { key: "status_param", label: "效果參數" },
   { key: "status_prob", label: "狀態機率" },
   { key: "range", label: "距離" },
   { key: "hit_range", label: "命中範圍" },
-  { key: "recharge_time", label: "冷卻" },
+  { key: "recharge_time", label: "施放(ms)" },
 ];
 
 export function SkillLevelTable({ rows, levelIcons }: SkillLevelTableProps) {

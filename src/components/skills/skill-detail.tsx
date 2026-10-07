@@ -26,14 +26,20 @@ const KEY_NUMERIC_FIELDS: readonly { key: keyof Magic; label: string; unit?: str
   { key: "func_dmg", label: "傷害參數" },
   { key: "func_hit_p1", label: "命中率", unit: "%" },
   { key: "break_prob", label: "破招機率" },
-  { key: "stun", label: "僵直時間", unit: "ms" },
+  { key: "stun", label: "間隔時間", unit: "ms" },
   { key: "time", label: "持續時間", unit: "ms" },
   { key: "status_param", label: "效果參數" },
   { key: "status_prob", label: "狀態機率" },
   { key: "range", label: "施放距離" },
   { key: "hit_range", label: "命中範圍" },
-  { key: "recharge_time", label: "冷卻時間" },
+  { key: "recharge_time", label: "施放時間", unit: "ms" },
 ];
+
+// 遊戲技能提示框把間隔時間印成秒、只留一位小數、餘數捨去（450ms → 0.4 秒）。
+// 對不上時在數值下補一行，避免玩家以為網站資料錯（issue #78）。
+export function gameIntervalNote(ms: number): string | null {
+  return ms % 100 === 0 ? null : `遊戲顯示 ${Math.floor(ms / 100) / 10} 秒`;
+}
 
 export function SkillDetail({ skill, current, allLevels, status, icon }: SkillDetailProps) {
   const attribLabel = magicAttribLabel(skill.attrib);
@@ -113,6 +119,11 @@ export function SkillDetail({ skill, current, allLevels, status, icon }: SkillDe
                     </span>
                   )}
                 </dd>
+                {row.key === "stun" && gameIntervalNote(row.value) && (
+                  <dd className="mt-0.5 text-xs text-muted-foreground">
+                    {gameIntervalNote(row.value)}
+                  </dd>
+                )}
               </div>
             ))}
           </dl>
