@@ -7,9 +7,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Magic } from "@/lib/types/magic";
+import { ItemIcon } from "@/components/common/item-icon";
+import { pickMagicIcon, type EntityImage } from "@/lib/queries/images";
 
 interface SkillLevelTableProps {
   rows: Magic[];
+  levelIcons?: Map<number, EntityImage>;
 }
 
 // 欄位：只顯示「至少有一個 level 非 0/null」的欄位，避免滿屏空值。
@@ -28,8 +31,12 @@ const CANDIDATE_FIELDS: readonly { key: keyof Magic; label: string }[] = [
   { key: "recharge_time", label: "冷卻" },
 ];
 
-export function SkillLevelTable({ rows }: SkillLevelTableProps) {
+export function SkillLevelTable({ rows, levelIcons }: SkillLevelTableProps) {
   if (rows.length === 0) return null;
+
+  // 只有各等級圖示不同時才多開一欄，否則每列都同一張圖沒意義。
+  const iconOf = (level: number) => pickMagicIcon(levelIcons, level);
+  const showIcons = new Set(rows.map((r) => iconOf(r.level)?.url)).size > 1;
 
   const visibleFields = CANDIDATE_FIELDS.filter(({ key }) =>
     rows.some((r) => {
@@ -47,7 +54,7 @@ export function SkillLevelTable({ rows }: SkillLevelTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[60px]">Lv</TableHead>
+              <TableHead className={showIcons ? "w-[88px]" : "w-[60px]"}>Lv</TableHead>
               {visibleFields.map((f) => (
                 <TableHead key={String(f.key)} className="text-right font-mono text-xs">
                   {f.label}
@@ -58,7 +65,16 @@ export function SkillLevelTable({ rows }: SkillLevelTableProps) {
           <TableBody>
             {rows.map((r) => (
               <TableRow key={r.level}>
-                <TableCell className="font-mono">{r.level}</TableCell>
+                <TableCell className="font-mono">
+                  {showIcons ? (
+                    <span className="inline-flex items-center gap-2">
+                      <ItemIcon image={iconOf(r.level)} alt="" className="size-6" />
+                      {r.level}
+                    </span>
+                  ) : (
+                    r.level
+                  )}
+                </TableCell>
                 {visibleFields.map((f) => {
                   const v = r[f.key] as number | null;
                   return (

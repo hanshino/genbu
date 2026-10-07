@@ -7,6 +7,7 @@ import {
   getSkillsByClan,
 } from "@/lib/queries/magic";
 import { getStatusById } from "@/lib/queries/status";
+import { getMagicIconMap, pickMagicIcon } from "@/lib/queries/images";
 import { SkillDetail } from "@/components/skills/skill-detail";
 import { SkillLevelTable } from "@/components/skills/skill-level-table";
 import { RelatedSkills } from "@/components/skills/related-skills";
@@ -67,6 +68,8 @@ export default async function SkillDetailPage({ params, searchParams }: PageProp
     ? getSkillsByClan(base.clan, { id: base.id, name: base.name }, 10)
     : [];
   const status = current.extra_status != null ? getStatusById(current.extra_status) : null;
+  const iconMap = getMagicIconMap([base.id, ...related.map((s) => s.id)]);
+  const levelIcons = iconMap.get(base.id);
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
@@ -74,11 +77,17 @@ export default async function SkillDetailPage({ params, searchParams }: PageProp
         <BackLink href="/skills" />
       </nav>
 
-      <SkillDetail skill={base} current={current} allLevels={levels} status={status} />
+      <SkillDetail
+        skill={base}
+        current={current}
+        allLevels={levels}
+        status={status}
+        icon={pickMagicIcon(levelIcons, current.level)}
+      />
 
-      <SkillLevelTable rows={rows} />
+      <SkillLevelTable rows={rows} levelIcons={levelIcons} />
 
-      {base.clan && <RelatedSkills clan={base.clan} skills={related} />}
+      {base.clan && <RelatedSkills clan={base.clan} skills={related} iconMap={iconMap} />}
     </div>
   );
 }

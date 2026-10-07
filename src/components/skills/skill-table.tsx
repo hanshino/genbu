@@ -15,15 +15,24 @@ import { magicTargetLabel } from "@/lib/constants/magic-target";
 import { magicAttribLabel, MAGIC_ATTRIB_COLOR } from "@/lib/constants/magic-attrib";
 import { magicSkillTypeLabel } from "@/lib/constants/magic-skill-type";
 import type { MagicSummary } from "@/lib/types/magic";
+import { ItemIcon } from "@/components/common/item-icon";
+import { pickMagicIcon, type EntityImage } from "@/lib/queries/images";
 
 interface SkillTableProps {
   skills: MagicSummary[];
   sort: SortContext;
   search?: string;
   unfilteredTotal?: number;
+  iconMap: Map<number, Map<number, EntityImage>>;
 }
 
-export function SkillTable({ skills, sort, search = "", unfilteredTotal }: SkillTableProps) {
+export function SkillTable({
+  skills,
+  sort,
+  search = "",
+  unfilteredTotal,
+  iconMap,
+}: SkillTableProps) {
   if (skills.length === 0) {
     return (
       <EmptyResult
@@ -60,9 +69,14 @@ export function SkillTable({ skills, sort, search = "", unfilteredTotal }: Skill
                 <TableCell>
                   <Link
                     href={`/skills/${s.id}?level=${s.firstLevel}`}
-                    className="font-medium hover:underline"
+                    className="group/name inline-flex items-center gap-2.5 font-medium"
                   >
-                    {s.name}
+                    <ItemIcon
+                      image={pickMagicIcon(iconMap.get(s.id), s.firstLevel)}
+                      alt=""
+                      className="size-8 transition-colors group-hover/name:border-primary/50"
+                    />
+                    <span className="group-hover/name:underline">{s.name}</span>
                   </Link>
                 </TableCell>
                 <TableCell>

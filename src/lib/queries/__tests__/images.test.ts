@@ -4,6 +4,8 @@ import {
   getItemIcon,
   getNpcImageMap,
   getNpcImage,
+  getMagicIconMap,
+  pickMagicIcon,
 } from "../images";
 
 // 真實 id（存在於 tthol.sqlite）
@@ -33,6 +35,16 @@ describe("images.ts 解析器", () => {
     const many = Array.from({ length: 950 }, () => ITEM_WITH_ICON); // 全同 → 去重成 1
     const map = getItemIconMap(many);
     expect(map.get(ITEM_WITH_ICON)).toBeDefined();
+  });
+
+  it("getMagicIconMap 依等級分圖，pickMagicIcon 缺級退回最低等級", () => {
+    expect(getMagicIconMap([]).size).toBe(0);
+    const map = getMagicIconMap([553, 1, 999999999]);
+    expect(map.has(999999999)).toBe(false);
+    const multi = map.get(553)!; // 同 id 各等級是不同技能、不同圖
+    expect(pickMagicIcon(multi, 1)!.url).not.toBe(pickMagicIcon(multi, 46)!.url);
+    expect(pickMagicIcon(map.get(1), 9999)!.url).toBe(pickMagicIcon(map.get(1), 1)!.url);
+    expect(pickMagicIcon(undefined, 1)).toBeNull();
   });
 
   it("getNpcImage / getNpcImageMap 對應 npc_id", () => {

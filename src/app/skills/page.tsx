@@ -6,6 +6,7 @@ import {
   getDistinctTargets,
   getDistinctSkillTypes,
 } from "@/lib/queries/magic";
+import { getMagicIconMap } from "@/lib/queries/images";
 import { parseSortDir } from "@/lib/sort";
 import { serializeSearchParams } from "@/lib/utils";
 import { SkillFilters } from "@/components/skills/skill-filters";
@@ -88,6 +89,7 @@ export default async function SkillsPage({ searchParams }: PageProps) {
         sort={{ sortBy, sortDir, searchParamsStr, basePath: "/skills" }}
         search={search}
         unfilteredTotal={result.unfilteredTotal}
+        iconMap={getMagicIconMap(result.skills.map((s) => s.id))}
       />
 
       {result.totalPages > 1 && (

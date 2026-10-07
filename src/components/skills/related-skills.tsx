@@ -2,13 +2,16 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { magicClanLabel } from "@/lib/constants/magic-clan";
 import type { MagicSummary } from "@/lib/types/magic";
+import { ItemIcon } from "@/components/common/item-icon";
+import { pickMagicIcon, type EntityImage } from "@/lib/queries/images";
 
 interface RelatedSkillsProps {
   clan: string;
   skills: MagicSummary[];
+  iconMap: Map<number, Map<number, EntityImage>>;
 }
 
-export function RelatedSkills({ clan, skills }: RelatedSkillsProps) {
+export function RelatedSkills({ clan, skills, iconMap }: RelatedSkillsProps) {
   if (skills.length === 0) return null;
 
   return (
@@ -22,9 +25,14 @@ export function RelatedSkills({ clan, skills }: RelatedSkillsProps) {
           <li key={`${s.id}-${s.name}`}>
             <Link
               href={`/skills/${s.id}?level=${s.firstLevel}`}
-              className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm hover:bg-muted/40"
+              className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-muted/40"
             >
-              <span className="truncate">{s.name}</span>
+              <ItemIcon
+                image={pickMagicIcon(iconMap.get(s.id), s.firstLevel)}
+                alt=""
+                className="size-8"
+              />
+              <span className="min-w-0 flex-1 truncate">{s.name}</span>
               <Badge variant="outline" className="shrink-0 font-mono text-xs font-normal">
                 Lv {s.maxLevel}
               </Badge>
