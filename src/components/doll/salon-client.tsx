@@ -68,6 +68,7 @@ import {
   createTooltipHandle,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics/track";
 
 /** 每個部位穿了哪一格外觀；itemId 是網址上代表這格的道具 */
 export type SalonWorn = Partial<Record<DollSlot, { itemId: number; look: DollLook }>>;
@@ -268,13 +269,15 @@ export function SalonClient(props: Props) {
       e.preventDefault();
       const step = e.key === "ArrowRight" ? 1 : -1;
       setDir((cur) => DIR_ORDER[(DIR_ORDER.indexOf(cur) + step + 8) % 8]);
+      if (!e.repeat) track("salon_change", { control: "dir", gender });
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [gender]);
 
   // ── 換裝：點一下穿上，再點一次脫下；武器跟左手互相讓位 ──
   const wear = (slot: DollSlot, look: DollLook | null) => {
+    if (!look && !worn[slot]) return;
     const next: SalonWorn = { ...worn };
     let nextHand = hand;
     if (!look || worn[slot]?.look.key === look.key) delete next[slot];
@@ -287,21 +290,25 @@ export function SalonClient(props: Props) {
     }
     setWorn(next);
     setHand(nextHand);
+    track("salon_change", { control: slot, gender });
   };
 
   const chooseHand = (h: Hand) => {
+    if (h === hand) return;
     setHand(h);
     if (h === "l" && worn.left) {
       const next = { ...worn };
       delete next.left;
       setWorn(next);
     }
+    track("salon_change", { control: "hand", gender });
   };
 
   const share = async () => {
     const url = window.location.origin + href;
     try {
       await navigator.clipboard.writeText(url);
+      track("salon_share", { gender });
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
@@ -325,6 +332,7 @@ export function SalonClient(props: Props) {
     p.set("head", "");
     p.delete("hair");
     router.replace(`/tools/salon?${p.toString()}`, { scroll: false });
+    track("salon_change", { control: "gender", gender: g });
   };
 
   // 分頁上的提醒：被別的部位蓋掉、跟武器衝突、武器位置還沒校正好
@@ -400,7 +408,14 @@ export function SalonClient(props: Props) {
                   {missing.map((s) => s.label).join("、")}：此裝備無外觀資料
                 </p>
               )}
-              <DirectionCompass dir={dir} onChange={setDir} />
+              <DirectionCompass
+                dir={dir}
+                onChange={(d) => {
+                  if (d === dir) return;
+                  setDir(d);
+                  track("salon_change", { control: "dir", gender });
+                }}
+              />
             </div>
           </Card>
         </div>
@@ -424,7 +439,11 @@ export function SalonClient(props: Props) {
             <ToggleGroup
               aria-label="頭型"
               value={[String(head)]}
-              onValueChange={(v) => v[0] && setHead(Number(v[0]))}
+              onValueChange={(v) => {
+                if (!v[0] || Number(v[0]) === head) return;
+                setHead(Number(v[0]));
+                track("salon_change", { control: "head", gender });
+              }}
               className="flex max-w-full min-w-0 flex-1 gap-1 overflow-x-auto border-0 bg-transparent p-0.5"
             >
               {heads.map((h) => {
@@ -458,7 +477,11 @@ export function SalonClient(props: Props) {
               options={hairOptions}
               frames={frames.filter((f) => f.slot === "head" && f.sequence === head && f.dir === 7)}
               value={hair}
-              onChange={setHair}
+              onChange={(color) => {
+                if (color === hair) return;
+                setHair(color);
+                track("salon_change", { control: "hair", gender });
+              }}
             />
           )}
           <div className="flex flex-wrap items-center gap-2 px-4 py-2.5">

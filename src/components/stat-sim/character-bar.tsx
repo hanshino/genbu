@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { SECTS } from "@/configs/stat-sim";
 import type { useCharacters } from "@/lib/hooks/use-characters";
+import { track } from "@/lib/analytics/track";
 import { ImportButton } from "./import-dialog";
 
 type Store = ReturnType<typeof useCharacters>;
@@ -48,7 +49,10 @@ export function CharacterBar({ store, onImport }: { store: Store; onImport: () =
           <TriangleAlertIcon className="size-4 shrink-0" aria-hidden />
           <span className="flex-1">{LOAD_ERRORS[store.error]}</span>
           {store.error !== "storage-failed" && (
-            <Button size="sm" variant="outline" onClick={store.resetCorrupt}>
+            <Button size="sm" variant="outline" onClick={() => {
+              store.resetCorrupt();
+              track("statsim_character", { action: "reset" });
+            }}>
               重設角色資料
             </Button>
           )}
@@ -70,7 +74,11 @@ export function CharacterBar({ store, onImport }: { store: Store; onImport: () =
             aria-label="角色"
             className="flex-wrap border-0 bg-transparent p-0"
             value={active ? [active.id] : []}
-            onValueChange={(v) => v[0] && store.select(v[0])}
+            onValueChange={(v) => {
+              if (!v[0] || v[0] === active?.id) return;
+              store.select(v[0]);
+              track("statsim_character", { action: "switch" });
+            }}
           >
             {store.store.characters.map((c) => (
               <ToggleGroupItem
@@ -92,7 +100,10 @@ export function CharacterBar({ store, onImport }: { store: Store; onImport: () =
             size="sm"
             variant="outline"
             disabled={!store.loaded}
-            onClick={() => store.create()}
+            onClick={() => {
+              store.create();
+              track("statsim_character", { action: "add" });
+            }}
           >
             <PlusIcon />
             新增
@@ -102,7 +113,11 @@ export function CharacterBar({ store, onImport }: { store: Store; onImport: () =
             size="sm"
             variant="outline"
             disabled={!active}
-            onClick={() => active && store.duplicate(active.id)}
+            onClick={() => {
+              if (!active) return;
+              store.duplicate(active.id);
+              track("statsim_character", { action: "duplicate" });
+            }}
           >
             <CopyIcon />
             複製
@@ -140,7 +155,10 @@ export function CharacterBar({ store, onImport }: { store: Store; onImport: () =
             onSubmit={(e) => {
               e.preventDefault();
               const name = renaming?.trim();
-              if (active && name) store.rename(active.id, name);
+              if (active && name && name !== active.name) {
+                store.rename(active.id, name);
+                track("statsim_character", { action: "rename" });
+              }
               setRenaming(null);
             }}
           >
@@ -182,7 +200,10 @@ export function CharacterBar({ store, onImport }: { store: Store; onImport: () =
             <Button
               variant="destructive"
               onClick={() => {
-                if (active) store.remove(active.id);
+                if (active) {
+                  store.remove(active.id);
+                  track("statsim_character", { action: "remove" });
+                }
                 setDeleting(false);
               }}
             >

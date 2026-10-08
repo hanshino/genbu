@@ -8,6 +8,9 @@ import userEvent from "@testing-library/user-event";
 import { StatSimClient } from "../stat-sim-client";
 import type { GameData, UiControl, UiWindowLayout } from "@/lib/types/stat-sim";
 import { EQUIP_SLOTS } from "@/lib/types/stat-sim";
+import { track } from "@/lib/analytics/track";
+
+vi.mock("@/lib/analytics/track", () => ({ track: vi.fn() }));
 
 const ctrl = (
   c: Partial<UiControl> & Pick<UiControl, "ctrlId" | "class" | "x" | "y" | "width" | "height">,
@@ -89,6 +92,7 @@ const data: GameData = {
 };
 
 beforeEach(() => {
+  vi.mocked(track).mockClear();
   localStorage.clear();
   window.history.replaceState(null, "", "/tools/stat-sim");
 });
@@ -112,11 +116,13 @@ describe("StatSimClient", () => {
     const user = userEvent.setup();
     render(<StatSimClient data={{ ...data, meridianIds: [855] }} windows={{ attribute, equipment }} />);
     await screen.findByTestId("source-total");
+    expect(track).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "匯入" }));
     const dialog = await screen.findByRole("dialog");
     fireEvent.change(within(dialog).getByLabelText("貼上匯入字串"), { target: { value: code } });
     await user.click(within(dialog).getByRole("button", { name: "匯入" }));
     await screen.findByRole("region", { name: "匯入結果" });
+    expect(track).toHaveBeenCalledExactlyOnceWith("statsim_import", { ok: true, via: "paste" });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "遊戲當時面板 vs 目前模擬" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "在經脈模擬器開啟" })).toHaveAttribute("href", "/tools/meridian?p=855.3");
@@ -137,6 +143,7 @@ describe("StatSimClient", () => {
     await waitFor(() => expect(JSON.parse(localStorage.getItem("genbu.characters")!).characters).toHaveLength(2));
     expect(window.location.hash).toBe("");
     expect(window.location.pathname + window.location.search).toBe("/tools/stat-sim?keep=1");
+    expect(track).toHaveBeenCalledExactlyOnceWith("statsim_import", { ok: true, via: "hash" });
   });
 
   it("匯入失敗時保留原角色與輸入內容", async () => {
@@ -151,6 +158,7 @@ describe("StatSimClient", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("格式版本是 v2，請更新網站");
     expect(screen.getByLabelText("貼上匯入字串")).toHaveValue("TTHOL2.invalid");
     expect(localStorage.getItem("genbu.characters")).toBe(before);
+    expect(track).toHaveBeenCalledExactlyOnceWith("statsim_import", { ok: false, via: "paste" });
   });
 
   it("hash 匯入失敗時開啟預填對話框，空清單不新增角色", async () => {
@@ -161,6 +169,7 @@ describe("StatSimClient", () => {
     expect(screen.getByRole<HTMLTextAreaElement>("textbox", { name: "貼上匯入字串" }).value).toContain("#import=TTHOL2.invalid");
     expect(window.location.hash).toBe("");
     expect(JSON.parse(localStorage.getItem("genbu.characters")!).characters).toHaveLength(0);
+    expect(track).toHaveBeenCalledExactlyOnceWith("statsim_import", { ok: false, via: "hash" });
   });
 
   it("成就全滿／選級、收藏值換算與含裝輸入扣掉被動加成", async () => {
@@ -201,13 +210,18 @@ describe("StatSimClient", () => {
     await user.click(screen.getByRole("option", { name: "Lv1" }));
     expect(screen.getByRole("button", { name: /^外功 2/ })).toBeInTheDocument();
     const value = screen.getByRole("spinbutton", { name: "收藏值" });
+    vi.mocked(track).mockClear();
     await user.type(value, "100");
+    expect(track).not.toHaveBeenCalled();
     expect(screen.getByRole("spinbutton", { name: "收藏體力等級" })).toHaveValue(2);
     expect(screen.getByRole("button", { name: /^外功 4/ })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /^外功 4/ }));
+    expect(track).toHaveBeenCalledExactlyOnceWith("statsim_edit", { area: "passive" });
+    vi.mocked(track).mockClear();
     const attr = screen.getByRole("textbox", { name: "輸入含裝外功" });
     await user.clear(attr);
     await user.type(attr, "10{Enter}");
+    expect(track).toHaveBeenCalledExactlyOnceWith("statsim_edit", { area: "stats" });
     const saved = () => JSON.parse(localStorage.getItem("genbu.characters")!).characters[0];
     expect(saved().attributes.str).toBe(7); // 10 − 成就1 − 收藏2
     expect(saved().passiveLevels).toMatchObject({ 1189: 1, 1151: 2 });
@@ -229,24 +243,31 @@ describe("StatSimClient", () => {
     // 預設角色 Lv1：升級點數 6，六圍都是 1 → 物攻 3
     const total = await screen.findByTestId("source-total");
     expect(total).toHaveTextContent("3");
+    expect(track).not.toHaveBeenCalled();
     expect(screen.getByTestId("remaining-points")).toHaveTextContent("6");
 
     await user.click(screen.getByRole("button", { name: "外功加 1 點（需要 1 點）" }));
     expect(screen.getByTestId("source-total")).toHaveTextContent("6");
     expect(screen.getByTestId("remaining-points")).toHaveTextContent("5");
+    expect(track).toHaveBeenCalledExactlyOnceWith("statsim_edit", { area: "stats" });
+    vi.mocked(track).mockClear();
 
     // 帽子 +5 外功：不含裝 2 → 含裝 7，物攻 floor(21 + 0.4 × 2) = 21
     await user.click(screen.getByRole("button", { name: /^帽子：未裝備/ }));
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("option", { name: "測試帽" }));
+    expect(track).not.toHaveBeenCalled();
     await user.click(within(dialog).getByRole("button", { name: "套用" }));
     await waitFor(() => expect(screen.getByTestId("source-total")).toHaveTextContent("21"));
     expect(screen.getByRole("button", { name: /^外功 7/ })).toBeInTheDocument();
+    expect(track).toHaveBeenCalledExactlyOnceWith("statsim_edit", { area: "equipment" });
+    vi.mocked(track).mockClear();
 
     // 被動全滿：測試刀法 Lv2 物攻 +8
     await user.click(screen.getByRole("tab", { name: /被動與加成/ }));
     await user.click(await screen.findByRole("button", { name: /全部點滿/ }));
     expect(screen.getByTestId("source-total")).toHaveTextContent("29");
+    expect(track).toHaveBeenCalledExactlyOnceWith("statsim_edit", { area: "passive" });
 
     // 存進 localStorage 的是不含裝外功
     const saved = JSON.parse(localStorage.getItem("genbu.characters")!);
@@ -256,6 +277,50 @@ describe("StatSimClient", () => {
       enhancementLevel: 0,
       manualBonuses: {},
     });
+  });
+
+  it("角色操作只在確認時記錄，不記錄改名字元或取消刪除", async () => {
+    const user = userEvent.setup();
+    render(<StrictMode><StatSimClient data={data} windows={{ attribute, equipment }} /></StrictMode>);
+    await screen.findByTestId("source-total");
+    expect(track).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "新增" }));
+    await user.click(screen.getByRole("button", { name: "複製" }));
+    await user.click(screen.getAllByRole("button", { name: /^新角色.*Lv1/ })[0]);
+    expect(vi.mocked(track).mock.calls).toEqual([
+      ["statsim_character", { action: "add" }],
+      ["statsim_character", { action: "duplicate" }],
+      ["statsim_character", { action: "switch" }],
+    ]);
+    vi.mocked(track).mockClear();
+    await user.click(screen.getByRole("button", { name: "改名" }));
+    await user.type(screen.getByRole("textbox", { name: "角色名稱" }), "測試");
+    expect(track).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "儲存" }));
+    expect(track).toHaveBeenCalledExactlyOnceWith("statsim_character", { action: "rename" });
+    vi.mocked(track).mockClear();
+    await user.click(screen.getByRole("button", { name: "刪除角色" }));
+    await user.click(screen.getByRole("button", { name: "取消" }));
+    expect(track).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "刪除角色" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "刪除" }));
+    expect(track).toHaveBeenCalledExactlyOnceWith("statsim_character", { action: "remove" });
+  });
+
+  it("等級輸入在 blur 後記錄一次；未變更不記錄", async () => {
+    const user = userEvent.setup();
+    render(<StatSimClient data={data} windows={{ attribute, equipment }} />);
+    await screen.findByTestId("source-total");
+    const level = screen.getByRole("spinbutton", { name: "等級" });
+    await user.click(level);
+    await user.keyboard("123");
+    expect(track).not.toHaveBeenCalled();
+    await user.tab();
+    expect(track).toHaveBeenCalledExactlyOnceWith("statsim_edit", { area: "stats" });
+    vi.mocked(track).mockClear();
+    await user.click(level);
+    await user.tab();
+    expect(track).not.toHaveBeenCalled();
   });
 
   it("含裝模式換裝後可選擇維持剛才填的含裝數值，或照新裝備計算", async () => {

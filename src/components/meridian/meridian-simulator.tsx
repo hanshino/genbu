@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CheckIcon, LinkIcon, MinusIcon, PlusIcon, RotateCcwIcon, ZapIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ import {
 } from "@/lib/meridian-sim";
 import type { MeridianData, MeridianLevels, MeridianStatFlag } from "@/lib/types/meridian";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics/track";
 import { fmt, fmtExp } from "./format";
 import { GameWindow, type Fx } from "./game-window";
 import { EstBadge, PointDetail, SectionLabel, StatTable } from "./point-detail";
@@ -94,6 +95,7 @@ export function MeridianSimulator({ data }: { data: MeridianData }) {
   const [toast, setToast] = useState({ msg: "", show: false, n: 0 });
   const [loaded, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
+  const sliderBefore = useRef<number | null>(null);
 
   // SSR 先用預設值渲染，mount 後才讀 localStorage／?p=，避免 hydration mismatch
   useEffect(() => {
@@ -149,10 +151,12 @@ export function MeridianSimulator({ data }: { data: MeridianData }) {
     const url = `${window.location.origin}/tools/meridian?p=${planCode}`;
     try {
       await navigator.clipboard.writeText(url);
+      track("meridian_share", { via: "clipboard" });
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
       window.prompt("複製以下連結", url);
+      track("meridian_share", { via: "prompt" });
     }
   };
 
@@ -205,6 +209,7 @@ export function MeridianSimulator({ data }: { data: MeridianData }) {
     const p = selected;
     const lv = levelOf(before.levels, p.id) + 1;
     const r = attemptBreak(idx, before, p.id);
+    track("meridian_attempt", { outcome: r.outcome });
     if (r.outcome === "blocked") {
       say(BLOCK_MSG[r.reason ?? ""] ?? "現在打不通");
       return;
@@ -223,26 +228,37 @@ export function MeridianSimulator({ data }: { data: MeridianData }) {
   const resetPlay = (start: number) => {
     setPlay(initialPlayState(start));
     setFx(null);
+    track("meridian_reset", { mode: "play" });
   };
 
   // ---- 規劃模式 ----
-  const planSet = (id: number, target: number) => {
+  const planSet = (id: number, target: number, report = true) => {
     const p = idx.get(id)!;
     const t = Math.max(INITIAL_LEVELS[id] ?? 0, Math.min(p.maxLevel, target));
     const cur = levelOf(plan, id);
     if (t === cur) return;
     setPlan(t > cur ? raiseTo(idx, plan, id, t) : lowerTo(idx, plan, id, t));
+    if (report) track("meridian_point", { action: t > cur ? "add" : "remove" });
   };
-  const fillChannel = () =>
+  const fillChannel = () => {
     setPlan(chanPoints.reduce((lv, p) => raiseTo(idx, lv, p.id, p.maxLevel), plan));
-  const clearChannel = () => setPlan(chanPoints.reduce((lv, p) => lowerTo(idx, lv, p.id, 0), plan));
+    track("meridian_fill", { scope: "channel" });
+  };
+  const clearChannel = () => {
+    setPlan(chanPoints.reduce((lv, p) => lowerTo(idx, lv, p.id, 0), plan));
+    track("meridian_reset", { mode: "plan", scope: "channel" });
+  };
 
   const planL = levelOf(plan, selId);
   const recentLog = play.log.slice(0, 8); // log 最新的在前
   const planMin = INITIAL_LEVELS[selId] ?? 0; // 承漿 Lv1 是任務給的，規劃時不能低於 1
 
   return (
-    <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)} className="gap-0">
+    <Tabs value={mode} onValueChange={(v) => {
+      if (v === mode) return;
+      setMode(v as Mode);
+      track("meridian_mode", { mode: String(v) });
+    }} className="gap-0">
       <div className="mt-6 mb-5 flex flex-wrap items-center gap-3">
         <TabsList className="h-9">
           <TabsTrigger value="play" className="px-4">
@@ -473,6 +489,7 @@ export function MeridianSimulator({ data }: { data: MeridianData }) {
                         setBuyInput(String(n));
                         const s = convertExp(idx, play, n);
                         setPlay(s);
+                        track("meridian_convert_exp");
                         say(
                           `換到 ${fmt(s.dantian - play.dantian)} 丹田，花了 ${fmtExp(s.spentExp - play.spentExp)} 經驗`,
                         );
@@ -644,10 +661,16 @@ export function MeridianSimulator({ data }: { data: MeridianData }) {
               <CardHeader>
                 <CardTitle>這套配置的成本</CardTitle>
                 <CardAction className="flex gap-1.5">
-                  <Button variant="outline" size="sm" onClick={() => setPlan(fillAll(idx))}>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setPlan(fillAll(idx));
+                    track("meridian_fill", { scope: "all" });
+                  }}>
                     全滿
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setPlan(INITIAL_LEVELS)}>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setPlan(INITIAL_LEVELS);
+                    track("meridian_reset", { mode: "plan", scope: "all" });
+                  }}>
                     清空
                   </Button>
                 </CardAction>
@@ -708,7 +731,18 @@ export function MeridianSimulator({ data }: { data: MeridianData }) {
                       max={selected.maxLevel}
                       step={1}
                       value={planL}
-                      onValueChange={(v) => planSet(selId, Array.isArray(v) ? v[0] : v)}
+                      onValueChange={(v) => {
+                        sliderBefore.current ??= planL;
+                        planSet(selId, Array.isArray(v) ? v[0] : v, false);
+                      }}
+                      onValueCommitted={(v) => {
+                        const target = Array.isArray(v) ? v[0] : v;
+                        const before = sliderBefore.current;
+                        sliderBefore.current = null;
+                        if (before != null && target !== before) {
+                          track("meridian_point", { action: target > before ? "add" : "remove" });
+                        }
+                      }}
                       aria-label={`${selected.name} 等級`}
                       className="flex-1"
                     />
