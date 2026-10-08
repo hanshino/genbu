@@ -1,4 +1,7 @@
 import type { ReactNode } from "react";
+import { ChevronRightIcon, InfoIcon } from "lucide-react";
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 /**
  * 道具頁的資訊分組外框（h2 層級）。
@@ -37,41 +40,72 @@ export function ItemSectionGroup({
           <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
         )}
       </header>
-      <div className="space-y-6">{children}</div>
+      <div className="space-y-2">{children}</div>
     </section>
   );
 }
 
-/** 分組內的單一區塊（h3 層級），統一道具頁各來源／用途區塊的標題樣式。 */
+/**
+ * 分組內的單一區塊（h3 層級），一律預設收合；收合的標題列「筆數 · 重點」就是這組的目錄。
+ *
+ * 標題列要放 ⓘ 說明按鈕，所以展開按鈕只包標題與筆數，ⓘ 是它旁邊的兄弟元素（不能巢狀 button）。
+ * 收合內容用 hiddenUntilFound 留在 HTML 裡：搜尋引擎抓得到，Ctrl+F 找到時會自動展開。
+ */
 export function ItemSubSection({
   title,
-  summary,
-  footer,
+  count,
+  highlight,
+  note,
   children,
 }: {
   title: string;
-  summary?: ReactNode;
-  footer?: ReactNode;
+  /** 例：「63 隻」 */
+  count: string;
+  /** 例：「最低 40 金幣」，收合時讓人不用點開就知道重點 */
+  highlight?: string | null;
+  /** 區塊說明，收進 ⓘ */
+  note?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-2">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h3 className="text-base font-medium">{title}</h3>
-        {summary != null && <span className="text-xs text-muted-foreground">{summary}</span>}
+    <Collapsible render={<section />}>
+      <div className="flex items-start rounded-lg border border-border/60 bg-card transition-colors hover:bg-muted/50 sm:items-center">
+        <h3 className="min-w-0 flex-1">
+          <CollapsibleTrigger className="group flex flex-wrap items-center gap-x-2.5 gap-y-0.5 rounded-lg px-3 py-2.5 sm:flex-nowrap">
+            <ChevronRightIcon
+              className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[panel-open]:rotate-90"
+              aria-hidden
+            />
+            <span className="shrink-0 text-base font-medium">{title}</span>
+            <span className="flex min-w-0 basis-full items-baseline gap-1.5 pl-6.5 text-xs text-muted-foreground sm:basis-auto sm:pl-0">
+              <span className="shrink-0 font-mono">{count}</span>
+              {highlight && (
+                <>
+                  <span className="shrink-0" aria-hidden>·</span>
+                  <span className="truncate">{highlight}</span>
+                </>
+              )}
+            </span>
+          </CollapsibleTrigger>
+        </h3>
+        {note != null && (
+          <Popover>
+            <PopoverTrigger
+              aria-label={`${title}說明`}
+              className="m-1.5 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:my-0"
+            >
+              <InfoIcon className="size-3.5" aria-hidden />
+            </PopoverTrigger>
+            <PopoverContent align="end" className="text-xs leading-relaxed text-muted-foreground">
+              {note}
+            </PopoverContent>
+          </Popover>
+        )}
       </div>
-      {children}
-      {footer != null && <p className="text-xs leading-relaxed text-muted-foreground">{footer}</p>}
-    </section>
-  );
-}
-
-/** LinkListRow 的容器；與 common/link-list 的 ul 樣式一致，只是標題交給 ItemSubSection。 */
-export function ItemLinkList({ children }: { children: ReactNode }) {
-  return (
-    <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
-      {children}
-    </ul>
+      <CollapsiblePanel hiddenUntilFound>
+        <div className="space-y-2 pt-2 pb-4">{children}</div>
+      </CollapsiblePanel>
+    </Collapsible>
   );
 }
 

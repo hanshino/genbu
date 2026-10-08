@@ -3,7 +3,8 @@ import { LinkListRow } from "@/components/common/link-list";
 import { ItemIcon } from "@/components/common/item-icon";
 import { RewardLine, TimedBadge } from "@/components/common/reward-view";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ItemLinkList, ItemSubSection } from "@/components/items/item-section-group";
+import { CappedList, ShowMoreList } from "@/components/common/capped-list";
+import { ItemSubSection } from "@/components/items/item-section-group";
 import type {
   BoxContainingItem,
   BoxRewardNode,
@@ -71,13 +72,18 @@ function RewardList({ rewards }: { rewards: BoxRewardNode[] }) {
   );
 }
 
-function BoxOptions({ options }: { options: ItemBoxOption[] }) {
+/** capped：最上層的開箱內容才套上限（標 data-cap-items），巢狀禮盒不套。 */
+function BoxOptions({ options, capped = false }: { options: ItemBoxOption[]; capped?: boolean }) {
   if (options.length === 1) return <RewardList rewards={options[0].rewards} />;
+  const cap = capped ? { "data-cap-items": "" } : {};
 
   // 每個選項只有一樣東西（如兵器兌換券）：攤平成兩欄清單，選項名當小字說明，省掉卡片標頭。
   if (options.every((o) => o.rewards.length === 1)) {
     return (
-      <ul className="grid gap-px overflow-hidden rounded-lg border border-border/60 bg-border/60 sm:grid-cols-2 [&>li]:bg-card sm:[&>li:last-child:nth-child(odd)]:col-span-2">
+      <ul
+        {...cap}
+        className="grid gap-px overflow-hidden rounded-lg border border-border/60 bg-border/60 sm:grid-cols-2 [&>li]:bg-card sm:[&>li:last-child:nth-child(odd)]:col-span-2"
+      >
         {options.map((o, i) => (
           <RewardRow key={i} reward={o.rewards[0]} caption={optionLabel(o, i)} />
         ))}
@@ -86,7 +92,7 @@ function BoxOptions({ options }: { options: ItemBoxOption[] }) {
   }
 
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <div {...cap} className="grid gap-2 sm:grid-cols-2">
       {options.map((o, i) => (
         <div key={i} className="overflow-hidden rounded-lg border border-border/60 bg-card">
           <div className="flex items-center gap-2 border-b border-border/60 bg-muted/40 px-3 py-1.5 text-xs">
@@ -111,8 +117,9 @@ export function BoxContentsSection({ options }: { options: ItemBoxOption[] }) {
   return (
     <ItemSubSection
       title="使用後可獲得"
-      summary={multi ? `擇一 · 共 ${options.length} 種` : `${options[0].rewards.length} 項`}
-      footer={
+      count={multi ? `${options.length} 個選項` : `${options[0].rewards.length} 項`}
+      highlight={multi ? (hasChoice ? "開啟時擇一" : "依條件得到其中一種") : null}
+      note={
         multi
           ? hasChoice
             ? "開啟時依選單選擇其中一項，只會拿到該選項的內容。"
@@ -120,7 +127,13 @@ export function BoxContentsSection({ options }: { options: ItemBoxOption[] }) {
           : undefined
       }
     >
-      <BoxOptions options={options} />
+      {options.length > 4 ? (
+        <CappedList total={options.length} limit={4} unit="個選項">
+          <BoxOptions options={options} capped />
+        </CappedList>
+      ) : (
+        <BoxOptions options={options} />
+      )}
     </ItemSubSection>
   );
 }
@@ -154,8 +167,12 @@ export function BoxSourcesSection({ boxes }: { boxes: BoxContainingItem[] }) {
   if (boxes.length === 0) return null;
   const groups = groupBoxes(boxes);
   return (
-    <ItemSubSection title="可從這些禮盒取得" summary={`${groups.length} 種禮盒`}>
-      <ItemLinkList>
+    <ItemSubSection
+      title="可從這些禮盒取得"
+      count={`${groups.length} 種`}
+      highlight={groups[0].box.boxItemName ?? `道具 #${groups[0].box.boxItemId}`}
+    >
+      <ShowMoreList unit="種">
         {groups.map(({ box, choicePaths, qtys, durationMin }) => {
           const name = box.boxItemName ?? `道具 #${box.boxItemId}`;
           return (
@@ -175,7 +192,7 @@ export function BoxSourcesSection({ boxes }: { boxes: BoxContainingItem[] }) {
             </LinkListRow>
           );
         })}
-      </ItemLinkList>
+      </ShowMoreList>
     </ItemSubSection>
   );
 }
@@ -188,8 +205,12 @@ export function MissionRewardSourcesSection({ missions }: { missions: MissionRew
   if (missions.length === 0) return null;
   const count = new Set(missions.map((m) => m.missionId)).size;
   return (
-    <ItemSubSection title="任務獎勵" summary={`${count} 個任務完成後給予`}>
-      <ItemLinkList>
+    <ItemSubSection
+      title="任務獎勵"
+      count={`${count} 個`}
+      highlight={missions[0].missionName ?? `任務 ${missions[0].missionId}`}
+    >
+      <ShowMoreList unit="筆">
         {missions.map((m, i) => (
           <LinkListRow key={`${m.missionId}-${i}`} href={`/missions/${m.missionId}`}>
             <span className="font-mono text-xs text-muted-foreground">#{m.missionId}</span>
@@ -198,7 +219,7 @@ export function MissionRewardSourcesSection({ missions }: { missions: MissionRew
             {m.qty != null && <span className="ml-auto font-mono text-xs text-muted-foreground">×{m.qty}</span>}
           </LinkListRow>
         ))}
-      </ItemLinkList>
+      </ShowMoreList>
     </ItemSubSection>
   );
 }

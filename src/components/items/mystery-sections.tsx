@@ -5,7 +5,8 @@ import { EntityPortrait } from "@/components/common/entity-portrait";
 import { LinkListRow } from "@/components/common/link-list";
 import { linkClass } from "@/components/common/reward-view";
 import { ItemSubSection } from "@/components/items/item-section-group";
-import { MysteryTable, ShowMoreList, type MysteryTableRow } from "@/components/items/mystery-table";
+import { MysteryTable, type MysteryTableRow } from "@/components/items/mystery-table";
+import { ShowMoreList } from "@/components/common/capped-list";
 import type { MysteryBoxContents, MysteryBoxInfo, MysteryEntry, MysterySource } from "@/lib/types/mystery";
 
 // 隨機寶箱（mystery_boxes）：依權重隨機抽，和對話開啟的 item_box_rewards 分開呈現。
@@ -105,8 +106,9 @@ export function MysteryContentsSection({ contents }: { contents: MysteryBoxConte
   return (
     <ItemSubSection
       title="開啟可能獲得（隨機）"
-      summary={info.hasData ? [formatDrop(info), `共 ${contents.entries.length} 項`].filter(Boolean).join(" · ") : undefined}
-      footer={
+      count={info.hasData ? `${contents.entries.length} 項` : "未公開"}
+      highlight={info.hasData ? formatDrop(info) : null}
+      note={
         info.hasData
           ? "機率為單次抽取的機率，依客戶端資料計算；每次開出多樣時，每一樣各自依此機率抽出。"
           : undefined
@@ -154,10 +156,11 @@ export function MysterySourcesSection({ sources }: { sources: MysterySource[] })
   return (
     <ItemSubSection
       title="可從這些寶箱開出（隨機）"
-      summary={`${groups.length} 種寶箱`}
-      footer="機率為開啟一次時抽中此道具的機率；同一寶箱可開出不同數量時，另列各數量的機率並加總。"
+      count={`${groups.length} 種`}
+      highlight={groups[0].first.boxName ?? `道具 #${groups[0].first.boxItemId}`}
+      note="機率為開啟一次時抽中此道具的機率；同一寶箱可開出不同數量時，另列各數量的機率並加總。"
     >
-      <ShowMoreList>
+      <ShowMoreList unit="種">
         {groups.map(({ first, seqs, total }) => {
           const name = first.boxName ?? `道具 #${first.boxItemId}`;
           const multi = seqs.length > 1;

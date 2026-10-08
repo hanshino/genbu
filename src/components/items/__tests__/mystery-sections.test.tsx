@@ -4,15 +4,20 @@ import { MysteryContentsSection, MysterySourcesSection } from "../mystery-sectio
 import { getMysteryContents, getMysterySources } from "@/lib/queries/mystery";
 
 it("隨機寶箱區塊：分頁、搜尋、巢狀展開、未公開、數量分布", () => {
-  const { unmount } = render(<MysteryContentsSection contents={getMysteryContents(32403)} />);
+  const { container, unmount } = render(<MysteryContentsSection contents={getMysteryContents(32403)} />);
+  // 區塊預設收合，但內容（含超過上限的列）仍在 DOM 裡
+  expect(container.querySelectorAll("tbody tr").length).toBeGreaterThanOrEqual(113);
+  fireEvent.click(screen.getByRole("button", { name: /^開啟可能獲得(?!.*說明)/ }));
   expect(screen.getAllByRole("row").length).toBe(11);
-  fireEvent.click(screen.getByRole("button", { name: /顯示其餘 103 項/ }));
+  fireEvent.click(screen.getByRole("button", { name: /顯示全部 113 項/ }));
   expect(screen.getAllByRole("row").length).toBe(114);
   fireEvent.change(screen.getByLabelText("搜尋寶箱內容"), { target: { value: "zzz" } });
   expect(screen.getByText(/找不到符合/)).toBeTruthy();
   unmount();
 
   const r2 = render(<MysteryContentsSection contents={getMysteryContents(24059)} />);
+  fireEvent.click(screen.getByRole("button", { name: /^開啟可能獲得(?!.*說明)/ }));
+  expect(screen.getAllByRole("table").length).toBe(1);
   fireEvent.click(screen.getByRole("button", { name: /展開內容/ }));
   expect(screen.getAllByRole("table").length).toBe(2);
   r2.unmount();

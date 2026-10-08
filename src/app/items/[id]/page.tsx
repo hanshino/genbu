@@ -208,7 +208,6 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
         id="how-to-get"
         title="如何取得"
         icon={<PackageSearchIcon />}
-        description={sourceSummary ? `目前資料庫可查到的入手途徑：${sourceSummary}。` : undefined}
       >
         {sourceSummary ? (
           <>

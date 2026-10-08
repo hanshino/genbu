@@ -27,8 +27,9 @@ export function CompoundUsesSection({ uses }: { uses: CompoundUse[] }) {
   return (
     <ItemSubSection
       title="煉化材料"
-      summary={`可投入 ${uses.length} 條配方`}
-      footer="此道具在這些配方中作為主材料被消耗。產出機率以單次嘗試計算；同一條配方所有可能產出（含未產出）的機率合計為 100%。裝備類煉化失敗會掉到「失敗回收」道具。"
+      count={`${uses.length} 條配方`}
+      highlight={groupBlocks.map(([g]) => g).join("、")}
+      note="此道具在這些配方中作為主材料被消耗。產出機率以單次嘗試計算；同一條配方所有可能產出（含未產出）的機率合計為 100%。裝備類煉化失敗會掉到「失敗回收」道具。"
     >
       <div className="space-y-4">
         {groupBlocks.map(([groupName, items]) => (

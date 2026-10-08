@@ -1,5 +1,5 @@
-import { ChevronDownIcon, InfoIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ChevronDownIcon } from "lucide-react";
+import { ItemSubSection } from "@/components/items/item-section-group";
 import {
   Table,
   TableBody,
@@ -52,16 +52,12 @@ export function AwakeningSection({ path }: { path: AwakeningPath }) {
     lastRow && Number.isFinite(lastRow.cumulativeExpected) ? lastRow.cumulativeExpected : 0;
 
   return (
-    <section className="space-y-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h3 className="text-base font-medium">覺醒升階</h3>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <span>覺醒類別</span>
-          <Badge variant="outline" className="font-mono">
-            {path.prefix}
-          </Badge>
-        </div>
-      </div>
+    <ItemSubSection
+      title="覺醒升階"
+      count={`${path.stages.length} 階`}
+      highlight={`覺醒類別 ${path.prefix}`}
+      note="屬性欄為該階獨立加值，非累計總值。累積金錢「期望」欄假設失敗不掉階；+18~+20 實際成本更高，可用退階防護令避免。"
+    >
 
       <div className="rounded-lg border border-border/60 overflow-x-auto">
         <Table>
@@ -141,14 +137,6 @@ export function AwakeningSection({ path }: { path: AwakeningPath }) {
         </Table>
       </div>
 
-      <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-        <InfoIcon className="mt-0.5 size-3 shrink-0" aria-hidden />
-        <span>
-          屬性欄為該階獨立加值，非累計總值。累積金錢「期望」欄假設失敗不掉階；+18~+20
-          實際成本更高，可用退階防護令避免。
-        </span>
-      </p>
-
       <details className="group rounded-lg border border-border/60 bg-card px-4 py-3 text-sm">
         <summary className="flex cursor-pointer list-none select-none items-center justify-between gap-2 font-medium transition-colors hover:text-foreground/80 [&::-webkit-details-marker]:hidden">
           <span>覺醒機制速查</span>
@@ -177,6 +165,6 @@ export function AwakeningSection({ path }: { path: AwakeningPath }) {
           </li>
         </ul>
       </details>
-    </section>
+    </ItemSubSection>
   );
 }

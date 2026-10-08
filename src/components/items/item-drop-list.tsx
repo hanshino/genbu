@@ -10,6 +10,7 @@ import { SpawnMapsCell } from "@/components/monsters/spawn-maps-cell";
 import { EntityPortrait } from "@/components/common/entity-portrait";
 import { TrackedLink } from "@/components/common/tracked-link";
 import { ItemSubSection } from "@/components/items/item-section-group";
+import { CappedList } from "@/components/common/capped-list";
 import type { MonsterDropSource } from "@/lib/types/monster";
 import type { MonsterStageSpawn } from "@/lib/types/monster-spawn";
 import type { EntityImage } from "@/lib/queries/images";
@@ -24,13 +25,21 @@ export function ItemDropList({
   portraitMap: Map<number, EntityImage>;
 }) {
   if (sources.length === 0) return null;
+  const top = sources.reduce((a, b) => (b.rate > a.rate ? b : a));
 
   return (
     <ItemSubSection
       title="怪物掉落"
-      summary={`${sources.length} 隻怪物會掉落`}
-      footer="掉落率為資料庫原始數值，不是官方公布的機率；同一欄位比較時數值越高代表越容易掉到。點怪物名稱可看牠的完整掉落表，點地圖名稱可看出沒位置。"
+      count={`${sources.length} 隻`}
+      highlight={`最高掉落率 ${top.rate.toLocaleString()}（${top.name}）`}
+      note="掉落率為資料庫原始數值，不是官方公布的機率；同一欄位比較時數值越高代表越容易掉到。點怪物名稱可看牠的完整掉落表，點地圖名稱可看出沒位置。"
     >
+      <CappedList
+        total={sources.length}
+        unit="隻"
+        searchNames={sources.length > 30 ? sources.map((m) => m.name) : undefined}
+        searchPlaceholder="搜尋怪物名稱"
+      >
       <div className="overflow-hidden rounded-lg border border-border/60">
         <Table>
           <TableHeader>
@@ -42,9 +51,9 @@ export function ItemDropList({
               <TableHead>出沒地圖</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody data-cap-items>
             {sources.map((m) => (
-              <TableRow key={m.id}>
+              <TableRow key={m.id} data-search={m.name}>
                 <TableCell className="font-mono text-xs text-muted-foreground">{m.id}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
@@ -73,6 +82,7 @@ export function ItemDropList({
           </TableBody>
         </Table>
       </div>
+      </CappedList>
     </ItemSubSection>
   );
 }

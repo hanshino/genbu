@@ -32,8 +32,9 @@ export function CompoundSourcesSection({
   return (
     <ItemSubSection
       title="煉化取得"
-      summary={`${sources.length} 條配方可產出此道具`}
-      footer="機率以單次嘗試計算；同一條配方所有可能產出（含未產出）的機率合計為 100%。材料名稱可點入查看各自的取得方式。"
+      count={`${sources.length} 條配方`}
+      highlight={groupBlocks.map(([g]) => g).join("、")}
+      note="機率以單次嘗試計算；同一條配方所有可能產出（含未產出）的機率合計為 100%。材料名稱可點入查看各自的取得方式。"
     >
       <div className="space-y-4">
         {groupBlocks.map(([groupName, items]) => (

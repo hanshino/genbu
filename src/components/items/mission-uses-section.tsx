@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { LinkListRow } from "@/components/common/link-list";
-import { ItemLinkList, ItemSubSection } from "@/components/items/item-section-group";
+import { ShowMoreList } from "@/components/common/capped-list";
+import { ItemSubSection } from "@/components/items/item-section-group";
 import type { MissionUseOfItem } from "@/lib/types/mission";
 import type { MissionTakingItem } from "@/lib/types/mission-logic";
 
@@ -42,8 +43,12 @@ export function MissionUsesSection({
   return (
     <>
       {merged.length > 0 && (
-        <ItemSubSection title="任務會收走" summary={`${merged.length} 個任務會收走`}>
-          <ItemLinkList>
+        <ItemSubSection
+          title="任務會收走"
+          count={`${merged.length} 個`}
+          highlight={merged[0].missionName ?? `任務 ${merged[0].missionId}`}
+        >
+          <ShowMoreList unit="個">
             {merged.map((t) => (
               <LinkListRow key={t.missionId} href={`/missions/${t.missionId}`}>
                 <span className="font-mono text-xs text-muted-foreground">#{t.missionId}</span>
@@ -53,17 +58,18 @@ export function MissionUsesSection({
                 )}
               </LinkListRow>
             ))}
-          </ItemLinkList>
+          </ShowMoreList>
         </ItemSubSection>
       )}
 
       {others.length > 0 && (
         <ItemSubSection
           title={precise ? "其他相關任務" : "任務需求"}
-          summary={`${others.length} 個任務會用到`}
-          footer="資料只記錄任務有引用此道具，未區分是繳交還是獎勵；實際用途請點入任務內容確認。"
+          count={`${others.length} 個`}
+          highlight={others[0].missionName ?? `任務 ${others[0].missionId}`}
+          note="資料只記錄任務有引用此道具，未區分是繳交還是獎勵；實際用途請點入任務內容確認。"
         >
-          <ItemLinkList>
+          <ShowMoreList unit="個">
             {others.map((u) => (
               <LinkListRow key={u.missionId} href={`/missions/${u.missionId}`}>
                 <span className="font-mono text-xs text-muted-foreground">#{u.missionId}</span>
@@ -81,7 +87,7 @@ export function MissionUsesSection({
                 )}
               </LinkListRow>
             ))}
-          </ItemLinkList>
+          </ShowMoreList>
         </ItemSubSection>
       )}
     </>

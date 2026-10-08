@@ -1,6 +1,7 @@
 import type { CompoundUse } from "@/lib/queries/compound";
 import { collectCompoundItemIds } from "@/lib/compound-grouping";
 import { getItemIconMap } from "@/lib/queries/images";
+import { ItemSubSection } from "@/components/items/item-section-group";
 import {
   EnhancementsList,
   type BonusBucket,
@@ -56,19 +57,13 @@ export function EquipmentEnhancementsSection({ uses }: { uses: CompoundUse[] }) 
   const iconMap = getItemIconMap(collectCompoundItemIds(uses));
 
   return (
-    <section className="space-y-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h3 className="text-base font-medium">可用強化</h3>
-        <span className="text-xs text-muted-foreground">
-          同槽位裝備通用 · {uses.length} 條配方 · {buckets.length} 種屬性
-        </span>
-      </div>
-
+    <ItemSubSection
+      title="可用強化"
+      count={`${buckets.length} 種屬性`}
+      highlight={`${uses.length} 條配方，同槽位裝備通用`}
+      note="強化配方依裝備槽位歸類；同槽位裝備皆通用。同一條配方可能含多個加成（顯示主加成）；機率為單次嘗試該加成出現的機率。"
+    >
       <EnhancementsList buckets={buckets} iconMap={iconMap} />
-
-      <p className="text-xs text-muted-foreground">
-        強化配方依裝備槽位歸類；同槽位裝備皆通用。同一條配方可能含多個加成（顯示主加成）；機率為單次嘗試該加成出現的機率。
-      </p>
-    </section>
+    </ItemSubSection>
   );
 }
