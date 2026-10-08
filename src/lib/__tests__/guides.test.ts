@@ -210,6 +210,23 @@ describe("renderGuideBody", () => {
     const order = ["鬼爪島", "鬼馬島", "蛇魔島", "鬼偶島", "鬼煞島"];
     expect(landings).toEqual(order);
     expect(tabs).toEqual(order);
+    // SSR 只渲染鬼爪島；其他分頁也必須有真正可走的路徑，不能退回跨平台直線。
+    const floor = [...guide.source.matchAll(/<DungeonStep\b([\s\S]*?)>/g)]
+      .map((m) => parseTagProps(m[1]))
+      .find((p) => p.n === 4)!;
+    const routes = getStepData({
+      stage: Number(floor.stage),
+      crop: floor.crop as StepInput["crop"],
+      routes: floor.routes as StepInput["routes"],
+    }).routes!;
+    expect(routes.map((r) => r.label)).toEqual(order);
+    for (const route of routes) {
+      for (const [i, segment] of route.segPaths.entries()) {
+        if (route.points[i].as !== "portal") {
+          expect(segment, `${route.label} 步行段 ${i}`).not.toBeNull();
+        }
+      }
+    }
     expect(html.match(/data-testid="route-layer"/g)).toHaveLength(1);
     expect(html).toContain('data-route-map="鬼爪島"');
     expect(html).toContain("（11，94）");
