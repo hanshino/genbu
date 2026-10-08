@@ -36,6 +36,17 @@ describe("道具頁：完整對話給予與兌換用途", () => {
     ).all()).toEqual([{ is_gm: 0, n: 44 }, { is_gm: 1, n: 2 }]);
   });
 
+  it("測試地圖（stage 385 TEST）呼叫的對話給予被排除", () => {
+    // grant 1858 只能從 TEST 圖呼叫；32857 另有神秘道人的正常給予（grant 1857）要保留。
+    for (const id of [32857, 32859]) {
+      const { npcSources, mapSources, exchangeUses } = getItemDialogueSources(id);
+      expect(mapSources.some((m) => m.stageId === 385)).toBe(false);
+      const grants = [...npcSources, ...exchangeUses].flatMap((n) => n.rewards).map((r) => r.grantId);
+      expect(grants).not.toContain(1858);
+    }
+    expect(getItemDialogueSources(32857).npcSources.map((n) => n.npcName)).toEqual(["神秘道人"]);
+  });
+
   it("真正任務／禮盒已涵蓋的列被剔除", () => {
     const db = getDb();
     const remaining = db.prepare(`SELECT COUNT(*) AS n FROM dialogue_rewards d

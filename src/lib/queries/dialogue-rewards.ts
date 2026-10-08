@@ -2,8 +2,12 @@ import { getDb } from "@/lib/db";
 import { getItemIconMap } from "@/lib/queries/images";
 import type { DialogueGrant, DialogueItem, MapDialogueSource, NpcDialogueSource } from "@/lib/types/dialogue-rewards";
 
+// 上游 tthol_data GM_STAGES。is_gm 只標了地圖事件本身，從測試圖呼叫的對話（如 stage 385 TEST）沒標。
+const GM_STAGE_IDS = "371, 385, 386, 901, 902, 903, 904, 920, 996, 999";
+
 /** covered_by='mission' 也包含隱藏旗標；只剔除任務區真的會顯示的列。 */
 export const DIALOGUE_REWARD_FILTER = `d.is_gm = 0
+  AND COALESCE(d.stage_id, d.entry_stage_id, 0) NOT IN (${GM_STAGE_IDS})
   AND (d.covered_by IS NULL OR d.covered_by <> 'item_box')
   AND (d.covered_by IS NULL OR d.covered_by <> 'mission' OR NOT EXISTS (
     SELECT 1 FROM mission_rewards mr
