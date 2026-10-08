@@ -4,6 +4,7 @@ import * as dbModule from "@/lib/db";
 import type { Point } from "@/lib/guide-steps";
 import {
   getStageMapImage,
+  getMapEventSourcesForItem,
   getNpcPlacementsForStage,
   getMonsterSpawnPositions,
   getNpcPositionsForStage,
@@ -34,6 +35,38 @@ afterEach(() => {
 });
 
 describe("maps.ts 查詢", () => {
+  it("赤玄謎寶箱 24200：玄謎窟盡頭的區域觸發給予 ×1", () => {
+    expect(getMapEventSourcesForItem(24200)).toContainEqual({
+      stageKind: "stage",
+      stageId: 317,
+      stageName: "玄謎窟盡頭",
+      rewards: [{ bind: "zone", qty: 1, durationMin: null, monsterId: null, monsterName: null }],
+    });
+  });
+
+  it("20001 的測試地圖事件不列為來源", () => {
+    expect(getMapEventSourcesForItem(20001)).toEqual([]);
+  });
+
+  it("木人巷限時道具 24440：op 79 的 a1 是分鐘，不是數量；死亡觸發附怪物", () => {
+    const source = getMapEventSourcesForItem(24440).find((s) => s.stageId === 307);
+    expect(source?.rewards).toContainEqual({
+      bind: "death", qty: 1, durationMin: 3, monsterId: 8136, monsterName: "●金牌木頭人",
+    });
+  });
+
+  it("sestage 事件依地圖分組，保留各死亡觸發怪物", () => {
+    const sources = getMapEventSourcesForItem(24496);
+    const forest = sources.filter((s) => s.stageKind === "sestage" && s.stageId === 1901);
+    expect(forest).toHaveLength(1);
+    expect(forest[0].stageName).toBe("忘憂森林");
+    expect(forest[0].rewards.map((r) => r.monsterId)).toEqual([13508, 13509, 13510]);
+  });
+
+  it("不存在的道具沒有地圖事件來源", () => {
+    expect(getMapEventSourcesForItem(999999999)).toEqual([]);
+  });
+
   it("getStageMapImage 回傳有圖 stage 的尺寸與格數", () => {
     const img = getStageMapImage("stage", STAGE_WITH_IMAGE);
     expect(img).not.toBeNull();

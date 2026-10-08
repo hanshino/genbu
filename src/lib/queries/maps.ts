@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 import { gameTextPlain } from "@/lib/format/game-text";
-import type { StageKind } from "@/lib/types/stage";
+import type { MapEventItemSource, StageKind } from "@/lib/types/stage";
 import type { StageMonsterSpawn } from "@/lib/types/monster-spawn";
 import type { Point } from "@/lib/guide-steps";
 import { getNpcImageMap, type EntityImage } from "./images";
@@ -13,6 +13,39 @@ export interface StageMapImage {
   tilesW: number;
   tilesH: number;
   tilePx: number;
+}
+
+/** 地圖事件給道具（8）／限時道具（79），排除測試地圖並依地圖分組。 */
+export function getMapEventSourcesForItem(itemId: number): MapEventItemSource[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT DISTINCT o.stage_kind AS stageKind, o.stage_id AS stageId, s.name AS stageName,
+              e.bind, CASE WHEN o.op = 8 THEN o.a1 ELSE 1 END AS qty,
+              CASE WHEN o.op = 79 THEN o.a1 END AS durationMin,
+              m.id AS monsterId, m.name AS monsterName
+       FROM map_event_ops o
+       JOIN map_events e ON e.id = o.event_id
+       JOIN stages s ON s.kind = o.stage_kind AND s.id = o.stage_id
+       LEFT JOIN v_map_event_bindings b
+         ON b.event_id = e.id AND e.bind = 'death' AND b.via = 'death'
+       LEFT JOIN monsters m ON m.id = b.npc_id
+       WHERE o.kind = 'A' AND o.op IN (8, 79) AND o.a0 = ?
+         AND (s.name IS NULL OR s.name NOT LIKE '%測試%')
+       ORDER BY o.stage_kind, o.stage_id, e.bind, monsterId, qty, durationMin`,
+    )
+    .all(itemId) as Array<Omit<MapEventItemSource, "rewards"> & MapEventItemSource["rewards"][number]>;
+
+  const groups = new Map<string, MapEventItemSource>();
+  for (const { stageKind, stageId, stageName, ...reward } of rows) {
+    const key = `${stageKind}:${stageId}`;
+    let group = groups.get(key);
+    if (!group) {
+      group = { stageKind, stageId, stageName, rewards: [] };
+      groups.set(key, group);
+    }
+    group.rewards.push(reward);
+  }
+  return [...groups.values()];
 }
 
 // ── 可行走遮罩（map_walkability）────────────────────────────────────────

@@ -19,7 +19,10 @@ import {
   getItemBoxContents,
   getMissionsRewardingItem,
   getMissionsTakingItem,
+  getNpcDialogueRewardsForItem,
+  getNpcDialogueTakesForItem,
 } from "@/lib/queries/mission-logic";
+import { getMapEventSourcesForItem } from "@/lib/queries/maps";
 import { getMysteryContents, getMysterySources } from "@/lib/queries/mystery";
 import {
   presets,
@@ -39,6 +42,11 @@ import { CompoundUsesSection } from "@/components/items/compound-uses-section";
 import { EquipmentEnhancementsSection } from "@/components/items/equipment-enhancements-section";
 import { ShopBuybackSection, ShopSalesSection } from "@/components/items/shop-availability-section";
 import { MissionUsesSection } from "@/components/items/mission-uses-section";
+import {
+  MapEventSourcesSection,
+  NpcDialogueSourcesSection,
+  NpcDialogueUsesSection,
+} from "@/components/items/event-source-sections";
 import {
   BoxContentsSection,
   BoxSourcesSection,
@@ -99,6 +107,9 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
   const missionUses = getMissionsUsingItem(item.id);
   const missionRewards = getMissionsRewardingItem(item.id);
   const missionTakes = getMissionsTakingItem(item.id);
+  const npcDialogueRewards = getNpcDialogueRewardsForItem(item.id);
+  const npcDialogueTakes = getNpcDialogueTakesForItem(item.id);
+  const mapEventSources = getMapEventSourcesForItem(item.id);
   const boxSources = getBoxesContainingItem(item.id);
   const boxContents = getItemBoxContents(item.id);
   const mysteryContents = getMysteryContents(item.id);
@@ -113,6 +124,8 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
     shops: shopSales.length,
     compounds: compoundSources.length,
     missions: new Set(rewardMissionIds).size,
+    npcDialogues: new Set(npcDialogueRewards.map((r) => r.npcName)).size,
+    mapEvents: mapEventSources.length,
     boxes: new Set(boxSources.map((b) => b.boxItemId)).size,
     mysteryBoxes: new Set(mysterySources.map((m) => m.boxItemId)).size,
   });
@@ -120,6 +133,7 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
     missionTakes.length > 0 || missionUses.some((u) => !rewardMissionIds.includes(u.missionId));
   const hasUses =
     mysteryContents != null ||
+    npcDialogueTakes.length > 0 ||
     boxContents.length > 0 || compoundUses.length > 0 || hasMissionUses || shopBuys.length > 0;
   const hasProgression = awakeningPath != null || enhancements.length > 0;
 
@@ -212,6 +226,10 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
 
             <MissionRewardSourcesSection missions={missionRewards} />
 
+            <NpcDialogueSourcesSection rewards={npcDialogueRewards} />
+
+            <MapEventSourcesSection sources={mapEventSources} />
+
             <BoxSourcesSection boxes={boxSources} />
 
             <MysterySourcesSection sources={mysterySources} />
@@ -237,6 +255,8 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
           <CompoundUsesSection uses={compoundUses} />
 
           <MissionUsesSection uses={missionUses} takes={missionTakes} excludeIds={rewardMissionIds} />
+
+          <NpcDialogueUsesSection takes={npcDialogueTakes} />
 
           <ShopBuybackSection buys={shopBuys} />
         </ItemSectionGroup>

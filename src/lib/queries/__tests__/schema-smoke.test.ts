@@ -70,7 +70,10 @@ import {
   getMissionLogic,
   getMissionsRewardingItem,
   getMissionsTakingItem,
+  getNpcDialogueRewardsForItem,
+  getNpcDialogueTakesForItem,
 } from "../mission-logic";
+import { getMapEventSourcesForItem } from "../maps";
 import {
   getAllMissionGroupStats,
   getAllMissionListItems,
@@ -512,8 +515,19 @@ describe("mission-logic.ts", () => {
     expect(() => getMissionsTakingItem(ITEM_TAKEN_BY_MISSION_ID)).not.toThrow();
   });
 
+  it("非任務 NPC 對話給予／收走道具", () => {
+    expect(() => getNpcDialogueRewardsForItem(28581)).not.toThrow();
+    expect(() => getNpcDialogueTakesForItem(27068)).not.toThrow();
+  });
+
   it("getHeroTokenSources（有禮盒符令來源）", () => {
     expect(() => getHeroTokenSources(HERO_WITH_TOKEN_ID)).not.toThrow();
+  });
+});
+
+describe("maps.ts", () => {
+  it("getMapEventSourcesForItem（地圖事件道具來源）", () => {
+    expect(() => getMapEventSourcesForItem(24200)).not.toThrow();
   });
 });
 
@@ -685,6 +699,10 @@ describe("schema smoke — 任務對話上游解析表", () => {
     "mission_events",
     "mission_requirements",
     "mission_rewards",
+    "npc_strings",
+    "map_event_ops",
+    "map_events",
+    "map_placements",
     "mystery_boxes",
     "mystery_box_items",
     "item_doll",
@@ -710,7 +728,7 @@ describe("schema smoke — 任務對話上游解析表", () => {
     expect(row).toBeDefined();
   });
 
-  it.each(["v_mission_overview", "v_item_mystery"])("view %s 存在", (view) => {
+  it.each(["v_mission_overview", "v_item_mystery", "v_map_event_bindings"])("view %s 存在", (view) => {
     const db = getDb();
     const row = db.prepare("SELECT name FROM sqlite_master WHERE type = 'view' AND name = ?").get(view);
     expect(row).toBeDefined();

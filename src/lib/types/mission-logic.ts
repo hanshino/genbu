@@ -174,6 +174,14 @@ export interface MissionTakingItem {
   qty: number | null;
 }
 
+/** 非任務 NPC 對話給予／收走道具；npcId 只指向有詳情頁的 NPC。 */
+export interface NpcDialogueItem {
+  npcId: number | null;
+  npcName: string | null;
+  qty: number | null;
+  durationMin: number | null;
+}
+
 /** 含此道具的禮盒（給道具頁反查用）。 */
 export interface BoxContainingItem {
   boxItemId: number;

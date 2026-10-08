@@ -84,6 +84,8 @@ export function summarizeSourceRoutes(counts: {
   shops: number;
   compounds: number;
   missions?: number;
+  npcDialogues?: number;
+  mapEvents?: number;
   boxes?: number;
   mysteryBoxes?: number;
 }): string | null {
@@ -92,6 +94,8 @@ export function summarizeSourceRoutes(counts: {
   if (counts.shops > 0) parts.push(`商店販售（${counts.shops} 家）`);
   if (counts.compounds > 0) parts.push(`煉化配方（${counts.compounds} 條）`);
   if (counts.missions) parts.push(`任務獎勵（${counts.missions} 個）`);
+  if (counts.npcDialogues) parts.push(`NPC 對話（${counts.npcDialogues} 位）`);
+  if (counts.mapEvents) parts.push(`地圖事件（${counts.mapEvents} 張地圖）`);
   if (counts.boxes) parts.push(`禮盒（${counts.boxes} 種）`);
   if (counts.mysteryBoxes) parts.push(`隨機寶箱（${counts.mysteryBoxes} 種）`);
   return parts.length > 0 ? parts.join(" · ") : null;

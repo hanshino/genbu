@@ -13,6 +13,7 @@ import type {
   MissionRewardingItem,
   MissionTakingItem,
   MissionTimer,
+  NpcDialogueItem,
   Reward,
   RewardResolved,
   RewardType,
@@ -537,6 +538,34 @@ export function getMissionsRewardingItem(itemId: number): MissionRewardingItem[]
        ORDER BY mr.mission_id`,
     )
     .all(itemId) as MissionRewardingItem[];
+}
+
+function getNpcDialogueItems(itemId: number, rewardTypes: string[]): NpcDialogueItem[] {
+  return getDb()
+    .prepare(
+      `SELECT DISTINCT ns.name AS npcName, mr.qty, mr.duration_min AS durationMin,
+              (SELECT MIN(n.id) FROM npc n
+               WHERE n.name = ns.name AND n.is_npc = 1 AND n.is_monster = 0
+                 AND EXISTS (SELECT 1 FROM map_placements p
+                             WHERE p.npc_id = n.id AND p.category = 'npc' AND p.in_bounds = 1)
+              ) AS npcId
+       FROM mission_rewards mr
+       LEFT JOIN npc_strings ns ON ns.id = mr.npc_name_id
+       WHERE mr.is_mission = 0 AND mr.is_gm = 0 AND mr.ref_id = ?
+         AND mr.reward_type IN (${rewardTypes.map(() => "?").join(",")})
+       ORDER BY npcName, mr.qty, durationMin`,
+    )
+    .all(itemId, ...rewardTypes) as NpcDialogueItem[];
+}
+
+/** 非任務 NPC 對話給予的道具；同名、數量與期限去重。 */
+export function getNpcDialogueRewardsForItem(itemId: number): NpcDialogueItem[] {
+  return getNpcDialogueItems(itemId, ["item", "timed_item"]);
+}
+
+/** 非任務 NPC 對話會收走的道具。 */
+export function getNpcDialogueTakesForItem(itemId: number): NpcDialogueItem[] {
+  return getNpcDialogueItems(itemId, ["take_item"]);
 }
 
 /** 反查：哪些任務會收走此道具（take_item）？（道具頁用） */
