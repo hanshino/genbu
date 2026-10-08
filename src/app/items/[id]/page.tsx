@@ -19,10 +19,8 @@ import {
   getItemBoxContents,
   getMissionsRewardingItem,
   getMissionsTakingItem,
-  getNpcDialogueRewardsForItem,
-  getNpcDialogueTakesForItem,
 } from "@/lib/queries/mission-logic";
-import { getMapEventSourcesForItem } from "@/lib/queries/maps";
+import { getItemDialogueSources } from "@/lib/queries/dialogue-rewards";
 import { getMysteryContents, getMysterySources } from "@/lib/queries/mystery";
 import {
   presets,
@@ -107,9 +105,8 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
   const missionUses = getMissionsUsingItem(item.id);
   const missionRewards = getMissionsRewardingItem(item.id);
   const missionTakes = getMissionsTakingItem(item.id);
-  const npcDialogueRewards = getNpcDialogueRewardsForItem(item.id);
-  const npcDialogueTakes = getNpcDialogueTakesForItem(item.id);
-  const mapEventSources = getMapEventSourcesForItem(item.id);
+  const { npcSources: npcDialogueRewards, exchangeUses: npcDialogueTakes, mapSources: mapEventSources } =
+    getItemDialogueSources(item.id);
   const boxSources = getBoxesContainingItem(item.id);
   const boxContents = getItemBoxContents(item.id);
   const mysteryContents = getMysteryContents(item.id);
@@ -124,7 +121,8 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
     shops: shopSales.length,
     compounds: compoundSources.length,
     missions: new Set(rewardMissionIds).size,
-    npcDialogues: new Set(npcDialogueRewards.map((r) => r.npcName)).size,
+    npcDialogues: npcDialogueRewards.filter((r) => !r.orphan).length,
+    otherDialogues: npcDialogueRewards.some((r) => r.orphan),
     mapEvents: mapEventSources.length,
     boxes: new Set(boxSources.map((b) => b.boxItemId)).size,
     mysteryBoxes: new Set(mysterySources.map((m) => m.boxItemId)).size,

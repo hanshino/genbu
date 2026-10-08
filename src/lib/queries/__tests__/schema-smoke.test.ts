@@ -70,10 +70,8 @@ import {
   getMissionLogic,
   getMissionsRewardingItem,
   getMissionsTakingItem,
-  getNpcDialogueRewardsForItem,
-  getNpcDialogueTakesForItem,
 } from "../mission-logic";
-import { getMapEventSourcesForItem } from "../maps";
+import { getItemDialogueSources } from "../dialogue-rewards";
 import {
   getAllMissionGroupStats,
   getAllMissionListItems,
@@ -515,19 +513,17 @@ describe("mission-logic.ts", () => {
     expect(() => getMissionsTakingItem(ITEM_TAKEN_BY_MISSION_ID)).not.toThrow();
   });
 
-  it("非任務 NPC 對話給予／收走道具", () => {
-    expect(() => getNpcDialogueRewardsForItem(28581)).not.toThrow();
-    expect(() => getNpcDialogueTakesForItem(27068)).not.toThrow();
-  });
-
   it("getHeroTokenSources（有禮盒符令來源）", () => {
     expect(() => getHeroTokenSources(HERO_WITH_TOKEN_ID)).not.toThrow();
   });
 });
 
-describe("maps.ts", () => {
-  it("getMapEventSourcesForItem（地圖事件道具來源）", () => {
-    expect(() => getMapEventSourcesForItem(24200)).not.toThrow();
+describe("dialogue-rewards.ts", () => {
+  it("getItemDialogueSources（NPC／地圖來源與兌換用途）", () => {
+    expect(() => getItemDialogueSources(21204)).not.toThrow();
+    expect(() => getItemDialogueSources(28332)).not.toThrow();
+    expect(() => getItemDialogueSources(24200)).not.toThrow();
+    expect(() => getDb().prepare("SELECT is_gm FROM messages LIMIT 1").get()).not.toThrow();
   });
 });
 
@@ -699,6 +695,7 @@ describe("schema smoke — 任務對話上游解析表", () => {
     "mission_events",
     "mission_requirements",
     "mission_rewards",
+    "dialogue_rewards",
     "npc_strings",
     "map_event_ops",
     "map_events",
@@ -728,7 +725,7 @@ describe("schema smoke — 任務對話上游解析表", () => {
     expect(row).toBeDefined();
   });
 
-  it.each(["v_mission_overview", "v_item_mystery", "v_map_event_bindings"])("view %s 存在", (view) => {
+  it.each(["v_mission_overview", "v_item_mystery", "v_map_event_bindings", "v_npc_exchange_rewards", "v_npc_string_npcs"])("view %s 存在", (view) => {
     const db = getDb();
     const row = db.prepare("SELECT name FROM sqlite_master WHERE type = 'view' AND name = ?").get(view);
     expect(row).toBeDefined();

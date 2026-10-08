@@ -5,10 +5,7 @@ import {
   getItemBoxContents,
   getMissionsRewardingItem,
   getMissionsTakingItem,
-  getNpcDialogueRewardsForItem,
-  getNpcDialogueTakesForItem,
 } from "../mission-logic";
-import { getNpcDetail } from "../npcs";
 import type { ItemBoxOption } from "@/lib/types/mission-logic";
 
 const names = (o: ItemBoxOption) => o.rewards.map((r) => r.resolved.itemName);
@@ -75,37 +72,4 @@ describe("道具頁：禮盒內容與任務反查", () => {
     expect(getMissionsTakingItem(28336)).toContainEqual(expect.objectContaining({ missionId: 17002, qty: 20 }));
   });
 
-  it("三生石 28581：擲杯聖者的非任務對話獎勵去重，無詳情頁時不連結", () => {
-    expect(getNpcDialogueRewardsForItem(28581)).toEqual([
-      { npcName: "擲杯聖者", npcId: null, qty: 1, durationMin: null },
-    ]);
-  });
-
-  it("百魅丹 24085：保留不同數量的對話獎勵", () => {
-    expect(getNpcDialogueRewardsForItem(24085).map((r) => r.qty)).toEqual([1, 2]);
-  });
-
-  it("掃地僧的對話獎勵使用可解析的 NPC 詳情頁 id", () => {
-    const [source] = getNpcDialogueRewardsForItem(28954);
-    expect(source.npcName).toBe("掃地僧");
-    expect(source.npcId).toBe(7060);
-    expect(getNpcDetail(source.npcId!)?.name).toBe(source.npcName);
-  });
-
-  it("天工閣弟子對話中收走 27068 ×50，重複分支只列一次", () => {
-    expect(getNpcDialogueTakesForItem(27068)).toEqual([
-      { npcName: "天工閣弟子", npcId: 7897, qty: 50, durationMin: null },
-    ]);
-  });
-
-  it("未收錄 NPC 名稱的收走紀錄仍保留", () => {
-    expect(getNpcDialogueTakesForItem(33557)).toEqual([
-      { npcName: null, npcId: null, qty: 10, durationMin: null },
-    ]);
-  });
-
-  it("不存在的道具沒有 NPC 對話來源或用途", () => {
-    expect(getNpcDialogueRewardsForItem(999999999)).toEqual([]);
-    expect(getNpcDialogueTakesForItem(999999999)).toEqual([]);
-  });
 });

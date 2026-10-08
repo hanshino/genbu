@@ -5,20 +5,6 @@
 
 export type StageKind = "stage" | "sestage";
 
-/** 道具頁反查地圖事件獎勵，依地圖分組。 */
-export interface MapEventItemSource {
-  stageKind: StageKind;
-  stageId: number;
-  stageName: string | null;
-  rewards: {
-    bind: "death" | "zone" | "none" | null;
-    qty: number | null;
-    durationMin: number | null;
-    monsterId: number | null;
-    monsterName: string | null;
-  }[];
-}
-
 export interface StageRow {
   kind: StageKind;
   id: number;

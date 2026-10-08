@@ -85,6 +85,7 @@ export function summarizeSourceRoutes(counts: {
   compounds: number;
   missions?: number;
   npcDialogues?: number;
+  otherDialogues?: boolean;
   mapEvents?: number;
   boxes?: number;
   mysteryBoxes?: number;
@@ -95,6 +96,7 @@ export function summarizeSourceRoutes(counts: {
   if (counts.compounds > 0) parts.push(`煉化配方（${counts.compounds} 條）`);
   if (counts.missions) parts.push(`任務獎勵（${counts.missions} 個）`);
   if (counts.npcDialogues) parts.push(`NPC 對話（${counts.npcDialogues} 位）`);
+  if (counts.otherDialogues) parts.push("其他對話（入口未明）");
   if (counts.mapEvents) parts.push(`地圖事件（${counts.mapEvents} 張地圖）`);
   if (counts.boxes) parts.push(`禮盒（${counts.boxes} 種）`);
   if (counts.mysteryBoxes) parts.push(`隨機寶箱（${counts.mysteryBoxes} 種）`);
