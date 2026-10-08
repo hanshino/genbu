@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronRightIcon,
   CircleAlertIcon,
@@ -63,6 +63,7 @@ import type {
   PanelResult,
 } from "@/lib/types/stat-sim";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics/track";
 import { STAT_LABELS, fmt } from "./labels";
 
 const box = "overflow-hidden rounded-xl bg-card text-sm ring-1 ring-foreground/10";
@@ -385,9 +386,15 @@ function Stepper({
         inputMode="numeric"
         min={0}
         max={MAX_COUNT}
-        value={count}
+        key={count}
+        defaultValue={count}
         aria-label={`${name}次數`}
-        onChange={(e) => onChange(Number(e.target.value))}
+        onBlur={(e) => {
+          const n = Number(e.target.value);
+          if (e.target.value.trim() !== "" && Number.isSafeInteger(n) && n >= 0 && n !== count) {
+            onChange(n);
+          } else e.target.value = String(count);
+        }}
         className="h-full w-10 [appearance:textfield] bg-transparent text-center font-mono text-sm outline-none focus-visible:bg-muted/50 [&::-webkit-inner-spin-button]:appearance-none"
       />
       <Button
@@ -417,6 +424,7 @@ function SecondsInput({
 }) {
   const toText = (value: number) => String(unit === "秒" ? value / 1000 : value);
   const [text, setText] = useState(toText(ms));
+  const before = useRef(ms);
   return (
     <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
       {label}
@@ -426,6 +434,7 @@ function SecondsInput({
         min={0}
         step={unit === "秒" ? 0.05 : 10}
         value={text}
+        onFocus={() => { before.current = ms; }}
         onChange={(e) => {
           setText(e.target.value);
           const n = Number(e.target.value);
@@ -433,7 +442,10 @@ function SecondsInput({
             onChange(Math.round(unit === "秒" ? n * 1000 : n));
           }
         }}
-        onBlur={() => setText(toText(ms))}
+        onBlur={() => {
+          setText(toText(ms));
+          if (ms !== before.current) track("statsim_edit", { area: "skill" });
+        }}
         className="h-7 w-16 px-2 font-mono text-foreground"
       />
       {unit}
@@ -603,12 +615,14 @@ export function DamageTab({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const updateCombo = (next: (prev: SavedCombo) => SavedCombo) =>
+  const updateCombo = (next: (prev: SavedCombo) => SavedCombo, report = true) => {
     setCombo((prev) => {
       const value = next(prev);
       save(comboKey(character.id), JSON.stringify(value));
       return value;
     });
+    if (report) track("statsim_edit", { area: "skill" });
+  };
   const setCount = (key: string, count: number) =>
     updateCombo((prev) => {
       const counts = { ...prev.counts };
@@ -690,6 +704,7 @@ export function DamageTab({
   const pickMonster = (m: DamageMonster) => {
     setMonsterId(m.id);
     save(MONSTER_KEY, String(m.id));
+    if (m.id !== monsterId) track("statsim_edit", { area: "target" });
   };
 
   if (loadError) {
@@ -736,7 +751,7 @@ export function DamageTab({
   const best = Math.max(normalValue ?? 0, ...ranked.map((s) => rankValue(s) ?? 0), 1);
   const unit = rankMode === "second" ? "/秒" : undefined;
   const setTiming = (patch: Partial<Timing>) =>
-    updateCombo((prev) => ({ ...prev, timing: { ...prev.timing, ...patch } }));
+    updateCombo((prev) => ({ ...prev, timing: { ...prev.timing, ...patch } }), false);
   const castSub = (s: SkillDamage) => {
     const every = castSeconds(s, timing);
     if (rankMode === "cast") return `Lv${s.level}`;

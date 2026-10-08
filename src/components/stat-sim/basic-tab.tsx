@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CheckIcon, CircleAlertIcon, CircleDashedIcon, PlusIcon, XIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { SECTS } from "@/configs/stat-sim";
 import { inferRebirthPoints, levelPoints, rebirthReward } from "@/lib/stat-sim";
+import { track } from "@/lib/analytics/track";
 import { EQUIP_SLOTS, SUB_SECT_CLANS, type CharacterV1, type SectId } from "@/lib/types/stat-sim";
 import { cn } from "@/lib/utils";
 import { SECT_OPTIONS, SUB_SECT_LABELS, fmt, selectOnFocus } from "./labels";
@@ -37,7 +38,11 @@ export function BasicTab({ character, update }: { character: CharacterV1; update
           <Field label="門派" htmlFor="sim-sect">
             <Select
               value={String(character.sectId)}
-              onValueChange={(v) => v && update((c) => ({ ...c, sectId: Number(v) as SectId }))}
+              onValueChange={(v) => {
+                if (!v || Number(v) === character.sectId) return;
+                update((c) => ({ ...c, sectId: Number(v) as SectId }));
+                track("statsim_edit", { area: "stats" });
+              }}
             >
               <SelectTrigger id="sim-sect" className="w-full" aria-label="門派">
                 <SelectValue>{(v: unknown) => SECTS[Number(v) as SectId]?.name ?? ""}</SelectValue>
@@ -90,12 +95,16 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function LevelField({ character, update }: { character: CharacterV1; update: Update }) {
   const [draft, setDraft] = useState(String(character.level));
+  const before = useRef(character.level);
   const n = Number(draft);
   const valid = Number.isSafeInteger(n) && n >= 1 && n <= 300;
   return (
     <Field label="等級" htmlFor="sim-level">
       <Input
-        onFocus={selectOnFocus}
+        onFocus={(e) => {
+          before.current = character.level;
+          selectOnFocus(e);
+        }}
         id="sim-level"
         type="number"
         inputMode="numeric"
@@ -110,7 +119,10 @@ function LevelField({ character, update }: { character: CharacterV1; update: Upd
             update((c) => ({ ...c, level: next }));
           }
         }}
-        onBlur={() => !valid && setDraft(String(character.level))}
+        onBlur={() => {
+          if (!valid) setDraft(String(character.level));
+          if (character.level !== before.current) track("statsim_edit", { area: "stats" });
+        }}
       />
     </Field>
   );
@@ -137,14 +149,15 @@ function SubSects({ character, update }: { character: CharacterV1; update: Updat
               <Checkbox
                 checked={on}
                 disabled={disabled}
-                onCheckedChange={(checked) =>
+                onCheckedChange={(checked) => {
                   update((c) => ({
                     ...c,
                     subSects: checked
                       ? [...c.subSects.filter((s) => s !== clan), clan].slice(0, 2)
                       : c.subSects.filter((s) => s !== clan),
-                  }))
-                }
+                  }));
+                  track("statsim_edit", { area: "stats" });
+                }}
               />
               {SUB_SECT_LABELS[clan]}
             </label>
@@ -163,12 +176,14 @@ function Rebirth({ character, update }: { character: CharacterV1; update: Update
   const [mode, setMode] = useState<"known" | "guess">("known");
   const [gameLeft, setGameLeft] = useState("");
   const levels = character.rebirthLevels ?? [];
-  const setLevels = (next: number[]) =>
+  const setLevels = (next: number[]) => {
     update((c) => ({
       ...c,
       rebirthLevels: next,
       rebirthPoints: next.reduce((sum, lv) => sum + rebirthReward(lv), 0),
     }));
+    track("statsim_edit", { area: "stats" });
+  };
 
   const left = gameLeft.trim() === "" ? null : Number(gameLeft);
   const guess = inferRebirthPoints({
@@ -327,14 +342,15 @@ function Rebirth({ character, update }: { character: CharacterV1; update: Update
               size="sm"
               className="mt-3"
               disabled={!canApply}
-              onClick={() =>
-                canApply &&
+              onClick={() => {
+                if (!canApply) return;
                 update((c) => {
                   const next = { ...c, rebirthPoints: guess.total! };
                   delete next.rebirthLevels;
                   return next;
-                })
-              }
+                });
+                track("statsim_edit", { area: "stats" });
+              }}
             >
               套用這個總和
             </Button>

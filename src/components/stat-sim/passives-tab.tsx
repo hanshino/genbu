@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CircleAlertIcon, LayersIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
 import { SECTS } from "@/configs/stat-sim";
 import { WEAPON_TYPE_NAMES } from "@/configs/stat-sim-passives";
 import { collectionLevels, passiveName } from "@/lib/stat-sim";
+import { track } from "@/lib/analytics/track";
 import type { CharacterV1, GameData, PassiveDef } from "@/lib/types/stat-sim";
 import { cn } from "@/lib/utils";
 import { BonusRows } from "./bonus-rows";
@@ -93,10 +94,14 @@ export function PassivesTab({
   const collection = data.passives.filter((p) => p.group === "collection");
   const achievements = data.passives.filter((p) => p.group === "achievement");
   const [collectionValue, setCollectionValue] = useState("");
+  const collectionBefore = useRef("");
+  const levelBefore = useRef(0);
   const achievementMax = (p: PassiveDef) => Math.min(p.maxLevel, p.obtainableMax ?? 0);
-  const setLevel = (id: number, lv: number) =>
+  const setLevel = (id: number, lv: number, report = true) => {
     update((c) => ({ ...c, passiveLevels: { ...c.passiveLevels, [id]: lv } }));
-  const fill = (rows: Row[]) =>
+    if (report && lv !== (character.passiveLevels[id] ?? 0)) track("statsim_edit", { area: "passive" });
+  };
+  const fill = (rows: Row[]) => {
     update((c) => {
       const passiveLevels = { ...c.passiveLevels };
       for (const { passive } of rows) {
@@ -105,6 +110,8 @@ export function PassivesTab({
       }
       return { ...c, passiveLevels };
     });
+    track("statsim_edit", { area: "passive" });
+  };
 
   return (
     <div className="space-y-4">
@@ -177,15 +184,16 @@ export function PassivesTab({
                   <Button
                     size="xs"
                     variant="outline"
-                    onClick={() =>
+                    onClick={() => {
                       update((c) => ({
                         ...c,
                         passiveLevels: {
                           ...c.passiveLevels,
                           ...Object.fromEntries(achievements.map((p) => [p.id, achievementMax(p)])),
                         },
-                      }))
-                    }
+                      }));
+                      track("statsim_edit", { area: "passive" });
+                    }}
                   >
                     全滿
                   </Button>
@@ -215,7 +223,16 @@ export function PassivesTab({
                     className="h-8 w-32 text-right font-mono"
                     value={collectionValue}
                     disabled={!data.collectionThresholds?.length}
-                    onFocus={selectOnFocus}
+                    onFocus={(e) => {
+                      collectionBefore.current = e.target.value;
+                      selectOnFocus(e);
+                    }}
+                    onBlur={(e) => {
+                      const n = Number(e.target.value);
+                      if (e.target.value !== collectionBefore.current && e.target.value.trim() !== "" && Number.isSafeInteger(n) && n >= 0) {
+                        track("statsim_edit", { area: "passive" });
+                      }
+                    }}
                     onChange={(e) => {
                       const text = e.target.value;
                       setCollectionValue(text);
@@ -301,12 +318,18 @@ export function PassivesTab({
                           aria-label={`${p.name}等級`}
                           className="h-7 text-right font-mono"
                           value={lv}
-                          onFocus={selectOnFocus}
+                          onFocus={(e) => {
+                            levelBefore.current = lv;
+                            selectOnFocus(e);
+                          }}
+                          onBlur={() => {
+                            if (lv !== levelBefore.current) track("statsim_edit", { area: "passive" });
+                          }}
                           onChange={(e) => {
                             const n = Number(e.target.value);
                             if (Number.isSafeInteger(n)) {
                               setCollectionValue("");
-                              setLevel(p.id, Math.max(0, Math.min(p.maxLevel, n)));
+                              setLevel(p.id, Math.max(0, Math.min(p.maxLevel, n)), false);
                             }
                           }}
                         />
@@ -342,9 +365,12 @@ export function PassivesTab({
                 <BonusRows
                   label={label}
                   value={character.manual[k] ?? {}}
-                  onChange={(bonus) =>
-                    update((c) => ({ ...c, manual: { ...c.manual, [k]: bonus } }))
-                  }
+                  onChange={(bonus) => {
+                    update((c) => ({ ...c, manual: { ...c.manual, [k]: bonus } }));
+                    if (JSON.stringify(bonus) !== JSON.stringify(character.manual[k] ?? {})) {
+                      track("statsim_edit", { area: "manual" });
+                    }
+                  }}
                 />
               </div>
             ))}

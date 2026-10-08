@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useCharacters } from "@/lib/hooks/use-characters";
+import { track } from "@/lib/analytics/track";
 import { SECTS } from "@/configs/stat-sim";
 import { createDefaultCharacter } from "@/lib/stat-character";
 import { assembleImport } from "@/lib/stat-sim-import";
@@ -82,7 +83,7 @@ export function StatSimClient({ data, windows }: Props) {
   const importing = useRef(false);
   const { loaded, addImported, store: characterStore } = store;
 
-  const submitImport = useCallback(async (text: string) => {
+  const submitImport = useCallback(async (text: string, via: "hash" | "paste" = "paste") => {
     if (!loaded || importing.current) return;
     importing.current = true;
     setImportStatus("pending");
@@ -111,11 +112,13 @@ export function StatSimClient({ data, windows }: Props) {
       setImportStatus("idle");
       setEditError(null);
       setSnapshot(null);
+      track("statsim_import", { ok: true, via });
     } catch (error) {
       setImportError(error instanceof ImportError ? error.message : "匯入失敗，請重新複製");
       setImportStatus("error");
       setInitialImportText(text);
       setImportOpen(true);
+      track("statsim_import", { ok: false, via });
     } finally {
       importing.current = false;
     }
@@ -128,7 +131,7 @@ export function StatSimClient({ data, windows }: Props) {
     const text = window.location.href;
     window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- consume an explicit URL import once after store hydration
-    void submitImport(text);
+    void submitImport(text, "hash");
   }, [loaded, submitImport]);
 
   const openImport = () => {
@@ -195,6 +198,7 @@ export function StatSimClient({ data, windows }: Props) {
         : null,
     );
     update((c) => ({ ...c, attributes: bare }));
+    if (value !== active.attributes[key]) track("statsim_edit", { area: "stats" });
   };
   const entered = snapshot ? ATTRIBUTE_KEYS.filter((k) => snapshot.equipped[k] != null) : [];
 
@@ -221,6 +225,7 @@ export function StatSimClient({ data, windows }: Props) {
     setEditError(null);
     setSnapshot({ ...snapshot, bare });
     update((c) => ({ ...c, attributes: bare }));
+    track("statsim_edit", { area: "stats" });
   };
 
   const addPoint = (key: AttributeKey) => {
@@ -247,6 +252,7 @@ export function StatSimClient({ data, windows }: Props) {
 
   const applyEquip = (slot: EquipSlot, value: EquippedItem | null) => {
     update((c) => ({ ...c, equipment: { ...c.equipment, [slot]: value } }));
+    track("statsim_edit", { area: "equipment" });
     setPicking(null);
   };
 
@@ -254,7 +260,10 @@ export function StatSimClient({ data, windows }: Props) {
     return (
       <>
         <CharacterBar store={store} onImport={openImport} />
-        <ImportEmptyState onCreate={() => store.create()} onImport={openImport} />
+        <ImportEmptyState onCreate={() => {
+          store.create();
+          track("statsim_character", { action: "add" });
+        }} onImport={openImport} />
         {importDialog}
       </>
     );
@@ -341,6 +350,7 @@ export function StatSimClient({ data, windows }: Props) {
                   ...c,
                   attributes: { str: 1, pow: 1, vit: 1, agi: 1, dex: 1, wis: 1 },
                 }));
+                track("statsim_edit", { area: "stats" });
               }}
             >
               <RotateCcwIcon />
