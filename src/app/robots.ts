@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/login", "/me"],
+      disallow: ["/api/", "/login", "/me", "/search"],
     },
     sitemap: "https://genbu.hanshino.dev/sitemap.xml",
   };

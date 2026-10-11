@@ -5,16 +5,15 @@ import {
   ArrowRightIcon,
   DatabaseIcon,
   RouteIcon,
-  SearchIcon,
   ShieldIcon,
   WrenchIcon,
 } from "lucide-react";
+import { GlobalSearch } from "@/components/search/global-search";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { getDb } from "@/lib/db";
 import { cn } from "@/lib/utils";
+import { NAV_SECTIONS, type NavSection } from "@/lib/site-nav";
 import { getItemsByIds } from "@/lib/queries/items";
 import { getRecentReports } from "@/lib/queries/market-prices";
 import { SERVERS, formatAmount, relativeTime } from "@/lib/market-price";
@@ -24,6 +23,13 @@ export const metadata: Metadata = {
   description:
     "查詢《武林同萌傳》（原《新絕代雙驕》）的道具取得方式、怪物掉落、技能與任務資料，搭配裝備比較及副本攻略，找回你需要的江湖情報。",
   alternates: { canonical: "/" },
+};
+
+const SECTION_ICONS: Record<string, LucideIcon> = {
+  攻略: RouteIcon,
+  資料庫: DatabaseIcon,
+  裝備: ShieldIcon,
+  工具: WrenchIcon,
 };
 
 interface Feature {
@@ -40,65 +46,21 @@ interface FeatureGroup {
   overview?: string;
 }
 
-// ponytail: 分組與 href 對齊 navbar.tsx 的 navGroups；navbar 新增入口時這裡要一起補
-const guideGroup: FeatureGroup = {
-  label: "攻略",
-  icon: RouteIcon,
-  features: [
-    {
-      title: "修行路線",
-      description: "照等級走：從創角、轉副門派、進階任務到轉生，每一站該做什麼",
-      href: "/guides",
-    },
-    {
-      title: "迷宮攻略",
-      description: "各迷宮的走法整理，搭配 160／175／180 解謎工具",
-      href: "/guides/dungeons",
-    },
-  ],
-};
+// 沒有 description 的入口（例如 navbar 專用的「工具總覽」）不上首頁
+function toFeatureGroup(section: NavSection): FeatureGroup {
+  return {
+    label: section.label,
+    icon: SECTION_ICONS[section.label],
+    overview: section.overview,
+    features: section.items.flatMap((e) =>
+      e.description ? [{ title: e.title ?? e.label, description: e.description, href: e.href }] : [],
+    ),
+  };
+}
 
-const groups: FeatureGroup[] = [
-  {
-    label: "資料庫",
-    icon: DatabaseIcon,
-    features: [
-      { title: "道具", description: "13,000+ 道具的屬性、隨機詞條、掉落來源", href: "/items" },
-      { title: "技能", description: "14 門派技能瀏覽、等級成長對照", href: "/skills" },
-      { title: "怪物", description: "等級、屬性、掉落反查一次找齊", href: "/monsters" },
-      { title: "英雄", description: "英雄清單、相惜組合，還能試排隊伍編成", href: "/heroes" },
-      { title: "任務", description: "任務步驟、所需物品、地點與 NPC", href: "/missions" },
-      { title: "地圖", description: "全部場景地圖、所屬區域與屬性", href: "/maps" },
-      { title: "NPC 位置", description: "搜尋 NPC 名稱，查它出現在哪些地圖", href: "/npcs" },
-      { title: "練功地圖", description: "輸入等級，找適合練功的地圖", href: "/training-spots" },
-      { title: "煉化", description: "煉化配方來源、產出與機率", href: "/compounds" },
-      { title: "成就", description: "1,200+ 成就的點數、描述與獎勵", href: "/achievements" },
-      { title: "商店", description: "NPC 商店販售與收購價，查哪裡買得到", href: "/shops" },
-    ],
-  },
-  {
-    label: "裝備",
-    icon: ShieldIcon,
-    features: [
-      { title: "排行榜", description: "七大流派加權，可調權重與等級區間", href: "/ranking" },
-      { title: "比較", description: "多件座騎／背飾的雷達圖與流派分數並排看", href: "/compare" },
-    ],
-  },
-  {
-    label: "工具",
-    icon: WrenchIcon,
-    overview: "/tools",
-    features: [
-      { title: "強化查詢", description: "依屬性反查真元、魂石強化配方與機率", href: "/tools/enhance" },
-      { title: "160 迷霧九宮格", description: "輸入總和與關閉房間，推算水晶數", href: "/tools/160" },
-      { title: "175 北斗七星", description: "輸入數字，算出七顆星的開關", href: "/tools/175" },
-      { title: "180 神武禁地", description: "輸入總和與封印數字，列出所有排法", href: "/tools/180" },
-      { title: "易容閣", description: "試穿外觀、坐騎與染髮，可分享連結", href: "/tools/salon" },
-      { title: "經脈模擬器", description: "還沒 180 等也能先試打通、規劃配點", href: "/tools/meridian" },
-      { title: "屬性模擬器", description: "填配點、裝備與被動，算出角色面板", href: "/tools/stat-sim" },
-    ],
-  },
-];
+const allGroups = NAV_SECTIONS.map(toFeatureGroup);
+const guideGroup = allGroups.find((g) => g.label === "攻略")!;
+const groups = allGroups.filter((g) => g !== guideGroup);
 
 function getStats() {
   const db = getDb();
@@ -148,19 +110,7 @@ export default function HomePage() {
           玄武提供《武林同萌傳》（原《新絕代雙驕》）的道具、怪物、技能與任務查詢，以及裝備比較和副本攻略。
         </p>
 
-        <form action="/items" role="search" className="mt-6 flex w-full max-w-md gap-2">
-          <Input
-            name="search"
-            type="search"
-            placeholder="搜尋道具名稱…"
-            aria-label="搜尋道具名稱"
-            className="h-9"
-          />
-          <Button type="submit" size="lg">
-            <SearchIcon aria-hidden />
-            搜尋
-          </Button>
-        </form>
+        <GlobalSearch className="mt-6" />
 
         <p className="mt-4 text-xs text-muted-foreground">
           收錄 <span className="tabular-nums">{stats.items.toLocaleString()}</span> 道具 ·{" "}

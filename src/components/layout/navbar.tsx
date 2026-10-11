@@ -13,64 +13,22 @@ import { AccountUser, IdentityBlock, IdentityTag, loginHref } from "@/components
 import { WelcomeBanner } from "@/components/auth/welcome-banner";
 import { track } from "@/lib/analytics/track";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import {
+  ABOUT_LINK,
+  CHANGELOG_LINK,
+  HOME_LINK,
+  NAV_SECTIONS,
+  type NavSection,
+} from "@/lib/site-nav";
 
-type NavLink = { href: string; label: string; exact?: boolean };
-// match：整組共用的路徑前綴，落在底下任何頁面（例如沒列在選單裡的文章頁）時整組亮起
-type NavGroup = { label: string; items: NavLink[]; match?: string };
-
-const navGroups: NavGroup[] = [
-  {
-    label: "資料庫",
-    items: [
-      { href: "/items", label: "道具" },
-      { href: "/skills", label: "技能" },
-      { href: "/monsters", label: "怪物" },
-      { href: "/heroes", label: "英雄" },
-      { href: "/missions", label: "任務" },
-      { href: "/maps", label: "地圖" },
-      { href: "/npcs", label: "NPC" },
-      { href: "/training-spots", label: "練功地圖" },
-      { href: "/compounds", label: "煉化" },
-      { href: "/achievements", label: "成就" },
-      { href: "/shops", label: "商店" },
-    ],
-  },
-  {
-    label: "裝備",
-    items: [
-      { href: "/ranking", label: "排行榜" },
-      { href: "/compare", label: "比較" },
-    ],
-  },
-  {
-    label: "工具",
-    items: [
-      { href: "/tools", label: "工具總覽", exact: true },
-      { href: "/tools/enhance", label: "強化查詢" },
-      { href: "/tools/160", label: "160 迷霧九宮格" },
-      { href: "/tools/175", label: "175 北斗七星" },
-      { href: "/tools/180", label: "180 神武禁地" },
-      { href: "/tools/salon", label: "易容閣" },
-      { href: "/tools/meridian", label: "經脈模擬器" },
-      { href: "/tools/stat-sim", label: "屬性模擬器" },
-    ],
-  },
-  {
-    label: "攻略",
-    match: "/guides",
-    items: [
-      { href: "/guides", label: "修行路線", exact: true },
-      { href: "/guides/dungeons", label: "迷宮攻略" },
-    ],
-  },
-];
+const navGroups = NAV_SECTIONS;
 
 function isActive(pathname: string, href: string, exact = false) {
   if (exact || href === "/") return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function isGroupActive(pathname: string, group: NavGroup) {
+function isGroupActive(pathname: string, group: NavSection) {
   if (group.match && isActive(pathname, group.match)) return true;
   return group.items.some((i) => isActive(pathname, i.href, i.exact));
 }
@@ -88,15 +46,24 @@ export function Navbar({ user }: { user: AccountUser | null }) {
         </Link>
 
         <nav className="hidden flex-1 items-center gap-1 text-sm md:flex">
-          <DesktopLink href="/" label="首頁" pathname={pathname} />
+          <DesktopLink href={HOME_LINK.href} label={HOME_LINK.label} pathname={pathname} />
           {navGroups.map((group) => (
             <DesktopGroup key={group.label} group={group} pathname={pathname} />
           ))}
-          <DesktopLink href="/changelog" label="更新紀錄" pathname={pathname} />
+          <DesktopLink
+            href={CHANGELOG_LINK.href}
+            label={CHANGELOG_LINK.label}
+            pathname={pathname}
+          />
         </nav>
 
         <div className="ml-auto hidden items-center gap-2 md:flex">
-          <DesktopLink href="/about" label="關於" pathname={pathname} muted />
+          <DesktopLink
+            href={ABOUT_LINK.href}
+            label={ABOUT_LINK.label}
+            pathname={pathname}
+            muted
+          />
           <ThemeToggle />
           <AccountMenu user={user} />
         </div>
@@ -133,8 +100,8 @@ export function Navbar({ user }: { user: AccountUser | null }) {
 
                 <nav className="flex flex-col gap-4">
                   <MobileLink
-                    href="/"
-                    label="首頁"
+                    href={HOME_LINK.href}
+                    label={HOME_LINK.label}
                     pathname={pathname}
                     onNavigate={() => setOpen(false)}
                   />
@@ -160,16 +127,16 @@ export function Navbar({ user }: { user: AccountUser | null }) {
                   ))}
 
                   <MobileLink
-                    href="/changelog"
-                    label="更新紀錄"
+                    href={CHANGELOG_LINK.href}
+                    label={CHANGELOG_LINK.label}
                     pathname={pathname}
                     onNavigate={() => setOpen(false)}
                   />
 
                   <div className="border-border/60 mt-2 border-t pt-3">
                     <MobileLink
-                      href="/about"
-                      label="關於"
+                      href={ABOUT_LINK.href}
+                      label={ABOUT_LINK.label}
                       pathname={pathname}
                       onNavigate={() => setOpen(false)}
                     />
@@ -276,7 +243,7 @@ function DesktopLink({
   );
 }
 
-function DesktopGroup({ group, pathname }: { group: NavGroup; pathname: string }) {
+function DesktopGroup({ group, pathname }: { group: NavSection; pathname: string }) {
   const active = isGroupActive(pathname, group);
   return (
     <MenuPrimitive.Root>
