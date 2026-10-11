@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
     "/guides": ["./content/guides/**"],
     "/guides/[slug]": ["./content/guides/**"],
     "/sitemap.xml": ["./content/guides/**"],
+    "/search": ["./content/guides/**"],
+    "/api/search": ["./content/guides/**"],
   },
 };
 

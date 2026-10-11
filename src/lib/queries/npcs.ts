@@ -2,7 +2,7 @@ import { getDb } from "@/lib/db";
 import { getNpcImageMap } from "@/lib/queries/images";
 import type { NpcDetail, NpcMap, NpcMission, NpcSummary } from "@/lib/types/npc";
 
-const NPC_MAPS_SQL = `
+export const NPC_MAPS_SQL = `
   SELECT n.id, n.name, p.id AS placementId,
                   p.stage_kind AS stageKind,
                   p.stage_id AS stageId,
