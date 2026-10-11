@@ -1,6 +1,6 @@
 import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import { getDb } from "@/lib/db";
-import { getGuides } from "@/lib/guides";
+import { getGuide, getGuides } from "@/lib/guides";
 import { NPC_MAPS_SQL } from "@/lib/queries/npcs";
 import { getSearchablePages } from "@/lib/site-nav";
 import {
@@ -46,6 +46,8 @@ function textRank(text: string, q: string): number | null {
 export function snippetAround(text: string, q: string): string {
   const plain = text
     .replace(/<[^>]*>/g, "")
+    // 任務步驟裡的道具佔位符，例如 [item26069×5]
+    .replace(/\[item\d+(?:×\d+)?\]/g, "")
     .replace(/(?:\\n|\s)+/g, " ")
     .trim();
   const at = plain.toLowerCase().indexOf(q.toLowerCase());
@@ -93,11 +95,14 @@ const DB_SPECS: DbSpec[] = [
     href: (r) => `/items/${r.id}`,
   },
   {
-    // magic 沒有 PK，id 會跨技能共用，所以以 (id, name) 為一筆，連到該技能的最低等級
+    // magic 沒有 PK，id 會跨技能共用，所以以 (id, name) 為一筆，連到該技能的最低等級；
+    // 各等級說明不同，串起來比對，任一等級提到就算命中
     type: "skill",
-    base: `SELECT id, name, name AS kname, clan AS meta, MIN(level) AS extra
+    base: `SELECT id, name, name AS kname, clan AS meta, MIN(level) AS extra,
+                  group_concat(help, ' ') AS ktext
            FROM magic GROUP BY id, name`,
     numericId: true,
+    fullText: true,
     href: (r) => `/skills/${r.id}?level=${r.extra ?? 1}`,
     hitId: (r) => `${r.id}:${r.name}`,
   },
@@ -123,9 +128,14 @@ const DB_SPECS: DbSpec[] = [
     href: (r) => `/npcs/${r.id}`,
   },
   {
+    // 任務說明加上各步驟文字，詳情頁都看得到
     type: "mission",
-    base: `SELECT id, name, name AS kname, NULL AS meta, NULL AS extra
-           FROM missions WHERE name IS NOT NULL AND trim(name) <> ''`,
+    base: `SELECT m.id, m.name, m.name AS kname, NULL AS meta, NULL AS extra,
+                  COALESCE(m.help, '') || ' ' || COALESCE(
+                    (SELECT group_concat(s.plain_text, ' ') FROM mission_steps s WHERE s.mission_id = m.id),
+                    '') AS ktext
+           FROM missions m WHERE m.name IS NOT NULL AND trim(m.name) <> ''`,
+    fullText: true,
     href: (r) => `/missions/${r.id}`,
   },
   {
@@ -137,7 +147,8 @@ const DB_SPECS: DbSpec[] = [
   },
   {
     type: "hero",
-    base: `SELECT id, name, name AS kname, NULL AS meta, NULL AS extra FROM hero`,
+    base: `SELECT id, name, name AS kname, NULL AS meta, NULL AS extra, help AS ktext FROM hero`,
+    fullText: true,
     href: (r) => `/heroes/${r.id}`,
   },
   {
@@ -146,12 +157,14 @@ const DB_SPECS: DbSpec[] = [
     href: (r) => `/compounds/${r.id}`,
   },
   {
-    // 成就沒有詳情頁，導到列表頁的搜尋；只比對名稱（列表頁會連描述一起搜）
+    // 成就沒有詳情頁，導到列表頁的搜尋（列表頁同樣會比對描述）
     type: "achievement",
-    base: `SELECT a.id, a.name, a.name AS kname, c.name AS meta, NULL AS extra
+    base: `SELECT a.id, a.name, a.name AS kname, c.name AS meta, NULL AS extra,
+                  a.description AS ktext
            FROM achievements a
            JOIN achievement_sub_cats sc ON sc.id = a.sub_cat_id
            JOIN achievement_categories c ON c.id = sc.category_id`,
+    fullText: true,
     href: (r) => `/achievements?search=${encodeURIComponent(r.name)}`,
   },
 ];
@@ -238,11 +251,30 @@ function searchPages(q: string): Ranked[] {
   return ranked;
 }
 
+// 攻略內文去掉 MDX 語法後的純文字，依 slug 快取（內容隨 build 固定）
+const guideTextCache = new Map<string, string>();
+
+function guideText(slug: string): string {
+  let text = guideTextCache.get(slug);
+  if (text === undefined) {
+    text = (getGuide(slug)?.source ?? "")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/[#*_`>|]+/g, " ")
+      .replace(/\s+/g, " ");
+    guideTextCache.set(slug, text);
+  }
+  return text;
+}
+
 function searchGuides(q: string): Ranked[] {
   const ranked: Ranked[] = [];
   for (const g of getGuides()) {
-    const rank = textRank(g.title, q);
-    if (rank === null) continue;
+    const titleRank = textRank(g.title, q);
+    const body = titleRank === null ? guideText(g.slug) : "";
+    const inBody = titleRank === null && body.toLowerCase().includes(q.toLowerCase());
+    if (titleRank === null && !inBody) continue;
+    const rank = titleRank ?? RANK_TEXT;
     const meta =
       g.levelMin !== null && g.levelMax !== null
         ? `Lv.${g.levelMin}~${g.levelMax}`
@@ -257,6 +289,7 @@ function searchGuides(q: string): Ranked[] {
         name: g.title,
         href: `/guides/${g.slug}`,
         ...(meta ? { meta } : {}),
+        ...(inBody ? { snippet: snippetAround(body, q) } : {}),
       },
     });
   }

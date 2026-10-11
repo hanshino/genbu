@@ -34,6 +34,26 @@ describe("searchAll（真實資料庫）", () => {
     }
   });
 
+  it("技能說明也會被搜到（緩速）", () => {
+    const skills = searchAll("緩速", { type: "skill" }).groups[0];
+    expect(skills.hits.map((h) => h.name)).toContain("寵冰刺碎裂");
+    for (const hit of skills.hits) expect(hit.snippet).toContain("緩速");
+  });
+
+  it.each([
+    ["mission", "水滴泡泡", "武術執教的測驗"], // 只在任務步驟裡出現
+    ["hero", "襁褓", "天下第一神劍。穆傲天"],
+    ["achievement", "完成任意成就10個", "初有所成"],
+    ["guide", "新手", "剛創角別慌：1–30 級這樣起步"],
+  ] as const)("%s 的說明文字也會被搜到（%s）", (type, q, name) => {
+    const hit = searchAll(q, { type }).groups[0]?.hits.find((h) => h.name === name);
+    expect(hit?.snippet).toContain(q);
+  });
+
+  it("snippetAround 去掉任務步驟的道具佔位符", () => {
+    expect(snippetAround("取回5個水滴泡泡[item26069×5]回來", "水滴泡泡")).toBe("取回5個水滴泡泡回來");
+  });
+
   it("snippetAround 去掉標籤與換行並截出命中處", () => {
     const text = "前言很長很長很長很長很長很長很長很長<FONT COLOR=F80000>赤焰洞</FONT>\\n後面還有很多很多很多很多很多字";
     const s = snippetAround(text, "赤焰");
