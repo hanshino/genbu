@@ -115,7 +115,9 @@ function estimateReadingMinutes(source: string): number {
   return Math.max(1, minutes);
 }
 
-function parseFrontmatter(raw: string, filename: string): { fm: RawFrontmatter; body: string } {
+function parseFrontmatter(rawInput: string, filename: string): { fm: RawFrontmatter; body: string } {
+  // Windows checkout（core.autocrlf=true）會把 mdx 轉成 CRLF，統一成 LF 再解析
+  const raw = rawInput.replace(/\r\n/g, "\n");
   const match = raw.match(/^---\n([\s\S]*?)\n---\n?/);
   if (!match) {
     throw new Error(`content/guides/${filename}: 缺少 frontmatter block`);
