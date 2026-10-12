@@ -43,6 +43,7 @@ npm run lint      # ESLint
 - `tthol.sqlite` is read-only game data, do NOT modify it
 - It is not tracked by git: the file lives as a GitHub Release asset (`db-YYYY-MM-DD` prerelease) and `db.lock.json` pins tag + sha256. Fresh clone → `npm run db:pull`. New DB → `npm run changelog -- <version>`, `npm run db:publish`, then commit `db.lock.json` + changelog JSON (publish before push, or CI can't download it)
 - Access via better-sqlite3 in Server Components / Route Handlers only
+- 市集擺攤掃描資料（tthol-headless 的 `market.db`）的結構與讀法見 `docs/market-db.md`
 - Key tables: items (13k), magic (6k), item_rand (5k), npc (5k), strong_formula (4k), monsters (3k), hero (84), hero_connect (75)
 
 ## Conventions
