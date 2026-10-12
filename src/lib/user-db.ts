@@ -52,6 +52,25 @@ export function getUserDb(): Database.Database {
         value     INTEGER NOT NULL,
         PRIMARY KEY (report_id, voter_sub)
       )`);
+      db.exec(`CREATE TABLE IF NOT EXISTS market_scans (
+        scan_id INTEGER PRIMARY KEY,
+        server TEXT NOT NULL,
+        started REAL NOT NULL,
+        ended REAL,
+        item_count INTEGER NOT NULL,
+        received_at INTEGER NOT NULL
+      )`);
+      db.exec(`CREATE TABLE IF NOT EXISTS market_listings (
+        scan_id INTEGER NOT NULL,
+        owner_hash TEXT NOT NULL,
+        item_id INTEGER NOT NULL,
+        price INTEGER NOT NULL,
+        count INTEGER NOT NULL,
+        strengthen INTEGER NOT NULL,
+        data TEXT
+      )`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_market_listings_item ON market_listings(item_id)`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_market_listings_scan ON market_listings(scan_id)`);
       globalDb._userDb = db;
     } catch (error) {
       db.close();
