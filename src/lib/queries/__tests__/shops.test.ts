@@ -52,7 +52,8 @@ describe("getShops", () => {
       >;
       const expected = rows.length === 1 && rows[0].stageName && rows[0].x != null && rows[0].y != null
         ? rows[0] : null;
-      expect(shop.location).toEqual(expected);
+      // 52 謎霧兌換商人位置為手動指定（另測於上方）
+      if (shop.id !== 52) expect(shop.location).toEqual(expected);
       expect(new Set(shop.npcNames).size).toBe(shop.npcNames.length);
       expect(getShopDetail(shop.id)!.npcNames).toEqual(shop.npcNames);
     }
