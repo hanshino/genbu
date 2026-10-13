@@ -40,6 +40,23 @@ function getShopNpcInfo(shopId: number): ShopNpcInfo {
       cache.set(row.shopId, info);
     }
 
+    // 點 NPC 直接開店（無對話）時，開店訊息本身的內文就是 NPC 名，例如 52 魅力兌換商人。
+    // 「開道具」「開商店69」這類是內部標記，不採用。
+    const directOpens = db.prepare(
+      `SELECT DISTINCT t.a0 AS shopId, m.msg AS name
+       FROM trigger_ops t
+       JOIN messages m ON m.file_no = t.file_no AND m.msg_id = t.msg_id
+       WHERE t.kind = 'A' AND t.op = 5 AND m.name_id IS NULL
+         AND m.msg IS NOT NULL AND m.msg <> '' AND m.msg NOT LIKE '開%'
+       ORDER BY 1, 2`,
+    ).all() as Array<{ shopId: number; name: string }>;
+    for (const row of directOpens) {
+      if (cache.get(row.shopId)?.npcNames.length) continue;
+      const info = cache.get(row.shopId) ?? { npcNames: [], location: null };
+      info.npcNames.push(row.name);
+      cache.set(row.shopId, info);
+    }
+
     // ponytail: 位置僅能依 NPC 名稱比對；總配置筆數非一筆就不顯示，精確對應需資料提供 NPC ID。
     const placements = db.prepare(
       `SELECT p.stage_id AS stageId, p.stage_kind AS stageKind, s.name AS stageName,
