@@ -14,12 +14,24 @@ function getShopNpcInfo(shopId: number): ShopNpcInfo {
   if (!shopNpcCache) {
     const db = getDb();
     const names = db.prepare(
-      `SELECT DISTINCT t.a0 AS shopId, ns.name
-       FROM trigger_ops t
-       JOIN messages m ON m.file_no = t.file_no AND m.msg_id = t.msg_id
-       JOIN npc_strings ns ON ns.id = m.name_id
-       WHERE t.kind = 'A' AND t.op = 5 AND ns.name IS NOT NULL AND ns.name <> ''
-       ORDER BY t.a0, ns.name`,
+      // 開店訊息本身沒標說話者（兌換/活動店常見）時，改取上一句對話的 NPC。
+      // ponytail: 只回溯一層；更深層多半是「解任務npc」這類泛用名，不採用。
+      `WITH open_msgs AS (
+         SELECT t.a0 AS shopId, m.file_no, m.msg_id, ns.name
+         FROM trigger_ops t
+         JOIN messages m ON m.file_no = t.file_no AND m.msg_id = t.msg_id
+         LEFT JOIN npc_strings ns ON ns.id = m.name_id AND ns.name <> ''
+         WHERE t.kind = 'A' AND t.op = 5
+       )
+       SELECT shopId, name FROM open_msgs WHERE name IS NOT NULL
+       UNION
+       SELECT o.shopId, ns.name
+       FROM open_msgs o
+       JOIN dialogue_edges e ON e.to_msg = o.msg_id
+       JOIN messages pm ON pm.file_no = o.file_no AND pm.msg_id = e.from_msg
+       JOIN npc_strings ns ON ns.id = pm.name_id AND ns.name <> ''
+       WHERE o.name IS NULL
+       ORDER BY 1, 2`,
     ).all() as Array<{ shopId: number; name: string }>;
     const cache = new Map<number, ShopNpcInfo>();
     for (const row of names) {
