@@ -70,6 +70,9 @@ function getShopNpcInfo(shopId: number): ShopNpcInfo {
         info.location = rows[0];
       }
     }
+    // 謎霧兌換商人另有木丸島三點配置，玩家實測主要在曼陀羅城，指定顯示。
+    const shop52 = cache.get(52);
+    if (shop52) shop52.location = { stageId: 264, stageKind: "stage", stageName: "曼陀羅城", x: 16, y: 56 };
     shopNpcCache = cache;
   }
   return shopNpcCache.get(shopId) ?? { npcNames: [], location: null };

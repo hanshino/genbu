@@ -28,6 +28,7 @@ describe("getShops", () => {
     expect(byId.get(52)!.npcNames).toEqual(["謎霧兌換商人"]);
     expect(byId.get(54)!.npcNames).toEqual(["魅力兌換商人"]);
     expect(byId.get(54)!.location?.stageName).toBe("成都少城");
+    expect(byId.get(52)!.location?.stageName).toBe("曼陀羅城");
 
     expect(shopLabel(byId.get(1)!)).toBe("飛雁山莊武器商");
     expect(byId.get(7)!.npcNames).toEqual(["莫愁谷道具店", "藥鋪掌櫃", "韓三娘"]);
