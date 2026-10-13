@@ -37,11 +37,13 @@ export function shopTitle(id: number): string {
  * 由 shops.style0 判定計價幣別:
  * - style0 = 2   → 金幣(gold)
  * - style0 > 100 → 貨幣道具(item),style0 即該貨幣道具的 item id
+ * - style0 = 6   → 魅力值(charm);依 54 魅力兌換商人推定
  * - 其它          → 無法判定(other),直接顯示 real_price 數字,不標任何幣別
  * style2/style3 恆為 (2,20000) 常數、無意義,忽略。
  */
 export function shopCurrencyKind(style0: number | null | undefined): ShopCurrencyKind {
   if (style0 === 2) return "gold";
+  if (style0 === 6) return "charm";
   if (style0 != null && style0 > 100) return "item";
   return "other";
 }
@@ -49,6 +51,7 @@ export function shopCurrencyKind(style0: number | null | undefined): ShopCurrenc
 /** 文字情境用的幣別標籤;other/未知回傳 null(價格直接顯示數字即可)。 */
 export function shopCurrencyLabel(currency: ShopCurrency): string | null {
   if (currency.kind === "gold") return "金幣";
+  if (currency.kind === "charm") return "魅力值";
   if (currency.kind === "item") return currency.itemName ?? "兌換道具";
   return null;
 }
@@ -63,6 +66,7 @@ function shopStoreLabel(kind: ShopKind, currency: ShopCurrency): string {
   if (currency.kind === "gold") {
     return kind === "weapon" ? "金幣武器店" : "金幣道具店";
   }
+  if (currency.kind === "charm") return "魅力值兌換店";
   if (currency.kind === "item") {
     return `${currency.itemName ?? "兌換道具"}兌換店`;
   }

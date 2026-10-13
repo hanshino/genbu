@@ -19,11 +19,15 @@ describe("getShops", () => {
 
   it("附上計價幣別與最大宗商品類型,可組出辨識標籤", () => {
     const byId = new Map(getShops().map((s) => [s.id, s]));
-    // 貨幣種類統計:金幣 48、貨幣道具 31、其它 10
+    // 貨幣種類統計:金幣 48、貨幣道具 31、魅力值 1、其它 9
     const all = [...byId.values()];
     expect(all.filter((s) => s.currency.kind === "gold")).toHaveLength(48);
     expect(all.filter((s) => s.currency.kind === "item")).toHaveLength(31);
-    expect(all.filter((s) => s.currency.kind === "other")).toHaveLength(10);
+    expect(all.filter((s) => s.currency.kind === "charm")).toHaveLength(1);
+    expect(all.filter((s) => s.currency.kind === "other")).toHaveLength(9);
+    expect(byId.get(52)!.npcNames).toEqual(["謎霧兌換商人"]);
+    expect(byId.get(54)!.npcNames).toEqual(["魅力兌換商人"]);
+    expect(byId.get(54)!.location?.stageName).toBe("成都少城");
 
     expect(shopLabel(byId.get(1)!)).toBe("飛雁山莊武器商");
     expect(byId.get(7)!.npcNames).toEqual(["莫愁谷道具店", "藥鋪掌櫃", "韓三娘"]);

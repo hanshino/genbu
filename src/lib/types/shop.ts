@@ -8,7 +8,7 @@ export type ShopKind = "weapon" | "item";
  * - item  :以貨幣道具計價(style0 > 100,style0 即貨幣道具 item id)
  * - other :幣別無法從資料判定(style0 ∈ {0,4,6,8,10}…),直接顯示數字
  */
-export type ShopCurrencyKind = "gold" | "item" | "other";
+export type ShopCurrencyKind = "gold" | "charm" | "item" | "other";
 
 export interface ShopCurrency {
   kind: ShopCurrencyKind;
