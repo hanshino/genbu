@@ -1,3 +1,5 @@
+import type { StageKind } from "@/lib/types/stage";
+
 export type ShopKind = "weapon" | "item";
 
 /**
@@ -16,7 +18,18 @@ export interface ShopCurrency {
   itemName: string | null;
 }
 
-export interface ShopSummary {
+export interface ShopNpcInfo {
+  npcNames: string[];
+  location: {
+    stageId: number;
+    stageKind: StageKind;
+    stageName: string;
+    x: number;
+    y: number;
+  } | null;
+}
+
+export interface ShopSummary extends ShopNpcInfo {
   id: number;
   kind: ShopKind;
   castleId: number | null;
@@ -25,7 +38,6 @@ export interface ShopSummary {
   /** 販售清單中最大宗的 items.type_name(英文列舉),無販售則 null */
   mainType: string | null;
   sellCount: number;
-  buyCount: number;
 }
 
 export interface ShopSellEntry {
@@ -38,13 +50,7 @@ export interface ShopSellEntry {
   rate: number;
 }
 
-export interface ShopBuyEntry {
-  itemId: number;
-  itemName: string | null;
-  rate: number;
-}
-
-export interface ShopDetail {
+export interface ShopDetail extends ShopNpcInfo {
   id: number;
   kind: ShopKind;
   castleId: number | null;
@@ -53,27 +59,17 @@ export interface ShopDetail {
   /** 販售清單中最大宗的 items.type_name(英文列舉),無販售則 null */
   mainType: string | null;
   sells: ShopSellEntry[];
-  buys: ShopBuyEntry[];
 }
 
 /** 道具頁「商店販售」列 */
 export interface ItemShopSale {
   shopId: number;
+  npcNames: string[];
   kind: ShopKind;
   castleId: number | null;
   /** 對玩家顯示的售價(= shop_sells.real_price) */
   price: number;
   /** 內部用:shop_sells.price(百分比 rate),不對玩家顯示 */
-  rate: number;
-  /** 該商店的計價幣別 */
-  currency: ShopCurrency;
-}
-
-/** 道具頁「商店收購」列 */
-export interface ItemShopBuy {
-  shopId: number;
-  kind: ShopKind;
-  castleId: number | null;
   rate: number;
   /** 該商店的計價幣別 */
   currency: ShopCurrency;

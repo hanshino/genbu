@@ -1,14 +1,58 @@
 import { getDb } from "@/lib/db";
 import { shopCurrencyKind, shopKindOf } from "@/lib/constants/shop";
 import type {
-  ItemShopBuy,
   ItemShopSale,
   ShopCurrency,
   ShopDetail,
+  ShopNpcInfo,
   ShopSummary,
 } from "@/lib/types/shop";
 
-/** 全部商店 + 販售/收購種數彙總,依 id 排序。 */
+let shopNpcCache: Map<number, ShopNpcInfo> | undefined;
+
+function getShopNpcInfo(shopId: number): ShopNpcInfo {
+  if (!shopNpcCache) {
+    const db = getDb();
+    const names = db.prepare(
+      `SELECT DISTINCT t.a0 AS shopId, ns.name
+       FROM trigger_ops t
+       JOIN messages m ON m.file_no = t.file_no AND m.msg_id = t.msg_id
+       JOIN npc_strings ns ON ns.id = m.name_id
+       WHERE t.kind = 'A' AND t.op = 5 AND ns.name IS NOT NULL AND ns.name <> ''
+       ORDER BY t.a0, ns.name`,
+    ).all() as Array<{ shopId: number; name: string }>;
+    const cache = new Map<number, ShopNpcInfo>();
+    for (const row of names) {
+      const info = cache.get(row.shopId) ?? { npcNames: [], location: null };
+      info.npcNames.push(row.name);
+      cache.set(row.shopId, info);
+    }
+
+    // ponytail: 位置僅能依 NPC 名稱比對；總配置筆數非一筆就不顯示，精確對應需資料提供 NPC ID。
+    const placements = db.prepare(
+      `SELECT p.stage_id AS stageId, p.stage_kind AS stageKind, s.name AS stageName,
+              p.tile_x AS x, p.tile_y AS y
+       FROM map_placements p
+       LEFT JOIN stages s ON s.kind = p.stage_kind AND s.id = p.stage_id
+       WHERE p.category = 'npc' AND p.npc_id IN (
+         SELECT id FROM npc WHERE name IN (SELECT value FROM json_each(?))
+       )
+       LIMIT 2`,
+    );
+    for (const info of cache.values()) {
+      const rows = placements.all(JSON.stringify(info.npcNames)) as Array<
+        NonNullable<ShopNpcInfo["location"]>
+      >;
+      if (rows.length === 1 && rows[0].stageName && rows[0].x != null && rows[0].y != null) {
+        info.location = rows[0];
+      }
+    }
+    shopNpcCache = cache;
+  }
+  return shopNpcCache.get(shopId) ?? { npcNames: [], location: null };
+}
+
+/** 全部商店 + 販售種數彙總,依 id 排序。 */
 export function getShops(): ShopSummary[] {
   const db = getDb();
   const rows = db
@@ -18,7 +62,6 @@ export function getShops(): ShopSummary[] {
               s.style0    AS style0,
               cur.name    AS currencyItemName,
               (SELECT COUNT(*) FROM shop_sells ss WHERE ss.shop_id = s.id) AS sellCount,
-              (SELECT COUNT(*) FROM shop_buys sb WHERE sb.shop_id = s.id)  AS buyCount,
               (SELECT i.type_name
                FROM shop_sells ss JOIN items i ON i.id = ss.item_id
                WHERE ss.shop_id = s.id AND i.type_name IS NOT NULL AND i.type_name <> ''
@@ -35,13 +78,13 @@ export function getShops(): ShopSummary[] {
     style0: number | null;
     currencyItemName: string | null;
     sellCount: number;
-    buyCount: number;
     mainType: string | null;
   }>;
   return rows.map((r) => {
     const currencyKind = shopCurrencyKind(r.style0);
     return {
       id: r.id,
+      ...getShopNpcInfo(r.id),
       castleId: r.castleId,
       kind: shopKindOf(r.id),
       currency: {
@@ -51,7 +94,6 @@ export function getShops(): ShopSummary[] {
       },
       mainType: r.mainType,
       sellCount: r.sellCount,
-      buyCount: r.buyCount,
     };
   });
 }
@@ -62,7 +104,7 @@ export function getAllShopIds(): number[] {
   return (db.prepare(`SELECT id FROM shops`).all() as { id: number }[]).map((r) => r.id);
 }
 
-/** 單一商店 + 販售(依售價)與收購清單;不存在回傳 null。 */
+/** 單一商店 + 販售清單(依售價);不存在回傳 null。 */
 export function getShopDetail(id: number): ShopDetail | null {
   const db = getDb();
   const shop = db
@@ -114,26 +156,14 @@ export function getShopDetail(id: number): ShopDetail | null {
     )
     .all(id) as ShopDetail["sells"];
 
-  const buys = db
-    .prepare(
-      `SELECT sb.item_id AS itemId,
-              i.name     AS itemName,
-              sb.rate
-       FROM shop_buys sb
-       LEFT JOIN items i ON i.id = sb.item_id
-       WHERE sb.shop_id = ?
-       ORDER BY sb.item_id`,
-    )
-    .all(id) as ShopDetail["buys"];
-
   return {
     id: shop.id,
+    ...getShopNpcInfo(shop.id),
     castleId: shop.castleId,
     kind: shopKindOf(shop.id),
     currency,
     mainType: shop.mainType,
     sells,
-    buys,
   };
 }
 
@@ -166,48 +196,10 @@ export function getShopsSellingItem(itemId: number): ItemShopSale[] {
     const currencyKind = shopCurrencyKind(r.style0);
     return {
       shopId: r.shopId,
+      npcNames: getShopNpcInfo(r.shopId).npcNames,
       castleId: r.castleId,
       kind: shopKindOf(r.shopId),
       price: r.price,
-      rate: r.rate,
-      currency: {
-        kind: currencyKind,
-        itemId: currencyKind === "item" ? r.style0 : null,
-        itemName: currencyKind === "item" ? r.currencyItemName : null,
-      },
-    };
-  });
-}
-
-/** 收購此道具的商店(道具頁用),依 rate 高→低排序。 */
-export function getShopsBuyingItem(itemId: number): ItemShopBuy[] {
-  const db = getDb();
-  const rows = db
-    .prepare(
-      `SELECT sb.shop_id  AS shopId,
-              s.castle_id AS castleId,
-              sb.rate,
-              s.style0    AS style0,
-              cur.name    AS currencyItemName
-       FROM shop_buys sb
-       JOIN shops s ON s.id = sb.shop_id
-       LEFT JOIN items cur ON cur.id = s.style0 AND s.style0 > 100
-       WHERE sb.item_id = ?
-       ORDER BY sb.rate DESC, sb.shop_id`,
-    )
-    .all(itemId) as Array<{
-    shopId: number;
-    castleId: number | null;
-    rate: number;
-    style0: number | null;
-    currencyItemName: string | null;
-  }>;
-  return rows.map((r) => {
-    const currencyKind = shopCurrencyKind(r.style0);
-    return {
-      shopId: r.shopId,
-      castleId: r.castleId,
-      kind: shopKindOf(r.shopId),
       rate: r.rate,
       currency: {
         kind: currencyKind,

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { getShops, getShopDetail, getShopsSellingItem, getShopsBuyingItem } from "../shops";
+import { getShops, getShopDetail, getShopsSellingItem } from "../shops";
+import { getDb } from "../../db";
 import { shopLabel } from "../../constants/shop";
 
 describe("getShops", () => {
@@ -10,11 +11,10 @@ describe("getShops", () => {
     expect(shops.filter((s) => s.kind === "item")).toHaveLength(77);
   });
 
-  it("商店 9(SHOP.INI 首家武器店)賣 13 種、收 1 種", () => {
+  it("商店 9(SHOP.INI 首家武器店)賣 13 種", () => {
     const s = getShops().find((x) => x.id === 9)!;
     expect(s.kind).toBe("weapon");
     expect(s.sellCount).toBe(13);
-    expect(s.buyCount).toBe(1);
   });
 
   it("附上計價幣別與最大宗商品類型,可組出辨識標籤", () => {
@@ -25,14 +25,32 @@ describe("getShops", () => {
     expect(all.filter((s) => s.currency.kind === "item")).toHaveLength(31);
     expect(all.filter((s) => s.currency.kind === "other")).toHaveLength(10);
 
-    // 代表性商店的自動標籤(店型 · 主商品),中文名走 ITEM_TYPE_LABELS 權威對照
-    expect(shopLabel(byId.get(1)!)).toBe("金幣武器店 · 衣");
-    expect(shopLabel(byId.get(7)!)).toBe("金幣道具店 · 藥品");
-    expect(shopLabel(byId.get(52)!)).toBe("謎霧之心兌換店 · 真元/魂石");
-    expect(shopLabel(byId.get(55)!)).toBe("海馬餅乾兌換店 · 一般道具");
-    expect(shopLabel(byId.get(66)!)).toBe("仙晶殘片兌換店 · 飾品");
-    expect(shopLabel(byId.get(69)!)).toBe("兌換店 · 座騎");
-    expect(shopLabel(byId.get(253)!)).toBe("歡樂幣兌換店 · 禮包");
+    expect(shopLabel(byId.get(1)!)).toBe("飛雁山莊武器商");
+    expect(byId.get(7)!.npcNames).toEqual(["莫愁谷道具店", "藥鋪掌櫃", "韓三娘"]);
+    expect(shopLabel(byId.get(7)!)).toBe("莫愁谷道具店、藥鋪掌櫃、韓三娘");
+    expect(shopLabel({ ...byId.get(1)!, npcNames: [] })).toBe("金幣武器店 · 衣");
+  });
+
+  it("位置僅在全部 NPC 名稱合計恰有一筆配置時顯示，不合併相同座標", () => {
+    const placements = getDb().prepare(
+      `SELECT p.stage_id AS stageId, p.stage_kind AS stageKind, s.name AS stageName,
+              p.tile_x AS x, p.tile_y AS y
+       FROM map_placements p
+       LEFT JOIN stages s ON s.kind = p.stage_kind AND s.id = p.stage_id
+       WHERE p.category = 'npc' AND p.npc_id IN (
+         SELECT id FROM npc WHERE name IN (SELECT value FROM json_each(?))
+       )`,
+    );
+    for (const shop of getShops()) {
+      const rows = placements.all(JSON.stringify(shop.npcNames)) as Array<
+        NonNullable<typeof shop.location>
+      >;
+      const expected = rows.length === 1 && rows[0].stageName && rows[0].x != null && rows[0].y != null
+        ? rows[0] : null;
+      expect(shop.location).toEqual(expected);
+      expect(new Set(shop.npcNames).size).toBe(shop.npcNames.length);
+      expect(getShopDetail(shop.id)!.npcNames).toEqual(shop.npcNames);
+    }
   });
 });
 
@@ -46,8 +64,6 @@ describe("getShopDetail", () => {
     // price 顯示的是 real_price(= floor(value 216 × rate 150 / 100)),不是 rate 本身
     expect(sword.price).toBe(324);
     expect(sword.rate).toBe(150);
-    expect(d.buys).toHaveLength(1);
-    expect(d.buys[0]).toMatchObject({ itemId: 20001, rate: 20 });
   });
 
   it("兌換店(style0>100)：貨幣為貨幣道具,帶 item id 與名稱", () => {
@@ -79,19 +95,13 @@ describe("getShopsSellingItem", () => {
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({ shopId: 2, price: 280, rate: 130 });
     expect(rows[1]).toMatchObject({ shopId: 9, price: 324, rate: 150 });
-    for (const r of rows) expect(r.currency.kind).toBe("gold");
+    for (const r of rows) {
+      expect(r.currency.kind).toBe("gold");
+      expect(r.npcNames).toEqual(getShopDetail(r.shopId)!.npcNames);
+    }
   });
 
   it("無人販售的道具回傳空陣列", () => {
     expect(getShopsSellingItem(999999)).toEqual([]);
-  });
-});
-
-describe("getShopsBuyingItem", () => {
-  it("青銅刀(20001)由 4 家收購,rate 皆 20", () => {
-    const rows = getShopsBuyingItem(20001);
-    expect(rows).toHaveLength(4);
-    expect(rows.map((r) => r.shopId).sort((a, b) => a - b)).toEqual([1, 2, 6, 9]);
-    for (const r of rows) expect(r.rate).toBe(20);
   });
 });

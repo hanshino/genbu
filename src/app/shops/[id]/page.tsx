@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!shop) return { title: "商店不存在 · 玄武" };
   return {
     title: `${shopLabel(shop)} · 武林同萌傳商店 · 玄武`,
-    description: `${shopLabel(shop)}(${shopTitle(shop.id)})的販售與收購清單`,
+    description: `${shopLabel(shop)}(${shopTitle(shop.id)})的販售清單`,
     alternates: { canonical: `/shops/${shop.id}` },
   };
 }
@@ -49,7 +49,6 @@ export default async function ShopDetailPage({ params }: PageProps) {
 
   const iconMap = getItemIconMap([
     ...shop.sells.map((e) => e.itemId),
-    ...shop.buys.map((e) => e.itemId),
     ...(shop.currency.itemId != null ? [shop.currency.itemId] : []),
   ]);
 
@@ -80,6 +79,11 @@ export default async function ShopDetailPage({ params }: PageProps) {
           <Badge variant="outline" className="font-normal">
             {castleLabel(shop.castleId)}
           </Badge>
+        )}
+        {shop.location && (
+          <Link href={`/maps/${shop.location.stageId}`} className="text-xs text-muted-foreground hover:underline">
+            {shop.location.stageName} ({shop.location.x}, {shop.location.y})
+          </Link>
         )}
         {shop.currency.kind !== "other" && (
           <Badge variant="outline" className="gap-1 font-normal">
@@ -138,50 +142,8 @@ export default async function ShopDetailPage({ params }: PageProps) {
         </div>
       </section>
 
-      {shop.buys.length > 0 && (
-        <section className="space-y-2">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-lg font-medium">收購</h2>
-            <span className="text-xs text-muted-foreground">{shop.buys.length} 種</span>
-          </div>
-          <div className="overflow-x-auto rounded-lg border border-border/60">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>道具</TableHead>
-                  <TableHead className="text-right">收購率</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {shop.buys.map((e) => (
-                  <TableRow key={e.itemId}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <ItemIcon
-                          image={iconMap.get(e.itemId) ?? null}
-                          alt={e.itemName ?? String(e.itemId)}
-                          className="size-6"
-                        />
-                        <Link
-                          href={`/items/${e.itemId}`}
-                          className="font-medium underline decoration-dotted underline-offset-2 hover:decoration-solid"
-                        >
-                          {e.itemName ?? `#${e.itemId}`}
-                        </Link>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-sm">{e.rate}%</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </section>
-      )}
-
       <p className="text-xs text-muted-foreground">
-        資料來自 SHOP.INI。商店暫無名稱與 NPC / 地圖對應。收購率推定為道具售價的百分比,
-        實際收購價以遊戲內為準。
+        販售資料來自 SHOP.INI，店名來自開店對話；位置依 NPC 名稱比對，僅在唯一對應時顯示。
       </p>
     </div>
   );

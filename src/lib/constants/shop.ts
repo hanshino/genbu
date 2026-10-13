@@ -28,7 +28,7 @@ export function castleLabel(castleId: number): string {
   return CASTLE_NAMES[castleId] ?? `城池 #${castleId}`;
 }
 
-/** 商店暫無名稱資料(SHOP.INI 無 name 欄),統一以編號呈現。 */
+/** 商店編號，用於補充辨識。 */
 export function shopTitle(id: number): string {
   return `商店 #${id}`;
 }
@@ -59,7 +59,7 @@ export function shopCurrencyLabel(currency: ShopCurrency): string | null {
  * - 兌換店 → {貨幣道具名}兌換店(例:謎霧之心兌換店)
  * - 其它   → 兌換店(幣別無法判定,不冠貨幣名)
  */
-export function shopStoreLabel(kind: ShopKind, currency: ShopCurrency): string {
+function shopStoreLabel(kind: ShopKind, currency: ShopCurrency): string {
   if (currency.kind === "gold") {
     return kind === "weapon" ? "金幣武器店" : "金幣道具店";
   }
@@ -70,21 +70,22 @@ export function shopStoreLabel(kind: ShopKind, currency: ShopCurrency): string {
 }
 
 /** 主商品類型的中文標籤(權威對照見 item-types.ts);無資料回傳 null。 */
-export function shopProductLabel(mainType: string | null): string | null {
+function shopProductLabel(mainType: string | null): string | null {
   if (!mainType) return null;
   return ITEM_TYPE_LABELS[mainType] ?? mainType;
 }
 
 /**
- * 完整的商店辨識標籤 =「店型 · 主商品」,例如:
- *   金幣武器店 · 衣 / 謎霧之心兌換店 · 飾品 / 兌換店 · 座騎
+ * 優先使用開店 NPC 名稱；無 NPC 時回退為「店型 · 主商品」。
  */
 export function shopLabel(shop: {
+  npcNames: string[];
   kind: ShopKind;
   currency: ShopCurrency;
-  mainType: string | null;
+  mainType?: string | null;
 }): string {
+  if (shop.npcNames.length > 0) return shop.npcNames.join("、");
   const store = shopStoreLabel(shop.kind, shop.currency);
-  const product = shopProductLabel(shop.mainType);
+  const product = shopProductLabel(shop.mainType ?? null);
   return product ? `${store} · ${product}` : store;
 }

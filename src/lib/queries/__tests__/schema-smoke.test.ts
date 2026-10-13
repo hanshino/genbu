@@ -94,7 +94,7 @@ import {
   getDistinctMonsterTypes,
   getDistinctElementals,
 } from "../monsters";
-import { getShops, getShopDetail, getShopsSellingItem, getShopsBuyingItem } from "../shops";
+import { getShops, getShopDetail, getShopsSellingItem } from "../shops";
 import {
   getAllStageNames,
   getAllStageGroupStats,
@@ -127,7 +127,7 @@ const MYSTERY_HIDDEN_ITEM_ID = 32862; // 夢影迷境寶箱：has_data = 0
 const ITEM_IN_MYSTERY_ID = 24004; // 大活絡藥：表 901 會開出
 
 // items
-const REAL_ITEM_ID = 20001; // 有對應 item_rand、shop_sells、shop_buys
+const REAL_ITEM_ID = 20001; // 有對應 item_rand、shop_sells
 const REAL_ITEM_TYPE = "HORSE"; // items.type_name 真實存在的值（>0 筆）
 
 // monsters / npc
@@ -170,7 +170,7 @@ const REAL_SKILL_TYPE = 6;
 const REAL_HERO_ID = 1; // hero.id 存在，且出現在 hero_connect 的 hero1~hero5 槽位
 
 // shops / status / messages
-const REAL_SHOP_ID = 9; // 同時有 shop_sells 與 shop_buys
+const REAL_SHOP_ID = 9; // 有 shop_sells
 const REAL_STATUS_ID = 1;
 const REAL_FILE_NO = 1;
 const REAL_MSG_ID = 1;
@@ -640,7 +640,7 @@ describe("shops.ts", () => {
     expect(() => getShops()).not.toThrow();
   });
 
-  it("getShopDetail（同時有 sells 與 buys）", () => {
+  it("getShopDetail", () => {
     expect(() => getShopDetail(REAL_SHOP_ID)).not.toThrow();
   });
 
@@ -648,9 +648,6 @@ describe("shops.ts", () => {
     expect(() => getShopsSellingItem(REAL_ITEM_ID)).not.toThrow();
   });
 
-  it("getShopsBuyingItem", () => {
-    expect(() => getShopsBuyingItem(REAL_ITEM_ID)).not.toThrow();
-  });
 });
 
 describe("stages.ts", () => {

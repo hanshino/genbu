@@ -6,7 +6,7 @@ import { BackLink } from "@/components/common/back-link";
 import { getItemById, getItemRands, getItemRandsByIds, getItemsByType } from "@/lib/queries/items";
 import { getMonstersByDropItem } from "@/lib/queries/monsters";
 import { getStagesForMonsters } from "@/lib/queries/monster-spawns";
-import { getShopsBuyingItem, getShopsSellingItem } from "@/lib/queries/shops";
+import { getShopsSellingItem } from "@/lib/queries/shops";
 import {
   getCompoundSourcesForItem,
   getCompoundUsesForItem,
@@ -38,7 +38,7 @@ import { AwakeningSection } from "@/components/items/awakening-section";
 import { CompoundSourcesSection } from "@/components/items/compound-sources-section";
 import { CompoundUsesSection } from "@/components/items/compound-uses-section";
 import { EquipmentEnhancementsSection } from "@/components/items/equipment-enhancements-section";
-import { ShopBuybackSection, ShopSalesSection } from "@/components/items/shop-availability-section";
+import { ShopSalesSection } from "@/components/items/shop-availability-section";
 import { MissionUsesSection } from "@/components/items/mission-uses-section";
 import {
   MapEventSourcesSection,
@@ -99,7 +99,6 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
   // 取得途徑 / 用途 / 強化的資料在此一次取齊：分組是否渲染要看筆數，
   // 若仍留在各子元件內查詢，page 端無法在全部為空時避免印出空的分組外框。
   const shopSales = getShopsSellingItem(item.id);
-  const shopBuys = getShopsBuyingItem(item.id);
   const compoundSources = getCompoundSourcesForItem(item.id);
   const compoundUses = getCompoundUsesForItem(item.id);
   const missionUses = getMissionsUsingItem(item.id);
@@ -132,7 +131,7 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
   const hasUses =
     mysteryContents != null ||
     npcDialogueTakes.length > 0 ||
-    boxContents.length > 0 || compoundUses.length > 0 || hasMissionUses || shopBuys.length > 0;
+    boxContents.length > 0 || compoundUses.length > 0 || hasMissionUses;
   const hasProgression = awakeningPath != null || enhancements.length > 0;
 
   const phase2 = isPhase2Type(item.type);
@@ -255,7 +254,6 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
 
           <NpcDialogueUsesSection takes={npcDialogueTakes} />
 
-          <ShopBuybackSection buys={shopBuys} />
         </ItemSectionGroup>
       )}
 

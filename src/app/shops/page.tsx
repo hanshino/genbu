@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { LinkListRow, LinkListSection } from "@/components/common/link-list";
 import { getShops } from "@/lib/queries/shops";
@@ -7,12 +8,12 @@ import type { ShopKind, ShopSummary } from "@/lib/types/shop";
 
 export const metadata: Metadata = {
   title: "商店 · 玄武",
-  description: "武林同萌傳 NPC 商店販售與收購清單",
+  description: "武林同萌傳 NPC 商店販售清單與位置",
   alternates: { canonical: "/shops" },
 };
 
 export default function ShopsPage() {
-  const shops = getShops();
+  const shops = getShops().filter((s) => s.sellCount > 0);
   const kinds: ShopKind[] = ["weapon", "item"];
 
   return (
@@ -20,7 +21,7 @@ export default function ShopsPage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">NPC 商店</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          共 {shops.length} 家商店;店名由計價貨幣與主要商品自動歸納(SHOP.INI 無店名欄),NPC 對應待考
+          共 {shops.length} 家商店；店名採用開啟商店的 NPC 名稱，位置僅在唯一對應時顯示。
         </p>
       </header>
 
@@ -29,7 +30,7 @@ export default function ShopsPage() {
       ))}
 
       <p className="text-xs text-muted-foreground">
-        資料來自 SHOP.INI;武器店/道具店分類依原始檔案的區段註解。
+        販售資料來自 SHOP.INI，店名來自開店對話；武器店/道具店分類依原始檔案的區段註解。
       </p>
     </div>
   );
@@ -40,16 +41,21 @@ function ShopSection({ kind, shops }: { kind: ShopKind; shops: ShopSummary[] }) 
   return (
     <LinkListSection title={SHOP_KIND_LABELS[kind]} summary={`${shops.length} 家`}>
       {shops.map((s) => (
-        <LinkListRow key={s.id} href={`/shops/${s.id}`}>
-          <span className="font-medium">{shopLabel(s)}</span>
+        <LinkListRow key={s.id}>
+          <Link href={`/shops/${s.id}`} className="font-medium hover:underline">{shopLabel(s)}</Link>
           <span className="font-mono text-xs text-muted-foreground">#{s.id}</span>
           {s.castleId != null && (
             <Badge variant="outline" className="font-normal">
               {castleLabel(s.castleId)}
             </Badge>
           )}
+          {s.location && (
+            <Link href={`/maps/${s.location.stageId}`} className="text-xs text-muted-foreground hover:underline">
+              {s.location.stageName} ({s.location.x}, {s.location.y})
+            </Link>
+          )}
           <span className="ml-auto font-mono text-xs text-muted-foreground">
-            販售 {s.sellCount} 種{s.buyCount > 0 ? ` · 收購 ${s.buyCount} 種` : ""}
+            販售 {s.sellCount} 種
           </span>
         </LinkListRow>
       ))}
