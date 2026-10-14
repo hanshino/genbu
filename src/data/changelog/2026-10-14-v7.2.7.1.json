@@ -1,0 +1,832 @@
+{
+  "version": "7.2.7.1",
+  "date": "2026-10-14",
+  "summary": {
+    "added": 175,
+    "changed": 209753,
+    "removed": 2
+  },
+  "addedTables": [],
+  "removedTables": [],
+  "tables": [
+    {
+      "table": "items",
+      "label": "道具",
+      "tier": "rich",
+      "counts": {
+        "added": 1,
+        "changed": 4,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "34396"
+          ],
+          "name": "重陽玄喵禮盒",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "重陽玄喵禮盒"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "打開有機會獲得全新坐騎「星語玄喵」、星蠍冷鉤、神燈精靈、仙喵聚呱、冬雲眠龍、時光歲月系列外裝及副門派進階書等超值好禮。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "100"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "BONUS"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "33241"
+          ],
+          "name": "新鮮茱萸",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "香菇",
+              "to": "新鮮茱萸"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "扶正補虛；健脾開胃；祛風透疹；化痰理氣；解毒；抗癌。\\n\\n活動道具，活動結束後將回收。",
+              "to": "《活動道具》\\n\\n溫陽祛濕不含糊，驅邪避災一肩扛。\\n\\n活動道具，活動結束後將回收。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33242"
+          ],
+          "name": "金絲皇菊",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "鮮磨菇",
+              "to": "金絲皇菊"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "正氣衰弱；神倦乏力；納呆；消化不良，新鮮的更美味。\\n\\n活動道具，活動結束後將回收。",
+              "to": "《活動道具》\\n\\n清熱解毒明眸子，小小一朵威力猛，從此告別通紅眼。。\\n\\n活動道具，活動結束後將回收。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "50691"
+          ],
+          "name": "星語玄喵",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試物品",
+              "to": "星語玄喵"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "夜幕為袍，星光為帽，輕靈身影穿行於雲海之間，魔杖輕揮處，細碎光芒灑落如雨，彷彿將整個銀河的溫柔，都藏進這一抹靜默的藍。"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "from": "0",
+              "to": "4000"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "from": "0",
+              "to": "800"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "from": "0",
+              "to": "15"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "from": "0",
+              "to": "15"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "from": "0",
+              "to": "15"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "from": "0",
+              "to": "175"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "from": "0",
+              "to": "100"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "53866"
+          ],
+          "name": "林間精靈",
+          "fields": [
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "滿身的刺僅為保護自己，卻時常傷痕累累，蜷縮著小小的身子，盼望的是一個溫暖的懷抱，但又有誰能永遠陪在身旁，使我不再徬徨呢？",
+              "to": "[外裝]滿身的刺僅為保護自己，卻時常傷痕累累，蜷縮著小小的身子，盼望的是一個溫暖的懷抱，但又有誰能永遠陪在身旁，使我不再徬徨呢？"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "achievements",
+      "label": "成就",
+      "tier": "rich",
+      "counts": {
+        "added": 1,
+        "changed": 0,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "30021"
+          ],
+          "name": "重陽登高",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "重陽登高"
+            },
+            {
+              "col": "description",
+              "label": "描述",
+              "value": "完成活動任務：重九登高菊飄香6次"
+            },
+            {
+              "col": "points",
+              "label": "點數",
+              "value": "0"
+            },
+            {
+              "col": "reward_amount",
+              "label": "獎勵數量",
+              "value": "500"
+            },
+            {
+              "col": "prereq_achievement_id",
+              "label": "前置成就",
+              "value": "0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "item_rand",
+      "label": "裝備隨機屬性",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 0,
+        "removed": 0
+      },
+      "structural": {
+        "addedColumns": [
+          "token",
+          "seq"
+        ],
+        "removedColumns": []
+      }
+    },
+    {
+      "table": "mission_steps",
+      "label": "任務步驟",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 3,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "10729",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待0",
+              "to": "前往星月山道掃除山道惡猿。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待1",
+              "to": "前往星月峰採集新鮮茱萸[item33241×10]。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待2",
+              "to": "前往探幽曲境採集金絲皇菊[item33242×10]後與童花順對話。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "missions",
+      "label": "任務",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 1,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "10729"
+          ],
+          "name": "重九登高菊飄香",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留",
+              "to": "重九登高菊飄香"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "from": "敬請期待",
+              "to": "星月峰傳來絕頂高人的切磋豪言！然而登頂山道空無一人，究竟發生了何事？快去一探究竟"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc",
+      "label": "NPC",
+      "tier": "rich",
+      "counts": {
+        "added": 1,
+        "changed": 2,
+        "removed": 1
+      },
+      "added": [
+        {
+          "idParts": [
+            "9999"
+          ],
+          "name": "佔位999",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "佔位999"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        }
+      ],
+      "removed": [
+        {
+          "idParts": [
+            "999"
+          ],
+          "name": "佔位999",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "佔位999"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "7064"
+          ],
+          "name": "童花順",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "蛇妖",
+              "to": "童花順"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "8315"
+          ],
+          "name": "▲山道惡猿",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "噬血妖藤",
+              "to": "▲山道惡猿"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc_strings",
+      "label": "NPC 對話",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 1,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "30794"
+          ],
+          "name": "童花順",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "蛇妖",
+              "to": "童花順"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "achievement_targets",
+      "label": "achievement_targets",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 58,
+        "removed": 0
+      }
+    },
+    {
+      "table": "dialogue_edges",
+      "label": "dialogue_edges",
+      "tier": "count",
+      "counts": {
+        "added": 44,
+        "changed": 46091,
+        "removed": 0
+      }
+    },
+    {
+      "table": "dialogue_rewards",
+      "label": "dialogue_rewards",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 670,
+        "removed": 0
+      }
+    },
+    {
+      "table": "doll_frame_images",
+      "label": "doll_frame_images",
+      "tier": "count",
+      "counts": {
+        "added": 20,
+        "changed": 0,
+        "removed": 0
+      }
+    },
+    {
+      "table": "item_doll",
+      "label": "item_doll",
+      "tier": "count",
+      "counts": {
+        "added": 2,
+        "changed": 0,
+        "removed": 0
+      }
+    },
+    {
+      "table": "item_images",
+      "label": "item_images",
+      "tier": "count",
+      "counts": {
+        "added": 3,
+        "changed": 2,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_dims",
+      "label": "map_dims",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 8,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_event_ops",
+      "label": "map_event_ops",
+      "tier": "count",
+      "counts": {
+        "added": 6,
+        "changed": 38971,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_events",
+      "label": "map_events",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 6584,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_images",
+      "label": "map_images",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 7,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_placements",
+      "label": "map_placements",
+      "tier": "count",
+      "counts": {
+        "added": 2,
+        "changed": 43289,
+        "removed": 0
+      },
+      "structural": {
+        "addedColumns": [
+          "facing",
+          "respawn_interval",
+          "spawn_f12",
+          "spawn_f30",
+          "spawn_f34"
+        ],
+        "removedColumns": []
+      }
+    },
+    {
+      "table": "map_walkability",
+      "label": "map_walkability",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 5,
+        "removed": 0
+      }
+    },
+    {
+      "table": "messages",
+      "label": "對話訊息",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 145,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_events",
+      "label": "mission_events",
+      "tier": "count",
+      "counts": {
+        "added": 9,
+        "changed": 6767,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_refs",
+      "label": "任務關聯",
+      "tier": "count",
+      "counts": {
+        "added": 2,
+        "changed": 877,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_requirements",
+      "label": "mission_requirements",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 1342,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_rewards",
+      "label": "mission_rewards",
+      "tier": "count",
+      "counts": {
+        "added": 2,
+        "changed": 841,
+        "removed": 0
+      }
+    },
+    {
+      "table": "monster_spawns",
+      "label": "monster_spawns",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 18123,
+        "removed": 0
+      }
+    },
+    {
+      "table": "npc_images",
+      "label": "npc_images",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 2,
+        "removed": 1
+      }
+    },
+    {
+      "table": "op_defs",
+      "label": "op_defs",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 22,
+        "removed": 0
+      }
+    },
+    {
+      "table": "status_param_defs",
+      "label": "status_param_defs",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 11,
+        "removed": 0
+      }
+    },
+    {
+      "table": "trigger_ops",
+      "label": "trigger_ops",
+      "tier": "count",
+      "counts": {
+        "added": 77,
+        "changed": 45927,
+        "removed": 0
+      }
+    }
+  ],
+  "ai": {
+    "model": "claude-opus-5-5",
+    "edited": false,
+    "highlights": [
+      "🌼 重陽活動任務「重九登高菊飄香」上線（原本是「保留／敬請期待」的空位，這版正式補上內容）：星月峰傳來絕頂高人要切磋的消息，但登頂山道上一個人都沒有。任務流程：先去星月山道清掉山道惡猿，再到星月峰採新鮮茱萸×10，接著去探幽曲境採金絲皇菊×10，最後找童花順對話。",
+      "🏔️ 新成就「重陽登高」：完成活動任務「重九登高菊飄香」6 次，獎勵數量 500。",
+      "🎁 新禮盒「重陽玄喵禮盒」（販售價 100）：依說明，打開有機會拿到全新坐騎「星語玄喵」，還有星蠍冷鉤、神燈精靈、仙喵聚呱、冬雲眠龍、時光歲月系列外裝和副門派進階書等獎勵。",
+      "🐱 坐騎「星語玄喵」正式實裝（原本是佔位的測試物品）：體力 4000、真氣 800、外功／技巧／玄學各 +15、物攻 175、命中 100。",
+      "🌿 新活動道具「新鮮茱萸」、「金絲皇菊」是重陽任務要採的材料，用的是舊活動道具香菇、鮮磨菇的欄位。依道具說明，活動結束後會回收。",
+      "🧑 任務 NPC 換新：「童花順」（重陽任務最後要對話的人）跟要清掉的怪物「▲山道惡猿」都是這版上線，用的是舊 NPC 欄位改名。",
+      "📝 林間精靈：說明前面加上 [外裝] 標記，只是標示調整。",
+      "⚙️ 地圖事件、對話節點、觸發指令、怪物分布、任務事件等表一次動到數千到數萬筆，主要是資料重新編號或建置重排，不是玩法變動。真正的新內容大概就是上面的重陽活動。"
+    ],
+    "tables": {
+      "items": {
+        "mode": "detail",
+        "note": "重陽玄喵禮盒（新）、星語玄喵坐騎屬性、新鮮茱萸／金絲皇菊活動道具；林間精靈只是說明加上 [外裝] 標記"
+      },
+      "missions": {
+        "mode": "detail",
+        "note": "佔位任務補上內容，正式名稱是「重九登高菊飄香」"
+      },
+      "mission_steps": {
+        "mode": "detail",
+        "note": "「敬請期待」步驟補上重陽任務的三個步驟"
+      },
+      "achievements": {
+        "mode": "detail",
+        "note": "新成就「重陽登高」"
+      },
+      "npc": {
+        "mode": "detail",
+        "note": "童花順、▲山道惡猿上線；佔位999 先刪再加，可以忽略"
+      },
+      "npc_strings": {
+        "mode": "summary",
+        "note": "童花順的顯示名同步更新"
+      },
+      "item_rand": {
+        "mode": "summary",
+        "note": "只加了欄位，資料沒變"
+      },
+      "dialogue_edges": {
+        "mode": "summary",
+        "note": "大批重新編號，屬於建置調整"
+      },
+      "trigger_ops": {
+        "mode": "summary",
+        "note": "大批重新編號，屬於建置調整"
+      },
+      "map_placements": {
+        "mode": "summary",
+        "note": "加了欄位，另有大批重排，屬於建置調整"
+      },
+      "map_event_ops": {
+        "mode": "summary",
+        "note": "大批重新編號，屬於建置調整"
+      },
+      "monster_spawns": {
+        "mode": "summary",
+        "note": "大批重排，屬於建置調整（新增的 1 筆應該是山道惡猿）"
+      },
+      "mission_events": {
+        "mode": "summary",
+        "note": "大批重排，屬於建置調整"
+      },
+      "map_events": {
+        "mode": "summary",
+        "note": "大批重排，屬於建置調整"
+      },
+      "mission_requirements": {
+        "mode": "summary",
+        "note": "大批重排，屬於建置調整"
+      },
+      "mission_rewards": {
+        "mode": "summary",
+        "note": "大批重排，屬於建置調整"
+      },
+      "mission_refs": {
+        "mode": "summary",
+        "note": "大批重排，屬於建置調整"
+      },
+      "dialogue_rewards": {
+        "mode": "summary",
+        "note": "大批重排，屬於建置調整"
+      },
+      "messages": {
+        "mode": "summary",
+        "note": "對話訊息批量更新"
+      }
+    }
+  }
+}
