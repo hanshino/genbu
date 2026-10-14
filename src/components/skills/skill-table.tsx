@@ -17,6 +17,8 @@ import { magicSkillTypeLabel } from "@/lib/constants/magic-skill-type";
 import type { MagicSummary } from "@/lib/types/magic";
 import { ItemIcon } from "@/components/common/item-icon";
 import { pickMagicIcon, type EntityImage } from "@/lib/queries/images";
+import { SKILL_NUMERIC_COLUMNS, type SkillColumnKey } from "@/lib/constants/skill-columns";
+import { cn } from "@/lib/utils";
 
 interface SkillTableProps {
   skills: MagicSummary[];
@@ -24,7 +26,14 @@ interface SkillTableProps {
   search?: string;
   unfilteredTotal?: number;
   iconMap: Map<number, Map<number, EntityImage>>;
+  columns: readonly SkillColumnKey[];
 }
+
+// 橫向捲動時固定在左側的欄位要有不透明底色，hover 時跟著整列變色。
+const STICKY =
+  "bg-background group-hover/row:bg-[color-mix(in_oklch,var(--muted)_50%,var(--background))]";
+// 編號只在 sm 以上固定：手機寬度只鎖名稱，留空間給右側數值。
+const ID_COL = cn("w-[90px] min-w-[90px] sm:sticky sm:left-0 sm:z-10", STICKY);
 
 export function SkillTable({
   skills,
@@ -32,6 +41,7 @@ export function SkillTable({
   search = "",
   unfilteredTotal,
   iconMap,
+  columns,
 }: SkillTableProps) {
   if (skills.length === 0) {
     return (
@@ -44,18 +54,46 @@ export function SkillTable({
     );
   }
 
+  const show = new Set(columns);
+  const numericCols = SKILL_NUMERIC_COLUMNS.filter((c) => show.has(c.key));
+  const nameCol = cn(
+    "sticky left-0 z-10 shadow-[inset_-1px_0_0_var(--color-border)]",
+    show.has("id") && "sm:left-[90px]",
+    STICKY,
+  );
+
   return (
     <div className="overflow-x-auto rounded-lg border border-border/60">
-      <Table className="min-w-[720px]">
+      <Table>
         <TableHeader>
-          <TableRow>
-            <SortableHead column="id" label="編號" className="w-[90px]" sort={sort} />
-            <TableHead>名稱</TableHead>
-            <TableHead className="w-[120px]">門派</TableHead>
-            <TableHead className="w-[110px]">分類</TableHead>
-            <TableHead className="w-[120px]">作用目標</TableHead>
-            <TableHead className="w-[70px]">屬性</TableHead>
-            <SortableHead column="maxLevel" label="最高 Lv" className="w-[80px]" right sort={sort} />
+          <TableRow className="group/row">
+            {show.has("id") && (
+              <SortableHead column="id" label="編號" className={ID_COL} sort={sort} />
+            )}
+            <TableHead className={nameCol}>名稱</TableHead>
+            {show.has("clan") && <TableHead className="w-[120px]">門派</TableHead>}
+            {show.has("skillType") && <TableHead className="w-[110px]">分類</TableHead>}
+            {show.has("target") && <TableHead className="w-[120px]">作用目標</TableHead>}
+            {show.has("attrib") && <TableHead className="w-[70px]">屬性</TableHead>}
+            {show.has("maxLevel") && (
+              <SortableHead
+                column="maxLevel"
+                label="最高 Lv"
+                className="w-[80px]"
+                right
+                sort={sort}
+              />
+            )}
+            {numericCols.map((c) => (
+              <SortableHead
+                key={c.key}
+                column={c.key}
+                label={c.label}
+                hint="最高等級數值"
+                right
+                sort={sort}
+              />
+            ))}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -64,9 +102,13 @@ export function SkillTable({
             const attribColor = s.attrib != null ? MAGIC_ATTRIB_COLOR[s.attrib] : null;
             const clanDisplay = magicClanListLabel(s.clan, s.skill_type);
             return (
-              <TableRow key={`${s.id}-${s.firstLevel}`}>
-                <TableCell className="font-mono text-xs text-muted-foreground">{s.id}</TableCell>
-                <TableCell>
+              <TableRow key={`${s.id}-${s.firstLevel}`} className="group/row">
+                {show.has("id") && (
+                  <TableCell className={cn("font-mono text-xs text-muted-foreground", ID_COL)}>
+                    {s.id}
+                  </TableCell>
+                )}
+                <TableCell className={nameCol}>
                   <Link
                     href={`/skills/${s.id}?level=${s.firstLevel}`}
                     className="group/name inline-flex items-center gap-2.5 font-medium"
@@ -79,31 +121,53 @@ export function SkillTable({
                     <span className="group-hover/name:underline">{s.name}</span>
                   </Link>
                 </TableCell>
-                <TableCell>
-                  {clanDisplay.kind === "clan" ? (
-                    <Badge variant="secondary" className="font-normal">
-                      {clanDisplay.label}
-                    </Badge>
-                  ) : (
-                    <span className="text-muted-foreground">{clanDisplay.label}</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {magicSkillTypeLabel(s.skill_type)}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {magicTargetLabel(s.target)}
-                </TableCell>
-                <TableCell>
-                  {attribLabel ? (
-                    <Badge variant="outline" className={`font-normal ${attribColor ?? ""}`}>
-                      {attribLabel}
-                    </Badge>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right font-mono tabular-nums">{s.maxLevel}</TableCell>
+                {show.has("clan") && (
+                  <TableCell>
+                    {clanDisplay.kind === "clan" ? (
+                      <Badge variant="secondary" className="font-normal">
+                        {clanDisplay.label}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground">{clanDisplay.label}</span>
+                    )}
+                  </TableCell>
+                )}
+                {show.has("skillType") && (
+                  <TableCell className="text-muted-foreground">
+                    {magicSkillTypeLabel(s.skill_type)}
+                  </TableCell>
+                )}
+                {show.has("target") && (
+                  <TableCell className="text-muted-foreground">
+                    {magicTargetLabel(s.target)}
+                  </TableCell>
+                )}
+                {show.has("attrib") && (
+                  <TableCell>
+                    {attribLabel ? (
+                      <Badge variant="outline" className={`font-normal ${attribColor ?? ""}`}>
+                        {attribLabel}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                )}
+                {show.has("maxLevel") && (
+                  <TableCell className="text-right font-mono tabular-nums">{s.maxLevel}</TableCell>
+                )}
+                {numericCols.map((c) => {
+                  const v = s[c.key];
+                  return (
+                    <TableCell key={c.key} className="text-right font-mono tabular-nums">
+                      {v == null ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : (
+                        v.toLocaleString()
+                      )}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             );
           })}

@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db";
 import { buildOrderBy, type SortDir } from "@/lib/sort";
 import { getStatusById } from "@/lib/queries/status";
 import type { Magic, MagicSummary } from "@/lib/types/magic";
+import { SKILL_NUMERIC_COLUMNS } from "@/lib/constants/skill-columns";
 import type { StepSkill, StepSkillKind } from "@/lib/guide-steps";
 
 export interface GetSkillsParams {
@@ -30,10 +31,32 @@ export interface GetSkillsResult {
 
 const DEFAULT_PAGE_SIZE = 20;
 
+// 數值欄用 `col IS NULL, col` 讓 NULL 不論升降冪都排最後（buildOrderBy 只在尾端加方向）。
 const SKILL_SORT_ALLOWLIST: Record<string, string> = {
   maxLevel: "maxLevel",
   id: "id",
+  ...Object.fromEntries(SKILL_NUMERIC_COLUMNS.map(({ key }) => [key, `${key} IS NULL, ${key}`])),
 };
+
+/**
+ * 每個 (id, name) 一列，非分組欄位一律取自該技能最高等級那一列。
+ * 不用 GROUP BY + 裸欄位：同時有 MIN/MAX 兩個聚合時 SQLite 裸欄位取哪列是未定義的。
+ * whereSql 作用在展開前的 level 列上，語意與原本 GROUP BY 前的 WHERE 相同。
+ */
+function skillSummarySql(whereSql: string): string {
+  return `SELECT id, name, clan, clan2, skill_type, attrib, target, firstLevel, maxLevel,
+                 spend_mp, recharge_time, stun, time, func_hit_p1, status_prob, range
+          FROM (
+            SELECT *,
+                   MIN(level) OVER g AS firstLevel,
+                   MAX(level) OVER g AS maxLevel,
+                   ROW_NUMBER() OVER (PARTITION BY id, name ORDER BY level DESC) AS rn
+            FROM magic
+            ${whereSql}
+            WINDOW g AS (PARTITION BY id, name)
+          )
+          WHERE rn = 1`;
+}
 
 // 列表頁：依 (id, name) 分組。magic 表沒有 PK，同 id 可能共用於多個無關技能
 // （極端例：id=553 塞 32 個各自獨立的技能），所以不能純用 id 分組。
@@ -108,18 +131,7 @@ export function getSkills(params: GetSkillsParams = {}): GetSkillsResult {
 
   const rows = db
     .prepare(
-      `SELECT id,
-              name,
-              clan,
-              clan2,
-              skill_type,
-              attrib,
-              target,
-              MIN(level) AS firstLevel,
-              MAX(level) AS maxLevel
-       FROM magic
-       ${whereSql}
-       GROUP BY id, name
+      `${skillSummarySql(whereSql)}
        ${orderBy}
        LIMIT ? OFFSET ?`,
     )
@@ -187,18 +199,7 @@ export function getSkillsByClan(
   }
   return db
     .prepare(
-      `SELECT id,
-              name,
-              clan,
-              clan2,
-              skill_type,
-              attrib,
-              target,
-              MIN(level) AS firstLevel,
-              MAX(level) AS maxLevel
-       FROM magic
-       WHERE clan = ? ${excludeSql}
-       GROUP BY id, name
+      `${skillSummarySql(`WHERE clan = ? ${excludeSql}`)}
        ORDER BY maxLevel DESC, id ASC
        LIMIT ?`,
     )

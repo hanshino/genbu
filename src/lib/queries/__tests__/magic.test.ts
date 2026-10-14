@@ -8,6 +8,7 @@ import {
   getDistinctClans,
   getDistinctTargets,
 } from "../magic";
+import { getDb } from "@/lib/db";
 
 describe("getSkills", () => {
   it("returns paginated skills grouped by (id, name)", () => {
@@ -66,6 +67,61 @@ describe("getSkills", () => {
     for (const s of result.skills) {
       expect(s.name).toContain("龍牙");
     }
+  });
+
+  it("numeric columns come from the max-level row (龍牙拳 id=227: Lv1 真氣 20 → Lv20 真氣 27)", () => {
+    const s = getSkills({ search: "227", pageSize: 20 }).skills.find((r) => r.id === 227);
+    expect(s?.maxLevel).toBe(20);
+    expect(s?.spend_mp).toBe(27);
+    expect(s?.range).toBe(2);
+    expect(s?.recharge_time).toBeNull();
+  });
+
+  it("every listed row's numeric values match its own max-level row", () => {
+    const db = getDb();
+    const stmt = db.prepare(
+      `SELECT spend_mp, recharge_time, stun, time, func_hit_p1, status_prob, range
+       FROM magic WHERE id = ? AND name = ? AND level = ?`,
+    );
+    for (const s of getSkills({ pageSize: 100, sortBy: "spend_mp", sortDir: "desc" }).skills) {
+      expect(stmt.get(s.id, s.name, s.maxLevel)).toEqual({
+        spend_mp: s.spend_mp,
+        recharge_time: s.recharge_time,
+        stun: s.stun,
+        time: s.time,
+        func_hit_p1: s.func_hit_p1,
+        status_prob: s.status_prob,
+        range: s.range,
+      });
+    }
+  });
+
+  it("sorts by a numeric column in both directions", () => {
+    const desc = getSkills({ pageSize: 100, sortBy: "spend_mp", sortDir: "desc" }).skills;
+    const asc = getSkills({ pageSize: 100, sortBy: "spend_mp", sortDir: "asc" }).skills;
+    const dv = desc.map((s) => s.spend_mp as number);
+    const av = asc.map((s) => s.spend_mp as number);
+    expect(dv.every((v) => v != null)).toBe(true);
+    expect(av.every((v) => v != null)).toBe(true);
+    expect(dv).toEqual([...dv].sort((a, b) => b - a));
+    expect(av).toEqual([...av].sort((a, b) => a - b));
+    expect(dv[0]).toBeGreaterThan(av[0]);
+  });
+
+  it("puts nulls last when sorting a numeric column (asc and desc)", () => {
+    for (const sortDir of ["asc", "desc"] as const) {
+      const { totalPages } = getSkills({ pageSize: 100, sortBy: "range", sortDir });
+      const tail = getSkills({ pageSize: 100, page: totalPages, sortBy: "range", sortDir }).skills;
+      expect(tail.at(-1)?.range).toBeNull();
+      const firstNull = tail.findIndex((s) => s.range == null);
+      expect(tail.slice(firstNull).every((s) => s.range == null)).toBe(true);
+    }
+  });
+
+  it("ignores non-allowlisted sort keys", () => {
+    const a = getSkills({ pageSize: 5, sortBy: "name; DROP TABLE magic" });
+    const b = getSkills({ pageSize: 5 });
+    expect(a.skills.map((s) => s.id)).toEqual(b.skills.map((s) => s.id));
   });
 
   it("paginates consistently", () => {

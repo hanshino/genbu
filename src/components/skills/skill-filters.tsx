@@ -14,6 +14,8 @@ import { magicClanLabel, MAGIC_CLAN_ORDER } from "@/lib/constants/magic-clan";
 import { magicTargetLabel, MAGIC_TARGET_ORDER } from "@/lib/constants/magic-target";
 import { magicSkillTypeLabel } from "@/lib/constants/magic-skill-type";
 import { FILTER_ALL } from "@/lib/constants/filters";
+import { SkillColumnPicker } from "@/components/skills/skill-column-picker";
+import type { SkillColumnKey } from "@/lib/constants/skill-columns";
 
 interface FilterState {
   search: string;
@@ -30,6 +32,7 @@ export function SkillFilters({
   availableClans,
   availableTargets,
   availableSkillTypes,
+  columns,
 }: {
   initialSearch: string;
   initialClan: string;
@@ -38,6 +41,7 @@ export function SkillFilters({
   availableClans: string[];
   availableTargets: string[];
   availableSkillTypes: number[];
+  columns: readonly SkillColumnKey[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -174,6 +178,7 @@ export function SkillFilters({
           ))}
         </SelectContent>
       </Select>
+      <SkillColumnPicker columns={columns} />
     </div>
   );
 }

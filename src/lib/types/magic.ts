@@ -64,4 +64,12 @@ export interface MagicSummary {
   skill_type: number | null;
   attrib: number | null;
   target: string | null;
+  // 以下數值皆取自該技能最高等級（maxLevel）那一列。
+  spend_mp: number | null;
+  recharge_time: number | null;
+  stun: number | null;
+  time: number | null;
+  func_hit_p1: number | null;
+  status_prob: number | null;
+  range: number | null;
 }

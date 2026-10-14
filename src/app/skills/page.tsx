@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import {
   getSkills,
   getDistinctClans,
@@ -9,6 +10,11 @@ import {
 import { getMagicIconMap } from "@/lib/queries/images";
 import { parseSortDir } from "@/lib/sort";
 import { serializeSearchParams } from "@/lib/utils";
+import {
+  DEFAULT_SKILL_COLUMNS,
+  SKILL_COLS_COOKIE,
+  parseSkillColumns,
+} from "@/lib/constants/skill-columns";
 import { SkillFilters } from "@/components/skills/skill-filters";
 import { SkillTable } from "@/components/skills/skill-table";
 import { Pagination } from "@/components/common/pagination";
@@ -31,6 +37,7 @@ interface PageProps {
     page?: string;
     sortBy?: string;
     sortDir?: string;
+    cols?: string;
   }>;
 }
 
@@ -45,6 +52,11 @@ export default async function SkillsPage({ searchParams }: PageProps) {
   const page = Number(params.page) || 1;
   const sortBy = params.sortBy;
   const sortDir = parseSortDir(params.sortDir);
+  // 欄位：URL（可分享）> cookie（上次的選擇）> 預設。
+  const columns =
+    parseSkillColumns(params.cols) ??
+    parseSkillColumns((await cookies()).get(SKILL_COLS_COOKIE)?.value) ??
+    DEFAULT_SKILL_COLUMNS;
 
   const result = getSkills({ search, clan, target, skillType, page, sortBy, sortDir });
   const availableClans = getDistinctClans();
@@ -74,6 +86,7 @@ export default async function SkillsPage({ searchParams }: PageProps) {
             availableClans={availableClans}
             availableTargets={availableTargets}
             availableSkillTypes={availableSkillTypes}
+            columns={columns}
           />
           <SearchBeacon
             scope="skills"
@@ -90,6 +103,7 @@ export default async function SkillsPage({ searchParams }: PageProps) {
         search={search}
         unfilteredTotal={result.unfilteredTotal}
         iconMap={getMagicIconMap(result.skills.map((s) => s.id))}
+        columns={columns}
       />
 
       {result.totalPages > 1 && (
