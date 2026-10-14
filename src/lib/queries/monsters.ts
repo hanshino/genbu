@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
-import { buildOrderBy, type SortDir } from "@/lib/sort";
+import { buildOrderBy, nullsLastSorts, type SortDir } from "@/lib/sort";
 import { MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL } from "@/lib/constants/monster-level";
+import { MONSTER_COLUMNS } from "@/lib/constants/monster-columns";
 import { getNpcImageMap } from "./images";
 import { getSkillsByCodesBatch } from "./magic";
 import { getStatusById } from "./status";
@@ -11,7 +12,6 @@ import type {
   MonsterDropSource,
   MonsterDropTable,
   MonsterSummary,
-  NpcRow,
 } from "@/lib/types/monster";
 
 /**
@@ -103,10 +103,13 @@ function normalizeLevelBounds(
   return { min: lo, max: hi };
 }
 
+const MONSTER_NUMERIC_KEYS = MONSTER_COLUMNS.numeric.map((c) => c.key);
+
 const MONSTER_SORT_ALLOWLIST: Record<string, string> = {
   level: "n.level",
   hp: "n.hp",
   id: "n.id",
+  ...nullsLastSorts(MONSTER_NUMERIC_KEYS, (k) => `n.${k}`),
 };
 
 export interface GetMonstersResult {
@@ -217,6 +220,7 @@ export function getMonsters(params: GetMonstersParams = {}): GetMonstersResult {
               n.type,
               n.elemental,
               n.hp,
+              ${MONSTER_NUMERIC_KEYS.map((k) => `n.${k}`).join(", ")},
               CASE
                 WHEN m.drop_item IS NULL OR m.drop_item = '[]' THEN 0
                 ELSE 1
@@ -227,20 +231,10 @@ export function getMonsters(params: GetMonstersParams = {}): GetMonstersResult {
        ${orderBy}
        LIMIT ? OFFSET ?`,
     )
-    .all(...args, pageSize, offset) as Array<
-    Pick<NpcRow, "id" | "name" | "level" | "type" | "elemental" | "hp"> & { hasDrop: 0 | 1 }
-  >;
+    .all(...args, pageSize, offset) as Array<Omit<MonsterSummary, "hasDrop"> & { hasDrop: 0 | 1 }>;
 
   return {
-    monsters: rows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      level: r.level,
-      type: r.type,
-      elemental: r.elemental,
-      hp: r.hp,
-      hasDrop: r.hasDrop === 1,
-    })),
+    monsters: rows.map((r) => ({ ...r, hasDrop: r.hasDrop === 1 })),
     total,
     page,
     pageSize,

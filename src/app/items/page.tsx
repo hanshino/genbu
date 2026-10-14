@@ -1,9 +1,13 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { getItems } from "@/lib/queries/items";
 import { getItemIconMap } from "@/lib/queries/images";
 import { parseSortDir } from "@/lib/sort";
 import { serializeSearchParams } from "@/lib/utils";
+import { resolveColumns } from "@/lib/columns";
+import { ITEM_COLUMNS } from "@/lib/constants/item-columns";
+import { ColumnPicker } from "@/components/common/column-picker";
 import { ItemFilters } from "@/components/items/item-filters";
 import { ItemTable } from "@/components/items/item-table";
 import { ItemPagination } from "@/components/items/item-pagination";
@@ -25,6 +29,7 @@ interface PageProps {
     page?: string;
     sortBy?: string;
     sortDir?: string;
+    cols?: string;
   }>;
 }
 
@@ -35,6 +40,11 @@ export default async function ItemsPage({ searchParams }: PageProps) {
   const page = Number(params.page) || 1;
   const sortBy = params.sortBy;
   const sortDir = parseSortDir(params.sortDir);
+  const columns = resolveColumns(
+    ITEM_COLUMNS,
+    params.cols,
+    (await cookies()).get(ITEM_COLUMNS.cookie)?.value,
+  );
 
   const result = getItems({ search, type, page, sortBy, sortDir });
   const iconMap = getItemIconMap(result.items.map((i) => i.id));
@@ -52,7 +62,9 @@ export default async function ItemsPage({ searchParams }: PageProps) {
 
       <div className="mb-6">
         <Suspense fallback={null}>
-          <ItemFilters initialSearch={search} initialType={type} />
+          <ItemFilters initialSearch={search} initialType={type}>
+            <ColumnPicker set={ITEM_COLUMNS} columns={columns} />
+          </ItemFilters>
           <SearchBeacon scope="items" query={search} hasFilter={!!type} resultCount={result.total} />
         </Suspense>
       </div>
@@ -63,6 +75,7 @@ export default async function ItemsPage({ searchParams }: PageProps) {
         iconMap={iconMap}
         search={search}
         unfilteredTotal={result.unfilteredTotal}
+        columns={columns}
       />
 
       {result.totalPages > 1 && (

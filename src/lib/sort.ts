@@ -24,3 +24,14 @@ export function buildOrderBy(opts: BuildOrderByOptions): string {
   if (sortCol === idColumn) return `ORDER BY ${idColumn} ${dir}${tail}`;
   return `ORDER BY ${sortCol} ${dir}, ${idColumn} ASC${tail}`;
 }
+
+/**
+ * 數值欄排序 allowlist：key → `expr IS NULL, expr`，NULL 不論升降冪都排最後
+ * （buildOrderBy 只在尾端加方向）。expr 預設就是 key 本身（key 即欄位名）。
+ */
+export function nullsLastSorts(
+  keys: readonly string[],
+  expr: (key: string) => string = (k) => k,
+): Record<string, string> {
+  return Object.fromEntries(keys.map((k) => [k, `${expr(k)} IS NULL, ${expr(k)}`]));
+}

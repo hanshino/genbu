@@ -17,7 +17,8 @@ import { magicSkillTypeLabel } from "@/lib/constants/magic-skill-type";
 import type { MagicSummary } from "@/lib/types/magic";
 import { ItemIcon } from "@/components/common/item-icon";
 import { pickMagicIcon, type EntityImage } from "@/lib/queries/images";
-import { SKILL_NUMERIC_COLUMNS, type SkillColumnKey } from "@/lib/constants/skill-columns";
+import { SKILL_COLUMNS, type SkillColumnKey } from "@/lib/constants/skill-columns";
+import { NumericCell, STICKY_ID_COL, stickyNameCol } from "@/components/common/column-cells";
 import { cn } from "@/lib/utils";
 
 interface SkillTableProps {
@@ -28,12 +29,6 @@ interface SkillTableProps {
   iconMap: Map<number, Map<number, EntityImage>>;
   columns: readonly SkillColumnKey[];
 }
-
-// 橫向捲動時固定在左側的欄位要有不透明底色，hover 時跟著整列變色。
-const STICKY =
-  "bg-background group-hover/row:bg-[color-mix(in_oklch,var(--muted)_50%,var(--background))]";
-// 編號只在 sm 以上固定：手機寬度只鎖名稱，留空間給右側數值。
-const ID_COL = cn("w-[90px] min-w-[90px] sm:sticky sm:left-0 sm:z-10", STICKY);
 
 export function SkillTable({
   skills,
@@ -55,12 +50,8 @@ export function SkillTable({
   }
 
   const show = new Set(columns);
-  const numericCols = SKILL_NUMERIC_COLUMNS.filter((c) => show.has(c.key));
-  const nameCol = cn(
-    "sticky left-0 z-10 shadow-[inset_-1px_0_0_var(--color-border)]",
-    show.has("id") && "sm:left-[90px]",
-    STICKY,
-  );
+  const numericCols = SKILL_COLUMNS.numeric.filter((c) => show.has(c.key));
+  const nameCol = stickyNameCol(show.has("id"));
 
   return (
     <div className="overflow-x-auto rounded-lg border border-border/60">
@@ -68,7 +59,7 @@ export function SkillTable({
         <TableHeader>
           <TableRow className="group/row">
             {show.has("id") && (
-              <SortableHead column="id" label="編號" className={ID_COL} sort={sort} />
+              <SortableHead column="id" label="編號" className={STICKY_ID_COL} sort={sort} />
             )}
             <TableHead className={nameCol}>名稱</TableHead>
             {show.has("clan") && <TableHead className="w-[120px]">門派</TableHead>}
@@ -104,7 +95,9 @@ export function SkillTable({
             return (
               <TableRow key={`${s.id}-${s.firstLevel}`} className="group/row">
                 {show.has("id") && (
-                  <TableCell className={cn("font-mono text-xs text-muted-foreground", ID_COL)}>
+                  <TableCell
+                    className={cn("font-mono text-xs text-muted-foreground", STICKY_ID_COL)}
+                  >
                     {s.id}
                   </TableCell>
                 )}
@@ -156,18 +149,9 @@ export function SkillTable({
                 {show.has("maxLevel") && (
                   <TableCell className="text-right font-mono tabular-nums">{s.maxLevel}</TableCell>
                 )}
-                {numericCols.map((c) => {
-                  const v = s[c.key];
-                  return (
-                    <TableCell key={c.key} className="text-right font-mono tabular-nums">
-                      {v == null ? (
-                        <span className="text-muted-foreground">—</span>
-                      ) : (
-                        v.toLocaleString()
-                      )}
-                    </TableCell>
-                  );
-                })}
+                {numericCols.map((c) => (
+                  <NumericCell key={c.key} value={s[c.key]} />
+                ))}
               </TableRow>
             );
           })}

@@ -19,9 +19,12 @@ const ALL_TYPES = "__all__";
 export function ItemFilters({
   initialSearch,
   initialType,
+  children,
 }: {
   initialSearch: string;
   initialType: string;
+  /** 篩選列右側的額外控制（顯示欄位）。 */
+  children?: React.ReactNode;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -105,6 +108,7 @@ export function ItemFilters({
           ))}
         </SelectContent>
       </Select>
+      {children}
     </div>
   );
 }

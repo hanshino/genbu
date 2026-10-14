@@ -25,6 +25,7 @@ export function MonsterFilters({
   initialLevelMax,
   availableTypes,
   availableElementals,
+  children,
 }: {
   initialSearch: string;
   initialType: string;
@@ -35,6 +36,8 @@ export function MonsterFilters({
   initialLevelMax: string;
   availableTypes: number[];
   availableElementals: string[];
+  /** 篩選列右側的額外控制（顯示欄位）。 */
+  children?: React.ReactNode;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -200,6 +203,7 @@ export function MonsterFilters({
             className="w-20"
           />
         </div>
+        {children}
       </div>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
         <label className="inline-flex min-h-11 cursor-pointer select-none items-center gap-2 py-1">

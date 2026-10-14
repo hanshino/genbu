@@ -330,3 +330,35 @@ describe("getNpcCombatStats — skills / onHit (飄渺秘境 生之難/死之難
     expect(new Set(codes).size).toBe(codes.length); // 沒有重複
   });
 });
+
+describe("getMonsters — numeric stat columns", () => {
+  const isSorted = (v: number[], dir: "asc" | "desc") =>
+    v.every((x, i) => i === 0 || (dir === "asc" ? x >= v[i - 1] : x <= v[i - 1]));
+
+  it("sorts by drop_exp in both directions (values from npc)", () => {
+    for (const sortDir of ["asc", "desc"] as const) {
+      const exp = getMonsters({ sortBy: "drop_exp", sortDir, pageSize: 100 }).monsters.map(
+        (m) => m.drop_exp as number,
+      );
+      expect(exp.every((v) => v != null)).toBe(true);
+      expect(isSorted(exp, sortDir)).toBe(true);
+    }
+    const top = getMonsters({ sortBy: "drop_exp", sortDir: "desc", pageSize: 1 }).monsters[0];
+    expect(top.drop_exp).toBeGreaterThan(0);
+  });
+
+  it("sorts by a camelCase column (pDamage_max) and returns every numeric field", () => {
+    const rows = getMonsters({ sortBy: "pDamage_max", sortDir: "desc", pageSize: 20 }).monsters;
+    const pmax = rows.map((m) => m.pDamage_max as number);
+    expect(isSorted(pmax, "desc")).toBe(true);
+    for (const key of ["damage_min", "fire_def", "attack_range", "base_hit"] as const) {
+      expect(typeof rows[0][key]).toBe("number");
+    }
+  });
+
+  it("ignores unknown sortBy and falls back to default order", () => {
+    const a = getMonsters({ pageSize: 10, sortBy: "n.hp; DROP TABLE npc" });
+    const b = getMonsters({ pageSize: 10 });
+    expect(a.monsters.map((m) => m.id)).toEqual(b.monsters.map((m) => m.id));
+  });
+});

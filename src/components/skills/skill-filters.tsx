@@ -14,8 +14,8 @@ import { magicClanLabel, MAGIC_CLAN_ORDER } from "@/lib/constants/magic-clan";
 import { magicTargetLabel, MAGIC_TARGET_ORDER } from "@/lib/constants/magic-target";
 import { magicSkillTypeLabel } from "@/lib/constants/magic-skill-type";
 import { FILTER_ALL } from "@/lib/constants/filters";
-import { SkillColumnPicker } from "@/components/skills/skill-column-picker";
-import type { SkillColumnKey } from "@/lib/constants/skill-columns";
+import { ColumnPicker } from "@/components/common/column-picker";
+import { SKILL_COLUMNS, type SkillColumnKey } from "@/lib/constants/skill-columns";
 
 interface FilterState {
   search: string;
@@ -178,7 +178,7 @@ export function SkillFilters({
           ))}
         </SelectContent>
       </Select>
-      <SkillColumnPicker columns={columns} />
+      <ColumnPicker set={SKILL_COLUMNS} columns={columns} />
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import { getDb } from "@/lib/db";
-import { buildOrderBy, type SortDir } from "@/lib/sort";
+import { buildOrderBy, nullsLastSorts, type SortDir } from "@/lib/sort";
 import { getStatusById } from "@/lib/queries/status";
 import type { Magic, MagicSummary } from "@/lib/types/magic";
-import { SKILL_NUMERIC_COLUMNS } from "@/lib/constants/skill-columns";
+import { SKILL_COLUMNS } from "@/lib/constants/skill-columns";
 import type { StepSkill, StepSkillKind } from "@/lib/guide-steps";
 
 export interface GetSkillsParams {
@@ -31,11 +31,10 @@ export interface GetSkillsResult {
 
 const DEFAULT_PAGE_SIZE = 20;
 
-// 數值欄用 `col IS NULL, col` 讓 NULL 不論升降冪都排最後（buildOrderBy 只在尾端加方向）。
 const SKILL_SORT_ALLOWLIST: Record<string, string> = {
   maxLevel: "maxLevel",
   id: "id",
-  ...Object.fromEntries(SKILL_NUMERIC_COLUMNS.map(({ key }) => [key, `${key} IS NULL, ${key}`])),
+  ...nullsLastSorts(SKILL_COLUMNS.numeric.map((c) => c.key)),
 };
 
 /**

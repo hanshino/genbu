@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import {
   getMonsters,
   getDistinctMonsterTypes,
@@ -9,6 +10,9 @@ import { getStagesForMonsters } from "@/lib/queries/monster-spawns";
 import { getNpcImageMap } from "@/lib/queries/images";
 import { parseSortDir } from "@/lib/sort";
 import { serializeSearchParams } from "@/lib/utils";
+import { resolveColumns } from "@/lib/columns";
+import { MONSTER_COLUMNS } from "@/lib/constants/monster-columns";
+import { ColumnPicker } from "@/components/common/column-picker";
 import { MonsterFilters } from "@/components/monsters/monster-filters";
 import { MonsterTable } from "@/components/monsters/monster-table";
 import { Pagination } from "@/components/common/pagination";
@@ -35,6 +39,7 @@ interface PageProps {
     page?: string;
     sortBy?: string;
     sortDir?: string;
+    cols?: string;
   }>;
 }
 
@@ -50,6 +55,11 @@ export default async function MonstersPage({ searchParams }: PageProps) {
   const page = Number(params.page) || 1;
   const sortBy = params.sortBy;
   const sortDir = parseSortDir(params.sortDir);
+  const columns = resolveColumns(
+    MONSTER_COLUMNS,
+    params.cols,
+    (await cookies()).get(MONSTER_COLUMNS.cookie)?.value,
+  );
 
   const typeNum = typeRaw ? Number(typeRaw) : undefined;
   const levelMinNum = levelMinRaw ? Number(levelMinRaw) : undefined;
@@ -104,7 +114,9 @@ export default async function MonstersPage({ searchParams }: PageProps) {
             initialLevelMax={levelMaxRaw}
             availableTypes={availableTypes}
             availableElementals={availableElementals}
-          />
+          >
+            <ColumnPicker set={MONSTER_COLUMNS} columns={columns} />
+          </MonsterFilters>
           <SearchBeacon
             scope="monsters"
             query={search}
@@ -121,6 +133,7 @@ export default async function MonstersPage({ searchParams }: PageProps) {
         portraitMap={portraitMap}
         search={search}
         unfilteredTotal={result.unfilteredTotal}
+        columns={columns}
       />
 
       {result.totalPages > 1 && (

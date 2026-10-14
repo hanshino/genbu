@@ -69,3 +69,36 @@ describe("getItems — sort", () => {
     expect(invalidResult.items.map((i) => i.id)).toEqual(defaultResult.items.map((i) => i.id));
   });
 });
+
+describe("getItems — numeric stat columns", () => {
+  const isSorted = (v: number[], dir: "asc" | "desc") =>
+    v.every((x, i) => i === 0 || (dir === "asc" ? x >= v[i - 1] : x <= v[i - 1]));
+
+  it("sorts by atk in both directions; 0 (= 無此數值) never comes first", () => {
+    for (const sortDir of ["asc", "desc"] as const) {
+      const atk = getItems({ sortBy: "atk", sortDir, pageSize: 100 }).items.map((i) => i.atk);
+      expect(atk.every((v) => v > 0)).toBe(true);
+      expect(isSorted(atk, sortDir)).toBe(true);
+    }
+    const top = getItems({ sortBy: "atk", sortDir: "desc", pageSize: 1 }).items[0].atk;
+    const bottom = getItems({ sortBy: "atk", sortDir: "asc", pageSize: 1 }).items[0].atk;
+    expect(top).toBeGreaterThan(bottom);
+  });
+
+  it("puts 0 last in both directions (page boundary between >0 and 0)", () => {
+    for (const sortDir of ["asc", "desc"] as const) {
+      const { totalPages } = getItems({ sortBy: "extra_def", sortDir, pageSize: 100 });
+      const tail = getItems({ sortBy: "extra_def", sortDir, page: totalPages, pageSize: 100 });
+      // 新 schema 欄位經 alias 對回 Item.def
+      expect(tail.items.every((i) => i.def === 0)).toBe(true);
+    }
+  });
+
+  it("sorts renamed columns by the real DB column (walk_speed → Item.speed)", () => {
+    const speeds = getItems({ sortBy: "walk_speed", sortDir: "desc", pageSize: 50 }).items.map(
+      (i) => i.speed,
+    );
+    expect(speeds[0]).toBeGreaterThan(0);
+    expect(isSorted(speeds, "desc")).toBe(true);
+  });
+});

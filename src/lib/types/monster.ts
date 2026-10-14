@@ -1,3 +1,5 @@
+import type { MonsterNumericKey } from "@/lib/constants/monster-columns";
+
 // npc 表：戰鬥主資料（包含 monsters.id 的超集合 — monsters 是 npc 中的可戰鬥子集）
 export interface NpcRow {
   id: number;
@@ -66,7 +68,8 @@ export interface MonsterDropSource {
 }
 
 // 怪物列表投影：列表頁顯示所需欄位
-export interface MonsterSummary {
+// 數值欄（damage_min…wood_def）見 constants/monster-columns.ts，直接取自 npc。
+export interface MonsterSummary extends Pick<NpcRow, MonsterNumericKey> {
   id: number;
   name: string;
   level: number;

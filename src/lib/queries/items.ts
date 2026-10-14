@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
-import { buildOrderBy, type SortDir } from "@/lib/sort";
+import { buildOrderBy, nullsLastSorts, type SortDir } from "@/lib/sort";
+import { ITEM_COLUMNS } from "@/lib/constants/item-columns";
 import type { Item, ItemRand } from "@/lib/types/item";
 
 // items 表欄位改名（新 schema），SQL 用 alias 把新欄位對回 app 舊 key，
@@ -77,6 +78,11 @@ const ITEM_SORT_ALLOWLIST: Record<string, string> = {
   level: "base_lv",
   weight: "weight",
   id: "id",
+  // 數值欄沒有 NULL，「無此數值」存 0：NULLIF 讓 0 跟 NULL 一樣排最後。
+  ...nullsLastSorts(
+    ITEM_COLUMNS.numeric.map((c) => c.key),
+    (k) => `NULLIF(${k}, 0)`,
+  ),
 };
 
 export interface GetItemsParams {
