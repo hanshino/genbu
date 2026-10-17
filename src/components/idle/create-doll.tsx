@@ -7,7 +7,7 @@ import { TICK_MS } from "@/configs/idle";
 import styles from "./character-create.module.css";
 
 /** 紙娃娃可以切換的動作（目前只有 dir 1 的動作圖）：動作名、顯示用的名稱。 */
-export const DOLL_ACTIONS = [
+const DOLL_ACTIONS = [
   { action: "wait", label: "待機" },
   { action: "walk", label: "走路" },
   { action: "attack1", label: "普通攻擊" },

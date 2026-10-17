@@ -16,7 +16,7 @@ import type { AttributeKey, PanelResult, UiWindowLayout } from "@/lib/types/stat
 import type { IdleState } from "@/lib/idle/types";
 import { cn } from "@/lib/utils";
 
-export const NOVICE_SECT_NAME = "入門弟子";
+const NOVICE_SECT_NAME = "入門弟子";
 
 const sectName = (state: IdleState) =>
   state.sectId === NOVICE_SECT_ID ? NOVICE_SECT_NAME : (SECTS[state.sectId]?.name ?? "—");
