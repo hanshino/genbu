@@ -6,9 +6,11 @@ import {
   getSkillRow,
   getSkillsByClan,
 } from "@/lib/queries/magic";
+import { getSkillEffectAvailability } from "@/lib/queries/skill-effect";
 import { getStatusById } from "@/lib/queries/status";
 import { getMagicIconMap, pickMagicIcon } from "@/lib/queries/images";
 import { SkillDetail } from "@/components/skills/skill-detail";
+import { SkillEffectPlayer } from "@/components/skills/skill-effect-player";
 import { SkillLevelTable } from "@/components/skills/skill-level-table";
 import { RelatedSkills } from "@/components/skills/related-skills";
 import { BackLink } from "@/components/common/back-link";
@@ -70,6 +72,7 @@ export default async function SkillDetailPage({ params, searchParams }: PageProp
   const status = current.extra_status != null ? getStatusById(current.extra_status) : null;
   const iconMap = getMagicIconMap([base.id, ...related.map((s) => s.id)]);
   const levelIcons = iconMap.get(base.id);
+  const effect = getSkillEffectAvailability(current.id, current.level);
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
@@ -84,6 +87,16 @@ export default async function SkillDetailPage({ params, searchParams }: PageProp
         status={status}
         icon={pickMagicIcon(levelIcons, current.level)}
       />
+
+      {effect && (
+        <SkillEffectPlayer
+          key={`${current.id}-${current.level}`}
+          magicId={current.id}
+          level={current.level}
+          genders={effect.genders}
+          presets={effect.presets}
+        />
+      )}
 
       <SkillLevelTable rows={rows} levelIcons={levelIcons} />
 
