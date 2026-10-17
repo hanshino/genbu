@@ -71,6 +71,13 @@ export function getUserDb(): Database.Database {
       )`);
       db.exec(`CREATE INDEX IF NOT EXISTS idx_market_listings_item ON market_listings(item_id)`);
       db.exec(`CREATE INDEX IF NOT EXISTS idx_market_listings_scan ON market_listings(scan_id)`);
+      // 放置掛機存檔：state 是版本化 JSON（見 src/lib/idle/types.ts），之後的階段只加欄位、用 version 判斷。
+      db.exec(`CREATE TABLE IF NOT EXISTS idle_saves (
+        sub TEXT PRIMARY KEY,
+        version INTEGER NOT NULL,
+        state TEXT NOT NULL,
+        updated_at INTEGER NOT NULL
+      )`);
       globalDb._userDb = db;
     } catch (error) {
       db.close();
