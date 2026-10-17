@@ -1,13 +1,7 @@
 // 放置掛機畫面用的純函式（不碰 DOM、不碰 DB）：每小時擊倒數、事件 → 紀錄文字、場景的暫態動畫、離線摘要文字。
-import {
-  GAME_SPEED,
-  NORMAL_ATTACK_TICKS,
-  OFFLINE_CAP_MS,
-  POST_CAST_TICKS,
-  SEARCH_TICKS,
-  TICK_MS,
-} from "@/configs/idle";
+import { GAME_SPEED, OFFLINE_CAP_MS, POST_CAST_TICKS, SEARCH_TICKS, TICK_MS } from "@/configs/idle";
 import { expectedDamage, hitChance, type Attacker } from "@/lib/combat/damage";
+import { stripFrameIndex } from "@/lib/skill-effect";
 import { advance } from "./engine";
 import { monsterTarget } from "./skills";
 import type { IdleData, IdleEvent, IdleMonster, IdleSkillLevel, IdleState, IdleSummary } from "./types";
@@ -63,16 +57,22 @@ export interface KillEstimate {
 /**
  * 對一種怪「平均多久擊倒一隻」：找怪 + 期望施放次數 × 施放時長 + 施放後間隔。
  * 次數 = 怪物 HP / 一次施放的期望傷害（含 miss、多段）。是估計，不是引擎的結果。
- * skill 為 null 代表普攻。
+ * skill 為 null 代表普攻，揮擊間隔用 normalCastTicks（Combatant.normalAttack.castTicks），沒有施放後間隔。
  */
-export function killEstimate(attacker: Attacker, monster: IdleMonster, skill: IdleSkillLevel | null): KillEstimate {
+export function killEstimate(
+  attacker: Attacker,
+  monster: IdleMonster,
+  skill: IdleSkillLevel | null,
+  normalCastTicks: number,
+): KillEstimate {
   const target = monsterTarget(monster);
   const hitPct = hitChance(attacker, target, skill);
   const expected = expectedDamage(attacker, target, skill);
   if (hitPct <= 0 || expected <= 0) return { hitPct, seconds: null };
   const casts = Math.max(1, monster.hp / expected);
-  const castTicks = skill ? skill.castTicks : NORMAL_ATTACK_TICKS;
-  const ticks = SEARCH_TICKS + casts * castTicks + (casts - 1) * POST_CAST_TICKS;
+  const castTicks = skill ? skill.castTicks : normalCastTicks;
+  const rest = skill ? POST_CAST_TICKS : 0;
+  const ticks = SEARCH_TICKS + casts * castTicks + (casts - 1) * rest;
   return { hitPct, seconds: ticksToMs(ticks) / 1000 };
 }
 
@@ -142,6 +142,26 @@ export function formatClock(ms: number): string {
 // ---------------------------------------------------------------------------
 // 場景：位置由 state.phase 推導；只有「打到誰、什麼時候打到」這類暫態靠事件。
 // ---------------------------------------------------------------------------
+
+/**
+ * 普攻揮擊動作圖（attack1，通常 4 格）此刻要畫第幾格，-1 = 還沒開始或已播完（回到待機）。
+ * 命中那一格（第 3 格，索引 2）要剛好落在命中時刻 hitAt：
+ * 週期夠長就照原速、晚一點開始；週期太短（攻速高）就整段加快，所以每次揮擊仍對上一次命中。
+ */
+export function attackFrameIndex(
+  delays: readonly number[],
+  elapsed: number,
+  hitAt: number,
+): number {
+  const hitFrame = Math.min(2, delays.length - 1);
+  const preHit = delays.slice(0, hitFrame).reduce((a, b) => a + b, 0);
+  const frames = [...delays];
+  if (hitAt >= preHit) {
+    const local = elapsed - (hitAt - preHit);
+    return local < 0 ? -1 : stripFrameIndex(frames, local);
+  }
+  return stripFrameIndex(frames, (elapsed * preHit) / Math.max(1, hitAt));
+}
 
 /** 擊倒後屍體留在場上的 ticks（接著淡出）。 */
 export const CORPSE_TICKS = 45;

@@ -10,11 +10,32 @@ import {
 } from "@/configs/idle";
 import { SECTS } from "@/configs/stat-sim";
 import { getDb } from "@/lib/db";
-import type { IdleData, IdleGender, IdleSectId, IdleMonster, IdleSkill, IdleSkillLevel } from "@/lib/idle/types";
-import { CREATE_WINDOW, type ButtonIcons, type ButtonState, type CreateControl, type CreateWindowData } from "@/lib/idle/create-layout";
+import type {
+  IdleData,
+  IdleGender,
+  IdleSectId,
+  IdleMonster,
+  IdleSkill,
+  IdleSkillLevel,
+} from "@/lib/idle/types";
+import {
+  CREATE_WINDOW,
+  type ButtonIcons,
+  type ButtonState,
+  type CreateControl,
+  type CreateWindowData,
+} from "@/lib/idle/create-layout";
+import { getStatSimWindows } from "@/lib/queries/stat-sim";
 import { getStrips } from "@/lib/queries/skill-effect";
 import { hitTicks, type StripSet, type TimelineFrame } from "@/lib/skill-effect";
-import { STAT_KEYS, type PanelBonus, type SectId, type SimItem, type StatKey } from "@/lib/types/stat-sim";
+import {
+  STAT_KEYS,
+  type PanelBonus,
+  type SectId,
+  type SimItem,
+  type StatKey,
+  type UiWindowLayout,
+} from "@/lib/types/stat-sim";
 
 const ITEM_ALIASES: Partial<Record<StatKey, string>> = {
   def: "extra_def",
@@ -237,7 +258,8 @@ export interface IdleSceneAssets {
   casterStrips: StripSet;
   /** monster id → 動作圖（npc.pic 對到 actor_strip_images 的 monster）。 */
   monsterStrips: Record<number, StripSet>;
-  map: { url: string; width: number; height: number } | null;
+  /** 角色分頁用的遊戲「基本屬性」視窗（與屬性模擬器同一份版面）。 */
+  attributeWindow: UiWindowLayout;
 }
 
 const sceneCache = new Map<string, IdleSceneAssets>();
@@ -248,14 +270,10 @@ export function loadIdleSceneAssets(data: IdleData): IdleSceneAssets {
   if (cached) return cached;
   const db = getDb();
   const label = db.prepare("SELECT label FROM effect_presets WHERE id = ?").get(data.presetId) as
-    | { label: string }
-    | undefined;
-  const stage = db.prepare("SELECT name FROM stages WHERE kind = 'stage' AND id = ?").get(data.stageId) as
-    | { name: string | null }
-    | undefined;
-  const map = db
-    .prepare("SELECT url, img_width AS width, img_height AS height FROM map_images WHERE stage_kind = 'stage' AND stage_id = ?")
-    .get(data.stageId) as { url: string; width: number; height: number } | undefined;
+    { label: string } | undefined;
+  const stage = db
+    .prepare("SELECT name FROM stages WHERE kind = 'stage' AND id = ?")
+    .get(data.stageId) as { name: string | null } | undefined;
   const monsterStrips: Record<number, StripSet> = {};
   for (const id of Object.keys(data.monsters).map(Number)) {
     const npc = db.prepare("SELECT pic FROM npc WHERE id = ?").get(id) as { pic: number | null } | undefined;
@@ -266,7 +284,7 @@ export function loadIdleSceneAssets(data: IdleData): IdleSceneAssets {
     stageName: stage?.name ?? "",
     casterStrips: getStrips("preset", data.presetId),
     monsterStrips,
-    map: map ?? null,
+    attributeWindow: getStatSimWindows().attribute,
   };
   sceneCache.set(key, assets);
   return assets;

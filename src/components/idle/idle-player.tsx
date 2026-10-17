@@ -37,6 +37,7 @@ import { LogTab } from "./log-tab";
 import { OfflineDialog } from "./offline-dialog";
 import type { LogEntry, Runtime } from "./runtime";
 import { SkillsTab } from "./skills-tab";
+import { TrialBadge, TrialNote } from "./trial-label";
 
 type TabKey = "character" | "skills" | "log";
 type SaveStatus = { kind: "saved"; at: number } | { kind: "syncing"; at: number } | { kind: "error"; at: number };
@@ -428,11 +429,17 @@ export function IdlePlayer({
     <div className="space-y-4">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="space-y-1">
-          <h1 className="font-heading text-2xl font-black tracking-wide sm:text-3xl">摸魚練功房</h1>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h1 className="font-heading text-2xl font-black tracking-wide sm:text-3xl">
+              摸魚練功房
+            </h1>
+            <TrialBadge />
+          </div>
           <p className="text-muted-foreground text-sm">
             {snap.name ? `${snap.name}　` : ""}
             {scene.presetLabel}　練功地點：{scene.stageName}
           </p>
+          <TrialNote />
         </div>
         <Badge variant="outline" className="h-7 gap-1.5 px-2.5 text-[13px]" aria-live="polite">
           {save.kind === "syncing" ? (
@@ -558,6 +565,7 @@ export function IdlePlayer({
           <CharacterTab
             state={snap}
             data={data}
+            scene={scene}
             draft={draft}
             busy={busy}
             error={actionError}

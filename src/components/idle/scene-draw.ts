@@ -1,10 +1,14 @@
-import { NORMAL_ATTACK_HIT_TICK, SEARCH_TICKS } from "@/configs/idle";
-import { drawActor, drawTimelineObjects, requestImage, type View } from "@/components/skills/skill-effect-canvas";
+import { SEARCH_TICKS } from "@/configs/idle";
+import {
+  drawActor,
+  drawTimelineObjects,
+  requestImage,
+  type View,
+} from "@/components/skills/skill-effect-canvas";
 import {
   CASTER_ID,
   casterPose,
   loopPose,
-  stripFrameIndex,
   targetPose,
   type EffectSprite,
   type EffectTimeline,
@@ -14,6 +18,7 @@ import {
 import type { IdleData, IdleState } from "@/lib/idle/types";
 import {
   POPUP_TICKS,
+  attackFrameIndex,
   currentMonsterId,
   peekEncounter,
   searchesCompleted,
@@ -32,14 +37,14 @@ const GROUND_RATIO = 0.8;
 const SLIDE_TICKS = 80;
 /** 背景捲動速度（地圖像素 / tick）；刻意比角色走路慢，當作遠景。 */
 const SCROLL_PER_TICK = 0.9;
-/** 普攻動畫提早這麼多 tick 開始，讓揮擊落在命中時刻附近。 */
-const ATTACK_LEAD = Math.max(0, NORMAL_ATTACK_HIT_TICK - 14);
 
 /**
- * 背景只取地圖上的一塊空曠沙地（地圖像素）；整張地圖是 8800x8400，不整張畫進場景。
- * 取自 (5950..7550, 2980..3580) 的沙地部分：該區下緣與右緣是海，所以只用左上這塊純沙地，捲到哪裡都不會出現海面。
+ * 背景是預先裁好的一塊空曠沙地（地圖像素 1000x280，來自 stage 147 整張地圖的 (6010, 3010)），
+ * 由 scripts/crop-idle-backdrop.mjs 產生，約 14 KB。整張地圖是 8800x8400 的 5 MB 圖，不再下載。
+ * 該區下緣與右緣是海，所以只取左上這塊純沙地，捲到哪裡都不會出現海面。
  */
-export const MAP_CROP = { x: 6010, y: 3010, w: 1000, h: 280 } as const;
+export const BACKDROP_URL = "/idle/backdrop-stage147.webp";
+export const BACKDROP_SIZE = { w: 1000, h: 280 } as const;
 
 /** 手機的場景（約 220 px 高）用較矮的邏輯舞台，角色才不會縮得太小。 */
 export function stageHeightFor(cssHeight: number): number {
@@ -47,31 +52,26 @@ export function stageHeightFor(cssHeight: number): number {
 }
 
 // ---------------------------------------------------------------------------
-// 背景：整張 webp 瀏覽器仍得下載與解碼，所以只載一次、裁出需要的區塊畫進離屏畫布後就放掉原圖。
+// 背景：載一次，之後每幀直接畫；載好前先用沙地底色。
 // ---------------------------------------------------------------------------
 
-let backdrop: HTMLCanvasElement | null = null;
+let backdrop: HTMLImageElement | null = null;
 let backdropRequest: Promise<void> | null = null;
 
-export function loadBackdrop(url: string): Promise<void> {
+export function loadBackdrop(url: string = BACKDROP_URL): Promise<void> {
   if (backdrop) return Promise.resolve();
   backdropRequest ??= new Promise<void>((resolve) => {
     const im = new Image();
     im.decoding = "async";
     im.onload = () => {
-      try {
-        const off = document.createElement("canvas");
-        off.width = MAP_CROP.w;
-        off.height = MAP_CROP.h;
-        off.getContext("2d")?.drawImage(im, MAP_CROP.x, MAP_CROP.y, MAP_CROP.w, MAP_CROP.h, 0, 0, MAP_CROP.w, MAP_CROP.h);
-        backdrop = off;
-      } catch {
-        backdrop = null;
-      }
-      im.src = "";
+      backdrop = im;
       resolve();
     };
-    im.onerror = () => resolve();
+    im.onerror = () => {
+      // 下次再試；先用沙地底色。
+      backdropRequest = null;
+      resolve();
+    };
     im.src = url;
   });
   return backdropRequest;
@@ -117,21 +117,21 @@ function drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number, scr
     return;
   }
   const s = WORLD_SCALE;
-  const bandH = Math.min(MAP_CROP.h, h / s);
-  const srcY = (MAP_CROP.h - bandH) * 0.5;
-  const period = MAP_CROP.w * 2;
+  const bandH = Math.min(BACKDROP_SIZE.h, h / s);
+  const srcY = (BACKDROP_SIZE.h - bandH) * 0.5;
+  const period = BACKDROP_SIZE.w * 2;
   const p = ((scroll % period) + period) % period;
-  for (let i = Math.floor(p / MAP_CROP.w); i < Math.floor(p / MAP_CROP.w) + 3; i++) {
-    const left = (i * MAP_CROP.w - p) * s;
+  for (let i = Math.floor(p / BACKDROP_SIZE.w); i < Math.floor(p / BACKDROP_SIZE.w) + 3; i++) {
+    const left = (i * BACKDROP_SIZE.w - p) * s;
     if (left > w) break;
     ctx.save();
     if (i % 2 === 0) {
       ctx.translate(left, 0);
     } else {
-      ctx.translate(left + MAP_CROP.w * s, 0);
+      ctx.translate(left + BACKDROP_SIZE.w * s, 0);
       ctx.scale(-1, 1);
     }
-    ctx.drawImage(backdrop, 0, srcY, MAP_CROP.w, bandH, 0, 0, MAP_CROP.w * s, bandH * s);
+    ctx.drawImage(backdrop, 0, srcY, BACKDROP_SIZE.w, bandH, 0, 0, BACKDROP_SIZE.w * s, bandH * s);
     ctx.restore();
   }
   // 壓一層暗，讓傷害數字與血條在亮沙地上也讀得到；場景不跟網站主題走。
@@ -165,8 +165,10 @@ function casterPoseFor(input: SceneInput): { pose: Pose | null; timelineEntry: n
   }
   const attack = strips.attack1;
   if (!attack) return { pose: rest, timelineEntry: null };
-  const index = stripFrameIndex(attack.delays, phase.elapsed - ATTACK_LEAD);
-  return { pose: phase.elapsed >= ATTACK_LEAD && index >= 0 ? { action: "attack1", index } : rest, timelineEntry: null };
+  // 普攻：命中那一格對齊這次揮擊預先抽好的命中時刻；攻速高、週期比動畫短時整段加快。
+  const hitAt = phase.pending[0]?.at ?? phase.castTicks;
+  const index = attackFrameIndex(attack.delays, phase.elapsed, hitAt);
+  return { pose: index >= 0 ? { action: "attack1", index } : rest, timelineEntry: null };
 }
 
 interface MonsterView {
@@ -208,7 +210,8 @@ function monsterView(input: SceneInput, x0: number, width: number): MonsterView 
       x: arrived ? home : width + 90 + (home - width - 90) * easeOut(q),
       alpha: 1,
       pose: arrived ? loopPose(strips, "wait", clock) : loopPose(strips, "walk", clock),
-      hp: data.monsters[id]?.hp ?? null,
+      // 找怪中還沒有開打：不畫名字與血條（遇怪事件之後才有）。
+      hp: null,
     };
   }
   const id = currentMonsterId(state, fx);

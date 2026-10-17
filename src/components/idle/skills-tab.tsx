@@ -43,10 +43,20 @@ export function SkillsTab({
     const refId = [...weights].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]?.[0];
     const ref = refId != null ? data.monsters[refId] : undefined;
     const rows = choice.options.map((o) => {
-      const row = data.skills.find((s) => s.id === o.skillId)?.levels.find((l) => l.level === o.level) ?? null;
-      return { option: o, est: ref && row ? killEstimate(combatant.attacker, ref, row) : null };
+      const row =
+        data.skills.find((s) => s.id === o.skillId)?.levels.find((l) => l.level === o.level) ??
+        null;
+      return {
+        option: o,
+        est:
+          ref && row
+            ? killEstimate(combatant.attacker, ref, row, combatant.normalAttack.castTicks)
+            : null,
+      };
     });
-    const normal = ref ? killEstimate(combatant.attacker, ref, null) : null;
+    const normal = ref
+      ? killEstimate(combatant.attacker, ref, null, combatant.normalAttack.castTicks)
+      : null;
     return { choice, locked, rows, ref, normal, attacker: combatant.attacker };
     // state 的內容只在等級、六圍、技能改變時才影響結果；每幀都會是新物件，所以用這幾個值當依賴。
     // eslint-disable-next-line react-hooks/exhaustive-deps

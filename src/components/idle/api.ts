@@ -68,7 +68,7 @@ export interface IdleBoot {
  * 公開資料 API 會被瀏覽器與 CDN 快取一小時以上；回傳格式一改就把版本加一，換網址避開舊快取。
  * 伺服器不看這個參數。
  */
-const STATIC_DATA_VERSION = 2;
+const STATIC_DATA_VERSION = 3;
 
 export function getIdleData(presetId: number, weaponItemId?: number): Promise<ApiResult<IdleBoot>> {
   const weapon = weaponItemId == null ? "" : `&weapon=${weaponItemId}`;

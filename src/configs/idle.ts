@@ -9,13 +9,12 @@ export const TICK_MS = 1000 / 60;
 
 /** 找怪（走路）3 秒；之後換成依移動速度。 */
 export const SEARCH_TICKS = 180;
-/** 每次施放結束後的間隔 0.5 秒（怪物還活著才會再施放）。 */
+/**
+ * 每次「技能」施放結束後的間隔 0.5 秒（怪物還活著才會再施放）。
+ * 普通攻擊（沒有可用技能時，Lv1..8 沒有任何門派技能可學）不套用：它的間隔由攻速等級決定，
+ * 見 src/lib/attack-speed.ts 與 buildCombatant 的 normalAttack。
+ */
 export const POST_CAST_TICKS = 30;
-
-/** 普攻（沒有可用技能時，Lv1..8 沒有任何門派技能可學）：沿用傷害試算的 DEFAULT_TIMING 700 ms。 */
-export const NORMAL_ATTACK_TICKS = 42;
-/** 普攻命中發生在施放中途。 */
-export const NORMAL_ATTACK_HIT_TICK = 21;
 
 /** 離線結算上限 12 小時。 */
 export const OFFLINE_CAP_MS = 12 * 60 * 60 * 1000;

@@ -44,15 +44,11 @@ export function IdleScene({ rt, data, scene, reducedMotion, drawRef, children }:
     return () => ro.disconnect();
   }, [drawRef]);
 
-  // 動作圖先載；背景是整張地圖（5 MB），等畫面空閒再載，載好前先用沙地底色。
+  // 動作圖與預先裁好的背景（約 14 KB）一起載；載好前先用沙地底色，載好後立刻重畫。
   useEffect(() => {
     preloadStrips([scene.casterStrips, ...Object.values(scene.monsterStrips)], () => {});
-    const url = scene.map?.url;
-    if (!url) return;
-    const start = () => void loadBackdrop(url);
-    const id = window.setTimeout(start, 400);
-    return () => window.clearTimeout(id);
-  }, [scene]);
+    void loadBackdrop().then(() => drawRef.current?.());
+  }, [scene, drawRef]);
 
   useEffect(() => {
     drawRef.current = () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NORMAL_ATTACK_HIT_TICK, NORMAL_ATTACK_TICKS, POST_CAST_TICKS, SEARCH_TICKS } from "@/configs/idle";
+import { POST_CAST_TICKS, SEARCH_TICKS } from "@/configs/idle";
 import { levelPoints } from "@/lib/stat-sim";
 import { advance, killExp, resumeIfBlocked } from "../engine";
 import { SeededRng } from "../rng";
@@ -10,6 +10,10 @@ const json = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 /** 事件的 t 是各次 advance 內的位移；把第二段平移 offset 後才能和單次跑的事件逐筆比對。 */
 const shift = (events: IdleEvent[], offset: number): IdleEvent[] => events.map((e) => ({ ...e, t: e.t + offset }));
+
+/** 預設夾具（移花宮拿長劍、身法 1）的普攻：v 180 → 攻速 Lv6 → 35 ticks，命中在 23。 */
+const NORMAL_ATTACK_TICKS = 35;
+const NORMAL_ATTACK_HIT_TICK = 23;
 
 const only = (id: number, over: Partial<IdleMonster> = {}) => ({
   monsters: { [id]: monster({ ...over, id }) },

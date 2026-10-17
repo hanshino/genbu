@@ -7,6 +7,7 @@ import { makeData, makeState } from "./fixtures";
 import {
   CORPSE_TICKS,
   applyEvents,
+  attackFrameIndex,
   describeEvent,
   formatOfflineDuration,
   killEstimate,
@@ -135,13 +136,38 @@ describe("場景暫態", () => {
 describe("killEstimate", () => {
   it("命中率 100% 時給出秒數，命中不足時 seconds 為 null", () => {
     const data = makeData();
-    const { attacker } = buildCombatant(makeState(), data);
-    const easy = killEstimate(attacker, data.monsters[5407], null);
+    const { attacker, normalAttack } = buildCombatant(makeState(), data);
+    const easy = killEstimate(attacker, data.monsters[5407], null, normalAttack.castTicks);
     expect(easy.hitPct).toBe(100);
     expect(easy.seconds).toBeGreaterThan(3);
-    const hard = killEstimate({ ...attacker, hit: 0 }, { ...data.monsters[5407], baseDodge: 200 }, null);
+    const hard = killEstimate(
+      { ...attacker, hit: 0 },
+      { ...data.monsters[5407], baseDodge: 200 },
+      null,
+      normalAttack.castTicks,
+    );
     expect(hard.hitPct).toBe(0);
     expect(hard.seconds).toBeNull();
+  });
+});
+
+describe("attackFrameIndex", () => {
+  const delays = [6, 6, 6, 6];
+  it("週期夠長：照原速，命中格（索引 2）從命中時刻開始", () => {
+    expect(attackFrameIndex(delays, 0, 25)).toBe(-1);
+    expect(attackFrameIndex(delays, 12, 25)).toBe(-1);
+    expect(attackFrameIndex(delays, 13, 25)).toBe(0);
+    expect(attackFrameIndex(delays, 24, 25)).toBe(1);
+    expect(attackFrameIndex(delays, 25, 25)).toBe(2);
+    expect(attackFrameIndex(delays, 31, 25)).toBe(3);
+    expect(attackFrameIndex(delays, 37, 25)).toBe(-1);
+  });
+
+  it("週期太短：整段加快，命中格仍然在命中時刻開始", () => {
+    expect(attackFrameIndex(delays, 0, 7)).toBe(0);
+    expect(attackFrameIndex(delays, 4, 7)).toBe(1);
+    expect(attackFrameIndex(delays, 7, 7)).toBe(2);
+    expect(attackFrameIndex(delays, 11, 7)).toBe(3);
   });
 });
 

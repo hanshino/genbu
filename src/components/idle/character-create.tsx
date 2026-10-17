@@ -34,14 +34,8 @@ import { ATTRIBUTE_KEYS, type AttributeKey } from "@/lib/types/stat-sim";
 import { postJson, type IdleView } from "./api";
 import { CreateDoll, availableActions } from "./create-doll";
 import styles from "./character-create.module.css";
-
-/** 視窗的底圖大小是 404×364；桌面用 2 / 1.5 / 1 倍，手機貼齊寬度。 */
-function scaleFor(width: number, base: number): number {
-  if (width >= base * 2) return 2;
-  if (width >= base * 1.5) return 1.5;
-  if (width >= base) return 1;
-  return Math.max(width, 200) / base;
-}
+import { TrialBadge, TrialNote } from "./trial-label";
+import { scaleFor } from "./window-scale";
 
 /** 輸入框內部的字至少要 16 px（iOS 聚焦時小於 16 px 會自動放大頁面），再整個縮回遊戲大小。 */
 const INPUT_FONT = 11;
@@ -314,8 +308,12 @@ export function CharacterCreate({
   return (
     <div className="space-y-4">
       <header className="space-y-1 text-center">
-        <h1 className="font-heading text-2xl font-black tracking-wide sm:text-3xl">建立角色</h1>
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+          <h1 className="font-heading text-2xl font-black tracking-wide sm:text-3xl">建立角色</h1>
+          <TrialBadge />
+        </div>
         <p className="text-muted-foreground text-sm">摸魚練功房的新角色都從入門弟子出發。</p>
+        <TrialNote />
       </header>
 
       <div ref={holder} className="w-full">

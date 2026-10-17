@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IdleGame } from "@/components/idle/idle-game";
 import { IdleLoginPrompt } from "@/components/idle/login-prompt";
+import { TrialBadge } from "@/components/idle/trial-label";
 import { getSession } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
@@ -17,7 +18,12 @@ export default async function IdlePage() {
         <IdleGame />
       ) : (
         <div className="py-8 sm:py-12">
-          <h1 className="font-heading mb-6 text-center text-2xl font-black tracking-wide sm:text-3xl">摸魚練功房</h1>
+          <div className="mb-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+            <h1 className="font-heading text-center text-2xl font-black tracking-wide sm:text-3xl">
+              摸魚練功房
+            </h1>
+            <TrialBadge />
+          </div>
           <IdleLoginPrompt />
         </div>
       )}

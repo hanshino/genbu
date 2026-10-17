@@ -1,4 +1,4 @@
-import { EXP_LEVEL_GAP, NORMAL_ATTACK_HIT_TICK, NORMAL_ATTACK_TICKS, POST_CAST_TICKS, SEARCH_TICKS } from "@/configs/idle";
+import { EXP_LEVEL_GAP, POST_CAST_TICKS, SEARCH_TICKS } from "@/configs/idle";
 import { CRIT, hitChance, MISS, playerHit, type SkillLike } from "@/lib/combat/damage";
 import { computeHitRequirement } from "@/lib/calc/hit-requirement";
 import { levelPoints } from "@/lib/stat-sim";
@@ -116,8 +116,9 @@ export function advance(
       return;
     }
     const segments = playerHit(attacker, target, skill, rng);
-    const hitTicks = ctx.skill ? ctx.skill.data.hitTicks : [NORMAL_ATTACK_HIT_TICK];
-    const castTicks = ctx.skill ? ctx.skill.data.castTicks : NORMAL_ATTACK_TICKS;
+    const { normalAttack } = ctx.combatant;
+    const hitTicks = ctx.skill ? ctx.skill.data.hitTicks : [normalAttack.hitTick];
+    const castTicks = ctx.skill ? ctx.skill.data.castTicks : normalAttack.castTicks;
     const at = (i: number) => Math.min(castTicks, hitTicks[Math.min(i, hitTicks.length - 1)]);
     const pending: PendingHit[] =
       segments[0][0] === MISS
@@ -210,7 +211,9 @@ export function advance(
       } else if (phase.hp <= 0) {
         startSearch();
       } else {
-        s.phase = { kind: "post-cast", monsterId: phase.monsterId, hp: phase.hp, remaining: POST_CAST_TICKS };
+        // 技能施放後休息 POST_CAST_TICKS；普攻的週期已經是兩次揮擊的間隔，接著直接揮下一次。
+        const rest = phase.skillId == null ? 0 : POST_CAST_TICKS;
+        s.phase = { kind: "post-cast", monsterId: phase.monsterId, hp: phase.hp, remaining: rest };
       }
     }
   }

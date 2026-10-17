@@ -1,5 +1,6 @@
 import { NOVICE_PANEL_SECT_ID, NOVICE_PRESET_IDS, NOVICE_SECT_ID } from "@/configs/idle";
 import { SECTS } from "@/configs/stat-sim";
+import { attackSpeedLevel, swingHitTick, swingTicks } from "@/lib/attack-speed";
 import type { Attacker } from "@/lib/combat/damage";
 import { computePanel } from "@/lib/stat-sim";
 import { resolveWeapon, type WeaponProfile } from "@/lib/stat-sim-damage";
@@ -22,12 +23,40 @@ export interface IdleCharacterInput {
   attributes: Attributes;
 }
 
+/** 普通攻擊：攻速等級（1..14）與一次揮擊的 ticks / 命中時刻（見 src/lib/attack-speed.ts）。 */
+export interface NormalAttack {
+  level: number;
+  /** 揮擊週期；普攻沒有施放後間隔，這就是兩次揮擊的間隔。 */
+  castTicks: number;
+  hitTick: number;
+}
+
 export interface Combatant {
   character: CharacterV1;
   gameData: GameData;
   panel: PanelResult;
   weapon: WeaponProfile;
   attacker: Attacker;
+  normalAttack: NormalAttack;
+}
+
+/**
+ * 普攻攻速：門派欄位用存檔的門派（入門弟子 1 有自己的一欄，不借移花宮），
+ * 身法取面板值，武器取右手武器的類型與 attack_speed 加成。
+ */
+export function normalAttackFor(
+  input: IdleCharacterInput,
+  panel: PanelResult,
+  data: IdleData,
+): NormalAttack {
+  const level = attackSpeedLevel(
+    data.weapon?.typeName ?? null,
+    input.sectId,
+    panel.attributes.agi.value ?? 0,
+    data.weapon?.stats.attack_speed ?? 0,
+  );
+  const castTicks = swingTicks(level);
+  return { level, castTicks, hitTick: swingHitTick(castTicks) };
 }
 
 /** computePanel 用的門派：入門弟子借用移花宮的面板公式（見 NOVICE_PANEL_SECT_ID）。 */
@@ -135,5 +164,12 @@ export function buildCombatant(input: IdleCharacterInput, data: IdleData): Comba
     int: panel.attributes.pow.value ?? 0,
     agi: panel.attributes.agi.value ?? 0,
   };
-  return { character, gameData, panel, weapon, attacker };
+  return {
+    character,
+    gameData,
+    panel,
+    weapon,
+    attacker,
+    normalAttack: normalAttackFor(input, panel, data),
+  };
 }
