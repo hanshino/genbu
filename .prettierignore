@@ -12,3 +12,4 @@ public
 *.svg
 .omc
 CHANGELOG.md
+src/lib/combat/__tests__/vectors.json
