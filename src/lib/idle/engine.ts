@@ -1,4 +1,4 @@
-import { NORMAL_ATTACK_HIT_TICK, NORMAL_ATTACK_TICKS, POST_CAST_TICKS, SEARCH_TICKS } from "@/configs/idle";
+import { EXP_LEVEL_GAP, NORMAL_ATTACK_HIT_TICK, NORMAL_ATTACK_TICKS, POST_CAST_TICKS, SEARCH_TICKS } from "@/configs/idle";
 import { CRIT, hitChance, MISS, playerHit, type SkillLike } from "@/lib/combat/damage";
 import { computeHitRequirement } from "@/lib/calc/hit-requirement";
 import { levelPoints } from "@/lib/stat-sim";
@@ -36,6 +36,11 @@ import type {
 /** 升到下一級所需經驗。規格預設：char_levels.exp 是從 L 升到 L+1 所需（Lv1 = 29）；要改成累計值只改這裡。 */
 export function expToNext(level: number, data: IdleData): number {
   return data.levelExp[level] ?? Number.POSITIVE_INFINITY;
+}
+
+/** 擊殺經驗：比怪高超過 EXP_LEVEL_GAP 級只拿 1。 */
+export function killExp(level: number, monster: Pick<IdleMonster, "level" | "dropExp">): number {
+  return level - monster.level > EXP_LEVEL_GAP ? 1 : monster.dropExp;
 }
 
 /** 玩家配點或換技能後呼叫：命中不足的暫停解除，重新找怪。其他階段不動。 */
@@ -143,7 +148,7 @@ export function advance(
   };
 
   const kill = (monster: IdleMonster) => {
-    const exp = monster.dropExp;
+    const exp = killExp(s.level, monster);
     const money = rng.randint(monster.dropMoneyMin, Math.max(monster.dropMoneyMin, monster.dropMoneyMax));
     s.stats.kills += 1;
     s.stats.exp += exp;

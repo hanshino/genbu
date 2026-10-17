@@ -1,11 +1,20 @@
 import type { SkillLike } from "@/lib/combat/damage";
 import type { Attributes, SectId, SimItem } from "@/lib/types/stat-sim";
 
+/** 放置角色的門派：stat-sim 的主門派，加上入門弟子 1。 */
+export type IdleSectId = SectId | 1;
+
 // ---------------------------------------------------------------------------
 // 存檔狀態（idle_saves.state 的 JSON，version 1）。純 JSON：不能有 undefined、Map、NaN。
 // ---------------------------------------------------------------------------
 
 export type IdleGender = "m" | "f";
+
+/** 角色生日（建立角色時選填；沒有年份）。 */
+export interface IdleBirthday {
+  month: number;
+  day: number;
+}
 
 /** 一次施放中、預先抽好的一個命中（落在施放的第 at 個 tick）。 */
 export interface PendingHit {
@@ -45,9 +54,14 @@ export interface IdleStats {
 }
 
 export interface IdleState {
+  /** 角色名字與生日：建立角色時填的，舊存檔沒有。 */
+  name?: string;
+  birthday?: IdleBirthday;
   presetId: number;
+  /** 右手武器（items.id）。沒有（舊存檔）= 用預設角色自己的武器；空手外觀的預設角色靠它指定武器。 */
+  weaponItemId?: number;
   gender: IdleGender;
-  sectId: SectId;
+  sectId: IdleSectId;
   level: number;
   /** 目前等級內累積的經驗（升級後扣掉所需經驗）。 */
   exp: number;
@@ -137,7 +151,7 @@ export interface IdleSkill {
 
 export interface IdleData {
   presetId: number;
-  sectId: SectId;
+  sectId: IdleSectId;
   gender: IdleGender;
   stageId: number;
   /** effect_presets.weapon_item_id 對應的武器；空手為 null。 */

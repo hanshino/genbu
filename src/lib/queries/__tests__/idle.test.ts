@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { GAME_SPEED, IDLE_STAGE_ID, SEARCH_TICKS, TICK_MS } from "@/configs/idle";
-import { applyAllocation, autoAllocateDelta } from "@/lib/idle/allocation";
+import { applyAllocation } from "@/lib/idle/allocation";
 import { buildCombatant, presetProblem } from "@/lib/idle/character";
 import { advance } from "@/lib/idle/engine";
 import { skillOptions } from "@/lib/idle/skills";
 import { makeState } from "@/lib/idle/__tests__/fixtures";
 import type { IdleData, IdleState } from "@/lib/idle/types";
-import { getIdlePreset, loadIdleData } from "../idle";
+import { createLayout } from "@/lib/idle/create-layout";
+import { getIdlePreset, loadCreateAssets, loadIdleData } from "../idle";
 
 const BARE_HAND = 300; // 移花宮・空手（男）
 const SWORD = 304; // 移花宮・劍（男）：長劍 SWORD
@@ -17,8 +18,9 @@ function freshState(data: IdleData): IdleState {
   return advance(makeState({ presetId: data.presetId, gender: data.gender, sectId: data.sectId, seed: 7 }), 0, data).state;
 }
 
-function withAutoAllocation(state: IdleState, data: IdleData): IdleState {
-  const applied = applyAllocation(state, autoAllocateDelta(state, data));
+/** Lv1 的 6 點：技巧 4、外功 2（對肉靶龜命中約 95 %）。量測用的固定配法，不是推薦配點。 */
+function withTestAllocation(state: IdleState): IdleState {
+  const applied = applyAllocation(state, { dex: 4, str: 2 });
   if ("error" in applied) throw new Error(applied.error);
   return { ...state, attributes: applied.attributes, unspentPoints: state.unspentPoints - applied.cost };
 }
@@ -133,7 +135,7 @@ describe("Lv1 預設配點能打死兩隻怪（平均每隻幾 tick）", () => {
   it.each(cases)("%s", (label, presetId) => {
     const data = loadIdleData(IDLE_STAGE_ID, presetId)!;
     const base = freshState(data);
-    const tuned = withAutoAllocation(base, data);
+    const tuned = withTestAllocation(base);
     expect(tuned.unspentPoints).toBe(0);
     const cells: string[] = [];
     for (const monsterId of [5407, 5408]) {
@@ -143,7 +145,7 @@ describe("Lv1 預設配點能打死兩隻怪（平均每隻幾 tick）", () => {
       const seconds = (auto * TICK_MS) / GAME_SPEED / 1000;
       const perHour = 3600 / seconds;
       cells.push(
-        `${monsterId}: auto ${auto.toFixed(0)} ticks = ${seconds.toFixed(1)} s/kill = ${perHour.toFixed(0)} kills/h` +
+        `${monsterId}: alloc ${auto.toFixed(0)} ticks = ${seconds.toFixed(1)} s/kill = ${perHour.toFixed(0)} kills/h` +
           ` (all-1: ${allOne.toFixed(0)} ticks)`,
       );
       expect(auto).toBeGreaterThan(SEARCH_TICKS);
@@ -159,7 +161,7 @@ describe("Lv1 預設配點能打死兩隻怪（平均每隻幾 tick）", () => {
 describe("12 小時離線快轉", () => {
   it("2,592,000 ticks 在 1 秒內結算完，且與事件路徑一致（Lv1 打到升級的真實資料）", () => {
     const data = loadIdleData(IDLE_STAGE_ID, SWORD)!;
-    const state = withAutoAllocation(freshState(data), data);
+    const state = withTestAllocation(freshState(data));
     const ticks = Math.floor((12 * 3600 * 1000 * GAME_SPEED) / TICK_MS);
     const started = performance.now();
     const fast = advance(state, ticks, data);
@@ -174,5 +176,74 @@ describe("12 小時離線快轉", () => {
     const full = advance(state, ticks, data, { collectEvents: true });
     expect(fast.summary).toEqual(full.summary);
     expect(fast.state).toEqual(full.state);
+  });
+});
+
+describe("建立角色視窗（NewCreate-1）", () => {
+  const assets = loadCreateAssets();
+  const layout = createLayout(assets.window);
+
+  it("404×364，底圖是 icon 271，控制項座標是視窗內的相對座標", () => {
+    expect(layout).toMatchObject({ width: 404, height: 364 });
+    expect(layout.backgroundUrl).toMatch(/^https:\/\//);
+    expect(layout.name).toEqual({ x: 278, y: 44, w: 95, h: 16 });
+    expect(layout.month).toEqual({ x: 277, y: 68, w: 29, h: 16 });
+    expect(layout.day).toEqual({ x: 329, y: 68, w: 30, h: 16 });
+    expect(layout.description).toEqual({ x: 31, y: 170, w: 171, h: 61 });
+    expect(layout.dollAnchor).toEqual({ x: 145, y: 145 });
+  });
+
+  it("六列選擇鈕：標籤與方向鈕同一列，133 的「種族：」改成「出生地：」", () => {
+    expect(layout.pickers.map((p) => [p.key, p.label])).toEqual([
+      ["gender", "性別："],
+      ["hair", "髮型："],
+      ["hairColor", "髮色："],
+      ["portrait", "頭像："],
+      ["story", "劇情頭像："],
+      ["birthplace", "出生地："],
+    ]);
+    for (const row of layout.pickers) {
+      expect(Math.abs(row.left.box.y - row.value.y)).toBeLessThanOrEqual(2);
+      expect(row.left.box.y).toBe(row.right.box.y);
+      expect(row.left.box.x).toBeLessThan(row.value.x);
+      expect(row.right.box.x).toBeGreaterThan(row.value.x);
+    }
+    expect(layout.labels.map((l) => l.text)).not.toContain("種族：");
+  });
+
+  it("六項屬性：標籤、數值與加減鈕在同一列（左欄外功 / 根骨 / 身法，右欄技巧 / 玄學 / 內力）", () => {
+    expect(layout.attributes.map((a) => [a.key, a.label])).toEqual([
+      ["str", "外功："],
+      ["vit", "根骨："],
+      ["agi", "身法："],
+      ["dex", "技巧："],
+      ["wis", "玄學："],
+      ["pow", "內力："],
+    ]);
+    for (const row of layout.attributes) {
+      const label = layout.labels.find((l) => l.text === row.label)!;
+      expect(Math.abs(label.box.y - row.value.y)).toBeLessThanOrEqual(2);
+      expect(Math.abs(row.plus.box.y - row.value.y)).toBeLessThanOrEqual(2);
+      expect(Math.abs(row.minus.box.y - row.value.y)).toBeLessThanOrEqual(2);
+      expect(row.plus.box.x).toBeLessThan(row.minus.box.x);
+      expect(row.value.x).toBeLessThan(row.plus.box.x);
+    }
+  });
+
+  it("按鈕圖：方向、加減鈕有 normal / focus / down；設定完成與回上一頁另有 disable", () => {
+    const small = [...layout.pickers.flatMap((p) => [p.left, p.right]), ...layout.attributes.flatMap((a) => [a.plus, a.minus])];
+    for (const b of small) expect(Object.keys(b.icons).sort()).toEqual(["down", "focus", "normal"]);
+    for (const b of [layout.finish, layout.back]) {
+      expect(Object.keys(b.icons).sort()).toEqual(["disable", "down", "focus", "normal"]);
+      expect(b.box).toMatchObject({ w: 108, h: 27 });
+    }
+  });
+
+  it("紙娃娃：入門弟子・刀男女都有待機與走路的動作圖", () => {
+    for (const gender of ["m", "f"] as const) {
+      expect(assets.strips[gender].wait?.frames).toBeGreaterThan(0);
+      expect(assets.strips[gender].walk?.frames).toBeGreaterThan(1);
+      expect(assets.strips[gender].attack1).toBeDefined();
+    }
   });
 });

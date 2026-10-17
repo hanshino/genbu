@@ -5,8 +5,11 @@ import { useMemo } from "react";
 import { STAT_LABELS } from "@/components/stat-sim/labels";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioOption } from "@/components/ui/radio-group";
 import { applyAllocation } from "@/lib/idle/allocation";
 import { buildCombatant } from "@/lib/idle/character";
+import { killExp } from "@/lib/idle/engine";
+import { currentStyle, stylesFor } from "@/lib/idle/job";
 import { activeSkill, lockedSkills } from "@/lib/idle/skills";
 import type { IdleData, IdleState } from "@/lib/idle/types";
 import { NORMAL_ATTACK_NAME, formatNumber, killEstimate } from "@/lib/idle/view";
@@ -37,8 +40,8 @@ export function CharacterTab({
   busy,
   error,
   onDraft,
-  onAuto,
   onConfirm,
+  onWeapon,
 }: {
   state: IdleState;
   data: IdleData;
@@ -46,8 +49,8 @@ export function CharacterTab({
   busy: boolean;
   error: string | null;
   onDraft: (draft: Draft) => void;
-  onAuto: () => void;
   onConfirm: () => void;
+  onWeapon: (styleKey: string) => void;
 }) {
   const attrKey = ATTRIBUTE_KEYS.map((k) => state.attributes[k]).join(",");
   const draftKey = ATTRIBUTE_KEYS.map((k) => draft[k] ?? 0).join(",");
@@ -75,6 +78,9 @@ export function CharacterTab({
   const cost = applied && !("error" in applied) ? applied.cost : 0;
   const remaining = state.unspentPoints - cost;
   const stat = (key: keyof typeof combatant.panel.stats) => combatant.panel.stats[key].value;
+  const styles = stylesFor(state.sectId);
+  const style = currentStyle(state);
+  const lockedNote = styles.find((s) => !s.enabled && s.note)?.note;
 
   const skillLabel = skill
     ? `${data.skills.find((s) => s.id === skill.skillId)?.name ?? "招式"} Lv${skill.level}`
@@ -130,10 +136,7 @@ export function CharacterTab({
             })}
           </div>
           <div className="flex flex-wrap gap-2 pt-1">
-            <Button className="h-11 px-4" disabled={busy || state.unspentPoints === 0} onClick={onAuto}>
-              依門派自動配點
-            </Button>
-            <Button variant="outline" className="h-11 px-4" disabled={busy || spent === 0} onClick={onConfirm}>
+            <Button className="h-11 px-4" disabled={busy || spent === 0} onClick={onConfirm}>
               確認分配{spent > 0 ? `（${cost} 點）` : ""}
             </Button>
             {spent > 0 && (
@@ -155,6 +158,36 @@ export function CharacterTab({
           <CardTitle>角色面板</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {styles.length > 0 && (
+            <div className="space-y-2">
+              <div id="weapon-style-label" className="text-muted-foreground text-[13px] font-medium">
+                武器
+              </div>
+              <RadioGroup<string>
+                aria-labelledby="weapon-style-label"
+                value={style?.key ?? ""}
+                onValueChange={onWeapon}
+                disabled={busy}
+                className="grid grid-cols-2 gap-2"
+              >
+                {styles.map((s) => (
+                  <RadioOption
+                    key={s.key}
+                    value={s.key}
+                    variant="card"
+                    disabled={busy || !s.enabled}
+                    className="min-h-11 items-center"
+                  >
+                    <span className="block font-medium">{s.label}</span>
+                    <span className="text-muted-foreground block text-xs">{s.weaponName}</span>
+                  </RadioOption>
+                ))}
+              </RadioGroup>
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                {lockedNote ? `${lockedNote}。` : ""}換武器會換成該武器的外觀與招式，技能改回自動。
+              </p>
+            </div>
+          )}
           <dl className="grid grid-cols-2 gap-x-5">
             {panel.map(([label, value]) => (
               <div key={label} className="border-border/60 flex justify-between gap-2 border-b py-1.5 text-sm">
@@ -169,6 +202,9 @@ export function CharacterTab({
               <div key={monster.id} className="flex flex-wrap justify-between gap-x-3">
                 <span>
                   {monster.name}（Lv{monster.level}）
+                  {killExp(state.level, monster) < monster.dropExp && (
+                    <span className="text-muted-foreground ml-1 text-xs">等級差過大，經驗只剩 1</span>
+                  )}
                 </span>
                 <span className="tabular-nums">
                   {est.seconds == null

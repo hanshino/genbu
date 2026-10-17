@@ -1,5 +1,6 @@
+import type { JobChoice } from "@/lib/idle/job";
 import type { IdleData, IdleState, IdleSummary } from "@/lib/idle/types";
-import type { IdleSceneAssets } from "@/lib/queries/idle";
+import type { IdleCreateAssets, IdleSceneAssets } from "@/lib/queries/idle";
 
 export interface IdleView {
   state: IdleState;
@@ -63,6 +64,22 @@ export interface IdleBoot {
   scene: IdleSceneAssets;
 }
 
-export function getIdleData(presetId: number): Promise<ApiResult<IdleBoot>> {
-  return request(`/api/idle/data?preset=${presetId}`, { cache: "default" });
+/**
+ * 公開資料 API 會被瀏覽器與 CDN 快取一小時以上；回傳格式一改就把版本加一，換網址避開舊快取。
+ * 伺服器不看這個參數。
+ */
+const STATIC_DATA_VERSION = 2;
+
+export function getIdleData(presetId: number, weaponItemId?: number): Promise<ApiResult<IdleBoot>> {
+  const weapon = weaponItemId == null ? "" : `&weapon=${weaponItemId}`;
+  return request(`/api/idle/data?preset=${presetId}${weapon}&v=${STATIC_DATA_VERSION}`, { cache: "default" });
+}
+
+export function getJobs(gender: "m" | "f"): Promise<ApiResult<{ jobs: JobChoice[] }>> {
+  return request(`/api/idle/jobs?gender=${gender}&v=${STATIC_DATA_VERSION}`, { cache: "default" });
+}
+
+/** 建立角色畫面用的遊戲視窗版面與紙娃娃動作圖（公開資料，可以快取）。 */
+export function getCreateAssets(): Promise<ApiResult<IdleCreateAssets>> {
+  return request(`/api/idle/create-window?v=${STATIC_DATA_VERSION}`, { cache: "default" });
 }

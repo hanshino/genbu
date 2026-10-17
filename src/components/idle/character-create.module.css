@@ -1,0 +1,193 @@
+/* 「創造角色」遊戲視窗：底圖 + 絕對定位疊層。
+   --s = 視窗倍率（JS 依可用寬度挑 2 / 1.5 / 1 / 手機貼齊寬度），--u = 1 個底圖 px，所有位置寫成 calc(var(--u) * N)。
+   --f = 輸入框的補償倍率（>= 1）：手機上遊戲字體只有 10 px 左右，iOS 聚焦時會自動放大頁面，
+   所以輸入框內部用 16 px 以上的字，再整個縮回遊戲大小。 */
+.win {
+  --u: calc(var(--s) * 1px);
+  position: relative;
+  margin-inline: auto;
+  color: #2f2110;
+  filter: drop-shadow(0 10px 22px oklch(0.22 0.015 260 / 0.26));
+}
+.bg {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.layer {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+}
+
+/* 靜態文字 */
+.f {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  line-height: 1;
+  font-family: var(--font-sans-tc), "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  font-size: calc(var(--u) * 11);
+  font-weight: 500;
+}
+.label {
+  pointer-events: none;
+}
+.title {
+  pointer-events: none;
+  font-family: var(--font-serif-tc), "Noto Serif TC", serif;
+  font-size: calc(var(--u) * 12);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  color: #4a2a0c;
+}
+/* 紅色標籤上的字 */
+.tab {
+  color: #fff7e6;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-shadow: 0 calc(var(--u) * 1) 0 oklch(0.3 0.09 30 / 0.7);
+}
+
+/* 數值欄（落在底圖的白框上） */
+.value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  overflow: visible;
+}
+.mono {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: calc(var(--u) * 11);
+  font-weight: 700;
+}
+/* 出生地「流星雷島˙南」六個字，白框只有 39 px 寬；縮小字級讓它大致落在框內。 */
+.tight {
+  font-size: calc(var(--u) * 8);
+  letter-spacing: calc(var(--u) * -0.3);
+}
+
+/* 屬性說明（MSTATIC 153）：多行、靠左上，字比其他欄位小一點 */
+.desc {
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-direction: column;
+  gap: calc(var(--u) * 2);
+  padding: calc(var(--u) * 6) calc(var(--u) * 8);
+  white-space: normal;
+  line-height: 1.4;
+  text-align: left;
+  font-size: calc(var(--u) * 10.5);
+  font-weight: 500;
+  color: #4b3416;
+  overflow: hidden;
+}
+.desc b {
+  font-weight: 700;
+  color: #7a2418;
+}
+
+/* 文字輸入框：真正的 <input>，疊在底圖的白框上 */
+.field {
+  position: absolute;
+}
+.input {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: calc(100% * var(--f));
+  height: calc(100% * var(--f));
+  transform: scale(calc(1 / var(--f)));
+  transform-origin: 0 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 calc(var(--u) * 3 * var(--f));
+  border: 0;
+  border-radius: calc(var(--u) * 3 * var(--f));
+  background: transparent;
+  color: #1c1409;
+  caret-color: #7a2418;
+  font-family: var(--font-sans-tc), "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  font-size: calc(var(--u) * 11 * var(--f));
+  font-weight: 500;
+  text-align: center;
+  outline: none;
+}
+.input::placeholder {
+  color: #9a8a6c;
+}
+.input:focus-visible {
+  box-shadow: 0 0 0 calc(var(--u) * 1.5 * var(--f)) var(--ring);
+  background: oklch(1 0 0 / 0.55);
+}
+.input[aria-invalid="true"] {
+  box-shadow: 0 0 0 calc(var(--u) * 1.5 * var(--f)) #c81e1e;
+}
+
+/* 遊戲原圖按鈕：各狀態的圖放在 --normal / --focus / --down / --disable，hover 與鍵盤聚焦用 focus 圖，按下用 down 圖。
+   沒有 disable 圖的按鈕（方向鈕、加減鈕）維持 normal 圖，需要時再加 .dim。 */
+.btn {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  margin: 0;
+  background: var(--normal) center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+  cursor: pointer;
+  border-radius: calc(var(--u) * 2);
+  -webkit-tap-highlight-color: transparent;
+}
+/* 看不見的點擊範圍：原作的方向鈕只有 12 px，手機上不到 11 px，往外加大，數值是底圖 px。 */
+.btn::after {
+  content: "";
+  position: absolute;
+  inset: calc(var(--u) * var(--ht, 0) * -1) calc(var(--u) * var(--hr, 0) * -1) calc(var(--u) * var(--hb, 0) * -1)
+    calc(var(--u) * var(--hl, 0) * -1);
+}
+.btn:hover:not(:disabled),
+.btn:focus-visible {
+  background-image: var(--focus, var(--normal));
+}
+.btn:active:not(:disabled) {
+  background-image: var(--down, var(--focus, var(--normal)));
+}
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.btn:disabled {
+  background-image: var(--disable, var(--normal));
+  cursor: default;
+}
+.btn.dim:disabled {
+  cursor: not-allowed;
+  filter: grayscale(1);
+  opacity: 0.45;
+}
+/* 還沒開放的選項：維持原本的樣子，但不會有互動回饋 */
+.btn.inert:disabled {
+  cursor: not-allowed;
+}
+
+/* 紙娃娃：只畫在底圖的藍色畫框裡（超出的揮刀動作會被裁掉，不會蓋到右邊的欄位） */
+.dollClip {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+}
+.dollSprite {
+  position: absolute;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .input {
+    transition: none;
+  }
+}

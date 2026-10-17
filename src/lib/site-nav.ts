@@ -162,9 +162,9 @@ export const NAV_SECTIONS: NavSection[] = [
       },
       {
         href: "/idle",
-        label: "武林掛機",
+        label: "摸魚練功房",
         description: "放置型小遊戲：角色自動打怪升級，離線也會累積",
-        keywords: ["放置", "掛機", "練功", "遊戲"],
+        keywords: ["放置", "掛機", "練功", "摸魚", "遊戲"],
       },
     ],
   },

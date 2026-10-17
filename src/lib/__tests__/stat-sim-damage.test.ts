@@ -209,13 +209,16 @@ describe("技能類型要配對的武器", () => {
     expect(skills.find((s) => s.skill.id === 702)!.support).toBe("verified");
   });
 
-  it("惡人谷拿刀：刀法照物攻推定；詐招拿刀只能推定", () => {
+  it("惡人谷拿刀：刀法照物攻推定；詐招要空手、手套或拂塵，拿刀放不出來", () => {
     const skills = run(equip(bad, 55003), monster(86, 127)).skills;
     const blade = skills.find((s) => s.skill.id === 705)!;
     expect(blade.wrongWeapon).toBeUndefined();
     expect(blade.support).toBe("presumed");
     expect(blade.variants[0].perHit.min).toBe(hitDamage(30, 2900, 930, 127));
-    expect(skills.find((s) => s.skill.id === 702)!.reasons).toContain("詐招只實測過拳套與空手");
+    const trick = skills.find((s) => s.skill.id === 702)!;
+    expect(trick.wrongWeapon).toBe("「詐招」要空手或右手拿手套或拂塵才能使用");
+    expect(trick.support).toBe("unsupported");
+    expect(trick.variants).toEqual([]);
   });
 
   it("只看右手：刀拿在左手也放不出刀法；掌法空手可以、拿劍不行", () => {
@@ -294,7 +297,8 @@ describe("自選招式", () => {
   it("要換的武器短名稱；寵物、道具招沒有學習等級，不給搜尋", () => {
     expect(requiredWeapon(血殺屠刀)).toBe("刀");
     expect(requiredWeapon(蓮蒼掌)).toBe("空手或手套");
-    expect(requiredWeapon(千瘡百孔)).toBeNull();
+    expect(requiredWeapon(千瘡百孔)).toBe("空手或手套或拂塵");
+    expect(requiredWeapon({ ...千瘡百孔, skillType: 5 })).toBeNull(); // 毒術不限武器
     expect(isPlayerSkill(血殺屠刀)).toBe(true);
     const pet = { ...血殺屠刀, levels: 血殺屠刀.levels.map((l) => l && { ...l, learnLevel: -1 }) };
     expect(isPlayerSkill(pet)).toBe(false);

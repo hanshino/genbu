@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { NORMAL_ATTACK_HIT_TICK, NORMAL_ATTACK_TICKS, POST_CAST_TICKS, SEARCH_TICKS } from "@/configs/idle";
 import { levelPoints } from "@/lib/stat-sim";
-import { advance, resumeIfBlocked } from "../engine";
+import { advance, killExp, resumeIfBlocked } from "../engine";
 import { SeededRng } from "../rng";
 import type { IdleEvent, IdleMonster } from "../types";
 import { LATE_HIT_SKILL, MULTI_HIT_SKILL, makeData, makeState, monster } from "./fixtures";
@@ -239,6 +239,23 @@ describe("升級", () => {
     expect(state.level).toBe(3);
     expect(Number.isFinite(state.exp)).toBe(true);
     expect(state.exp).toBeGreaterThan(500);
+  });
+
+  it("等級差：比怪高 15 級以內拿全額，超過只拿 1；比怪低等也拿全額", () => {
+    const horse = { level: 3, dropExp: 85 };
+    expect(killExp(1, horse)).toBe(85);
+    expect(killExp(18, horse)).toBe(85);
+    expect(killExp(19, horse)).toBe(1);
+    expect(killExp(60, horse)).toBe(1);
+  });
+
+  it("擊殺事件與統計用等級差後的經驗", () => {
+    const data = makeData({ skills: [], ...only(5407, { hp: 1, dropExp: 85 }), levelExp: [0, ...Array(30).fill(1e9)] });
+    const { state, events } = advance(makeState({ level: 19 }), 2_000, data, { collectEvents: true });
+    const kills = events.filter((e) => e.type === "kill");
+    expect(kills.length).toBeGreaterThan(0);
+    expect(kills.every((e) => e.type === "kill" && e.exp === 1)).toBe(true);
+    expect(state.stats.exp).toBe(kills.length);
   });
 });
 

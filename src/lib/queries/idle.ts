@@ -1,10 +1,17 @@
 // 僅供 server 使用：把放置引擎需要的資料一次載成純 JSON（IdleData），引擎本身不碰 DB。
 import { gunzipSync } from "node:zlib";
 import { SECT_SKILL_CLANS } from "@/configs/stat-sim-damage";
-import { IDLE_EXCLUDED_SKILL_TYPES, IDLE_SKILL_FUNC_DMG } from "@/configs/idle";
+import {
+  IDLE_EXCLUDED_SKILL_TYPES,
+  IDLE_SKILL_FUNC_DMG,
+  NOVICE_PRESET_IDS,
+  NOVICE_SECT_ID,
+  NOVICE_WEAPON_ID,
+} from "@/configs/idle";
 import { SECTS } from "@/configs/stat-sim";
 import { getDb } from "@/lib/db";
-import type { IdleData, IdleGender, IdleMonster, IdleSkill, IdleSkillLevel } from "@/lib/idle/types";
+import type { IdleData, IdleGender, IdleSectId, IdleMonster, IdleSkill, IdleSkillLevel } from "@/lib/idle/types";
+import { CREATE_WINDOW, type ButtonIcons, type ButtonState, type CreateControl, type CreateWindowData } from "@/lib/idle/create-layout";
 import { getStrips } from "@/lib/queries/skill-effect";
 import { hitTicks, type StripSet, type TimelineFrame } from "@/lib/skill-effect";
 import { STAT_KEYS, type PanelBonus, type SectId, type SimItem, type StatKey } from "@/lib/types/stat-sim";
@@ -166,16 +173,19 @@ function loadSkills(sectId: SectId, gender: IdleGender): IdleSkill[] {
 // tthol.sqlite 是唯讀的，同一個 (地圖, 預設角色) 的資料不會變，載一次就好（技能時間軸要解壓縮）。
 const cache = new Map<string, IdleData | null>();
 
-/** 找不到預設角色或地圖沒有怪物回傳 null。 */
-export function loadIdleData(stageId: number, presetId: number): IdleData | null {
-  const key = `${stageId}:${presetId}`;
+/**
+ * 找不到預設角色或地圖沒有怪物回傳 null。
+ * weaponItemId 覆蓋預設角色的武器（空手外觀的預設角色沒有武器，武器由存檔指定）；入門弟子固定拿新手用青銅刀。
+ */
+export function loadIdleData(stageId: number, presetId: number, weaponItemId?: number | null): IdleData | null {
+  const key = `${stageId}:${presetId}:${weaponItemId ?? ""}`;
   if (cache.has(key)) return cache.get(key)!;
-  const data = buildIdleData(stageId, presetId);
+  const data = buildIdleData(stageId, presetId, weaponItemId ?? null);
   cache.set(key, data);
   return data;
 }
 
-function buildIdleData(stageId: number, presetId: number): IdleData | null {
+function buildIdleData(stageId: number, presetId: number, weaponItemId: number | null): IdleData | null {
   const preset = getIdlePreset(presetId);
   if (!preset) return null;
   const db = getDb();
@@ -198,18 +208,21 @@ function buildIdleData(stageId: number, presetId: number): IdleData | null {
     levelExp[row.level] = row.exp;
   }
 
-  // sect_id 不在 SECTS（入門弟子 1、無名島 16…）的預設角色算不出面板，不載技能；開局由 presetProblem 擋下。
-  const sectId = preset.sectId as SectId;
+  // 入門弟子 1 沒有可學的傷害招式（只用普攻），武器換成起始的新手用青銅刀。
+  // 其他不在 SECTS 的門派（無名島 16…）算不出面板，不載技能；開局由 presetProblem 擋下。
+  const sectId = preset.sectId as IdleSectId;
+  const novice = sectId === NOVICE_SECT_ID;
+  const weaponId = novice ? NOVICE_WEAPON_ID : (weaponItemId ?? preset.weaponItemId);
   return {
     presetId,
     sectId,
     gender: preset.gender,
     stageId,
-    weapon: preset.weaponItemId == null ? null : loadWeapon(preset.weaponItemId),
+    weapon: weaponId == null ? null : loadWeapon(weaponId),
     monsters,
     spawns,
     levelExp,
-    skills: SECTS[sectId] ? loadSkills(sectId, preset.gender) : [],
+    skills: !novice && SECTS[sectId as SectId] ? loadSkills(sectId as SectId, preset.gender) : [],
   };
 }
 
@@ -257,4 +270,50 @@ export function loadIdleSceneAssets(data: IdleData): IdleSceneAssets {
   };
   sceneCache.set(key, assets);
   return assets;
+}
+
+// ---------------------------------------------------------------------------
+// 建立角色畫面：原作「創造角色」視窗（NewCreate-1）的底圖、控制項與按鈕圖，加上入門弟子・刀（男 / 女）的動作圖。
+// ---------------------------------------------------------------------------
+
+export interface IdleCreateAssets {
+  window: CreateWindowData;
+  /** 紙娃娃用：入門弟子・刀 102（男）/ 103（女）的動作圖（dir = 1）。 */
+  strips: Record<IdleGender, StripSet>;
+}
+
+let createCache: IdleCreateAssets | undefined;
+
+export function loadCreateAssets(): IdleCreateAssets {
+  if (createCache) return createCache;
+  const db = getDb();
+  const win = db
+    .prepare('SELECT width, height, icon_id AS iconId FROM ui_windows WHERE "window" = ?')
+    .get(CREATE_WINDOW) as { width: number; height: number; iconId: number } | undefined;
+  if (!win) throw new Error(`查無視窗 ${CREATE_WINDOW}`);
+  const icons = new Map<number, ButtonIcons>();
+  for (const row of db
+    .prepare('SELECT icon_id AS iconId, state, url FROM ui_images WHERE "window" = ? AND frame = 0')
+    .all(CREATE_WINDOW) as { iconId: number; state: string; url: string }[]) {
+    icons.set(row.iconId, { ...icons.get(row.iconId), [row.state as ButtonState]: row.url });
+  }
+  const backgroundUrl = icons.get(win.iconId)?.normal;
+  if (!backgroundUrl) throw new Error(`視窗 ${CREATE_WINDOW} 缺少底圖 ${win.iconId}`);
+  const controls = (
+    db
+      .prepare(
+        `SELECT ctrl_id AS id, class AS kind, x, y, width, height, title, icon_id AS iconId
+         FROM ui_controls WHERE "window" = ? ORDER BY ctrl_id`,
+      )
+      .all(CREATE_WINDOW) as (Omit<CreateControl, "icons"> & { iconId: number | null })[]
+  ).map(({ iconId, ...control }): CreateControl => ({
+    ...control,
+    title: control.title || null,
+    icons: iconId == null ? null : (icons.get(iconId) ?? null),
+  }));
+  createCache = {
+    window: { width: win.width, height: win.height, backgroundUrl, controls },
+    strips: { m: getStrips("preset", NOVICE_PRESET_IDS.m), f: getStrips("preset", NOVICE_PRESET_IDS.f) },
+  };
+  return createCache;
 }

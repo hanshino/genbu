@@ -1,3 +1,4 @@
+import { NOVICE_PANEL_SECT_ID, NOVICE_PRESET_IDS, NOVICE_SECT_ID } from "@/configs/idle";
 import { SECTS } from "@/configs/stat-sim";
 import type { Attacker } from "@/lib/combat/damage";
 import { computePanel } from "@/lib/stat-sim";
@@ -12,11 +13,11 @@ import {
   type PanelResult,
   type SectId,
 } from "@/lib/types/stat-sim";
-import type { IdleData } from "./types";
+import type { IdleData, IdleSectId } from "./types";
 
 /** 存檔裡只有門派、等級與六圍會影響角色面板。 */
 export interface IdleCharacterInput {
-  sectId: SectId;
+  sectId: IdleSectId;
   level: number;
   attributes: Attributes;
 }
@@ -27,6 +28,11 @@ export interface Combatant {
   panel: PanelResult;
   weapon: WeaponProfile;
   attacker: Attacker;
+}
+
+/** computePanel 用的門派：入門弟子借用移花宮的面板公式（見 NOVICE_PANEL_SECT_ID）。 */
+export function panelSectId(sectId: IdleSectId): SectId {
+  return sectId === NOVICE_SECT_ID ? NOVICE_PANEL_SECT_ID : sectId;
 }
 
 // 武器是靜態資料，同一份 IdleData 只組一次 GameData。
@@ -60,7 +66,7 @@ export function buildCharacter(input: IdleCharacterInput, data: IdleData): Chara
     version: 1,
     id: `idle-${data.presetId}`,
     name: "放置角色",
-    sectId: input.sectId,
+    sectId: panelSectId(input.sectId),
     subSects: [],
     level: input.level,
     rebirthPoints: 0,
@@ -77,7 +83,11 @@ export function buildCharacter(input: IdleCharacterInput, data: IdleData): Chara
  * computePanel 只支援 SECTS 內的主門派，resolveWeapon 不支援的武器（弓、拳刃、杖…）算不出攻擊。
  */
 export function presetProblem(data: IdleData): string | null {
-  if (!SECTS[data.sectId]) return "這個門派目前還不支援放置玩法。";
+  if (!SECTS[panelSectId(data.sectId)]) return "這個門派目前還不支援放置玩法。";
+  // 入門弟子一律拿新手用青銅刀，只開放外觀也拿刀的兩個預設角色。
+  if (data.sectId === NOVICE_SECT_ID && !Object.values(NOVICE_PRESET_IDS).includes(data.presetId as 102 | 103)) {
+    return "入門弟子請從建立角色開始。";
+  }
   const input: IdleCharacterInput = {
     sectId: data.sectId,
     level: 1,

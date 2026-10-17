@@ -3,7 +3,8 @@
 import { NextResponse } from "next/server";
 import { GAME_SPEED, OFFLINE_CAP_MS, SEARCH_TICKS, TICK_MS } from "@/configs/idle";
 import { requireAuth } from "@/lib/auth/require-auth";
-import { buildCombatant } from "@/lib/idle/character";
+import { buildCombatant, presetProblem } from "@/lib/idle/character";
+import { startAttributes, type NewCharacter } from "@/lib/idle/creation";
 import { advance, resumeIfBlocked } from "@/lib/idle/engine";
 import { skillOptions, type SkillChoice } from "@/lib/idle/skills";
 import type { IdleData, IdleState, IdleSummary } from "@/lib/idle/types";
@@ -86,22 +87,27 @@ export function viewOf(state: IdleState, data: IdleData) {
 }
 
 function dataFor(state: IdleState): IdleData {
-  const data = loadIdleData(state.stageId, state.presetId);
+  const data = loadIdleData(state.stageId, state.presetId, state.weaponItemId);
   if (!data) throw new Error(`存檔的地圖或角色已不存在（stage ${state.stageId}, preset ${state.presetId}）`);
   return data;
 }
 
-/** 新存檔：Lv1、六圍全 1、Lv1 的點數尚未分配。seed 由呼叫端傳入（route 用 crypto）。 */
-export function createState(data: IdleData, seed: number, now: number): IdleState {
+/** 新存檔的角色資料；沒給就是六圍全 1、Lv1 的點數都還沒分配（測試與預設角色用）。 */
+export type NewSaveInit = Partial<Pick<NewCharacter, "name" | "birthday" | "attributes" | "unspentPoints">>;
+
+/** 新存檔：Lv1。seed 由呼叫端傳入（route 用 crypto）。 */
+export function createState(data: IdleData, seed: number, now: number, init: NewSaveInit = {}): IdleState {
   const initial: IdleState = {
+    ...(init.name !== undefined ? { name: init.name } : {}),
+    ...(init.birthday ? { birthday: init.birthday } : {}),
     presetId: data.presetId,
     gender: data.gender,
     sectId: data.sectId,
     level: 1,
     exp: 0,
     money: 0,
-    attributes: { str: 1, pow: 1, vit: 1, agi: 1, dex: 1, wis: 1 },
-    unspentPoints: levelPoints(1),
+    attributes: init.attributes ?? startAttributes(),
+    unspentPoints: init.unspentPoints ?? levelPoints(1),
     skillId: null,
     skillLevel: 0,
     stageId: data.stageId,
@@ -118,11 +124,14 @@ export type StartResult =
   | { ok: true; state: IdleState; data: IdleData }
   | { ok: false; status: number; error: string };
 
-/** 建立新存檔；已經有存檔時不覆蓋（回 409）。 */
-export function startSave(sub: string, data: IdleData, seed: number, now: number): StartResult {
+/**
+ * 建立新存檔；已經有存檔時不覆蓋（回 409）。
+ * data 的預設角色不在這裡檢查：route 只會傳入入門弟子，測試直接傳任何預設角色來準備存檔。
+ */
+export function startSave(sub: string, data: IdleData, seed: number, now: number, init: NewSaveInit = {}): StartResult {
   return getUserDb().transaction((): StartResult => {
     if (readSave(sub)) return { ok: false, status: 409, error: "已經有存檔了。" };
-    const state = createState(data, seed, now);
+    const state = createState(data, seed, now, init);
     writeSave(sub, state, now);
     return { ok: true, state, data };
   })();
@@ -206,10 +215,20 @@ export function changeSave(
     const settled = settleToNow(saved, data, now);
     const changed = change(settled.state, data);
     if (typeof changed === "string") return { ok: false, status: 400, error: changed };
+    // 轉職、換武器會換預設角色或武器（外觀、技能）：之後的衍生欄位與回傳的資料都要用新的。
+    // 變更之前的時間已經用舊角色結算掉了（上面的 settleToNow）。
+    let nextData = data;
+    const nextPreset = changed.presetId ?? saved.presetId;
+    const nextWeapon = "weaponItemId" in changed ? changed.weaponItemId : saved.weaponItemId;
+    if (nextPreset !== saved.presetId || nextWeapon !== saved.weaponItemId) {
+      const loaded = loadIdleData(saved.stageId, nextPreset, nextWeapon);
+      if (!loaded || presetProblem(loaded)) return { ok: false, status: 400, error: "找不到這個角色。" };
+      nextData = loaded;
+    }
     // 套用後重跑一次 0 tick 的 advance，讓 skillLevel 等衍生欄位跟上。
-    const applied = advance(resumeIfBlocked({ ...settled.state, ...changed }), 0, data).state;
+    const applied = advance(resumeIfBlocked({ ...settled.state, ...changed }), 0, nextData).state;
     const state = { ...applied, saveCounter: saved.saveCounter + 1 };
     writeSave(sub, state, now);
-    return { ok: true, state, data, summary: settled.summary };
+    return { ok: true, state, data: nextData, summary: settled.summary };
   })();
 }

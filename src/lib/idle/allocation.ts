@@ -1,10 +1,6 @@
-import { AUTO_ALLOCATE } from "@/configs/idle";
-import { hitChance, usesInner } from "@/lib/combat/damage";
 import { nextCost } from "@/lib/stat-sim";
 import { ATTRIBUTE_KEYS, type AttributeKey, type Attributes } from "@/lib/types/stat-sim";
-import { buildCombatant } from "./character";
-import { activeSkill, monsterTarget } from "./skills";
-import type { IdleData, IdleState } from "./types";
+import type { IdleState } from "./types";
 
 export type AttributeDelta = Partial<Record<AttributeKey, number>>;
 
@@ -39,34 +35,4 @@ export function applyAllocation(
   }
   if (requested === 0) return { error: "請至少加 1 點屬性。" };
   return { attributes, cost };
-}
-
-/**
- * 依門派自動配點（模板定義在 configs/idle.ts 的 AUTO_ALLOCATE）：先點技巧到命中率達標，其餘全點主攻擊屬性。
- * 回傳加點量（可直接餵 applyAllocation）；沒有點數或點不動時是空物件。
- */
-export function autoAllocateDelta(state: IdleState, data: IdleData): AttributeDelta {
-  const attributes: Attributes = { ...state.attributes };
-  let points = state.unspentPoints;
-  const delta: AttributeDelta = {};
-  const add = (key: AttributeKey): boolean => {
-    const cost = nextCost(attributes[key]);
-    if (cost > points) return false;
-    points -= cost;
-    attributes[key] += 1;
-    delta[key] = (delta[key] ?? 0) + 1;
-    return true;
-  };
-  const build = () => buildCombatant({ sectId: state.sectId, level: state.level, attributes }, data);
-
-  const first = build();
-  const skill = activeSkill(data, state.level, first, state.skillId)?.data ?? null;
-  const hardest = Object.values(data.monsters).reduce((a, b) => (b.baseDodge > a.baseDodge ? b : a));
-  const target = monsterTarget(hardest);
-  while (points > 0 && hitChance(build().attacker, target, skill) < AUTO_ALLOCATE.targetHitChance) {
-    if (!add(AUTO_ALLOCATE.hitAttribute)) break;
-  }
-  const main = AUTO_ALLOCATE.mainAttribute[usesInner(first.attacker, skill) ? "matk" : "atk"];
-  while (points > 0 && add(main));
-  return delta;
 }

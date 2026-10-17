@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon, RefreshCwIcon, SearchIcon, SwordsIcon, TriangleAlertIcon } from "lucide-react";
+import { CheckIcon, RefreshCwIcon, ScrollTextIcon, SearchIcon, SwordsIcon, TriangleAlertIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GAME_SPEED, SYNC_INTERVAL_MS, TICK_MS } from "@/configs/idle";
 import { buildCombatant } from "@/lib/idle/character";
 import { advance, expToNext } from "@/lib/idle/engine";
+import { canChangeJob, stylesFor, type JobChoice } from "@/lib/idle/job";
 import { activeSkill } from "@/lib/idle/skills";
 import type { IdleData, IdleEvent, IdleState, IdleSummary } from "@/lib/idle/types";
 import {
@@ -30,6 +31,7 @@ import { ATTRIBUTE_KEYS } from "@/lib/types/stat-sim";
 import { getSave, postBeacon, postJson, type IdleBoot, type IdleView } from "./api";
 import { prefetchBundle } from "./bundles";
 import { CharacterTab, type Draft } from "./character-tab";
+import { JobDialog } from "./job-dialog";
 import { IdleScene } from "./idle-scene";
 import { LogTab } from "./log-tab";
 import { OfflineDialog } from "./offline-dialog";
@@ -61,7 +63,7 @@ function logContextFor(state: IdleState, data: IdleData): LogContext {
   return { monsterName: monster?.name ?? "怪物", skillName: skill?.name ?? NORMAL_ATTACK_NAME };
 }
 
-function createRuntime(state: IdleState, data: IdleData, summary: IdleSummary | null): Runtime {
+function createRuntime(state: IdleState, data: IdleData, summary: IdleSummary | null, notice: string | null): Runtime {
   const now = Date.now();
   return {
     state,
@@ -71,8 +73,8 @@ function createRuntime(state: IdleState, data: IdleData, summary: IdleSummary | 
     unsynced: 0,
     fx: newFx(),
     logCtx: logContextFor(state, data),
-    log: [],
-    logSeq: 0,
+    log: notice ? [{ id: 0, time: formatClock(now), text: notice, gain: "" }] : [],
+    logSeq: notice ? 1 : 0,
     killTimes: [],
     startedAt: now,
     sessionKills0: state.stats.kills,
@@ -90,21 +92,27 @@ export function IdlePlayer({
   initial,
   offline,
   boot,
+  notice,
+  onReload,
 }: {
   initial: IdleState;
   offline: IdleSummary | null;
   boot: IdleBoot;
+  /** 重新載入後要先放進戰鬥紀錄的一行（例如拜入門派）。 */
+  notice: string | null;
+  /** 角色換了預設角色（轉職）：整個重新載入，場景與資料才會換成新的。 */
+  onReload: (notice: string | null) => void;
 }) {
   const { data, scene } = boot;
   const reducedMotion = useSyncExternalStore(subscribeMotion, reducedMotionNow, () => false);
 
-  const [seed] = useState(() => createRuntime(initial, data, offline));
+  const [seed] = useState(() => createRuntime(initial, data, offline, notice));
   const rt = useRef<Runtime>(seed);
   const drawRef = useRef<(() => void) | null>(null);
 
   const [snap, setSnap] = useState<IdleState>(initial);
   const [vitals, setVitals] = useState<Vitals>({ rate: seed.lastRate, sessionMs: 0, sessionKills: 0 });
-  const [log, setLog] = useState<LogEntry[]>([]);
+  const [log, setLog] = useState<LogEntry[]>(() => seed.log.slice());
   const [tab, setTab] = useState<TabKey>("character");
   const [draft, setDraft] = useState<Draft>({});
   const [busy, setBusy] = useState(false);
@@ -114,6 +122,12 @@ export function IdlePlayer({
     offline && offlineWorthShowing(offline) ? offline : null,
   );
   const [now, setNow] = useState(() => Date.now());
+  const [jobOpen, setJobOpen] = useState(false);
+  const [jobBusy, setJobBusy] = useState(false);
+  const [jobError, setJobError] = useState<string | null>(null);
+  const jobPrompted = useRef(false);
+  /** 轉職成功、整頁即將重新載入：之後排隊中的同步結果不再處理。 */
+  const reloading = useRef(false);
 
   // 請求排隊：同一時間只送一個，每個都用送出當下最新的存檔計數。
   const chain = useRef<Promise<unknown>>(Promise.resolve());
@@ -126,6 +140,12 @@ export function IdlePlayer({
 
   const adopt = useCallback(
     (state: IdleState) => {
+      if (reloading.current) return;
+      // 別的分頁已經轉職：這裡載的是舊角色的資料，整個重新載入。
+      if (state.presetId !== data.presetId || (state.weaponItemId ?? data.weapon?.id) !== data.weapon?.id) {
+        onReload(null);
+        return;
+      }
       const r = rt.current;
       r.state = state;
       r.fx = newFx();
@@ -134,7 +154,7 @@ export function IdlePlayer({
       r.logCtx = logContextFor(state, data);
       setSnap(state);
     },
-    [data],
+    [data, onReload],
   );
 
   const doSync = useCallback(async () => {
@@ -192,6 +212,57 @@ export function IdlePlayer({
       });
     },
     [enqueue, adopt],
+  );
+
+  const changeJob = useCallback(
+    (job: JobChoice) => {
+      setJobBusy(true);
+      setJobError(null);
+      return enqueue(async () => {
+        const r = rt.current;
+        const res = await postJson<IdleView>("/api/idle/job-change", { saveCounter: r.state.saveCounter, sectId: job.sectId });
+        if (res.ok) {
+          // 保持「處理中」直到整頁換成新角色。
+          reloading.current = true;
+          onReload(`拜入${job.sectName}門下`);
+          return;
+        }
+        setJobBusy(false);
+        if (res.status === 409 && res.state) {
+          adopt(res.state);
+          setJobError("存檔已在別處更新，已重新載入，請再選一次。");
+        } else {
+          setJobError(res.error);
+        }
+      });
+    },
+    [enqueue, adopt, onReload],
+  );
+
+  // 換武器流派：外觀、武器與技能都換成新的，和轉職一樣整個重新載入。
+  const changeWeapon = useCallback(
+    (key: string) => {
+      setBusy(true);
+      setActionError(null);
+      return enqueue(async () => {
+        const r = rt.current;
+        const res = await postJson<IdleView>("/api/idle/weapon", { saveCounter: r.state.saveCounter, style: key });
+        if (res.ok) {
+          reloading.current = true;
+          const style = stylesFor(r.state.sectId).find((s) => s.key === key);
+          onReload(style ? `改拿${style.weaponName}，練${style.label}` : null);
+          return;
+        }
+        setBusy(false);
+        if (res.status === 409 && res.state) {
+          adopt(res.state);
+          setActionError("存檔已在別處更新，已重新載入。");
+        } else {
+          setActionError(res.error);
+        }
+      });
+    },
+    [enqueue, adopt, onReload],
   );
 
   // 遊戲迴圈：跑與伺服器相同的引擎，畫面與紀錄由事件驅動；分頁看不到時停掉，離線時間交給伺服器結算。
@@ -338,6 +409,15 @@ export function IdlePlayer({
     [data, phase.kind, snap.level, attrKey],
   );
 
+  // 到 9 級的入門弟子自動持有轉職證書；進頁面或剛升到 9 級時自動跳出一次（歡迎回來的視窗關掉之後）。
+  const jobReady = canChangeJob(snap);
+  useEffect(() => {
+    if (jobReady && summary === null && !jobPrompted.current) {
+      jobPrompted.current = true;
+      setJobOpen(true);
+    }
+  }, [jobReady, summary]);
+
   const need = expToNext(snap.level, data);
   const pct = Number.isFinite(need) && need > 0 ? Math.min(100, Math.floor((snap.exp / need) * 100)) : 0;
   const sessionMinutes = Math.floor(vitals.sessionMs / 60_000);
@@ -348,8 +428,9 @@ export function IdlePlayer({
     <div className="space-y-4">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="space-y-1">
-          <h1 className="font-heading text-2xl font-black tracking-wide sm:text-3xl">武林掛機</h1>
+          <h1 className="font-heading text-2xl font-black tracking-wide sm:text-3xl">摸魚練功房</h1>
           <p className="text-muted-foreground text-sm">
+            {snap.name ? `${snap.name}　` : ""}
             {scene.presetLabel}　練功地點：{scene.stageName}
           </p>
         </div>
@@ -436,6 +517,16 @@ export function IdlePlayer({
               <b className="tabular-nums">{vitals.rate == null ? "—" : `約 ${formatNumber(vitals.rate)} 隻`}</b>
             </div>
           </div>
+          {jobReady && (
+            <Badge
+              variant="outline"
+              className="border-primary text-primary h-7 px-3 text-[13px]"
+              render={<button type="button" aria-label="可轉職，選擇門派" onClick={() => setJobOpen(true)} />}
+            >
+              <ScrollTextIcon aria-hidden />
+              可轉職
+            </Badge>
+          )}
           {snap.unspentPoints > 0 && (
             <Badge
               className="h-7 px-3 text-[13px]"
@@ -471,8 +562,8 @@ export function IdlePlayer({
             busy={busy}
             error={actionError}
             onDraft={setDraft}
-            onAuto={() => void act("/api/idle/auto-allocate", {})}
             onConfirm={() => void act("/api/idle/allocate", { attributes: draftDelta() })}
+            onWeapon={(key) => void changeWeapon(key)}
           />
         </TabsContent>
         <TabsContent value="skills">
@@ -488,6 +579,17 @@ export function IdlePlayer({
         </TabsContent>
       </Tabs>
 
+      <JobDialog
+        open={jobOpen && jobReady && summary === null}
+        gender={snap.gender}
+        busy={jobBusy}
+        error={jobError}
+        onClose={() => {
+          setJobOpen(false);
+          setJobError(null);
+        }}
+        onConfirm={(job) => void changeJob(job)}
+      />
       <OfflineDialog
         summary={summary}
         stageName={scene.stageName}

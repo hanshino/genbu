@@ -43,12 +43,14 @@ export const UNARMED_RULE: WeaponRule = { support: "verified", ...PHYSICAL };
 export const VERIFIED_FUNC_DMG: readonly number[] = [3, 4, 6, 7, 8];
 
 /**
- * skill_type → 右手要拿的武器（null 是空手）；不在表上的類型（詐招、毒、醫、機關、身法、符陣）不限武器。
+ * skill_type → 右手要拿的武器（null 是空手）；不在表上的類型（毒、醫、機關、身法、符陣）不限武器。
+ * 詐招（2）空手、手套（PUNCHER）或拂塵（WHISK）：內勁流的傷害來自內勁（使用者 2026-10 確認）；封包實測過空手與拳套。
  * tthol_data 靜態分析客戶端得到（0x421010 施法前檢查）：只看右手，不符就跳「你必須裝備適當的武器才能使用這個技能」，封包不送。
  * 自創武功（649–654）另有「本門武器」放行，這裡不處理。
  */
 export const SKILL_TYPE_WEAPONS: Record<number, { right: readonly (string | null)[]; left?: string }> = {
   1: { right: ["BLADE"] },
+  2: { right: [null, "PUNCHER", "WHISK"] },
   3: { right: ["SWORD"] },
   4: { right: [null, "PUNCHER"] },
   7: { right: ["STING"] },
