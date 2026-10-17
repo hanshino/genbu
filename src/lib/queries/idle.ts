@@ -5,7 +5,8 @@ import { IDLE_EXCLUDED_SKILL_TYPES, IDLE_SKILL_FUNC_DMG } from "@/configs/idle";
 import { SECTS } from "@/configs/stat-sim";
 import { getDb } from "@/lib/db";
 import type { IdleData, IdleGender, IdleMonster, IdleSkill, IdleSkillLevel } from "@/lib/idle/types";
-import { hitTicks, type TimelineFrame } from "@/lib/skill-effect";
+import { getStrips } from "@/lib/queries/skill-effect";
+import { hitTicks, type StripSet, type TimelineFrame } from "@/lib/skill-effect";
 import { STAT_KEYS, type PanelBonus, type SectId, type SimItem, type StatKey } from "@/lib/types/stat-sim";
 
 const ITEM_ALIASES: Partial<Record<StatKey, string>> = {
@@ -210,4 +211,50 @@ function buildIdleData(stageId: number, presetId: number): IdleData | null {
     levelExp,
     skills: SECTS[sectId] ? loadSkills(sectId, preset.gender) : [],
   };
+}
+
+// ---------------------------------------------------------------------------
+// 畫面用的靜態資料：標籤、地圖、動作圖。與引擎無關，只給 /idle 的場景用。
+// ---------------------------------------------------------------------------
+
+export interface IdleSceneAssets {
+  presetLabel: string;
+  stageName: string;
+  /** 玩家預設角色的全部動作圖（dir = 1）。 */
+  casterStrips: StripSet;
+  /** monster id → 動作圖（npc.pic 對到 actor_strip_images 的 monster）。 */
+  monsterStrips: Record<number, StripSet>;
+  map: { url: string; width: number; height: number } | null;
+}
+
+const sceneCache = new Map<string, IdleSceneAssets>();
+
+export function loadIdleSceneAssets(data: IdleData): IdleSceneAssets {
+  const key = `${data.stageId}:${data.presetId}`;
+  const cached = sceneCache.get(key);
+  if (cached) return cached;
+  const db = getDb();
+  const label = db.prepare("SELECT label FROM effect_presets WHERE id = ?").get(data.presetId) as
+    | { label: string }
+    | undefined;
+  const stage = db.prepare("SELECT name FROM stages WHERE kind = 'stage' AND id = ?").get(data.stageId) as
+    | { name: string | null }
+    | undefined;
+  const map = db
+    .prepare("SELECT url, img_width AS width, img_height AS height FROM map_images WHERE stage_kind = 'stage' AND stage_id = ?")
+    .get(data.stageId) as { url: string; width: number; height: number } | undefined;
+  const monsterStrips: Record<number, StripSet> = {};
+  for (const id of Object.keys(data.monsters).map(Number)) {
+    const npc = db.prepare("SELECT pic FROM npc WHERE id = ?").get(id) as { pic: number | null } | undefined;
+    monsterStrips[id] = npc?.pic != null ? getStrips("monster", npc.pic) : {};
+  }
+  const assets: IdleSceneAssets = {
+    presetLabel: label?.label ?? "",
+    stageName: stage?.name ?? "",
+    casterStrips: getStrips("preset", data.presetId),
+    monsterStrips,
+    map: map ?? null,
+  };
+  sceneCache.set(key, assets);
+  return assets;
 }

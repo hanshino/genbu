@@ -114,3 +114,29 @@ export function activeSkill(
   }
   return pick ? { skillId: pick.option.skillId, level: pick.row.level, data: pick.row } : null;
 }
+
+export interface LockedSkill {
+  skillId: number;
+  name: string;
+  /** 最低可學等級。 */
+  learnLevel: number;
+}
+
+/**
+ * 目前等級還不能用、但之後會解鎖的招（只列武器符合、有演出資料的）。給畫面灰顯「LvN 可學」，不影響引擎選招。
+ */
+export function lockedSkills(data: IdleData, level: number, combatant: Combatant): LockedSkill[] {
+  const out: LockedSkill[] = [];
+  for (const skill of data.skills) {
+    if (skill.skillType != null && IDLE_EXCLUDED_SKILL_TYPES.includes(skill.skillType)) continue;
+    if (learnableLevel(skill, level)) continue;
+    let first: IdleSkillLevel | null = null;
+    for (const row of skill.levels) {
+      if (row.learnLevel > level && (!first || row.learnLevel < first.learnLevel)) first = row;
+    }
+    if (!first || !IDLE_SKILL_FUNC_DMG.includes(first.funcDmg) || first.hitTicks.length === 0) continue;
+    if (weaponRequirement(skillDef(skill, first), combatant.character, combatant.gameData) !== null) continue;
+    out.push({ skillId: skill.id, name: skill.name, learnLevel: first.learnLevel });
+  }
+  return out.sort((a, b) => a.learnLevel - b.learnLevel || a.skillId - b.skillId);
+}

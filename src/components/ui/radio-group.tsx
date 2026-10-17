@@ -51,7 +51,7 @@ function RadioOption<Value>({
           <RadioPrimitive.Indicator className="size-2 rounded-full bg-primary" />
         </span>
       )}
-      <span className="min-w-0">{children}</span>
+      <span className={cn("min-w-0", variant === "card" && "flex-1")}>{children}</span>
     </RadioPrimitive.Root>
   );
 }

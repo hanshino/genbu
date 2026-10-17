@@ -59,6 +59,20 @@ v1 欄位：`presetId, gender, sectId, level, exp, money, attributes, unspentPoi
 - 怪物經驗與金錢：海馬 85 / 2..4、龜 94 / 1..7，來自 NPC.BIN，可能與 monster.ini 有出入，視為近似值。
 - 動作圖（db-2026-10-18-1）：60 個預設角色都有 `walk`（走路時不顯示武器，原作如此）；海馬（pic 5582）、龜（pic 5584）有 wait / walk / hurt / death。另有 sit / death / hurt 可再補。
 
+## 建立角色與轉職（2026-10-18 決定，依 tthol-emulator 規則）
+
+來源：tthol-emulator `server/chargen.py`、`server/progress.py`、`server/stats.py`、`server/attack_speed.py`、`server/jobchange.py`、`docs/server-only-data.md`。
+
+- 畫面照原作「創造角色」視窗（NewCreate-1，db-2026-10-17-6 的 `ui_windows` / `ui_controls` / `ui_images`），紙娃娃位置用 control 77 畫。
+- 可選：名字（Big5 ≤ 15 bytes；不可空白、不可含 `~!@#$%^&*()=+|?/,'{}"\;`、不可含「GM」）、性別、六項屬性初始點。髮型／髮色先固定（場景用預先合成的入門弟子動作圖）；出生地固定雷島（char.ini 的 55 流星雷島˙南）。
+- 初始：入門弟子（clan bit 1，人族）、Lv1、經驗 0、金錢 0、六項屬性 1、可分配 6 點（`levelPoints(1)`），空手。
+- 加點成本 `pointCost`：≤10 為 1，之後 `2 + ⌊(v − 11) / 15⌋`，**上限 10**（genbu 現有實作少了上限，要補）。屬性上限：Lv140 以下 99。
+- 轉職（使用者簡化）：**到 9 級自動獲得轉職證書**，之後可選惡人谷／移花宮／天外天；選定後換成該門派的預設角色外觀與武器，技能改用該門派的。原作要學完新手技能，v1 省略。
+- 入門弟子 1–8 級沒有可學的傷害招式，用普通攻擊。
+- 起始武器：char.ini 給 23004 新手用青銅刀（BLADE）；emulator 直接裝在右手，另有 23001 草鞋、23002 布衣、23003 圓盾。v1 讓新角色裝備新手用青銅刀（外觀用入門弟子・刀預設角色 102 / 103）。
+- 入門弟子面板（`stats.py` NOVICE_SECTS，**未實測，emulator 沿用移花宮那一列**）：護勁 ⌊3P/2⌋ + W；MP 上限 6·Lv + 40 + 6P + 9W；HP 上限 ⌊(20000 + 1000·Lv + 45·Lv·(Lv+1)) / 100⌋ + ⌊18·V·(V+1) / 20⌋（兩段分別取整）。物攻、內勁、防禦、命中、閃躲、重擊、拆招與門派無關。
+- 普攻間隔（`server/attack_speed.py`、`data/attack_speed.csv`）：v = attack_speed.ini[右手武器類型][門派]（空手 185；刀 入門 170；劍 入門 175；匕首 180；棍 170；倭刀 175 …）；s = v + ⌊(250 − v) × 身法 / 250⌋；等級 = 階梯 (0, 150, 157, 163, 170, 177, 183, 190, 197, 203, 210, 217, 223, 230) 中 ≤ s 的個數，再加裝備的 attack_speed 加成；揮擊週期 = 3 × (17 − 等級) × 0.48 / 27 秒（Lv1 ≈ 0.85 秒、Lv14 ≈ 0.16 秒）。
+
 ## 仍待定
 
 - 找怪要走多遠（決定找怪秒數）：v1 先用固定 3 秒 × 速度倍率，之後依移動速度與重生間隔估算。

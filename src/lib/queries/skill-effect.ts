@@ -141,7 +141,7 @@ function toStrip(row: StripRow): ActorStrip {
   };
 }
 
-function getStrips(kind: "preset" | "monster", actorId: number): StripSet {
+export function getStrips(kind: "preset" | "monster", actorId: number): StripSet {
   const rows = getDb()
     .prepare(
       `SELECT action, url, width, height, cell_w AS cellW, cell_h AS cellH, frames,
