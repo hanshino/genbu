@@ -17,17 +17,16 @@ export interface Box {
 
 export type AttrField =
   | { kind: "label"; box: Box; color: string; text: string }
-  | {
-      kind: "attr" | "next" | "add";
-      box: Box;
-      color: string;
-      key: AttributeKey;
-      iconUrl?: string | null;
-    }
+  | { kind: "attr"; box: Box; color: string; key: AttributeKey }
+  | { kind: "next"; box: Box; color: string; key: AttributeKey }
+  | { kind: "add"; box: Box; color: string; key: AttributeKey; iconUrl?: string | null }
   | { kind: "stat"; box: Box; color: string; key: PanelStatKey; hiddenInGame: boolean }
   | { kind: "bar"; box: Box; color: string; key: "hp" | "mp" }
   | { kind: "points"; box: Box; color: string }
-  | { kind: "text"; box: Box; color: string; key: "name" | "level" | "sect" | null };
+  | { kind: "text"; box: Box; color: string; key: TextKey | null };
+
+/** 視窗左欄的文字欄位（名字、稱號、經驗值、等級、門派、魅力值、生日）。 */
+export type TextKey = "name" | "title" | "exp" | "level" | "sect" | "charm" | "birthday";
 
 const ATTR_BY_LABEL: Record<string, AttributeKey> = {
   外功: "str",
@@ -50,10 +49,14 @@ const STAT_BY_LABEL: Record<string, PanelStatKey> = {
   體力: "hp",
   真氣: "mp",
 };
-const TEXT_BY_LABEL: Record<string, "name" | "level" | "sect"> = {
+const TEXT_BY_LABEL: Record<string, TextKey> = {
   名字: "name",
+  稱號: "title",
+  經驗值: "exp",
   等級: "level",
   門派: "sect",
+  魅力值: "charm",
+  生日: "birthday",
 };
 /** 遊戲裡蓋住命中／閃躲／重擊／拆招的擋板；網站不畫它，只用它的範圍標「遊戲中不顯示」。 */
 const BLIND_CTRL_ID = 489;
@@ -120,7 +123,10 @@ export function attributeFields(win: UiWindowLayout): AttrField[] {
     const base = { box: boxOf(c), color: c.color ?? "#000000" };
     const attr = ATTR_BY_LABEL[title];
     const stat = STAT_BY_LABEL[title];
-    if (attr) fields.push({ ...base, kind: nth === 0 ? "attr" : "next", key: attr });
+    if (attr)
+      fields.push(
+        nth === 0 ? { ...base, kind: "attr", key: attr } : { ...base, kind: "next", key: attr },
+      );
     else if (stat === "hp" || stat === "mp") {
       if (c.class === "PROGRESS") fields.push({ ...base, kind: "bar", key: stat });
     } else if (stat) fields.push({ ...base, kind: "stat", key: stat, hiddenInGame: covered(c) });

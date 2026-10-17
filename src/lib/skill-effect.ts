@@ -184,7 +184,7 @@ export function hitTicks(frames: TimelineFrame[]): number[] {
 }
 
 /** 待機循環：用全域 tick 對整段動畫取餘數。 */
-function loopPose(strips: StripSet, action: string, tick: number): Pose | null {
+export function loopPose(strips: StripSet, action: string, tick: number): Pose | null {
   const strip = strips[action];
   if (!strip) return null;
   const total = sum(strip.delays);

@@ -160,6 +160,12 @@ export const NAV_SECTIONS: NavSection[] = [
         description: "填配點、裝備與被動，算出角色面板",
         keywords: ["屬性", "面板", "配點", "傷害", "模擬"],
       },
+      {
+        href: "/idle",
+        label: "摸魚練功房",
+        description: "放置型小遊戲：角色自動打怪升級，離線也會累積",
+        keywords: ["放置", "掛機", "練功", "摸魚", "遊戲"],
+      },
     ],
   },
   {

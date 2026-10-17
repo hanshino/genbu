@@ -150,6 +150,19 @@ button.v:focus-visible,
   opacity: 0.45;
 }
 
+/* 摸魚練功房：加點鈕的看不見的點擊範圍（原作的鈕只有 12 px）。上下各 3 單位剛好填滿 18 單位的列距，不會蓋到相鄰的鈕。 */
+.touch::after {
+  content: "";
+  position: absolute;
+  inset: calc(var(--u) * -3) calc(var(--u) * -8) calc(var(--u) * -3) calc(var(--u) * -6);
+}
+/* 摸魚練功房：尚未確認的「+N」 */
+.pending {
+  color: #ffe08a !important;
+  font-weight: 700;
+  text-shadow: 0 calc(var(--u) * 1) 0 oklch(0.25 0.06 60 / 0.8);
+}
+
 /* 體力／真氣條 */
 .bar {
   overflow: hidden;
@@ -163,11 +176,13 @@ button.v:focus-visible,
   text-shadow: 0 calc(var(--u) * 0.6) calc(var(--u) * 1.2) oklch(0.2 0.05 260 / 0.9);
 }
 button.hp,
-button.hp:hover {
+button.hp:hover,
+output.hp {
   background: linear-gradient(oklch(0.62 0.17 28), oklch(0.48 0.16 28));
 }
 button.mp,
-button.mp:hover {
+button.mp:hover,
+output.mp {
   background: linear-gradient(oklch(0.66 0.13 235), oklch(0.5 0.13 240));
 }
 
