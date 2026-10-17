@@ -1,12 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
   casterPose,
+  clonePose,
   effectFrameIndex,
   hitTicks,
   indexSprites,
   msPerTick,
   referencedSprites,
+  showsTarget,
   stripFrameIndex,
+  targetModeLabel,
   targetPose,
   totalTicks,
   type ActorStrip,
@@ -40,8 +43,9 @@ function obj(
   action: string,
   frame: number,
   delay: number | null = null,
+  cloneOf: number | null = null,
 ): TimelineObject {
-  return [id, seq, action, frame, 0, 0, 0, 1, 1, 32, delay, 0];
+  return [id, seq, action, frame, 0, 0, 0, 1, 1, 32, delay, 0, cloneOf];
 }
 
 describe("stripFrameIndex", () => {
@@ -78,6 +82,15 @@ describe("hitTicks", () => {
     expect(hitTicks(frames)).toEqual([3, 9]);
     expect(hitTicks([])).toEqual([]);
   });
+  it("推測出來的命中（inferred）與一般命中一樣算", () => {
+    const frames: TimelineFrame[] = [
+      { t: 4, o: [], e: [{ type: "hit", inferred: true }] },
+      { t: 12, o: [], e: [{ type: "hit" }] },
+    ];
+    expect(hitTicks(frames)).toEqual([4, 12]);
+    // 推測命中同樣會讓目標播 hurt
+    expect(targetPose(4, hitTicks(frames), targetStrips, false)).toEqual({ action: "hurt", index: 0 });
+  });
 });
 
 describe("casterPose", () => {
@@ -100,6 +113,52 @@ describe("casterPose", () => {
   it("沒有 prepare 時退到 wait，都沒有就是 null", () => {
     expect(casterPose(undefined, { wait: strip([8]) }, 0)?.action).toBe("wait");
     expect(casterPose(undefined, {}, 0)).toBeNull();
+  });
+});
+
+describe("clonePose", () => {
+  it("cloneOf = 1：照施法者的方式處理動作、frame 與 delay", () => {
+    expect(clonePose(obj(30, null, "CHOP", 5, null, 1), casterStrips, targetStrips, 5)).toEqual({
+      source: "caster",
+      pose: { action: "chop", index: 1 },
+    });
+    expect(clonePose(obj(30, null, "CHOP", 13, 7, 1), casterStrips, targetStrips, 13)).toEqual({
+      source: "caster",
+      pose: { action: "chop", index: 1 },
+    });
+  });
+  it("cloneOf = 1：動作播完或是 wait 時回到 prepare 循環", () => {
+    expect(clonePose(obj(30, null, "WAIT", 0, null, 1), casterStrips, null, 9)).toEqual({
+      source: "caster",
+      pose: { action: "prepare", index: 1 },
+    });
+    expect(clonePose(obj(30, null, "CHOP", 99, null, 1), casterStrips, null, 0)?.pose.action).toBe("prepare");
+  });
+  it("cloneOf = 2：用目標素材（呼叫端鏡像）；沒畫目標時略過", () => {
+    expect(clonePose(obj(31, null, "HURT", 7, null, 2), casterStrips, targetStrips, 0)).toEqual({
+      source: "target",
+      pose: { action: "hurt", index: 1 },
+    });
+    expect(clonePose(obj(31, null, "HURT", 7, null, 2), casterStrips, null, 0)).toBeNull();
+  });
+  it("其他 cloneOf 值略過", () => {
+    expect(clonePose(obj(32, null, "CHOP", 0, null, 7), casterStrips, targetStrips, 0)).toBeNull();
+    expect(clonePose(obj(32, null, "CHOP", 0, null, null), casterStrips, targetStrips, 0)).toBeNull();
+  });
+});
+
+describe("target_mode", () => {
+  it("enemy / ground 畫怪物，self / ally 不畫", () => {
+    expect(showsTarget("enemy")).toBe(true);
+    expect(showsTarget("ground")).toBe(true);
+    expect(showsTarget("self")).toBe(false);
+    expect(showsTarget("ally")).toBe(false);
+  });
+  it("自己 / 隊友在說明列顯示作用對象，其餘沒有", () => {
+    expect(targetModeLabel("self")).toBe("自己");
+    expect(targetModeLabel("ally")).toBe("隊友");
+    expect(targetModeLabel("enemy")).toBeNull();
+    expect(targetModeLabel("ground")).toBeNull();
   });
 });
 

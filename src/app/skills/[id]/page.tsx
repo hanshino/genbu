@@ -72,7 +72,7 @@ export default async function SkillDetailPage({ params, searchParams }: PageProp
   const status = current.extra_status != null ? getStatusById(current.extra_status) : null;
   const iconMap = getMagicIconMap([base.id, ...related.map((s) => s.id)]);
   const levelIcons = iconMap.get(base.id);
-  const effect = getSkillEffectAvailability(base.id);
+  const effect = getSkillEffectAvailability(current.id, current.level);
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
@@ -90,9 +90,11 @@ export default async function SkillDetailPage({ params, searchParams }: PageProp
 
       {effect && (
         <SkillEffectPlayer
-          magicId={base.id}
+          key={`${current.id}-${current.level}`}
+          magicId={current.id}
+          level={current.level}
           genders={effect.genders}
-          presetLabels={effect.presetLabels}
+          presets={effect.presets}
         />
       )}
 

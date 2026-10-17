@@ -36,7 +36,10 @@ export interface EffectSprite {
   blend: EffectBlend;
 }
 
-/** [id, seq, action, frame, x, y, z, sx, sy, mixer, delay, dir]；id 1 = 施法者、2 = 目標，seq 為 null。 */
+/**
+ * [id, seq, action, frame, x, y, z, sx, sy, mixer, delay, dir, cloneOf]
+ * id 1 = 施法者、2 = 目標，seq 為 null；cloneOf 只有「角色分身」才有值（複製哪個 id）。
+ */
 export type TimelineObject = [
   number,
   number | null,
@@ -50,18 +53,35 @@ export type TimelineObject = [
   number,
   number | null,
   number,
+  number | null,
 ];
 
 export interface TimelineFrame {
   t: number;
   o: TimelineObject[];
-  e?: { type: string }[];
+  e?: { type: string; inferred?: boolean }[];
+}
+
+export type TargetMode = "enemy" | "ground" | "self" | "ally";
+export type EffectFidelity = "ok" | "partial";
+
+/** 一條時間軸（同一個 cast_effect + variant 只會有一份，男女共用時只送一次）。 */
+export interface EffectTimeline {
+  variant: "target" | "self";
+  tickMs: number;
+  ticks: number;
+  frames: TimelineFrame[];
+  fidelity: EffectFidelity;
+  unknownNatives: string[] | null;
 }
 
 export interface EffectCaster {
   presetId: number;
   label: string;
   strips: StripSet;
+  targetMode: TargetMode;
+  /** bundle.timelines 的 key。 */
+  timelineKey: string;
 }
 
 export interface EffectTarget {
@@ -72,13 +92,28 @@ export interface EffectTarget {
 
 export interface SkillEffectBundle {
   magicId: number;
-  tickMs: number;
-  ticks: number;
-  frames: TimelineFrame[];
-  unknownNatives: string[] | null;
+  level: number;
+  timelines: Record<string, EffectTimeline>;
   sprites: EffectSprite[];
   casters: Partial<Record<EffectGender, EffectCaster>>;
-  target: EffectTarget;
+  /** 沒有任何性別需要畫怪物時為 null。 */
+  target: EffectTarget | null;
+}
+
+export function timelineKey(castEffect: number, variant: string): string {
+  return `${castEffect}:${variant}`;
+}
+
+/** 這種作用對象要不要畫怪物（與傷害數字、擊倒選項）。 */
+export function showsTarget(mode: TargetMode): boolean {
+  return mode === "enemy" || mode === "ground";
+}
+
+/** 自己 / 隊友模式在說明列顯示的對象名；要畫怪物的模式回傳 null。 */
+export function targetModeLabel(mode: TargetMode): string | null {
+  if (mode === "self") return "自己";
+  if (mode === "ally") return "隊友";
+  return null;
 }
 
 export interface Pose {
@@ -89,6 +124,7 @@ export interface Pose {
 }
 
 export const CASTER_ID = 1;
+export const TARGET_ID = 2;
 /** 播放長度 = 腳本 tick 數 + 收尾這麼多 tick（讓受擊、倒地、傷害數字演完）。 */
 export const TAIL_TICKS = 30;
 export const DAMAGE_NUMBER_TICKS = 45;
@@ -192,6 +228,40 @@ export function targetPose(tick: number, hits: number[], strips: StripSet, kill:
 
   const index = stripFrameIndex(hurt.delays, sinceHit);
   return index >= 0 ? { action: "hurt", index } : idle();
+}
+
+export interface ClonePose {
+  /** 用哪一組素材：施法者（原樣）或目標（鏡像）。 */
+  source: "caster" | "target";
+  pose: Pose;
+}
+
+/**
+ * 角色分身的姿勢。cloneOf = 1 照施法者的方式處理（動作名小寫、frame 與 delay 同 id 1）；
+ * cloneOf = 2 用目標素材（呼叫端要鏡像），目標不畫時略過；其他值略過。
+ */
+export function clonePose(
+  entry: TimelineObject,
+  casterStrips: StripSet,
+  targetStrips: StripSet | null,
+  tick: number,
+): ClonePose | null {
+  const cloneOf = entry[12];
+  if (cloneOf === CASTER_ID) {
+    const pose = casterPose(entry, casterStrips, tick);
+    return pose ? { source: "caster", pose } : null;
+  }
+  if (cloneOf === TARGET_ID && targetStrips) {
+    const action = entry[2].toLowerCase();
+    const strip = targetStrips[action];
+    if (strip) {
+      const index = stripFrameIndex(strip.delays, entry[3], entry[10]);
+      if (index >= 0) return { source: "target", pose: { action, index } };
+    }
+    const idle = loopPose(targetStrips, "wait", tick);
+    return idle ? { source: "target", pose: idle } : null;
+  }
+  return null;
 }
 
 export function spriteKey(seq: number, state: string): string {

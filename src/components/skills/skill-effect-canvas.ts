@@ -2,14 +2,15 @@ import {
   CASTER_ID,
   DAMAGE_NUMBER_TICKS,
   casterPose,
+  clonePose,
   effectFrameIndex,
   spriteKey,
   targetPose,
   type ActorStrip,
   type EffectBlend,
   type EffectSprite,
+  type EffectTimeline,
   type Pose,
-  type SkillEffectBundle,
   type StripSet,
   type TimelineObject,
 } from "@/lib/skill-effect";
@@ -49,28 +50,34 @@ export function requestImage(url: string, onLoad: () => void): void {
 }
 
 export interface SceneInput {
-  bundle: SkillEffectBundle;
+  timeline: EffectTimeline;
   /** indexSprites(bundle.sprites) */
   sprites: Map<string, EffectSprite>;
   casterStrips: StripSet;
+  /** 不畫怪物（自己 / 隊友）時為 null，也不畫受擊與傷害數字。 */
+  targetStrips: StripSet | null;
   hits: number[];
   tick: number;
   kill: boolean;
 }
 
+/** x/y/z 是腳本座標；alpha 與 lift 讓分身能照自己的位置與透明度畫。 */
 function drawActor(
   ctx: CanvasRenderingContext2D,
   strips: StripSet,
   pose: Pose | null,
   x: number,
   mirror: boolean,
+  lift = 0,
+  alpha = 1,
 ) {
-  if (!pose) return;
+  if (!pose || alpha <= 0) return;
   const strip: ActorStrip | undefined = strips[pose.action];
   const im = strip && imageCache.get(strip.url);
   if (!strip || !isReady(im)) return;
   ctx.save();
-  ctx.translate(X0 + x * S, GROUND);
+  ctx.globalAlpha = alpha;
+  ctx.translate(X0 + x * S, GROUND - lift * S);
   ctx.scale(mirror ? -S : S, S);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(im, pose.index * strip.cellW, 0, strip.cellW, strip.cellH, -strip.anchorX, -strip.anchorY, strip.cellW, strip.cellH);
@@ -97,7 +104,7 @@ function drawEffect(
   ctx.restore();
 }
 
-function drawBackdrop(ctx: CanvasRenderingContext2D) {
+function drawBackdrop(ctx: CanvasRenderingContext2D, withTarget: boolean) {
   // 加算混合的特效需要暗底，所以舞台不跟網站主題走。
   const bg = ctx.createLinearGradient(0, 0, 0, STAGE_H);
   bg.addColorStop(0, "#0b0e16");
@@ -109,7 +116,7 @@ function drawBackdrop(ctx: CanvasRenderingContext2D) {
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, STAGE_W, STAGE_H);
   ctx.fillStyle = "rgba(0,0,0,.35)";
-  for (const x of [CASTER_X, TARGET_X]) {
+  for (const x of withTarget ? [CASTER_X, TARGET_X] : [CASTER_X]) {
     ctx.beginPath();
     ctx.ellipse(X0 + x * S, GROUND, 34 * S, 9 * S, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -137,17 +144,29 @@ function drawDamageNumbers(ctx: CanvasRenderingContext2D, hits: number[], tick: 
 }
 
 export function drawScene(ctx: CanvasRenderingContext2D, scene: SceneInput) {
-  const { bundle, sprites, casterStrips, hits, tick, kill } = scene;
-  drawBackdrop(ctx);
+  const { timeline, sprites, casterStrips, targetStrips, hits, tick, kill } = scene;
+  drawBackdrop(ctx, targetStrips !== null);
 
-  const inScript = tick < bundle.frames.length;
-  const entry = inScript ? bundle.frames[tick] : undefined;
-  const casterEntry = entry?.o.find((o) => o[0] === CASTER_ID);
+  const entry = tick < timeline.frames.length ? timeline.frames[tick] : undefined;
+  const casterEntry = entry?.o.find((o) => o[0] === CASTER_ID && o[12] == null);
 
   drawActor(ctx, casterStrips, casterPose(casterEntry, casterStrips, tick), CASTER_X, false);
-  drawActor(ctx, bundle.target.strips, targetPose(tick, hits, bundle.target.strips, kill), TARGET_X, true);
-  if (entry) {
-    for (const o of entry.o) if (o[1] != null) drawEffect(ctx, o, sprites);
+  if (targetStrips) {
+    drawActor(ctx, targetStrips, targetPose(tick, hits, targetStrips, kill), TARGET_X, true);
   }
-  drawDamageNumbers(ctx, hits, tick);
+  if (entry) {
+    // 特效與分身依腳本順序畫（分身是帶 cloneOf 的角色物件，淡入淡出靠 mixer）。
+    for (const o of entry.o) {
+      if (o[1] != null) {
+        drawEffect(ctx, o, sprites);
+      } else if (o[12] != null) {
+        const clone = clonePose(o, casterStrips, targetStrips, tick);
+        if (!clone) continue;
+        const alpha = Math.max(0, Math.min(1, o[9] / 32));
+        const mirror = clone.source === "target";
+        drawActor(ctx, mirror ? (targetStrips as StripSet) : casterStrips, clone.pose, o[4], mirror, o[5] + o[6], alpha);
+      }
+    }
+  }
+  if (targetStrips) drawDamageNumbers(ctx, hits, tick);
 }

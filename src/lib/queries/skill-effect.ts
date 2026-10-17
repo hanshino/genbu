@@ -2,27 +2,39 @@ import { gunzipSync } from "node:zlib";
 import { getDb } from "@/lib/db";
 import {
   referencedSprites,
+  showsTarget,
   spriteKey,
+  timelineKey,
   type ActorStrip,
   type EffectBlend,
   type EffectCaster,
+  type EffectFidelity,
   type EffectGender,
   type EffectSprite,
   type EffectTarget,
+  type EffectTimeline,
   type SkillEffectBundle,
   type StripSet,
+  type TargetMode,
   type TimelineFrame,
 } from "@/lib/skill-effect";
 
 export interface SkillEffectAvailability {
+  level: number;
   genders: EffectGender[];
-  presetLabels: Partial<Record<EffectGender, string>>;
+  presets: Partial<
+    Record<EffectGender, { label: string; targetMode: TargetMode; fidelity: EffectFidelity }>
+  >;
 }
 
 interface PresetRow {
   gender: EffectGender;
   presetId: number;
   label: string;
+  castEffect: number;
+  variant: "target" | "self";
+  targetMode: TargetMode;
+  fidelity: EffectFidelity;
 }
 
 interface StripRow {
@@ -45,39 +57,51 @@ interface SpriteRow extends Omit<EffectSprite, "delays" | "blend"> {
 
 const BLENDS: EffectBlend[] = ["add", "sub", "alpha", "normal"];
 
-function isValidId(id: number): boolean {
-  return Number.isSafeInteger(id) && id > 0;
-}
+const TARGET_MODES: TargetMode[] = ["enemy", "ground", "self", "ally"];
 
-// 技能有演出 = 最低等級那筆的 cast_effect 有時間軸，且該技能有指定施法者外觀。
-function getTimelineEffect(baseMagicId: number): number | null {
+// 技能有演出 = 該等級在 magic_effect_presets 有列（它的 (cast_effect, variant) 保證有時間軸）。
+// 同一個 magic id 在不同等級可能是不同技能，所以一定要指定等級；沒指定就取有資料的最低等級。
+function resolveLevel(magicId: number, level: number | null | undefined): number | null {
+  if (level != null) {
+    return Number.isSafeInteger(level) && level > 0 ? level : null;
+  }
   const row = getDb()
-    .prepare(
-      `SELECT m.cast_effect AS castEffect FROM magic m
-       WHERE m.id = ? AND m.cast_effect IN (SELECT cast_effect FROM magic_effect_timelines)
-       ORDER BY m.level LIMIT 1`,
-    )
-    .get(baseMagicId) as { castEffect: number } | undefined;
-  return row?.castEffect ?? null;
+    .prepare("SELECT MIN(level) AS level FROM magic_effect_presets WHERE magic_id = ?")
+    .get(magicId) as { level: number | null };
+  return row.level;
 }
 
-function getPresets(baseMagicId: number): PresetRow[] {
-  return getDb()
+function getPresets(magicId: number, level: number): PresetRow[] {
+  const rows = getDb()
     .prepare(
-      `SELECT mp.gender, mp.preset_id AS presetId, p.label
-       FROM magic_effect_presets mp JOIN effect_presets p ON p.id = mp.preset_id
-       WHERE mp.magic_id = ? ORDER BY mp.gender DESC`,
+      `SELECT mp.gender, mp.preset_id AS presetId, p.label, mp.cast_effect AS castEffect,
+              mp.variant, mp.target_mode AS targetMode, t.fidelity
+       FROM magic_effect_presets mp
+       JOIN effect_presets p ON p.id = mp.preset_id
+       JOIN magic_effect_timelines t ON t.cast_effect = mp.cast_effect AND t.variant = mp.variant
+       WHERE mp.magic_id = ? AND mp.level = ? ORDER BY mp.gender DESC`,
     )
-    .all(baseMagicId) as PresetRow[];
+    .all(magicId, level) as PresetRow[];
+  return rows.filter(
+    (r) => (r.gender === "m" || r.gender === "f") && TARGET_MODES.includes(r.targetMode),
+  );
 }
 
-export function getSkillEffectAvailability(baseMagicId: number): SkillEffectAvailability | null {
-  if (!isValidId(baseMagicId) || getTimelineEffect(baseMagicId) === null) return null;
-  const presets = getPresets(baseMagicId).filter((p) => p.gender === "m" || p.gender === "f");
+export function getSkillEffectAvailability(
+  magicId: number,
+  level?: number | null,
+): SkillEffectAvailability | null {
+  if (!Number.isSafeInteger(magicId) || magicId <= 0) return null;
+  const lv = resolveLevel(magicId, level);
+  if (lv === null) return null;
+  const presets = getPresets(magicId, lv);
   if (presets.length === 0) return null;
   return {
+    level: lv,
     genders: presets.map((p) => p.gender),
-    presetLabels: Object.fromEntries(presets.map((p) => [p.gender, p.label])),
+    presets: Object.fromEntries(
+      presets.map((p) => [p.gender, { label: p.label, targetMode: p.targetMode, fidelity: p.fidelity }]),
+    ),
   };
 }
 
@@ -138,37 +162,67 @@ function getTarget(): EffectTarget | null {
   return { npcId: row.npcId, name: row.name, strips: getStrips("monster", row.pic) };
 }
 
-export function getSkillEffectBundle(baseMagicId: number): SkillEffectBundle | null {
-  if (!isValidId(baseMagicId)) return null;
-  const castEffect = getTimelineEffect(baseMagicId);
-  if (castEffect === null) return null;
-  const presets = getPresets(baseMagicId);
-  const target = getTarget();
-  if (presets.length === 0 || !target) return null;
-
-  const timeline = getDb()
-    .prepare("SELECT ticks, json, unknown_natives AS unknownNatives FROM magic_effect_timelines WHERE cast_effect = ?")
-    .get(castEffect) as { ticks: number; json: Buffer; unknownNatives: string | null };
-  const parsed = JSON.parse(gunzipSync(timeline.json).toString("utf8")) as {
+function getTimeline(castEffect: number, variant: string): { timeline: EffectTimeline } | null {
+  const row = getDb()
+    .prepare(
+      `SELECT ticks, json, fidelity, unknown_natives AS unknownNatives
+       FROM magic_effect_timelines WHERE cast_effect = ? AND variant = ?`,
+    )
+    .get(castEffect, variant) as
+    | { ticks: number; json: Buffer; fidelity: EffectFidelity; unknownNatives: string | null }
+    | undefined;
+  if (!row) return null;
+  const parsed = JSON.parse(gunzipSync(row.json).toString("utf8")) as {
     tick_ms: number;
     ticks: number;
     frames: TimelineFrame[];
   };
+  return {
+    timeline: {
+      variant: variant === "self" ? "self" : "target",
+      tickMs: parsed.tick_ms,
+      ticks: row.ticks ?? parsed.ticks,
+      frames: parsed.frames,
+      fidelity: row.fidelity,
+      unknownNatives: row.unknownNatives ? (JSON.parse(row.unknownNatives) as string[]) : null,
+    },
+  };
+}
 
+export function getSkillEffectBundle(magicId: number, level?: number | null): SkillEffectBundle | null {
+  if (!Number.isSafeInteger(magicId) || magicId <= 0) return null;
+  const lv = resolveLevel(magicId, level);
+  if (lv === null) return null;
+  const presets = getPresets(magicId, lv);
+  if (presets.length === 0) return null;
+
+  const timelines: Record<string, EffectTimeline> = {};
   const casters: Partial<Record<EffectGender, EffectCaster>> = {};
   for (const p of presets) {
-    if (p.gender !== "m" && p.gender !== "f") continue;
-    casters[p.gender] = { presetId: p.presetId, label: p.label, strips: getStrips("preset", p.presetId) };
+    const key = timelineKey(p.castEffect, p.variant);
+    if (!timelines[key]) {
+      const found = getTimeline(p.castEffect, p.variant);
+      if (!found) continue;
+      timelines[key] = found.timeline;
+    }
+    casters[p.gender] = {
+      presetId: p.presetId,
+      label: p.label,
+      strips: getStrips("preset", p.presetId),
+      targetMode: p.targetMode,
+      timelineKey: key,
+    };
   }
+  if (Object.keys(casters).length === 0) return null;
 
+  const needsTarget = Object.values(casters).some((c) => showsTarget(c.targetMode));
+  const allFrames = Object.values(timelines).flatMap((t) => t.frames);
   return {
-    magicId: baseMagicId,
-    tickMs: parsed.tick_ms,
-    ticks: timeline.ticks ?? parsed.ticks,
-    frames: parsed.frames,
-    unknownNatives: timeline.unknownNatives ? (JSON.parse(timeline.unknownNatives) as string[]) : null,
-    sprites: getSprites(parsed.frames),
+    magicId,
+    level: lv,
+    timelines,
+    sprites: getSprites(allFrames),
     casters,
-    target,
+    target: needsTarget ? getTarget() : null,
   };
 }

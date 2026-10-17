@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PauseIcon, PlayIcon, RotateCcwIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,18 +14,25 @@ import {
   hitTicks,
   indexSprites,
   msPerTick,
+  showsTarget,
+  targetModeLabel,
   totalTicks,
+  type EffectFidelity,
   type EffectGender,
   type SkillEffectBundle,
   type SpeedKey,
+  type TargetMode,
 } from "@/lib/skill-effect";
 import { STAGE_H, STAGE_W, drawScene, requestImage } from "@/components/skills/skill-effect-canvas";
 
 interface SkillEffectPlayerProps {
-  /** 技能最低等級那筆的 id（API 與施法者外觀都以它為 key）。 */
+  /** 同一個 id 在不同等級可能是不同技能，所以演出以 (id, 等級) 為 key；換等級請讓父層用 key 重建。 */
   magicId: number;
+  level: number;
   genders: EffectGender[];
-  presetLabels: Partial<Record<EffectGender, string>>;
+  presets: Partial<
+    Record<EffectGender, { label: string; targetMode: TargetMode; fidelity: EffectFidelity }>
+  >;
 }
 
 const GENDER_LABELS: Record<EffectGender, string> = { m: "男", f: "女" };
@@ -33,7 +41,7 @@ function prefersReducedMotion(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export function SkillEffectPlayer({ magicId, genders, presetLabels }: SkillEffectPlayerProps) {
+export function SkillEffectPlayer({ magicId, level, genders, presets }: SkillEffectPlayerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -68,7 +76,7 @@ export function SkillEffectPlayer({ magicId, genders, presetLabels }: SkillEffec
   useEffect(() => {
     if (!requested) return;
     const controller = new AbortController();
-    fetch(`/api/skills/${magicId}/effect`, { signal: controller.signal })
+    fetch(`/api/skills/${magicId}/effect?level=${level}`, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error(String(res.status));
         return res.json() as Promise<SkillEffectBundle>;
@@ -82,23 +90,29 @@ export function SkillEffectPlayer({ magicId, genders, presetLabels }: SkillEffec
         setFailed(true);
       });
     return () => controller.abort();
-  }, [requested, magicId, attempt]);
+  }, [requested, magicId, level, attempt]);
 
   const caster = bundle?.casters[gender];
-  const total = bundle ? totalTicks(bundle.ticks) : 0;
-  const hits = useMemo(() => (bundle ? hitTicks(bundle.frames) : []), [bundle]);
+  const timeline = bundle && caster ? bundle.timelines[caster.timelineKey] : undefined;
+  const preset = presets[gender];
+  const targetMode = caster?.targetMode ?? preset?.targetMode ?? "enemy";
+  const partial = (timeline?.fidelity ?? preset?.fidelity) === "partial";
+  const targetStrips = showsTarget(targetMode) ? (bundle?.target?.strips ?? null) : null;
+  const total = timeline ? totalTicks(timeline.ticks) : 0;
+  const hits = useMemo(() => (timeline ? hitTicks(timeline.frames) : []), [timeline]);
   const sprites = useMemo(() => indexSprites(bundle?.sprites ?? []), [bundle]);
 
   // 預載目前性別需要的圖，載入完成就重畫。
   useEffect(() => {
     if (!bundle || !caster) return;
+    const targetStrips = showsTarget(caster.targetMode) ? bundle.target?.strips : undefined;
     let cancelled = false;
     const onLoad = () => {
       if (!cancelled) setImageVersion((v) => v + 1);
     };
     const urls = new Set<string>();
     for (const strip of Object.values(caster.strips)) urls.add(strip.url);
-    for (const strip of Object.values(bundle.target.strips)) urls.add(strip.url);
+    if (targetStrips) for (const strip of Object.values(targetStrips)) urls.add(strip.url);
     for (const sprite of bundle.sprites) urls.add(sprite.url);
     for (const url of urls) requestImage(url, onLoad);
     return () => {
@@ -108,8 +122,8 @@ export function SkillEffectPlayer({ magicId, genders, presetLabels }: SkillEffec
 
   // 播放：累積經過的毫秒，湊滿一個 tick 就前進。
   useEffect(() => {
-    if (!bundle || !visible || !playing) return;
-    const mpt = msPerTick(speed, bundle.tickMs);
+    if (!timeline || !visible || !playing) return;
+    const mpt = msPerTick(speed, timeline.tickMs);
     let acc = 0;
     let last = performance.now();
     let raf = 0;
@@ -125,14 +139,14 @@ export function SkillEffectPlayer({ magicId, genders, presetLabels }: SkillEffec
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [bundle, visible, playing, speed, total]);
+  }, [timeline, visible, playing, speed, total]);
 
   // 畫面：tick、性別、擊倒切換、圖片載入完成時重畫。
   useEffect(() => {
     const ctx = canvasRef.current?.getContext("2d");
-    if (!ctx || !bundle || !caster) return;
-    drawScene(ctx, { bundle, sprites, casterStrips: caster.strips, hits, tick, kill });
-  }, [bundle, caster, sprites, hits, tick, kill, imageVersion]);
+    if (!ctx || !timeline || !caster) return;
+    drawScene(ctx, { timeline, sprites, casterStrips: caster.strips, targetStrips, hits, tick, kill });
+  }, [timeline, caster, sprites, targetStrips, hits, tick, kill, imageVersion]);
 
   function changeGender(next: EffectGender) {
     if (next === gender) return;
@@ -141,12 +155,16 @@ export function SkillEffectPlayer({ magicId, genders, presetLabels }: SkillEffec
   }
 
   const loading = requested && !bundle && !failed;
-  const casterLabel = caster?.label ?? presetLabels[gender];
+  const casterLabel = caster?.label ?? preset?.label;
+  const objectLabel = targetModeLabel(targetMode);
 
   return (
     <Card ref={rootRef}>
       <CardHeader>
-        <CardTitle>技能演出</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          技能演出
+          {partial && <Badge variant="secondary">部分模擬</Badge>}
+        </CardTitle>
         {genders.length > 1 && (
           <CardAction>
             <ToggleGroup
@@ -172,7 +190,7 @@ export function SkillEffectPlayer({ magicId, genders, presetLabels }: SkillEffec
             aria-label="技能演出畫面"
             className="absolute inset-0 size-full"
           />
-          {!bundle && (
+          {!timeline && (
             <div
               role={failed ? "alert" : "status"}
               className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0b0e16] text-sm text-slate-300"
@@ -198,7 +216,7 @@ export function SkillEffectPlayer({ magicId, genders, presetLabels }: SkillEffec
           )}
         </div>
 
-        {bundle && (
+        {timeline && (
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <div className="flex items-center gap-1.5">
               <Button
@@ -259,20 +277,26 @@ export function SkillEffectPlayer({ magicId, genders, presetLabels }: SkillEffec
               </Select>
             </div>
 
-            <label className="flex cursor-pointer items-center gap-2 text-sm select-none">
-              <Checkbox className="size-4" checked={kill} onCheckedChange={(v) => setKill(v === true)} />
-              最後擊倒
-            </label>
+            {targetStrips && (
+              <label className="flex cursor-pointer items-center gap-2 text-sm select-none">
+                <Checkbox className="size-4" checked={kill} onCheckedChange={(v) => setKill(v === true)} />
+                最後擊倒
+              </label>
+            )}
           </div>
         )}
 
         <div className="space-y-1 text-xs text-muted-foreground">
-          {bundle && (
+          {timeline && (
             <p>
-              施法者：{casterLabel}　目標：{bundle.target.name}
+              施法者：{casterLabel}　
+              {objectLabel ? `作用對象：${objectLabel}` : `目標：${bundle?.target?.name ?? ""}`}
             </p>
           )}
-          <p>模擬重現：時間軸由技能腳本模擬產生，每 tick 長度未經實測，部分特效為近似。</p>
+          <p>
+            模擬重現：時間軸由技能腳本模擬產生，每 tick 長度未經實測，部分特效為近似。
+            {partial && "此技能有部分特效尚未能模擬，畫面可能不完整。"}
+          </p>
         </div>
       </CardContent>
     </Card>
