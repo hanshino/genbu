@@ -72,15 +72,27 @@ describe("stripFrameIndex", () => {
 });
 
 describe("hitTicks", () => {
-  it("只取 hit 事件，沒有 e 的格子不會出錯", () => {
+  it("只取 hit 事件，沒有 e 的格子不會出錯；同 tick 的兩次命中各算一筆", () => {
     const frames: TimelineFrame[] = [
       { t: 0, o: [] },
       { t: 3, o: [], e: [{ type: "hit" }] },
       { t: 5, o: [], e: [{ type: "other" }] },
       { t: 9, o: [], e: [{ type: "hit" }, { type: "hit" }] },
     ];
-    expect(hitTicks(frames)).toEqual([3, 9]);
+    expect(hitTicks(frames)).toEqual([3, 9, 9]);
     expect(hitTicks([])).toEqual([]);
+  });
+  it("依時間排序，同 tick 以事件 i 排序，不去重", () => {
+    const frames: TimelineFrame[] = [
+      { t: 20, o: [], e: [{ type: "hit", i: 2 }] },
+      { t: 0, o: [], e: [{ type: "hit", i: 0 }] },
+      { t: 10, o: [], e: [{ type: "hit", i: 1 }, { type: "hit", i: 2 }] },
+    ];
+    expect(hitTicks(frames)).toEqual([0, 10, 10, 20]);
+  });
+  it("同 tick 重複命中：受擊動作從該 tick 重播，擊倒看最後一筆", () => {
+    expect(targetPose(10, [0, 10, 10], targetStrips, false)).toEqual({ action: "hurt", index: 0 });
+    expect(targetPose(10 + 24, [0, 10, 10], targetStrips, true)).toEqual({ action: "death", index: 0 });
   });
   it("推測出來的命中（inferred）與一般命中一樣算", () => {
     const frames: TimelineFrame[] = [

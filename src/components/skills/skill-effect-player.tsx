@@ -31,7 +31,10 @@ interface SkillEffectPlayerProps {
   level: number;
   genders: EffectGender[];
   presets: Partial<
-    Record<EffectGender, { label: string; targetMode: TargetMode; fidelity: EffectFidelity }>
+    Record<
+      EffectGender,
+      { label: string; targetMode: TargetMode; fidelity: EffectFidelity; hitCount: number; extraHitPct: number | null }
+    >
   >;
 }
 
@@ -56,6 +59,7 @@ export function SkillEffectPlayer({ magicId, level, genders, presets }: SkillEff
   const [playing, setPlaying] = useState(() => !prefersReducedMotion());
   const [speed, setSpeed] = useState<SpeedKey>("tick");
   const [kill, setKill] = useState(false);
+  const [extraHit, setExtraHit] = useState(false);
   const [imageVersion, setImageVersion] = useState(0);
 
   // 捲到才載入資料；離開畫面就停掉播放迴圈。
@@ -93,7 +97,10 @@ export function SkillEffectPlayer({ magicId, level, genders, presets }: SkillEff
   }, [requested, magicId, level, attempt]);
 
   const caster = bundle?.casters[gender];
-  const timeline = bundle && caster ? bundle.timelines[caster.timelineKey] : undefined;
+  // 額外一擊：切到 hit_count + 1 那條時間軸。
+  const extraOn = extraHit && !!caster?.extraTimelineKey;
+  const activeKey = extraOn ? caster?.extraTimelineKey : caster?.timelineKey;
+  const timeline = bundle && activeKey ? bundle.timelines[activeKey] : undefined;
   const preset = presets[gender];
   const targetMode = caster?.targetMode ?? preset?.targetMode ?? "enemy";
   const partial = (timeline?.fidelity ?? preset?.fidelity) === "partial";
@@ -283,6 +290,19 @@ export function SkillEffectPlayer({ magicId, level, genders, presets }: SkillEff
                 最後擊倒
               </label>
             )}
+            {targetStrips && caster?.extraHitPct != null && (
+              <label className="flex cursor-pointer items-center gap-2 text-sm select-none">
+                <Checkbox
+                  className="size-4"
+                  checked={extraOn}
+                  onCheckedChange={(v) => {
+                    setExtraHit(v === true);
+                    setTick(0);
+                  }}
+                />
+                額外一擊（{caster.extraHitPct}% 機率）
+              </label>
+            )}
           </div>
         )}
 
@@ -290,7 +310,9 @@ export function SkillEffectPlayer({ magicId, level, genders, presets }: SkillEff
           {timeline && (
             <p>
               施法者：{casterLabel}　
-              {objectLabel ? `作用對象：${objectLabel}` : `目標：${bundle?.target?.name ?? ""}`}
+              {objectLabel
+                ? `作用對象：${objectLabel}`
+                : `目標：${bundle?.target?.name ?? ""}${timeline.hitCount > 1 ? `　${timeline.hitCount} 段` : ""}`}
             </p>
           )}
           <p>

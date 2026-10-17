@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { getDb } from "@/lib/db";
 import { getSkillEffectAvailability, getSkillEffectBundle } from "../skill-effect";
 import { GET } from "@/app/api/skills/[id]/effect/route";
-import { showsTarget, spriteKey, type SkillEffectBundle } from "@/lib/skill-effect";
+import { hitTicks, showsTarget, spriteKey, type SkillEffectBundle } from "@/lib/skill-effect";
 
 const MAGIC_ID = 4; // 怒擊：cast_effect 508 / target，男 preset 100、女 preset 101
 
@@ -11,7 +11,7 @@ function presetKeys(): { id: number; level: number }[] {
   return getDb()
     .prepare(
       `SELECT MIN(magic_id) AS id, MIN(level) AS level FROM magic_effect_presets
-       GROUP BY cast_effect, variant, target_mode, preset_id`,
+       GROUP BY cast_effect, variant, target_mode, preset_id, hit_count, extra_hit_pct IS NULL`,
     )
     .all() as { id: number; level: number }[];
 }
@@ -53,10 +53,10 @@ describe("skill-effect query", () => {
   it("以 (技能 id, 等級) 為 key：同一個 id 不同等級是不同演出", () => {
     const self = getSkillEffectBundle(553, 25)!;
     const enemy = getSkillEffectBundle(553, 35)!;
-    expect(self.casters.m!.timelineKey).toBe("511:self");
+    expect(self.casters.m!.timelineKey).toBe("511:self:1");
     expect(self.casters.m!.targetMode).toBe("self");
     expect(self.target).toBeNull();
-    expect(enemy.casters.m!.timelineKey).toBe("320:target");
+    expect(enemy.casters.m!.timelineKey).toBe("320:target:1");
     expect(enemy.casters.m!.targetMode).toBe("enemy");
     expect(enemy.target?.name).toBe("咆嘯雪狼");
     expect(getSkillEffectAvailability(553, 25)!.presets.m!.targetMode).toBe("self");
@@ -65,11 +65,11 @@ describe("skill-effect query", () => {
 
   it("359 Lv1 是 self（沒有怪物）；369 Lv1 是 ce 182 / enemy", () => {
     const thorn = getSkillEffectBundle(359, 1)!;
-    expect(thorn.casters.m!.timelineKey).toBe("317:self");
+    expect(thorn.casters.m!.timelineKey).toBe("317:self:1");
     expect(thorn.casters.m!.targetMode).toBe("self");
     expect(thorn.target).toBeNull();
     const poison = getSkillEffectBundle(369, 1)!;
-    expect(poison.casters.m!.timelineKey).toBe("182:target");
+    expect(poison.casters.m!.timelineKey).toBe("182:target:1");
     expect(poison.casters.m!.targetMode).toBe("enemy");
     expect(poison.target).not.toBeNull();
   });
@@ -102,7 +102,7 @@ describe("skill-effect query", () => {
       }
     }
     // 男女指到同一條時間軸時只送一份
-    expect(Object.keys(b.timelines)).toEqual(["508:target"]);
+    expect(Object.keys(b.timelines)).toEqual(["508:target:1"]);
     expect(b.target!.npcId).toBe(8346);
     expect(b.target!.name).toBe("咆嘯雪狼");
     expect(Object.keys(b.target!.strips).sort()).toEqual(["death", "hurt", "wait"]);
@@ -153,6 +153,70 @@ describe("skill-effect query", () => {
   });
 });
 
+describe("hit_count 與額外一擊", () => {
+  function hitsOf(id: number, level: number) {
+    const b = getSkillEffectBundle(id, level)!;
+    const { caster, timeline } = casterOf(b);
+    return { caster, timeline, hits: hitTicks(timeline.frames) };
+  }
+
+  it("111 Lv13：6 段，命中在 0/10/20/30/40/50", () => {
+    const { caster, timeline, hits } = hitsOf(111, 13);
+    expect(caster.hitCount).toBe(6);
+    expect(timeline.hitCount).toBe(6);
+    expect(hits).toEqual([0, 10, 20, 30, 40, 50]);
+    expect(getSkillEffectAvailability(111, 13)!.presets.m!.hitCount).toBe(6);
+  });
+
+  it("111 Lv1：2 段，命中在 0 和 8", () => {
+    expect(hitsOf(111, 1).hits).toEqual([0, 8]);
+  });
+
+  it("714 Lv1：8 段", () => {
+    const { caster, hits } = hitsOf(714, 1);
+    expect(caster.hitCount).toBe(8);
+    expect(hits).toHaveLength(8);
+  });
+
+  it("沒有額外一擊的技能：extraHitPct 與 extraTimelineKey 為 null", () => {
+    const { caster } = hitsOf(MAGIC_ID, 1);
+    expect(caster.extraHitPct).toBeNull();
+    expect(caster.extraTimelineKey).toBeNull();
+  });
+
+  it("有 extra_hit_pct 的技能：同時帶 hit_count 與 hit_count + 1 兩條時間軸", () => {
+    const row = getDb()
+      .prepare(
+        `SELECT magic_id AS id, level, extra_hit_pct AS pct, hit_count AS hitCount
+         FROM magic_effect_presets WHERE extra_hit_pct IS NOT NULL AND gender = 'm'
+         ORDER BY magic_id, level LIMIT 1`,
+      )
+      .get() as { id: number; level: number; pct: number; hitCount: number };
+    const a = getSkillEffectAvailability(row.id, row.level)!;
+    expect(a.presets.m!.extraHitPct).toBe(row.pct);
+    const b = getSkillEffectBundle(row.id, row.level)!;
+    const caster = b.casters.m!;
+    expect(caster.extraHitPct).toBe(row.pct);
+    expect(caster.extraTimelineKey).not.toBe(caster.timelineKey);
+    expect(b.timelines[caster.timelineKey].hitCount).toBe(row.hitCount);
+    expect(b.timelines[caster.extraTimelineKey!].hitCount).toBe(row.hitCount + 1);
+    expect(hitTicks(b.timelines[caster.extraTimelineKey!].frames)).toHaveLength(row.hitCount + 1);
+    expect(hitTicks(b.timelines[caster.timelineKey].frames)).toHaveLength(row.hitCount);
+  });
+
+  it("額外一擊那條時間軸的 hit_count 永遠是 hit_count + 1", () => {
+    for (const { id, level } of presetKeys()) {
+      const b = getSkillEffectBundle(id, level)!;
+      for (const c of Object.values(b.casters)) {
+        expect(b.timelines[c.timelineKey].hitCount).toBe(c.hitCount);
+        if (c.extraTimelineKey) {
+          expect(b.timelines[c.extraTimelineKey].hitCount).toBe(c.hitCount + 1);
+        }
+      }
+    }
+  });
+});
+
 describe("GET /api/skills/[id]/effect", () => {
   const call = (id: string, query = "") =>
     GET(new Request(`http://x/api/skills/${id}/effect${query}`), { params: Promise.resolve({ id }) });
@@ -169,9 +233,9 @@ describe("GET /api/skills/[id]/effect", () => {
   it("?level= 取指定等級的演出", async () => {
     const self = (await (await call("553", "?level=25")).json()) as SkillEffectBundle;
     const enemy = (await (await call("553", "?level=35")).json()) as SkillEffectBundle;
-    expect(self.casters.m!.timelineKey).toBe("511:self");
+    expect(self.casters.m!.timelineKey).toBe("511:self:1");
     expect(self.target).toBeNull();
-    expect(enemy.casters.m!.timelineKey).toBe("320:target");
+    expect(enemy.casters.m!.timelineKey).toBe("320:target:1");
     expect(enemy.target).not.toBeNull();
   });
 

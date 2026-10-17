@@ -59,15 +59,16 @@ export type TimelineObject = [
 export interface TimelineFrame {
   t: number;
   o: TimelineObject[];
-  e?: { type: string; inferred?: boolean }[];
+  e?: { type: string; i?: number; inferred?: boolean }[];
 }
 
 export type TargetMode = "enemy" | "ground" | "self" | "ally";
 export type EffectFidelity = "ok" | "partial";
 
-/** 一條時間軸（同一個 cast_effect + variant 只會有一份，男女共用時只送一次）。 */
+/** 一條時間軸（同一個 cast_effect + variant + hit_count 只會有一份，男女共用時只送一次）。 */
 export interface EffectTimeline {
   variant: "target" | "self";
+  hitCount: number;
   tickMs: number;
   ticks: number;
   frames: TimelineFrame[];
@@ -82,6 +83,12 @@ export interface EffectCaster {
   targetMode: TargetMode;
   /** bundle.timelines 的 key。 */
   timelineKey: string;
+  /** 這個等級的招式命中段數。 */
+  hitCount: number;
+  /** 有機率多打一擊時的機率（%），否則為 null。 */
+  extraHitPct: number | null;
+  /** 多打一擊（hitCount + 1）那條時間軸的 key；沒有額外一擊時為 null。 */
+  extraTimelineKey: string | null;
 }
 
 export interface EffectTarget {
@@ -100,8 +107,8 @@ export interface SkillEffectBundle {
   target: EffectTarget | null;
 }
 
-export function timelineKey(castEffect: number, variant: string): string {
-  return `${castEffect}:${variant}`;
+export function timelineKey(castEffect: number, variant: string, hitCount: number): string {
+  return `${castEffect}:${variant}:${hitCount}`;
 }
 
 /** 這種作用對象要不要畫怪物（與傷害數字、擊倒選項）。 */
@@ -164,13 +171,16 @@ export function stripFrameIndex(delays: number[], ticksIn: number, override?: nu
   return -1;
 }
 
-/** 腳本中所有「命中」tick（遞增、去重）。 */
+/**
+ * 腳本中每一次命中的 tick，一個命中事件一筆、依時間排序（同 tick 以事件的 i 排序）。
+ * 不去重：同一個 tick 打兩下就是兩筆，傷害數字各佔一排，受擊動作在該 tick 重播。
+ */
 export function hitTicks(frames: TimelineFrame[]): number[] {
-  const out: number[] = [];
+  const hits: { t: number; i: number }[] = [];
   for (const f of frames) {
-    if (f.e?.some((e) => e.type === "hit") && !out.includes(f.t)) out.push(f.t);
+    for (const e of f.e ?? []) if (e.type === "hit") hits.push({ t: f.t, i: e.i ?? 0 });
   }
-  return out.sort((a, b) => a - b);
+  return hits.sort((a, b) => a.t - b.t || a.i - b.i).map((h) => h.t);
 }
 
 /** 待機循環：用全域 tick 對整段動畫取餘數。 */

@@ -23,7 +23,16 @@ export interface SkillEffectAvailability {
   level: number;
   genders: EffectGender[];
   presets: Partial<
-    Record<EffectGender, { label: string; targetMode: TargetMode; fidelity: EffectFidelity }>
+    Record<
+      EffectGender,
+      {
+        label: string;
+        targetMode: TargetMode;
+        fidelity: EffectFidelity;
+        hitCount: number;
+        extraHitPct: number | null;
+      }
+    >
   >;
 }
 
@@ -35,6 +44,8 @@ interface PresetRow {
   variant: "target" | "self";
   targetMode: TargetMode;
   fidelity: EffectFidelity;
+  hitCount: number;
+  extraHitPct: number | null;
 }
 
 interface StripRow {
@@ -75,10 +86,12 @@ function getPresets(magicId: number, level: number): PresetRow[] {
   const rows = getDb()
     .prepare(
       `SELECT mp.gender, mp.preset_id AS presetId, p.label, mp.cast_effect AS castEffect,
-              mp.variant, mp.target_mode AS targetMode, t.fidelity
+              mp.variant, mp.target_mode AS targetMode, t.fidelity,
+              mp.hit_count AS hitCount, mp.extra_hit_pct AS extraHitPct
        FROM magic_effect_presets mp
        JOIN effect_presets p ON p.id = mp.preset_id
        JOIN magic_effect_timelines t ON t.cast_effect = mp.cast_effect AND t.variant = mp.variant
+                                    AND t.hit_count = mp.hit_count
        WHERE mp.magic_id = ? AND mp.level = ? ORDER BY mp.gender DESC`,
     )
     .all(magicId, level) as PresetRow[];
@@ -100,7 +113,16 @@ export function getSkillEffectAvailability(
     level: lv,
     genders: presets.map((p) => p.gender),
     presets: Object.fromEntries(
-      presets.map((p) => [p.gender, { label: p.label, targetMode: p.targetMode, fidelity: p.fidelity }]),
+      presets.map((p) => [
+        p.gender,
+        {
+          label: p.label,
+          targetMode: p.targetMode,
+          fidelity: p.fidelity,
+          hitCount: p.hitCount,
+          extraHitPct: p.extraHitPct,
+        },
+      ]),
     ),
   };
 }
@@ -162,13 +184,17 @@ function getTarget(): EffectTarget | null {
   return { npcId: row.npcId, name: row.name, strips: getStrips("monster", row.pic) };
 }
 
-function getTimeline(castEffect: number, variant: string): { timeline: EffectTimeline } | null {
+function getTimeline(
+  castEffect: number,
+  variant: string,
+  hitCount: number,
+): { timeline: EffectTimeline } | null {
   const row = getDb()
     .prepare(
       `SELECT ticks, json, fidelity, unknown_natives AS unknownNatives
-       FROM magic_effect_timelines WHERE cast_effect = ? AND variant = ?`,
+       FROM magic_effect_timelines WHERE cast_effect = ? AND variant = ? AND hit_count = ?`,
     )
-    .get(castEffect, variant) as
+    .get(castEffect, variant, hitCount) as
     | { ticks: number; json: Buffer; fidelity: EffectFidelity; unknownNatives: string | null }
     | undefined;
   if (!row) return null;
@@ -180,6 +206,7 @@ function getTimeline(castEffect: number, variant: string): { timeline: EffectTim
   return {
     timeline: {
       variant: variant === "self" ? "self" : "target",
+      hitCount,
       tickMs: parsed.tick_ms,
       ticks: row.ticks ?? parsed.ticks,
       frames: parsed.frames,
@@ -198,19 +225,32 @@ export function getSkillEffectBundle(magicId: number, level?: number | null): Sk
 
   const timelines: Record<string, EffectTimeline> = {};
   const casters: Partial<Record<EffectGender, EffectCaster>> = {};
-  for (const p of presets) {
-    const key = timelineKey(p.castEffect, p.variant);
+  const load = (castEffect: number, variant: string, hitCount: number): string | null => {
+    const key = timelineKey(castEffect, variant, hitCount);
     if (!timelines[key]) {
-      const found = getTimeline(p.castEffect, p.variant);
-      if (!found) continue;
+      const found = getTimeline(castEffect, variant, hitCount);
+      if (!found) return null;
       timelines[key] = found.timeline;
     }
+    return key;
+  };
+  for (const p of presets) {
+    const key = load(p.castEffect, p.variant, p.hitCount);
+    if (!key) continue;
+    // 有機率多打一擊時，另帶 hit_count + 1 那條時間軸讓使用者切換。
+    const extraKey =
+      p.extraHitPct !== null && showsTarget(p.targetMode)
+        ? load(p.castEffect, p.variant, p.hitCount + 1)
+        : null;
     casters[p.gender] = {
       presetId: p.presetId,
       label: p.label,
       strips: getStrips("preset", p.presetId),
       targetMode: p.targetMode,
       timelineKey: key,
+      hitCount: p.hitCount,
+      extraHitPct: extraKey ? p.extraHitPct : null,
+      extraTimelineKey: extraKey,
     };
   }
   if (Object.keys(casters).length === 0) return null;

@@ -123,24 +123,36 @@ function drawBackdrop(ctx: CanvasRenderingContext2D, withTarget: boolean) {
   }
 }
 
-// 佔位用的傷害數字：命中後往上飄、淡出。
+const DAMAGE_ROW_HEIGHT = 28;
+const DAMAGE_POP_TICKS = 6;
+const DAMAGE_FADE_TICKS = 20;
+
+// 佔位用的傷害數字：每次命中各佔一排、由下往上疊，最後一擊之後一起淡出。
 function drawDamageNumbers(ctx: CanvasRenderingContext2D, hits: number[], tick: number) {
-  for (const h of hits) {
+  if (hits.length === 0) return;
+  const end = hits[hits.length - 1] + DAMAGE_NUMBER_TICKS;
+  if (tick > end) return;
+  const fade = Math.min(1, (end - tick) / DAMAGE_FADE_TICKS);
+  ctx.save();
+  ctx.globalCompositeOperation = "source-over";
+  ctx.font = '900 26px "Noto Serif TC", "Microsoft JhengHei", serif';
+  ctx.textAlign = "center";
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = "#2a0b05";
+  ctx.fillStyle = "#ffcf5a";
+  // 最多 10 段：段數多時壓縮排距，讓最上面一排不超出畫布。
+  const baseY = GROUND - 120 * S;
+  const rowHeight = Math.min(DAMAGE_ROW_HEIGHT, (baseY - 40) / Math.max(1, hits.length - 1));
+  hits.forEach((h, row) => {
     const dt = tick - h;
-    if (dt < 0 || dt > DAMAGE_NUMBER_TICKS) continue;
-    ctx.save();
-    ctx.globalCompositeOperation = "source-over";
-    ctx.globalAlpha = 1 - Math.max(0, dt - 25) / 20;
-    ctx.font = '900 30px "Noto Serif TC", "Microsoft JhengHei", serif';
-    ctx.textAlign = "center";
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = "#2a0b05";
-    ctx.fillStyle = "#ffcf5a";
-    const y = GROUND - 120 * S - Math.min(dt, 25) * 2;
+    if (dt < 0) return;
+    const pop = Math.min(dt, DAMAGE_POP_TICKS) / DAMAGE_POP_TICKS;
+    ctx.globalAlpha = pop * fade;
+    const y = baseY - row * rowHeight - pop * 8;
     ctx.strokeText("1234", X0 + TARGET_X * S, y);
     ctx.fillText("1234", X0 + TARGET_X * S, y);
-    ctx.restore();
-  }
+  });
+  ctx.restore();
 }
 
 export function drawScene(ctx: CanvasRenderingContext2D, scene: SceneInput) {
