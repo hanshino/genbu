@@ -9,7 +9,7 @@ import {
 } from "react";
 import Link from "next/link";
 import type { MDXComponents } from "mdx/types";
-import { ClockAlertIcon, LightbulbIcon, TriangleAlertIcon } from "lucide-react";
+import { ChevronDownIcon, ClockAlertIcon, LightbulbIcon, TriangleAlertIcon } from "lucide-react";
 import { headingId } from "@/lib/guides";
 import { getGuideRef, type GuideRefKind } from "@/lib/guide-refs";
 import {
@@ -21,7 +21,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { BoxContents } from "./box-contents";
+import { BuildCalculator, DungeonHitTable, MarginalChart, SkillCards } from "./build";
 import { Check, ChecklistRoot } from "./checklist";
 import { DungeonStep, StepDone } from "./dungeon-step";
 import { GuideRefTag } from "./guide-ref-tag";
@@ -97,6 +99,25 @@ function Verify({ children }: { children?: ReactNode }) {
         {children}
       </div>
     </aside>
+  );
+}
+
+/* ── 收合的細節數據 ── */
+
+function Details({ title = "展開看數據", children }: { title?: string; children?: ReactNode }) {
+  return (
+    <Collapsible className="my-5 rounded-xl border">
+      <CollapsibleTrigger className="group hover:bg-muted/50 flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-medium">
+        <ChevronDownIcon
+          className="text-muted-foreground size-4 transition-transform group-data-[panel-open]:rotate-180"
+          aria-hidden
+        />
+        {title}
+      </CollapsibleTrigger>
+      <CollapsiblePanel>
+        <div className="px-4 pb-1 [&>div:first-child]:mt-1">{children}</div>
+      </CollapsiblePanel>
+    </Collapsible>
   );
 }
 
@@ -250,4 +271,9 @@ export const guideMdxComponents: MDXComponents = {
   RouteTab,
   StepTargets,
   NineRoomGrid,
+  Details,
+  SkillCards,
+  MarginalChart,
+  BuildCalculator,
+  DungeonHitTable,
 };

@@ -2,7 +2,9 @@ import {
   ATTACK_SPEED_TABLE,
   ESTIMATED_POINT_FROM,
   floorStat,
+  innerAttack,
   LEVEL_POINT_SEGMENTS,
+  meleeAttack,
   pointCost,
   RANGED_UNSUPPORTED_REASON,
   RANGED_WEAPON_TYPES,
@@ -125,11 +127,6 @@ export function inferRebirthPoints(input: {
   return { total, status: invalid ? "check" : "ok", reasons: invalid ? [invalid, ...reasons] : reasons, estimated };
 }
 
-/** Σ max(0, x−5−10k)，用等差級數求和，超過 200 不封頂。 */
-function tier(x: number): number {
-  const count = Math.max(0, Math.ceil((x - 5) / 10));
-  return count * (x - 5) - 5 * count * (count - 1);
-}
 
 function estimate(stat: StatValue, reason: string): void {
   stat.estimated = true;
@@ -321,8 +318,8 @@ export function computePanel(character: CharacterV1, data: GameData): PanelResul
   add("hp", floorStat(sect.hpK * v * (v + 1) / 2), "attribute", "根骨體力");
   add("mp", sect.mp.level * lv + sect.mp.base, "base", "門派等級真氣");
   add("mp", sect.mp.pow * p + sect.mp.wis * w, "attribute", "內力與玄學真氣");
-  add("atk", floorStat(3 * s + 0.4 * tier(s)), "attribute", "外功物攻");
-  add("matk", floorStat(3 * p + 0.3 * tier(p)), "attribute", "內力內勁");
+  add("atk", meleeAttack(s), "attribute", "外功物攻");
+  add("matk", innerAttack(p), "attribute", "內力內勁");
   add("def", 3 * v, "attribute", "根骨防禦");
   add("mdef", sect.mdef(p, w), "attribute", "門派護勁");
   add("hit", lv + 50, "base", "等級命中");
