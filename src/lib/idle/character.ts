@@ -163,6 +163,8 @@ export function buildCombatant(input: IdleCharacterInput, data: IdleData): Comba
     str: panel.attributes.str.value ?? 0,
     int: panel.attributes.pow.value ?? 0,
     agi: panel.attributes.agi.value ?? 0,
+    // 放置玩法沒有暗器
+    ammo: 0,
   };
   return {
     character,
