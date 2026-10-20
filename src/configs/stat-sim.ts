@@ -2,6 +2,18 @@ import type { SectId } from "@/lib/types/stat-sim";
 
 export const floorStat = (value: number): number => Math.floor(value + 1e-9);
 
+/** Σ max(0, x−5−10k)，用等差級數求和，超過 200 不封頂。 */
+export function attributeTier(x: number): number {
+  const count = Math.max(0, Math.ceil((x - 5) / 10));
+  return count * (x - 5) - 5 * count * (count - 1);
+}
+
+/** 外功的近戰物攻（不含裝備、被動）：⌊3·S + 0.4·Σ(S)⌋。 */
+export const meleeAttack = (str: number): number => floorStat(3 * str + 0.4 * attributeTier(str));
+
+/** 內力的內勁（不含裝備、被動）：⌊3·P + 0.3·Σ(P)⌋。 */
+export const innerAttack = (pow: number): number => floorStat(3 * pow + 0.3 * attributeTier(pow));
+
 interface SectFormula {
   name: string;
   mainClan: string;

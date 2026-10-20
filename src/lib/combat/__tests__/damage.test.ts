@@ -267,6 +267,35 @@ describe("tthol-combat tests/test_damage.py", () => {
     expect(d.playerHit(a, t, multi, Low())[0][1]).toBe(d.physical(1053, 1400, 120, 400));
   });
 
+  it("ammo_joins_the_base_once_on_a_swing_three_times_on_a_skill", () => {
+    // official real client 2026-10-18 (tthol-headless): 物攻 646, 木紋手甲 BOW 92..98 + 十字鏢 23 on ▲虎頭工蜂 5223
+    // (Lv21, 防禦 16): 10 normal hits 733..739 = the whole range, crits 1480..1484; 大手裡劍 263 Lv16 4415..4437
+    const a = atk(100, 646, 241, 1e6, 0, {
+      weaponMin: 92,
+      weaponMax: 98,
+      weaponType: "BOW",
+      ammo: 23,
+    });
+    const t = mob({ level: 21, extraDef: 16 });
+    expect(d.damageRange(a, t)).toEqual([733, 740]); // the BOW roll tops at 99 beside a 暗器
+    expect(d.physical(646 + 23 + 92, 200, 21, 16)).toBeLessThanOrEqual(1480);
+    expect(d.physical(646 + 23 + 98, 200, 21, 16)).toBeGreaterThanOrEqual(1484);
+    const shuriken = makeSkill({ funcDmg: 3, p1: 560, p2: 16 });
+    expect(d.baseRange(a, shuriken)).toEqual([646 + 3 * 23 + 92, 646 + 3 * 23 + 99]);
+    const [lo, hi] = d.damageRange(a, t, shuriken);
+    expect(lo).toBeLessThanOrEqual(4415);
+    expect(hi).toBeGreaterThanOrEqual(4437);
+    expect(d.baseRange({ ...a, ammo: 0 }, shuriken)).toEqual([646 + 92, 646 + 98]);
+    // 影殺 261 Lv16 (func 7, p1 100, p2 40, 6 equal segments) adds p2 beside a 暗器: 818..821 on 5223
+    const shadow = makeSkill({ funcDmg: 7, p1: 100, p2: 40, p3: 6 });
+    const [slo, shi] = d.damageRange(a, t, shadow);
+    expect(slo).toBeLessThanOrEqual(6 * 818);
+    expect(shi).toBeGreaterThanOrEqual(6 * 821);
+    expect(shi - slo).toBeLessThan(6 * 10);
+    // 轟天彈 115: 大手裡劍's top 5954 (seen 4 times) is the roll of 99
+    expect(d.damageRange({ ...a, ammo: 115 }, t, shuriken)[1]).toBe(5954);
+  });
+
   it("skill_multiplier_and_multi_hit", () => {
     const row = makeSkill({ funcDmg: 4, p1: 1650, funcHitP1: 90 }); // 千瘡百孔 702 Lv20: 內勁 against 護勁
     let a = atk(100, 155, 900, 1e6, 0);
@@ -324,10 +353,10 @@ describe("tthol-combat tests/test_damage.py", () => {
     const t = mob({ level: 156, extraDef: 1539 });
     const lo = d.playerHit(a, t, STAB, Low())[0][1];
     const hi = d.playerHit(a, t, STAB, High())[0][1];
-    expect([lo, hi]).toEqual([30544, 30728]);
-    expect(d.damageRange(a, t, STAB)).toEqual([30544, 30728]);
-    expect(d.playerHit({ ...a, wis: 0 }, t, STAB, High())[0][1]).toBe(21329); // 玄學 is ~30 % of it
-    expect(d.playerHit(a, t, { ...STAB, funcDmg: 1 }, High())[0][1]).toBe(21329); // no 玄學 term on another kind
+    expect([lo, hi]).toEqual([30544, 30727]); // the 96 hits' own span: floored before the 玄學 term (was one over)
+    expect(d.damageRange(a, t, STAB)).toEqual([30544, 30727]);
+    expect(d.playerHit({ ...a, wis: 0 }, t, STAB, High())[0][1]).toBe(21328); // 玄學 is ~30 % of it
+    expect(d.playerHit(a, t, { ...STAB, funcDmg: 1 }, High())[0][1]).toBe(21328); // no 玄學 term on another kind
   });
 
   it("fire_adds_the_fitted_wis_curve", () => {

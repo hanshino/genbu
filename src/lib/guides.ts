@@ -225,7 +225,8 @@ export function getGuides(): GuideMeta[] {
     metas.push(toGuideMeta(fm, body, filename));
   }
   metas.sort((a, b) => a.order - b.order);
-  cachedMetas = metas;
+  // dev 不快取：改檔名、改 frontmatter 時列表才會跟著更新
+  if (process.env.NODE_ENV === "production") cachedMetas = metas;
   return metas;
 }
 

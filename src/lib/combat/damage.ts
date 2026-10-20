@@ -1,7 +1,7 @@
 /**
  * 玩家對怪物的一次攻擊：傷害、命中、重擊與 MP，全部是純函式。
  *
- * 逐行移植自 tthol-combat `src/tthol_combat/damage.py`（commit 3e6e777482987b257043d4113331ae1a916af18b）。
+ * 逐行移植自 tthol-combat `src/tthol_combat/damage.py`（commit 1d76260d396e7f2d1702fcb06cba5b8c52a8df84）。
  * 數字以 `src/lib/combat/__tests__/vectors.json` 作為黃金測資對拍，兩邊必須保持一致。
  *
  * 重新同步（tthol-combat 的 damage.py 改了之後）：
@@ -13,7 +13,7 @@
  * 不要在這裡獨立改公式；公式與常數的出處都在 tthol-combat。
  *
  * 原文件說明：
- *   dmg = ⌊m·B·K / (K + D)⌋ − ⌊D / 2⌋,  K = 5·防禦方等級 + 500,
+ *   dmg = ⌊(⌊m·B⌋ + flat)·K / (K + D)⌋ − ⌊D / 2⌋,  K = 5·防禦方等級 + 500,
  *   B = 物攻 + 武器傷害 roll；內勁攻擊則為 內勁 + pdamage（內勁傷害力）roll；
  *   D = 防禦方的 防禦（內勁攻擊為 護勁）；m = 普攻 1、重擊 2、技能為 func_dmg_p1 / 100。
  *   技能用哪一種由 func_dmg 決定（INNER_DMG）；普攻是否為內勁看武器是否只有 pdamage（手套、氣劍）。
@@ -151,6 +151,18 @@ export const KYLIN_FIXED_BASE: ReadonlySet<number> = new Set([DMG_KYLIN_MULTI, D
 // 各 func_dmg 種類被確認的程度（tthol-emulator docs/server-only-data.md，2026-10-13）：exact = CE 量測點或
 // 官方命中全部落在範圍內；fitted = 大多數官方命中落在範圍內；其餘為猜測。
 export const EXACT_DMG: ReadonlySet<number> = new Set([3, 4, 6, 7, 8, 10]);
+// 暗器（左手 HIDDEN_WEAPON，搭配 BOW 投射器）：其傷害在普攻時加進 物攻 B 一次、技能時加 AMMO_SKILL 次
+// （tthol-headless 2026-10-18，官方實機：十字鏢 23 / 勾魂鏢 100 / 轟天彈 115 / 虛無標 135，同為 646 物攻與
+// 92..98 的 BOW，普攻約 100 次命中；大手裡劍 263 / 滿天花雨 264（func 3）與 影殺 261（func 7））。
+// 不在面板 物攻 裡（暗器修練的 +X 已經在）
+export const AMMO_SKILL = 3;
+// 戴著暗器時 BOW 的 roll 可達 damage_max + 1（大手裡劍出現 4 次的最高 5954 沒有它到不了），且 func_dmg 7 會像
+// func 3 一樣在防禦前加上 p2（影殺 p2 40：13 次命中精確）。兩者只在這一組成立：官方 447k segments 的近戰命中都
+// 不需要（tthol-headless 2026-10-18），所以只限暗器
+export const AMMO_ROLL_TOP = 1;
+// p1 % 倍率先取整，再加固定項：⌊⌊p1·B / 100⌋ + extra⌋·K / (K + D)。官方 447k segments（tthol-headless
+// calib-20261014-slot454，2026-10-18）上精確命中 func 10 74.7 -> 96.0 %、4 69.4 -> 83.8 %、3 98.5 -> 99.7 %，
+// 沒有下降的；但 func 17（DMG_WIS_CURVE，擬合曲線）從 15.5 降到 6.5 %，所以它維持最後一次取整
 export const FITTED_DMG: ReadonlySet<number> = new Set([17, 50]);
 
 // ---------------------------------------------------------------------------
@@ -216,6 +228,8 @@ export interface Attacker {
   readonly int: number;
   /** 身法（07 id 38），含裝備的面板值 */
   readonly agi: number;
+  /** 所戴暗器的傷害（左手 HIDDEN_WEAPON，固定值），沒戴為 0 */
+  readonly ammo: number;
 }
 
 /** 一次攻擊命中時可能的一種落點：機率（0..1，不含 miss）、其 43 segment 型別、總傷害的下限 / 上限。 */
@@ -252,6 +266,7 @@ export function makeAttacker(
     str: 0,
     int: 0,
     agi: 0,
+    ammo: 0,
     ...init,
   };
 }
@@ -260,9 +275,15 @@ export function makeAttacker(
 // Attacker 的方法（Python 的 Attacker.roll / roll_range / inner_swing）
 // ---------------------------------------------------------------------------
 
+/** 物攻 B 中暗器的部分：普攻加一次暗器傷害，技能加 AMMO_SKILL 次。 */
+export function ammoPart(a: Attacker, skill: SkillLike | null): number {
+  return Math.max(0, a.ammo) * (skill !== null ? AMMO_SKILL : 1);
+}
+
 /** `roll` 的 (低, 高)。 */
 export function rollRange(a: Attacker, inner: boolean): [number, number] {
-  const [lo, hi] = inner ? [a.pweaponMin, a.pweaponMax] : [a.weaponMin, a.weaponMax];
+  const [lo, base] = inner ? [a.pweaponMin, a.pweaponMax] : [a.weaponMin, a.weaponMax];
+  const hi = base && !inner && a.ammo > 0 ? base + AMMO_ROLL_TOP : base;
   return hi ? [lo, Math.max(lo, hi)] : [0, 0];
 }
 
@@ -285,8 +306,8 @@ export function innerSwing(a: Attacker): boolean {
 // ---------------------------------------------------------------------------
 
 /**
- * ⌊((mult100 / 100)·B + extra)·K / (K + D)⌋ − ⌊D / 2⌋，至少為 1；K = 5·level + 500（level 與 D 為防禦方）；
- * `extra` = 技能的固定項（DMG_WIS、DMG_KYLIN_WIS）。
+ * ⌊(⌊(mult100 / 100)·B⌋ + extra)·K / (K + D)⌋ − ⌊D / 2⌋，至少為 1；K = 5·level + 500（level 與 D 為防禦方）；
+ * `extra` = 技能的固定項（DMG_WIS、DMG_KYLIN_WIS）。floorFirst 為 false 時拿掉內層取整（DMG_WIS_CURVE）。
  */
 export function physical(
   base: number,
@@ -294,8 +315,15 @@ export function physical(
   level: number,
   defence: number,
   extra = 0,
+  floorFirst = true,
 ): number {
   const k = 5 * level + 500;
+  if (floorFirst) {
+    return Math.max(
+      1,
+      floorDiv((floorDiv(mult100 * base, 100) + extra) * k, k + defence) - floorDiv(defence, 2),
+    );
+  }
   return Math.max(
     1,
     floorDiv((mult100 * base + 100 * extra) * k, 100 * (k + defence)) - floorDiv(defence, 2),
@@ -404,7 +432,7 @@ export function baseRange(a: Attacker, skill: SkillLike | null): [number, number
   }
   const inner = usesInner(a, skill);
   const [lo, hi] = rollRange(a, inner);
-  const stat = inner ? a.matk : a.atk;
+  const stat = inner ? a.matk : a.atk + ammoPart(a, skill);
   return [stat + lo, stat + hi];
 }
 
@@ -426,8 +454,17 @@ export function segments(
     return [ignoreDefence(skill.p1, skill.p2, skill.p3, base, atkBase === null ? a.atk : atkBase)];
   }
   const hits = DMG_MULTI_KINDS.has(skill.funcDmg) ? Math.max(1, skill.p3) : 1;
-  const extra = wisBonus(skill, a.wis) + kylinWis(skill, a);
-  const dmg = physical(base + agiBonus(skill, a), Math.max(1, mult100), t.level, defence, extra);
+  let extra = wisBonus(skill, a.wis) + kylinWis(skill, a);
+  if (skill.funcDmg === DMG_MULTI && a.ammo > 0) extra += skill.p2;
+  const floorFirst = skill.funcDmg !== DMG_WIS_CURVE;
+  const dmg = physical(
+    base + agiBonus(skill, a),
+    Math.max(1, mult100),
+    t.level,
+    defence,
+    extra,
+    floorFirst,
+  );
   return Array.from({ length: hits }, () => dmg);
 }
 
@@ -513,7 +550,7 @@ export function playerHit(
     base = fixedBase(a, skill);
   } else {
     const inner = usesInner(a, skill);
-    base = (inner ? a.matk : a.atk) + roll(a, rr, inner);
+    base = (inner ? a.matk : a.atk + ammoPart(a, skill)) + roll(a, rr, inner);
   }
   if (skill === null) {
     const crit = rr.randrange(100) < critChance(a.crit);
