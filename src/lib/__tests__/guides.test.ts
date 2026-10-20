@@ -22,7 +22,7 @@ const CONTENT_DIR = path.join(process.cwd(), "content", "guides");
 describe("getGuides", () => {
   it("returns all 19 drafted guides sorted by order", () => {
     const guides = getGuides();
-    expect(guides.length).toBe(19);
+    expect(guides.length).toBe(20);
     for (let i = 1; i < guides.length; i++) {
       expect(guides[i].order).toBeGreaterThan(guides[i - 1].order);
     }
