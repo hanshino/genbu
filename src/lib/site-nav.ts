@@ -84,6 +84,12 @@ export const NAV_SECTIONS: NavSection[] = [
         keywords: ["煉化", "合成"],
       },
       {
+        href: "/zhenjie",
+        label: "真解",
+        description: "70 本真解的星數、強度範圍與加成數值",
+        keywords: ["真解", "技能強化"],
+      },
+      {
         href: "/achievements",
         label: "成就",
         description: "1,200+ 成就的點數、描述與獎勵",
