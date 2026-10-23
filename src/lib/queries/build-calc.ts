@@ -92,7 +92,8 @@ export function getBuildSkills(ids: number[]): BuildSkill[] {
     p2: r.p2 ?? 0,
     p3: r.p3 ?? 0,
     p4: r.p4 ?? 0,
-    hit: r.hit ?? 100,
+    // 0／null 表示不縮放命中，等同 100%
+    hit: r.hit || 100,
     mp: r.mp ?? 0,
   }));
 }
