@@ -33,6 +33,8 @@ import {
 import { isPhase2Type } from "@/lib/constants/item-types";
 import { ItemDetail } from "@/components/items/item-detail";
 import { ItemRandTable } from "@/components/items/item-rand-table";
+import { ZhenjieItemSection } from "@/components/zhenjie/zhenjie-item-section";
+import { getZhenjieBook, getZhenjieTiers } from "@/lib/queries/zhenjie";
 import { ItemDropList } from "@/components/items/item-drop-list";
 import { AwakeningSection } from "@/components/items/awakening-section";
 import { CompoundSourcesSection } from "@/components/items/compound-sources-section";
@@ -90,6 +92,7 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
   const user = await getCurrentUser();
 
   const rands = getItemRands(String(item.id));
+  const zhenjie = getZhenjieBook(item.id);
   const sources = getMonstersByDropItem(item.id);
   const spawnsByMonster = getStagesForMonsters(sources.map((s) => s.id));
   const cover = imageOfItem(item);
@@ -189,7 +192,11 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
         </div>
       )}
 
-      <ItemRandTable rands={rands} />
+      {zhenjie ? (
+        <ZhenjieItemSection book={zhenjie} tiers={getZhenjieTiers()} />
+      ) : (
+        <ItemRandTable rands={rands} />
+      )}
 
       {/* 「這是什麼 → 值多少 → 哪裡拿 → 拿來幹嘛」：市價接在道具本身的數值之後、
           入手途徑之前。資料由 client 自己打 API，不影響這頁的伺服器渲染。 */}

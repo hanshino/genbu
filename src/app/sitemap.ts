@@ -30,6 +30,7 @@ const STATIC_ROUTES: Array<{
   { path: "/missions", changeFrequency: "weekly", priority: 0.7 },
   { path: "/shops", changeFrequency: "weekly", priority: 0.6 },
   { path: "/compounds", changeFrequency: "weekly", priority: 0.6 },
+  { path: "/zhenjie", changeFrequency: "monthly", priority: 0.6 },
   { path: "/heroes", changeFrequency: "weekly", priority: 0.6 },
   { path: "/heroes/team-builder", changeFrequency: "monthly", priority: 0.5 },
   { path: "/achievements", changeFrequency: "weekly", priority: 0.6 },
