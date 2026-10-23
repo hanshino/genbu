@@ -1,6 +1,7 @@
 import { SparklesIcon } from "lucide-react";
 import Link from "next/link";
-import { getBuildBuffs, getBuildSkills } from "@/lib/queries/build-calc";
+import { Fragment } from "react";
+import { getBuildBuffs, getBuildSkills, type BuildSkillLevel } from "@/lib/queries/build-calc";
 import type { CalcInput } from "@/lib/build-calc";
 import type { SectId } from "@/lib/types/stat-sim";
 import { BuildCalculatorClient } from "./build-calculator";
@@ -9,7 +10,38 @@ import { MarginalChart as MarginalChartView } from "./marginal-chart";
 
 const range = (a: number, b: number) => (a === b ? `${a}` : `${a} → ${b}`);
 
-/** 主攻招卡片：icon、開放等級、倍率、玄學係數、命中倍率（第 1 級 → 最高級）。 */
+/**
+ * 卡片上的傷害欄位，依 func_dmg 決定 p2..p4 的意思（見 src/lib/combat/damage.ts）：
+ * 3 單次 × p1% 再加 p2、7 p3 段 × p1%、8 p4% 機率 p1% 否則 p2%、10 × p1% 再加 玄學 × p2。
+ */
+function damageRows(a: BuildSkillLevel, b: BuildSkillLevel): [string, string][] {
+  switch (a.funcDmg) {
+    case 3:
+      return [
+        ["倍率", `${range(a.p1, b.p1)}%`],
+        ...(b.p2 > 0 ? [["固定加成", `+${range(a.p2, b.p2)}`] as [string, string]] : []),
+      ];
+    case 7:
+      return [
+        ["倍率", `${range(a.p1, b.p1)}%`],
+        ["段數", `${range(a.p3, b.p3)} 段`],
+      ];
+    case 8:
+      return [
+        ["高傷", `${range(a.p1, b.p1)}%（${range(a.p4, b.p4)}% 機率）`],
+        ["低傷", `${range(a.p2, b.p2)}%`],
+      ];
+    case 10:
+      return [
+        ["倍率", `${range(a.p1, b.p1)}%`],
+        ["玄學係數", `× ${range(a.p2, b.p2)}`],
+      ];
+    default:
+      return [["倍率", `${range(a.p1, b.p1)}%`]];
+  }
+}
+
+/** 主攻招卡片：icon、開放等級、傷害參數、命中倍率（第 1 級 → 最高級）。 */
 export function SkillCards({ ids, until }: { ids: number[]; until?: number[] }) {
   const skills = getBuildSkills(ids);
   return (
@@ -45,10 +77,12 @@ export function SkillCards({ ids, until }: { ids: number[]; until?: number[] }) 
               </div>
             </div>
             <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs tabular-nums">
-              <dt className="text-muted-foreground">倍率</dt>
-              <dd>{range(first.p1, last.p1)}%</dd>
-              <dt className="text-muted-foreground">玄學係數</dt>
-              <dd>× {range(first.p2, last.p2)}</dd>
+              {damageRows(first, last).map(([label, value]) => (
+                <Fragment key={label}>
+                  <dt className="text-muted-foreground">{label}</dt>
+                  <dd>{value}</dd>
+                </Fragment>
+              ))}
               <dt className="text-muted-foreground">命中倍率</dt>
               <dd>{range(first.hit, last.hit)}%</dd>
             </dl>
