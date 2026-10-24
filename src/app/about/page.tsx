@@ -108,7 +108,7 @@ export default function AboutPage() {
 
       <Section icon={<DatabaseIcon className="text-primary size-5" aria-hidden />} title="資料來源">
         <p className="text-muted-foreground text-sm leading-relaxed">
-          所有遊戲資料來自《武林同萌傳》遊戲檔案與社群整理，僅作為查詢用途展示，不涉及任何遊戲內檔案的散布。
+          遊戲資料與美術素材取自《武林同萌傳》遊戲用戶端與社群整理，僅作為查詢用途展示，不提供遊戲檔案或素材下載。
           站內計算公式（流派加權、裝備分數）為個人整理，僅供參考；如與實際數值有出入，請以遊戲內顯示為準。
         </p>
       </Section>
@@ -166,9 +166,15 @@ export default function AboutPage() {
         title="免責聲明"
       >
         <p className="text-muted-foreground text-xs leading-relaxed">
-          本站為個人興趣製作之非官方查詢站，與《武林同萌傳》原廠及代理商無任何隸屬關係。
-          遊戲名稱、美術素材、設定資料之著作權皆歸原權利人所有，本站僅整理公開可得之數值資訊提供查詢，不提供遊戲檔案或修改工具。
-          站內計算結果僅供參考，實際遊戲數值以官方為準。
+          本站為個人興趣製作之非官方、非營利查詢站，與《武林同萌傳》原廠及代理商無任何隸屬關係。
+          遊戲名稱、美術素材、設定資料之著作權皆歸原權利人所有。權利人聯絡、下架流程與隱私說明請見{" "}
+          <Link
+            href="/legal"
+            className="text-foreground underline underline-offset-4 hover:text-primary"
+          >
+            免責與著作權聲明
+          </Link>
+          。
         </p>
       </Section>
     </div>
