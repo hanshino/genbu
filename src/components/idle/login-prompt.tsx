@@ -9,7 +9,7 @@ export function IdleLoginPrompt() {
     <Card className="mx-auto w-full max-w-sm">
       <CardHeader className="text-center">
         <CardTitle className="text-lg">登入後開始掛機</CardTitle>
-        <CardDescription>進度存在伺服器，登入後離線時也會繼續累積經驗。</CardDescription>
+        <CardDescription>進度存在伺服器</CardDescription>
       </CardHeader>
       <CardContent>
         {/* LINE 綠是全站唯一的品牌色例外，不走主題色票。 */}

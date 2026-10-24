@@ -28,7 +28,7 @@ export default function HeroesPage() {
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">英雄</h1>
         <p className="text-sm text-muted-foreground">
-          資料表共 {heroes.length} 位英雄 · {groups.length} 個原始分組
+          {heroes.length} 位英雄
         </p>
       </header>
 
@@ -38,9 +38,7 @@ export default function HeroesPage() {
       >
         <UsersIcon className="size-4 shrink-0 text-primary" aria-hidden />
         <span className="font-medium">英雄相惜配隊器</span>
-        <span className="min-w-0 text-xs text-muted-foreground">
-          固定主英雄，選 1 至 4 位相惜英雄，比較 hero_connect 連結加成總和
-        </span>
+        <span className="min-w-0 text-xs text-muted-foreground">相惜組合試算</span>
         <ChevronRightIcon
           className="ml-auto size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
           aria-hidden
@@ -61,7 +59,7 @@ export default function HeroesPage() {
                 star_up {hero.starUp}
               </Badge>
               <span className="ml-auto font-mono text-xs text-muted-foreground">
-                {hero.combinationCount > 0 ? `${hero.combinationCount} 組組合` : "無組合"}
+                {hero.combinationCount > 0 ? `${hero.combinationCount} 組組合` : "—"}
               </span>
             </LinkListRow>
           ))}
@@ -69,9 +67,8 @@ export default function HeroesPage() {
       ))}
 
       <p className="text-xs leading-relaxed text-muted-foreground">
-        分組是 hero 表的原始 group 欄位（資料中為 1 至 4），不是已核實的官方陣營或章節名稱。star_up
-        同樣是原始欄位值，本站不做星級換算或解讀。組合數為此英雄出現在 hero_connect hero1 至 hero5
-        任一槽位的次數。本頁只呈現資料表現有的 84 筆，不是完整英雄圖鑑。
+        資料來自原始欄位，分組與 star_up 語意未解碼。組合數為此英雄出現在 hero_connect
+        任一槽位的次數。
       </p>
     </div>
   );

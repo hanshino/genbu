@@ -9,12 +9,10 @@ interface Props {
 export function MonsterStageSpawns({ spawns }: Props) {
   if (spawns.length === 0) return null;
 
-  const totalPoints = spawns.reduce((s, x) => s + x.spawnPoints, 0);
-
   return (
     <LinkListSection
       title="出沒地圖"
-      summary={`${spawns.length} 張地圖 · 共 ${totalPoints} 個刷怪點`}
+      summary={`${spawns.length} 張地圖`}
       footer="×N 為該地圖上此怪的刷怪點數量（GENERATOR.OBD 解析）。"
     >
       {spawns.map((s) => (

@@ -21,7 +21,7 @@ export default function ShopsPage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">NPC 商店</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          共 {shops.length} 家商店；店名採用開啟商店的 NPC 名稱，位置僅在唯一對應時顯示。
+          店名取自開啟商店的 NPC；位置僅在唯一對應時顯示。
         </p>
       </header>
 

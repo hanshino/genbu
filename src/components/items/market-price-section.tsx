@@ -283,7 +283,6 @@ export function MarketPriceSection({
             <>
               <div className="flex items-baseline justify-between gap-3">
                 <h3 className="text-sm font-medium">{hasState ? "乾淨裝" : "最近的回報"}</h3>
-                <span className="text-xs text-muted-foreground">依認同數排序</span>
               </div>
               <ul className="mt-1.5">
                 {cleanRows.map((report) => (
@@ -369,7 +368,7 @@ export function MarketPriceSection({
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm">登入後可以回報價格，也能幫別人的報價按讚或倒讚。</p>
+            <p className="text-sm">登入後可回報與評價</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               站上不會顯示你的 LINE 名字，只顯示你自己設的暱稱加末五碼。
             </p>
@@ -634,7 +633,6 @@ function ReportForm({
   return (
     <div>
       <h3 className="text-sm font-medium">回報你看到的價格</h3>
-      <p className="mt-0.5 text-xs text-muted-foreground">你在哪個伺服器買賣到的，就填哪個。</p>
 
       <form onSubmit={submit} className="mt-3 space-y-3">
         <div className="grid grid-cols-2 items-end gap-2.5 sm:grid-cols-[minmax(0,1fr)_7.5rem_9rem]">
@@ -875,7 +873,7 @@ function RatePopover({
           只存在你自己的瀏覽器，不會上傳，也不會動到別人看到的價。
         </p>
 
-        {invalid && <p className="text-xs text-destructive">匯率要填大於 0 的數字。</p>}
+        {invalid && <p className="text-xs text-destructive">匯率須大於 0</p>}
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" size="lg" onClick={() => setOpen(false)}>

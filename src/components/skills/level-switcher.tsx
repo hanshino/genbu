@@ -17,7 +17,6 @@ export function LevelSwitcher({
   if (levels.length <= 1) return null;
   return (
     <div className="flex flex-wrap items-center gap-1 text-xs">
-      <span className="mr-1 text-muted-foreground">切換等級</span>
       {levels.map((lv) => {
         const isActive = lv === currentLevel;
         const href = `/skills/${skillId}?level=${lv}`;

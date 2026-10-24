@@ -19,7 +19,6 @@ export default async function MePage() {
         <header className="mb-6 sm:mb-8">
           <h1 className="font-heading text-2xl font-bold sm:text-3xl">個人設定</h1>
           <p className="text-muted-foreground mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm sm:mt-2">
-            <span>目前身分</span>
             <span className="text-foreground">{user.nickname}</span>
             <IdentityTag tag={user.tag} className="text-xs" />
           </p>

@@ -70,7 +70,6 @@ export function MissionDialogueSection({ missionId }: { missionId: number }) {
               <Badge variant="outline" className="font-mono">
                 MSG{g.fileNo}
               </Badge>
-              <span className="text-xs text-muted-foreground">{g.entries.length} 段</span>
             </div>
 
             <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">

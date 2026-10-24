@@ -315,7 +315,6 @@ export function MissionList({ missions, groups }: Props) {
             {/* Sticky 分組標題：搜尋列之下（top = navbar 14 + search ~12 = ~6.5rem） */}
             <div className="sticky top-[6.5rem] z-20 -mx-4 flex items-baseline gap-2 border-b border-border/60 bg-background/95 px-4 py-1.5 backdrop-blur supports-[backdrop-filter]:bg-background/80">
               <h2 className="text-sm font-medium">{groupLabel(groupId)}</h2>
-              <span className="text-xs text-muted-foreground">{items.length} 個任務</span>
             </div>
             <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
               {items.map((m) => (

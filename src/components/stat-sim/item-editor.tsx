@@ -305,7 +305,7 @@ export function ItemEditor({ idBase, item, data, draft, ev, onChange }: Props) {
           icon={<DicesIcon aria-hidden />}
           title="隨機素質"
           badge={`已勾 ${checkedCount} 項`}
-          note={`${countText}勾選遊戲裡實際出現的素質，再填上數值；沒勾的不會算進去。`}
+          note={countText || undefined}
         >
           {countHint && (
             <p

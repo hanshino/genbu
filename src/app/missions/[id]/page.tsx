@@ -210,12 +210,10 @@ function FlowDialogue({
           <span>系統</span>
         </div>
       )}
-      {hideText ? null : flow.dialogue ? (
+      {!hideText && flow.dialogue && (
         <p className="text-sm leading-relaxed text-muted-foreground">
           「<GameText text={flow.dialogue} maxChars={60} />」
         </p>
-      ) : (
-        <p className="text-xs text-muted-foreground">（無台詞）</p>
       )}
     </div>
   );

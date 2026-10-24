@@ -268,9 +268,6 @@ export function MeridianSimulator({ data }: { data: MeridianData }) {
             規劃模式
           </TabsTrigger>
         </TabsList>
-        <Badge variant="secondary" className="font-normal text-muted-foreground">
-          {mode === "play" ? "擲骰打通，失敗一樣扣丹田" : "直接設等級，看成本與屬性"}
-        </Badge>
       </div>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
@@ -318,10 +315,6 @@ export function MeridianSimulator({ data }: { data: MeridianData }) {
             onChannel={selectChannel}
           />
 
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            遊戲視窗依客戶端介面座標重建，右半的欄位會跟著模擬結果即時更新。在人形區點一下就會選到最近的穴位，不用戳準小圓點；手機上也可以用下面的穴位清單。
-          </p>
-
           <Card size="sm">
             <CardHeader>
               <CardTitle>{channel.name} · 穴位</CardTitle>
@@ -364,7 +357,6 @@ export function MeridianSimulator({ data }: { data: MeridianData }) {
             <Card size="sm">
               <CardHeader>
                 <CardTitle>{channel.name} · 穴位等級</CardTitle>
-                <p className="text-xs text-muted-foreground">用 +／− 調整等級，前置會自動補齊。</p>
                 <CardAction className="flex gap-1.5">
                   <Button variant="outline" size="sm" onClick={fillChannel}>
                     本脈全滿
@@ -538,7 +530,7 @@ export function MeridianSimulator({ data }: { data: MeridianData }) {
                     style={{ width: `${Math.min(100, (play.qi / QI_MAX) * 100)}%` }}
                   />
                 </div>
-                <Hint>每次打通失敗 +1。累積到 {QI_MAX} 時，下一次打通必定成功，之後歸零。</Hint>
+                <Hint>打通失敗一樣扣丹田，並讓氣海 +1。累積到 {QI_MAX} 時，下一次打通必定成功，之後歸零。</Hint>
               </CardContent>
             </Card>
 
@@ -707,7 +699,7 @@ export function MeridianSimulator({ data }: { data: MeridianData }) {
                     {copied ? "已複製連結" : "複製分享連結"}
                   </Button>
                   <span className="text-xs text-muted-foreground">
-                    {planCode ? "朋友打開就會看到這套配點。" : "先配幾個穴位才能分享。"}
+                    {!planCode && "先配幾個穴位才能分享。"}
                   </span>
                 </div>
               </CardContent>

@@ -80,7 +80,6 @@ export function WeightEditor({ weights, onChange }: Props) {
           + 新增屬性
         </Button>
       </div>
-      {rows.length === 0 && <p className="text-xs text-muted-foreground">尚未設定權重</p>}
       <div className="space-y-2.5">
         {rows.map((r) => {
           const label = itemAttributeNames[r.key] ?? r.key;

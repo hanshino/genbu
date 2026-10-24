@@ -52,7 +52,7 @@ export default function ZhenjiePage() {
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">真解</h1>
         <p className="text-sm text-muted-foreground">
-          {books.length} 本真解 · 使用後強化對應技能，加成條數與數值隨機
+          {books.length} 本真解
         </p>
       </header>
 
@@ -125,7 +125,7 @@ export default function ZhenjiePage() {
               </Table>
             </div>
             <p className="text-xs text-muted-foreground">
-              數值 = 強度 × 係數後無條件捨去，最少為 1。技能倍率以「倍」表示，例如 0.62 倍。
+              數值 = 強度 × 係數後無條件捨去，最少為 1。
             </p>
           </section>
         </CardContent>

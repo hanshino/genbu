@@ -104,7 +104,6 @@ export function HeroRosterDialog({
             />
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs text-muted-foreground">分組快速選取</span>
             {groups.map((group) => {
               const selectable = group.heroes.filter((h) => h.id !== mainHeroId);
               const on = selectable.length > 0 && selectable.every((h) => selectedIds.has(h.id));
@@ -127,7 +126,7 @@ export function HeroRosterDialog({
         <div className="min-h-0 flex-1 overflow-y-auto">
           {groups.length === 0 ? (
             <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-              找不到符合「{trimmed}」的英雄。試試其他名稱或英雄編號。
+              找不到「{trimmed}」
             </p>
           ) : (
             groups.map((group) => (

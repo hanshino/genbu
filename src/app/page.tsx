@@ -34,7 +34,7 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
 
 interface Feature {
   title: string;
-  description: string;
+  description?: string;
   href: string;
 }
 
@@ -46,14 +46,14 @@ interface FeatureGroup {
   overview?: string;
 }
 
-// 沒有 description 的入口（例如 navbar 專用的「工具總覽」）不上首頁
+// hideOnHome 的入口（例如 navbar 專用的「工具總覽」）不上首頁
 function toFeatureGroup(section: NavSection): FeatureGroup {
   return {
     label: section.label,
     icon: SECTION_ICONS[section.label],
     overview: section.overview,
     features: section.items.flatMap((e) =>
-      e.description ? [{ title: e.title ?? e.label, description: e.description, href: e.href }] : [],
+      e.hideOnHome ? [] : [{ title: e.title ?? e.label, description: e.description, href: e.href }],
     ),
   };
 }
@@ -105,10 +105,7 @@ export default function HomePage() {
           玄
         </span>
         <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">玄武</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">武林同萌傳 · 玩家資料庫</p>
-        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground">
-          玄武提供《武林同萌傳》（原《新絕代雙驕》）的道具、怪物、技能與任務查詢，以及裝備比較和副本攻略。
-        </p>
+        <p className="mt-1.5 text-sm text-muted-foreground">《武林同萌傳》玩家資料庫</p>
 
         <GlobalSearch className="mt-6" />
 
@@ -128,18 +125,15 @@ export default function HomePage() {
 
       {/* 市價本來只在物品詳情頁看得到，沒逛到那頁的人不知道可以報價，放首頁當入口。 */}
       <section className="mt-10 rounded-lg border border-border/60 bg-card p-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <h2 className="text-sm font-medium">最近的市價回報</h2>
-          <p className="text-xs text-muted-foreground">價格由玩家自己回報，登入後誰都能報。</p>
-        </div>
+        <h2 className="text-sm font-medium">最近的市價回報</h2>
 
         {recent.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">
-            還沒有人回報過價格。到任一{" "}
+            尚無回報，到
             <Link href="/items" className="text-primary underline underline-offset-3">
               物品頁
-            </Link>{" "}
-            就能報第一筆。
+            </Link>
+            報第一筆
           </p>
         ) : (
           <ul className="mt-1.5">
@@ -171,7 +165,6 @@ export default function HomePage() {
       {/* 攻略放最前面並加框：新玩家／回鍋玩家最需要的是「從哪開始」 */}
       <section className="mt-10 rounded-xl border border-primary/30 bg-primary/5 p-4 sm:p-5">
         <GroupHeading group={guideGroup} className="mt-0" />
-        <p className="-mt-2 mb-4 text-sm text-foreground">剛開始玩或剛回鍋？從這裡開始</p>
         <FeatureGrid features={guideGroup.features} className="sm:grid-cols-2 lg:grid-cols-2" />
       </section>
 
@@ -218,7 +211,9 @@ function FeatureGrid({ features, className }: { features: Feature[]; className?:
           <Card size="sm" className="h-full transition-colors hover:bg-muted/50 hover:ring-primary/50">
             <CardHeader>
               <CardTitle>{f.title}</CardTitle>
-              <CardDescription className="text-xs leading-relaxed">{f.description}</CardDescription>
+              {f.description && (
+                <CardDescription className="text-xs leading-relaxed">{f.description}</CardDescription>
+              )}
             </CardHeader>
           </Card>
         </Link>

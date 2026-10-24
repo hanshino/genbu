@@ -32,10 +32,10 @@ export default async function LoginPage({
         </div>
 
         <h1 className="font-heading mt-5 text-center text-lg font-bold sm:mt-6 sm:text-xl">
-          使用 LINE 登入以回報市價
+          登入玄武
         </h1>
         <p className="text-muted-foreground mt-2 text-center text-sm leading-relaxed sm:mt-2.5">
-          登入後才能回報道具價格、為別人的回報投票。單純查資料不用登入。
+          回報價格與投票需登入，查資料不用。
         </p>
 
         {/* LINE 綠是全站唯一的品牌色例外，不走主題色票。 */}

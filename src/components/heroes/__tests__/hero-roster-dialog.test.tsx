@@ -63,7 +63,7 @@ describe("HeroRosterDialog", () => {
     await user.clear(search);
     await user.type(search, "查無此人");
     await waitFor(() =>
-      expect(screen.getByText(/找不到符合「查無此人」的英雄/)).toBeInTheDocument(),
+      expect(screen.getByText(/找不到「查無此人」/)).toBeInTheDocument(),
     );
   });
 

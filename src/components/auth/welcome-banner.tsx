@@ -61,9 +61,8 @@ export function WelcomeBanner({ user }: { user: AccountUser | null }) {
         {/* 窄版：文字一行、按鈕退到下一行靠左；sm 以上才拉回同一列並推到右邊。 */}
         <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <p className="text-sm">
-            已登入。你目前的名字是 <span className="font-medium">{user.nickname}</span>
+            已登入，名字是 <span className="font-medium">{user.nickname}</span>
             <IdentityTag tag={user.tag} className="text-xs" />
-            ，可以改成你習慣的。
           </p>
           <Link
             href="/me"

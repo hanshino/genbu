@@ -171,9 +171,6 @@ function Distribution({ slices, topLabel }: { slices: Slice[]; topLabel: string 
       </summary>
 
       <div className="mt-2.5 rounded-md border border-border/60 bg-background/40 p-2.5">
-        <p className="mb-1.5 text-[0.65rem] leading-relaxed text-muted-foreground">
-          單次嘗試的完整結果分佈，含沒有效果的部分，加總為 100%。
-        </p>
         <div
           className="flex h-3 overflow-hidden rounded-sm bg-muted"
           role="img"

@@ -5,11 +5,9 @@ import {
   MessagesSquareIcon,
   ExternalLinkIcon,
   DatabaseIcon,
-  WrenchIcon,
   HeartIcon,
   Code2Icon,
   CpuIcon,
-  ShieldAlertIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -19,17 +17,6 @@ export const metadata: Metadata = {
   title: "關於 | 玄武",
   description: "關於玄武 — 武林同萌傳玩家資料庫的緣由、功能、技術與作者。",
 };
-
-const capabilities = [
-  { title: "道具查詢", desc: "搜尋 13,000+ 道具，查看屬性、隨機詞條、掉落來源。" },
-  { title: "流派排行", desc: "七大流派加權，即時調整權重與等級區間。" },
-  { title: "裝備比較", desc: "同時比對多件座騎 / 背飾的雷達圖與流派分數。" },
-  { title: "技能瀏覽", desc: "14 門派技能瀏覽、等級成長對照。" },
-  { title: "怪物查詢", desc: "等級、屬性、掉落反查一次找齊。" },
-  { title: "煉化配方", desc: "煉化群組總覽，配方來源、產出、機率一覽。" },
-  { title: "任務瀏覽", desc: "全部任務的步驟、所需物品、地點 / NPC 一覽。" },
-  { title: "副本解謎", desc: "160 迷霧九宮格、175 北斗七星、180 神武禁地互動解題器。" },
-];
 
 const techStack = [
   "Next.js 16",
@@ -80,36 +67,23 @@ export default function AboutPage() {
           關於玄武
         </h1>
         <p className="text-muted-foreground mt-3 max-w-xl text-sm leading-relaxed">
-          武林同萌傳 (TTHOL) 的玩家資料庫 — 道具查詢、裝備流派比較、副本解謎，集中一處、即時查得。
+          武林同萌傳 (TTHOL) 玩家資料庫
         </p>
       </header>
 
       <Separator className="my-10" />
 
-      <Section
-        icon={<WrenchIcon className="text-primary size-5" aria-hidden />}
-        title="這個站做什麼"
-      >
-        <p className="text-muted-foreground text-sm leading-relaxed">
-          武林同萌傳的攻略資訊散落在論壇、Wiki、群組對話之間，找一件裝備往往需要翻好幾個頁面。
-          玄武把這些遊戲資料整理進可查、可比、可推算的工具裡，讓玩家不用切到第二個分頁就能做完一輪規劃。
-        </p>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          {capabilities.map((c) => (
-            <div key={c.title} className="border-border/60 bg-card rounded-md border p-4">
-              <p className="font-medium">{c.title}</p>
-              <p className="text-muted-foreground mt-1 text-xs leading-relaxed">{c.desc}</p>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <Separator className="my-10" />
-
       <Section icon={<DatabaseIcon className="text-primary size-5" aria-hidden />} title="資料來源">
         <p className="text-muted-foreground text-sm leading-relaxed">
-          遊戲資料與美術素材取自《武林同萌傳》遊戲用戶端與社群整理，僅作為查詢用途展示，不提供遊戲檔案或素材下載。
-          站內計算公式（流派加權、裝備分數）為個人整理，僅供參考；如與實際數值有出入，請以遊戲內顯示為準。
+          遊戲資料與素材取自遊戲用戶端與社群整理，公式為個人整理，僅供參考，以遊戲內顯示為準。
+          著作權、下架流程與隱私說明請見{" "}
+          <Link
+            href="/legal"
+            className="text-foreground underline underline-offset-4 hover:text-primary"
+          >
+            免責與著作權聲明
+          </Link>
+          。
         </p>
       </Section>
 
@@ -159,24 +133,6 @@ export default function AboutPage() {
         </Card>
       </Section>
 
-      <Separator className="my-10" />
-
-      <Section
-        icon={<ShieldAlertIcon className="text-primary size-5" aria-hidden />}
-        title="免責聲明"
-      >
-        <p className="text-muted-foreground text-xs leading-relaxed">
-          本站為個人興趣製作之非官方、非營利查詢站，與《武林同萌傳》原廠及代理商無任何隸屬關係。
-          遊戲名稱、美術素材、設定資料之著作權皆歸原權利人所有。權利人聯絡、下架流程與隱私說明請見{" "}
-          <Link
-            href="/legal"
-            className="text-foreground underline underline-offset-4 hover:text-primary"
-          >
-            免責與著作權聲明
-          </Link>
-          。
-        </p>
-      </Section>
     </div>
   );
 }

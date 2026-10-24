@@ -101,9 +101,6 @@ export default async function SalonPage({ searchParams }: Props) {
       </nav>
       <header className="mb-5">
         <h1 className="font-heading text-3xl font-bold">易容閣</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          挑選各部位的外觀，預覽角色穿上後的樣子。相同外觀的道具合併成一格，點格子就能換裝。
-        </p>
       </header>
       <SalonClient
         key={gender}

@@ -212,7 +212,7 @@ function ConditionList({ conditions }: { conditions: MissionCondition[] }) {
 }
 
 function modeHint(g: MissionRequirementGroup) {
-  return g.mode === 1 ? "以下任一成立即可" : "以下全部成立才可接取";
+  return g.mode === 1 ? "以下任一成立即可" : null;
 }
 
 /** 完全相同的條件組（上游常見重複）只留一組，擇一語意不變。 */
@@ -229,6 +229,7 @@ function dedupeGroups(groups: MissionRequirementGroup[]): MissionRequirementGrou
 export function MissionRequirementSection({ groups: raw }: { groups: MissionRequirementGroup[] }) {
   const groups = dedupeGroups(raw);
   const hasLikely = groups.some((g) => g.conditions.some((c) => c.likely));
+  if (groups.length === 0) return null;
 
   return (
     <section className="space-y-2">
@@ -241,11 +242,11 @@ export function MissionRequirementSection({ groups: raw }: { groups: MissionRequ
         )}
       </div>
 
-      {groups.length === 0 ? (
-        <p className="text-sm text-muted-foreground">無接取條件資料</p>
-      ) : groups.length === 1 ? (
+      {groups.length === 1 ? (
         <div className="space-y-1.5">
-          <p className="text-xs text-muted-foreground">{modeHint(groups[0])}</p>
+          {modeHint(groups[0]) && (
+            <p className="text-xs text-muted-foreground">{modeHint(groups[0])}</p>
+          )}
           <ConditionList conditions={groups[0].conditions} />
         </div>
       ) : (
@@ -259,7 +260,7 @@ export function MissionRequirementSection({ groups: raw }: { groups: MissionRequ
           </TabsList>
           {groups.map((g, i) => (
             <TabsContent key={i} value={i} className="space-y-1.5">
-              <p className="text-xs text-muted-foreground">{modeHint(g)}</p>
+              {modeHint(g) && <p className="text-xs text-muted-foreground">{modeHint(g)}</p>}
               <ConditionList conditions={g.conditions} />
             </TabsContent>
           ))}

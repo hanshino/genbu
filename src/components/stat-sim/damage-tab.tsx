@@ -577,9 +577,6 @@ function SkillPicker({
           </ComboboxList>
         </ComboboxContent>
       </Combobox>
-      <p className="text-xs text-muted-foreground">
-        右邊是加進來之後的結果：算得出來的進排行，武器不對的進「換武器才能用」。
-      </p>
     </div>
   );
 }
@@ -772,14 +769,10 @@ export function DamageTab({
         </header>
         <div className="space-y-2 px-4 py-3">
           <MonsterPicker monsters={damageData.monsters} value={monster} onChange={pickMonster} />
-          {monster ? (
+          {monster && (
             <p className="text-xs text-muted-foreground">
               Lv{monster.level}・防禦 {fmt(monster.extraDef)}・護勁 {fmt(monster.magicDef)}・血量{" "}
               <span className="font-mono text-foreground">{fmt(monster.hp)}</span>
-            </p>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              選一隻怪，算出你打牠每招多少、幾招打完。
             </p>
           )}
         </div>
@@ -948,7 +941,6 @@ export function DamageTab({
           <section className={box} aria-label="循環試算">
             <header className={head}>
               <h2 className="font-heading text-sm font-semibold">循環試算</h2>
-              <span className="text-xs text-muted-foreground">一直重複這一輪</span>
               {comboKeys.length > 0 && (
                 <Button
                   size="xs"
@@ -963,7 +955,7 @@ export function DamageTab({
             {comboKeys.length === 0 ? (
               <p className="px-4 py-6 text-center text-xs text-muted-foreground">
                 按排行旁的 <PlusIcon className="inline size-3.5 align-[-2px]" aria-label="加號" />{" "}
-                把招式加進來，算每秒輸出、幾秒打完，以及每加 1 點屬性每秒多打多少。
+                加入招式
               </p>
             ) : (
               <>

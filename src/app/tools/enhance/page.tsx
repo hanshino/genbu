@@ -246,16 +246,8 @@ export default async function EnhanceFinderPage({ searchParams }: PageProps) {
           className="absolute top-1 -left-4 hidden h-14 w-[3px] rounded-full bg-primary sm:block"
         />
         <h1 className="font-heading text-2xl leading-tight font-bold md:text-3xl">
-          屬性反查
-          <span className="ml-2 font-medium text-muted-foreground">強化配方</span>
+          強化配方反查
         </h1>
-        <div className="mt-3 max-w-[46ch] rounded-lg border border-dashed border-border/70 bg-card/60 px-3 py-2.5 text-[0.8rem] leading-relaxed text-muted-foreground">
-          <b className="font-medium text-foreground">
-            我要加物攻，該用哪顆真元？大概要幾顆才會成功？
-          </b>
-          <br />
-          選一個想加的屬性，這裡把加得到它的配方全列出來，附上單次機率與毀裝標記。
-        </div>
       </header>
 
       {/* ── 篩選 ─────────────────────────────────────────────── */}

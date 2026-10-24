@@ -119,7 +119,7 @@ export function CompareClient({
         ))}
         {initialItems.length === 0 && (
           <span className="text-sm text-muted-foreground">
-            尚未加入裝備。用上方搜尋框加入 1~{COMPARE_TRAY_MAX} 件。
+            尚未加入裝備（最多 {COMPARE_TRAY_MAX} 件）
           </span>
         )}
       </div>
@@ -129,8 +129,7 @@ export function CompareClient({
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <h2 className="text-lg font-semibold">流派適配</h2>
             <span className="text-xs text-muted-foreground">
-              條形＝該列相對強度；<span className="text-primary/80">+N%</span>{" "}
-              ＝勝者領先第二名的幅度
+              條形＝該列相對強度
             </span>
           </div>
           <ComparePresets items={initialItems} randsByItem={randsByItem} />
@@ -144,7 +143,7 @@ export function CompareClient({
             <CompareRadar items={initialItems} maxValues={maxValues} />
           </div>
           <p className="text-xs text-muted-foreground">
-            數值為相對同類型裝備池最大值的百分比；精確數字見下方屬性細項。
+            相對同類型裝備池最大值的百分比
           </p>
         </section>
       )}

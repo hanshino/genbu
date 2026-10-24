@@ -36,7 +36,7 @@ export default function GuidesPage() {
             一個角色的一生
           </h1>
           <p className="text-muted-foreground max-w-[32em] text-[15.5px] leading-relaxed text-pretty sm:text-[17px]">
-            不管剛創角還是回鍋，找到你的等級，照著走就對了。每一站我都寫清楚該做什麼、會開什麼系統、那系統怎麼玩。
+            找到你的等級，照著走。
           </p>
         </div>
         <AuthorCard />

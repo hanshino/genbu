@@ -428,11 +428,11 @@ export function RankingClient({ type, items, rands, iconMap }: Props) {
       </aside>
       <div className="space-y-2">
         <div className="text-sm text-muted-foreground" role="status" aria-live="polite">
-          {rows.length} 件符合條件
+          {rows.length} 件
         </div>
         {rows.length === 0 ? (
           <div className="rounded-md border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
-            沒有符合條件的裝備。試試放寬等級區間或移除門檻。
+            沒有符合的裝備
           </div>
         ) : (
           <RankingTable

@@ -61,8 +61,6 @@ export default async function SkillsPage({ searchParams }: PageProps) {
   const availableTargets = getDistinctTargets();
   const availableSkillTypes = getDistinctSkillTypes();
 
-  const hasFilter = !!(search || clan || target || skillType);
-
   const searchParamsStr = serializeSearchParams(params);
 
   return (
@@ -70,7 +68,7 @@ export default async function SkillsPage({ searchParams }: PageProps) {
       <header className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">技能瀏覽</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          共 {result.total.toLocaleString()} 個技能{hasFilter ? "（符合條件）" : ""}
+          共 {result.total.toLocaleString()} 個技能
         </p>
       </header>
 

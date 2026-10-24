@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StageMapViewer, clusterPoints, letterTag, type MapMonster } from "../stage-map-viewer";
 import type { StageMapImage, NpcPlacement, PortalExit } from "@/lib/queries/maps";
@@ -490,7 +490,7 @@ describe("<StageMapViewer> 傳點", () => {
     const { container } = renderPortals([sameMap]);
     expect(container.querySelector("[data-portal-arc]")).toBeNull();
     await user.click(portalMarker("往極之淵"));
-    expect(await screen.findByText("目的地就是本圖，落點已標在地圖上。")).toBeInTheDocument();
+    await waitFor(() => expect(container.querySelector("[data-portal-arc]")).not.toBeNull());
     expect(container.querySelector("[data-portal-arc]")).not.toBeNull();
     expect(within(figureOf()).getByRole("img", { name: "落點 1" })).toBeInTheDocument();
     expect(thumb()).toBeNull();

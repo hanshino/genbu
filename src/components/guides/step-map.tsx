@@ -1255,10 +1255,7 @@ export function StepMap({ alt }: { alt?: string }) {
         <Legend data={data} walkProps={{ view, pin, setPin, setPeek }} />
         {(crop || walk.length > 0) && (
           <div className="flex items-center justify-between gap-3 border-t border-dashed px-3 py-2">
-            <span className="text-muted-foreground text-[12px] sm:invisible">
-              {full ? "地圖可左右滑動" : ""}
-            </span>
-            <div className="flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-2">
               {walk.length > 0 && (
                 <Button
                   type="button"
@@ -1679,7 +1676,6 @@ export function StepTargets() {
           className="from-card pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l to-transparent @lg:hidden"
         />
       </div>
-      <p className="text-muted-foreground mt-2 text-[12px] @lg:hidden">表格可左右滑動</p>
       <p className="text-muted-foreground mt-2 flex items-center gap-1.5 text-[12.5px]">
         <InfoIcon className="size-3.5 shrink-0" aria-hidden />
         <span>

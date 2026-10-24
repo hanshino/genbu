@@ -47,7 +47,7 @@ export function NicknameForm({ user }: { user: AccountUser }) {
     <form onSubmit={save} className="mt-4 sm:mt-5">
       <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
         <div>
-          <label htmlFor="nickname" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="nickname" className="sr-only">
             暱稱
           </label>
 
@@ -57,7 +57,6 @@ export function NicknameForm({ user }: { user: AccountUser }) {
               name="nickname"
               value={nickname}
               maxLength={20}
-              placeholder="輸入暱稱"
               autoComplete="nickname"
               aria-invalid={invalid || undefined}
               aria-describedby="nickname-hint nickname-status"
@@ -73,14 +72,7 @@ export function NicknameForm({ user }: { user: AccountUser }) {
           </div>
 
           <p id="nickname-hint" className="text-muted-foreground mt-2 text-xs leading-relaxed">
-            <span className="sm:hidden">
-              1–20 個字。你的辨識碼是 <IdentityTag tag={user.tag} className="text-foreground" />
-              ，由系統產生、不能修改，用來分辨和你同名的玩家。
-            </span>
-            <span className="hidden sm:inline">
-              1–20 個字。後面的 <IdentityTag tag={user.tag} />
-              由系統產生、不能修改，用來分辨和你同名的玩家。
-            </span>
+            1–20 字。辨識碼由系統產生，不可修改
           </p>
 
           <p
@@ -108,7 +100,7 @@ export function NicknameForm({ user }: { user: AccountUser }) {
           type="submit"
           size="lg"
           disabled={saving}
-          className="h-10 w-full sm:mt-[1.85rem] sm:h-9 sm:w-auto sm:px-4"
+          className="h-10 w-full sm:h-9 sm:w-auto sm:px-4"
         >
           {saving ? "儲存中…" : "儲存"}
         </Button>

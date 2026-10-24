@@ -146,9 +146,6 @@ export function ForestMatrixSolver() {
         <Button variant="outline" onClick={onClear}>
           清除
         </Button>
-        <span className="text-muted-foreground text-xs">
-          已填 {known.length} / 2 間關閉房間
-        </span>
       </div>
 
       {result && !result.ok && <InlineAlert>{REASON_MESSAGE[result.reason]}</InlineAlert>}

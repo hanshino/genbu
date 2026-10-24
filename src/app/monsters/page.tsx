@@ -81,16 +81,6 @@ export default async function MonstersPage({ searchParams }: PageProps) {
   const spawnsByMonster = getStagesForMonsters(result.monsters.map((m) => m.id));
   const portraitMap = getNpcImageMap(result.monsters.map((m) => m.id));
 
-  const hasFilter = !!(
-    search ||
-    typeRaw ||
-    elemental ||
-    hasDrop ||
-    isNormal ||
-    levelMinRaw ||
-    levelMaxRaw
-  );
-
   const searchParamsStr = serializeSearchParams(params);
 
   return (
@@ -98,7 +88,7 @@ export default async function MonstersPage({ searchParams }: PageProps) {
       <header className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">怪物查詢</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          共 {result.total.toLocaleString()} 隻{hasFilter ? "（符合條件）" : ""}
+          共 {result.total.toLocaleString()} 隻
         </p>
       </header>
 
