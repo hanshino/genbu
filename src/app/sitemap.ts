@@ -44,6 +44,7 @@ const STATIC_ROUTES: Array<{
   { path: "/tools/enhance", changeFrequency: "weekly", priority: 0.5 },
   { path: "/changelog", changeFrequency: "weekly", priority: 0.4 },
   { path: "/about", changeFrequency: "monthly", priority: 0.3 },
+  { path: "/legal", changeFrequency: "yearly", priority: 0.2 },
 ];
 
 function detailEntries(
