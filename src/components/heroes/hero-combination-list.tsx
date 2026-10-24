@@ -23,12 +23,7 @@ interface Props {
 export function HeroCombinationList({ combinations, currentHeroId }: Props) {
   return (
     <section className="space-y-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-medium">參與的組合</h2>
-        {combinations.length > 0 && (
-          <span className="text-xs text-muted-foreground">{combinations.length} 組</span>
-        )}
-      </div>
+      <h2 className="text-lg font-medium">參與的組合</h2>
 
       {combinations.length === 0 ? (
         <p className="rounded-lg border border-border/60 bg-card px-4 py-6 text-sm text-muted-foreground">

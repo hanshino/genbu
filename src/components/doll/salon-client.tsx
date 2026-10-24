@@ -405,7 +405,7 @@ export function SalonClient(props: Props) {
               {missing.length > 0 && (
                 <p className="absolute top-2.5 left-3 flex items-center gap-1.5 rounded-md bg-card/85 px-2 py-1 text-xs text-muted-foreground backdrop-blur-sm">
                   <CircleAlertIcon className="size-3.5 shrink-0" aria-hidden />
-                  {missing.map((s) => s.label).join("、")}：此裝備無外觀資料
+                  {missing.map((s) => s.label).join("、")}：無外觀資料
                 </p>
               )}
               <DirectionCompass
@@ -503,7 +503,7 @@ export function SalonClient(props: Props) {
         </Card>
 
         <Card className="order-last gap-0 py-0 lg:order-none">
-          <PanelHeader title="目前穿著" hint="展開可看共用此外觀的道具" />
+          <PanelHeader title="目前穿著" />
           <CardContent className="py-1.5">
             <div className="flex flex-col [&>*]:border-b [&>*]:border-dashed [&>*]:border-border/70 [&>*:last-child]:border-b-0">
               <WornLine label="頭型">
@@ -607,7 +607,7 @@ export function SalonClient(props: Props) {
                     </span>
                   )}
                   {!payload.look.hasImage && (
-                    <span className="block text-[11px] opacity-70">此裝備無外觀資料</span>
+                    <span className="block text-[11px] opacity-70">無外觀資料</span>
                   )}
                 </>
               ) : (
@@ -852,7 +852,7 @@ function PanelHeader({
   className,
 }: {
   title: string;
-  hint: React.ReactNode;
+  hint?: React.ReactNode;
   className?: string;
 }) {
   return (
@@ -863,7 +863,7 @@ function PanelHeader({
       )}
     >
       <CardTitle className="font-semibold">{title}</CardTitle>
-      <span className="text-xs text-muted-foreground">{hint}</span>
+      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
     </CardHeader>
   );
 }

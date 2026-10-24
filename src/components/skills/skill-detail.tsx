@@ -94,7 +94,7 @@ export function SkillDetail({ skill, current, allLevels, status, icon }: SkillDe
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-2.5">
           <div className="flex items-baseline gap-1.5">
             <span className="font-mono text-lg font-semibold">Lv {current.level}</span>
-            <span className="text-xs text-muted-foreground">/ 最高 {maxLevel}</span>
+            <span className="text-xs text-muted-foreground">/ {maxLevel}</span>
           </div>
           <LevelSwitcher skillId={skill.id} levels={allLevels} currentLevel={current.level} />
         </div>
@@ -128,7 +128,7 @@ export function SkillDetail({ skill, current, allLevels, status, icon }: SkillDe
             ))}
           </dl>
         ) : (
-          <div className="px-4 py-6 text-sm text-muted-foreground">此等級無顯示中的數值欄位</div>
+          <div className="px-4 py-6 text-sm text-muted-foreground">無數值</div>
         )}
         {status && <StatusEffect status={status} />}
       </div>
@@ -147,7 +147,7 @@ function StatusEffect({ status }: { status: Status }) {
         {status.name}
       </Badge>
       {status.group != null && (
-        <span className="text-xs text-muted-foreground">{statusGroupLabel(status.group)}群組</span>
+        <span className="text-xs text-muted-foreground">{statusGroupLabel(status.group)}</span>
       )}
       {params.length > 0 && (
         <span className="font-mono text-xs text-muted-foreground">

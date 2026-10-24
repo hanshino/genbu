@@ -20,7 +20,7 @@ function mapHref(stageId: number, placementId?: number) {
 
 export function NpcMapsSection({ maps }: { maps: NpcMap[] }) {
   return (
-    <LinkListSection title="出現地圖" summary="點地圖會標出 NPC 所在位置">
+    <LinkListSection title="出現地圖">
       {maps.map((m) => {
         const name = m.stageName ?? `地圖 #${m.stageId}`;
         const multi = m.placements.length > 1;

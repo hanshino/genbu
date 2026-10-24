@@ -65,8 +65,7 @@ export default async function HeroDetailPage({ params }: PageProps) {
       <HeroTokenSources sources={tokenSources} />
 
       <p className="text-xs leading-relaxed text-muted-foreground">
-        資料來自 hero 與 hero_connect 兩張表的原始欄位。分組與 star_up 的語意未解碼，不做換算；
-        培養與升星路徑不在資料中，本頁不提供。
+        資料來自原始欄位，分組與 star_up 語意未解碼。
       </p>
     </div>
   );

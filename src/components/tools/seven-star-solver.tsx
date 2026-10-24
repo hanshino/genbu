@@ -67,7 +67,7 @@ export function SevenStarSolver() {
               "border-destructive focus-visible:ring-destructive/40",
           )}
         />
-        {rawInvalid && <InlineAlert>數字須介於 1~127 且為整數</InlineAlert>}
+        {rawInvalid && <InlineAlert>須為 1~127 的整數</InlineAlert>}
       </div>
 
       <div

@@ -75,7 +75,6 @@ export function RoadTimeline({ stops }: { stops: GuideMeta[] }) {
             </Button>
           ))}
           <label className="text-muted-foreground flex w-full items-center gap-2 text-[13.5px] sm:ml-auto sm:w-auto">
-            直接輸入
             <Input
               type="number"
               inputMode="numeric"

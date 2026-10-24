@@ -111,11 +111,11 @@ export function MapList({ stages, groups }: Props) {
             className="pl-9"
           />
         </div>
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          {filtered.length === 0
-            ? "找不到符合的地圖"
-            : `顯示 ${filtered.length.toLocaleString()} / ${stages.length.toLocaleString()} 張地圖`}
-        </p>
+        {trimmed && filtered.length > 0 && (
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            顯示 {filtered.length.toLocaleString()} / {stages.length.toLocaleString()} 張地圖
+          </p>
+        )}
       </div>
 
       {filtered.length === 0 && (

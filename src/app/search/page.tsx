@@ -47,9 +47,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
       </header>
 
       {!q || !all ? (
-        <p className="text-sm text-muted-foreground">
-          輸入關鍵字，一次搜尋道具、技能、怪物、任務、地圖、頁面等資料。
-        </p>
+        null
       ) : (
         <>
           <SearchBeacon scope="global" query={q} hasFilter={!!type} resultCount={resultCount} />
@@ -57,9 +55,6 @@ export default async function SearchPage({ searchParams }: PageProps) {
           {all.total === 0 ? (
             <div className="rounded-lg border border-border/60 bg-card p-6 text-center">
               <p className="text-sm font-medium">找不到「{q}」相關結果</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                試試更短的關鍵字，或檢查有沒有打錯字。
-              </p>
             </div>
           ) : (
             <div className="space-y-4">

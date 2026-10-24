@@ -78,7 +78,7 @@ export function GuideTocMobile({ headings }: { headings: GuideHeading[] }) {
     >
       <CollapsibleTrigger className="group text-muted-foreground hover:bg-muted/60 hover:text-foreground flex items-center gap-2.5 px-4 py-3 text-[13.5px]">
         <ListIcon className="size-4" aria-hidden />
-        這篇有 {headings.length} 段
+        目錄
         <ChevronDownIcon
           className="ml-auto size-4 group-data-panel-open:rotate-180 motion-safe:transition-transform"
           aria-hidden

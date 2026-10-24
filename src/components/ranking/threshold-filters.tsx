@@ -16,7 +16,6 @@ export function ThresholdFilters({ values, onChange }: Props) {
   return (
     <div className="space-y-1.5">
       <label className="text-sm font-medium">硬性門檻</label>
-      <p className="text-xs text-muted-foreground">空白代表不限制</p>
       <div className="space-y-1.5">
         {THRESHOLD_KEYS.map((k) => (
           <div key={k} className="grid grid-cols-[4rem_1fr] items-center gap-2">

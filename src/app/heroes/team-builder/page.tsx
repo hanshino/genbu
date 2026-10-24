@@ -19,11 +19,8 @@ export default function HeroTeamBuilderPage() {
         <BackLink href="/heroes" />
       </nav>
 
-      <header className="space-y-1">
+      <header>
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">英雄相惜配隊器</h1>
-        <p className="text-sm text-muted-foreground">
-          固定一位主英雄，再選 1 至 4 位相惜英雄，列出 hero_connect 連結加成總和較高的組合。
-        </p>
       </header>
 
       <HeroTeamBuilder heroes={heroes} combinations={combinations} />

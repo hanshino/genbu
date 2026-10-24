@@ -51,6 +51,7 @@ npm run lint      # ESLint
 - Use Traditional Chinese (zh-tw) for all user-facing text
 - Follow Next.js App Router patterns (Server Components by default, 'use client' only when needed)
 - Keep components small and focused
+- Avoid unnecessary secondary labels and descriptions. Let the layout do the explaining.
 
 ### UI Components: shadcn-first, hand-roll last resort
 

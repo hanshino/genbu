@@ -169,9 +169,6 @@ export function ZhenjieItemSection({ book, tiers }: { book: ZhenjieBook; tiers: 
         <ChevronRightIcon className="size-3.5" aria-hidden />
       </Link>
 
-      <p className="text-xs leading-relaxed text-muted-foreground">
-        強度範圍取自遊戲設定檔，官方公告的上限是強度 200，官方伺服器實際範圍可能不同。條數機率假設抽取次數平均分布，屬推測值。
-      </p>
     </section>
   );
 }

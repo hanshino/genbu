@@ -110,16 +110,13 @@ export function HeroTeamBuilder({ heroes, combinations }: Props) {
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-start">
       <aside className="space-y-4 rounded-lg border border-border/60 bg-card p-4 lg:sticky lg:top-20">
-        <div className="flex items-baseline gap-2">
-          <h2 className="flex items-center gap-1.5 text-base font-medium">
-            <SlidersHorizontalIcon className="size-4 text-muted-foreground" aria-hidden />
-            配置條件
-          </h2>
-          <span className="text-xs text-muted-foreground">固定主英雄，另選 1–4 位</span>
-        </div>
+        <h2 className="flex items-center gap-1.5 text-base font-medium">
+          <SlidersHorizontalIcon className="size-4 text-muted-foreground" aria-hidden />
+          配置條件
+        </h2>
 
         <section className="space-y-1.5">
-          <h3 className="text-xs font-medium text-muted-foreground">主英雄（固定）</h3>
+          <h3 className="text-xs font-medium text-muted-foreground">主英雄</h3>
           <Combobox
             items={filteredHeroes}
             filter={null}
@@ -151,12 +148,6 @@ export function HeroTeamBuilder({ heroes, combinations }: Props) {
               </ComboboxList>
             </ComboboxContent>
           </Combobox>
-          {mainHero && (
-            <p className="text-xs text-muted-foreground">
-              目前：{mainHero.name}
-              <span className="ml-1.5 font-mono">#{mainHero.id}</span>
-            </p>
-          )}
         </section>
 
         <section className="rounded-lg border border-primary/50 bg-primary/5 p-3">
@@ -165,7 +156,7 @@ export function HeroTeamBuilder({ heroes, combinations }: Props) {
             可使用英雄
           </h3>
           <p className="mt-1 mb-2.5 text-xs text-muted-foreground">
-            先決定哪些英雄真的在你手上，結果只會從這個範圍挑相惜英雄。
+            結果只會從這個範圍挑相惜英雄。
           </p>
 
           <RadioGroup
@@ -176,9 +167,6 @@ export function HeroTeamBuilder({ heroes, combinations }: Props) {
           >
             <RadioOption value="all" variant="card">
               <span className="font-medium">全部 {heroes.length} 位皆可用</span>
-              <span className="block text-xs text-muted-foreground">
-                不設限制，把整份名冊都當成可搭配對象
-              </span>
             </RadioOption>
             <RadioOption value="custom" variant="card">
               <span className="font-medium">只用我勾選的英雄</span>
@@ -192,7 +180,7 @@ export function HeroTeamBuilder({ heroes, combinations }: Props) {
             <div className="mt-2.5 space-y-2 border-t border-dashed border-primary/40 pt-2.5">
               <p className="text-xs text-muted-foreground">
                 <span className="font-mono text-base text-foreground">{poolSize}</span>{" "}
-                位可使用（含主英雄）
+                位可使用
               </p>
               <Button
                 type="button"
@@ -208,7 +196,7 @@ export function HeroTeamBuilder({ heroes, combinations }: Props) {
         </section>
 
         <section className="space-y-1.5">
-          <h3 className="text-xs font-medium text-muted-foreground">目標屬性（單選）</h3>
+          <h3 className="text-xs font-medium text-muted-foreground">目標屬性</h3>
           <RadioGroup
             value={target}
             onValueChange={(value) => setTarget(value as HeroBonusKey)}
@@ -240,9 +228,7 @@ export function HeroTeamBuilder({ heroes, combinations }: Props) {
       </aside>
 
       <section className="min-w-0 space-y-4">
-        <p className="text-sm text-muted-foreground">
-          固定主英雄，依「{targetLabel}」的連結加成總和排序，最多顯示 10 組。
-        </p>
+        <p className="text-sm text-muted-foreground">最多顯示 10 組</p>
 
         <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border/60 bg-border/60 sm:grid-cols-4">
           <MetaCell label="主英雄" value={mainHero?.name ?? "—"} />
@@ -320,12 +306,9 @@ export function HeroTeamBuilder({ heroes, combinations }: Props) {
 
         {showResults && suggestions.length > 0 && (
           <section className="space-y-2 rounded-lg border border-border/60 bg-card p-4">
-            <div className="flex flex-wrap items-baseline gap-2">
-              <h2 className="text-base font-medium">再多一位會更好</h2>
-              <span className="text-xs text-muted-foreground">尚未勾選，不計入上方結果</span>
-            </div>
+            <h2 className="text-base font-medium">再多一位會更好</h2>
             <p className="text-xs leading-relaxed text-muted-foreground">
-              以下英雄不在「可使用英雄」範圍內，完全沒有進入上方結果。這裡只是說明：如果手上多了這一位，
+              以下英雄尚未勾選，不計入上方結果。如果手上多了這一位，
               {targetLabel}連結加成總和的上限會往哪裡走。
             </p>
             <ul className="divide-y divide-border/60">

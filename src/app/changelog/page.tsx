@@ -17,12 +17,7 @@ export default function ChangelogPage() {
     <div className="mx-auto max-w-3xl px-4 py-10 sm:py-14">
       <header className="mb-8 flex items-center gap-3">
         <HistoryIcon className="text-primary size-6" aria-hidden />
-        <div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">更新紀錄</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            資料庫每次更新的異動摘要，對齊遊戲版本。
-          </p>
-        </div>
+        <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">更新紀錄</h1>
       </header>
 
       {entries.length === 0 ? (

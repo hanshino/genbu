@@ -132,7 +132,7 @@ function InitialState() {
       </span>
       <h2 className="font-heading text-base font-semibold">還沒有查詢結果</h2>
       <p className="text-sm leading-relaxed text-muted-foreground">
-        輸入等級後，這裡會列出適合你練功的野外地圖：要撐多少命中、有哪些怪、會掉什麼。
+        輸入等級查看
       </p>
       <ol className="mt-1 flex w-full flex-col gap-2 text-xs leading-relaxed text-muted-foreground">
         {[
@@ -252,11 +252,8 @@ export default async function TrainingSpotsPage({ searchParams }: PageProps) {
 
   return (
     <div className="mx-auto max-w-4xl space-y-5 px-4 py-8">
-      <header className="space-y-1.5">
+      <header>
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">練功地圖</h1>
-        <p className="max-w-[60ch] text-sm text-pretty text-muted-foreground">
-          輸入等級和門派，看哪裡有適合你打的怪、要撐多少命中、會掉什麼。
-        </p>
       </header>
 
       <section className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
@@ -394,7 +391,7 @@ export default async function TrainingSpotsPage({ searchParams }: PageProps) {
             </div>
           ) : (
             <p className="rounded-xl border border-dashed border-border bg-card px-4 py-6 text-sm text-muted-foreground">
-              這個等級沒有符合條件的野外地圖，可以看看下方的其他地圖。
+              此等級沒有野外地圖
             </p>
           )}
 

@@ -78,10 +78,7 @@ export default async function CompoundGroupDetailPage({ params }: PageProps) {
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
           {group.name ?? `#${group.id}`}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          GroupID #{group.id} · {recipes.length} 條配方
-          {levelRange && ` · ${levelRange}`}
-        </p>
+        {levelRange && <p className="text-sm text-muted-foreground">{levelRange}</p>}
       </header>
 
       <div className="space-y-6">
@@ -89,7 +86,6 @@ export default async function CompoundGroupDetailPage({ params }: PageProps) {
           <section key={type} className="space-y-3">
             <div className="flex items-center gap-2">
               <Badge variant="outline">{COMPOUND_TYPE_LABELS[type] ?? type}</Badge>
-              <span className="text-xs text-muted-foreground">{items.length} 條</span>
             </div>
             <CompoundRecipeTable recipes={items} iconMap={iconMap} />
           </section>

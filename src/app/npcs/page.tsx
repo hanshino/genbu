@@ -20,7 +20,7 @@ export default function NpcsPage() {
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">NPC 位置查詢</h1>
         <p className="text-sm text-muted-foreground">
-          共 {npcs.length.toLocaleString()} 位 NPC · 點進去看出現在哪些地圖
+          {npcs.length.toLocaleString()} 位 NPC
         </p>
       </header>
 

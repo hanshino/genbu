@@ -78,7 +78,7 @@ export default function DungeonGuidesPage() {
           迷宮與副本
         </h1>
         <p className="text-muted-foreground max-w-[32em] text-[15.5px] leading-relaxed text-pretty sm:text-[17px]">
-          任務迷宮一關一關怎麼走、要打哪些怪，都整理在這裡。副本裡的數字謎題，用下面的工具輸入題目就能算出答案。
+          數字謎題可用下方工具。
         </p>
       </section>
 

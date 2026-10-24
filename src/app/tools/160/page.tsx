@@ -15,9 +15,6 @@ export default function ForestMatrixPage() {
       </nav>
       <header className="mb-6">
         <h1 className="font-heading text-3xl font-bold">160 副本 — 迷霧九宮格</h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          選擇總和（12 或 15），點擊兩間關閉的房間輸入 NPC 給的水晶數，點「解題」即可推算其餘 7 間。
-        </p>
       </header>
       <ForestMatrixSolver />
     </div>

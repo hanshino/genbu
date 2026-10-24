@@ -25,9 +25,6 @@ export default function StatSimPage() {
 
       <header className="mb-5">
         <h1 className="font-heading text-2xl font-bold tracking-wide md:text-3xl">屬性模擬器</h1>
-        <p className="mt-2 max-w-[62ch] text-sm text-muted-foreground">
-          填入門派、等級、轉生、配點、裝備與被動，算出角色面板，並列出每一項數值的來源。角色資料只存在這台裝置的瀏覽器裡。
-        </p>
       </header>
 
       <StatSimClient data={data} windows={windows} />

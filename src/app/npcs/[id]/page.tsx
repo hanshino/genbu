@@ -48,9 +48,6 @@ export default async function NpcDetailPage({ params }: PageProps) {
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground">NPC</p>
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{npc.name}</h1>
-          {npc.maps.length > 0 && (
-            <p className="text-sm text-muted-foreground">出現在 {npc.maps.length} 張地圖</p>
-          )}
         </div>
       </header>
 

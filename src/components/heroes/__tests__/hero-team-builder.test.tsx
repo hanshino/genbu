@@ -184,7 +184,7 @@ describe("HeroTeamBuilder", () => {
     await user.click(screen.getByRole("button", { name: "完成" }));
 
     expect(await screen.findByText("再多一位會更好")).toBeInTheDocument();
-    expect(screen.getByText("尚未勾選，不計入上方結果")).toBeInTheDocument();
+    expect(screen.getByText(/尚未勾選，不計入上方結果/)).toBeInTheDocument();
     expect(screen.getByText(/可解鎖：甲丙同心/)).toBeInTheDocument();
     expect(screen.getByText("+400")).toBeInTheDocument();
   });

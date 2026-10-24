@@ -249,7 +249,6 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
           id="item-uses"
           title="用途與去向"
           icon={<HammerIcon />}
-          description="以下為此道具的消耗與出清方式，不是取得來源。"
         >
           <BoxContentsSection options={boxContents} />
 
@@ -269,7 +268,7 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
           id="item-progression"
           title="強化與覺醒"
           icon={<TrendingUpIcon />}
-          description="取得之後可以怎麼把它變強；成本與機率皆為資料庫數值，非官方公告。"
+          description="成本與機率為資料庫數值，非官方公告。"
         >
           {awakeningPath && <AwakeningSection path={awakeningPath} />}
 

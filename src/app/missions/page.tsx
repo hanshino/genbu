@@ -20,15 +20,13 @@ export default function MissionsHubPage() {
   const missions = getAllMissionListItems();
 
   const total = missions.length;
-  const cycleCount = missions.filter((m) => m.cycleTime != null).length;
-  const groupCount = groups.filter((g) => g.groupId != null).length;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">任務</h1>
         <p className="text-sm text-muted-foreground">
-          {total.toLocaleString()} 個任務 · {groupCount} 個分組 · {cycleCount} 個可重複
+          {total.toLocaleString()} 個任務
         </p>
       </header>
 

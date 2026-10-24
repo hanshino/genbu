@@ -56,7 +56,7 @@ export default async function ItemsPage({ searchParams }: PageProps) {
       <header className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">道具查詢</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          共 {result.total.toLocaleString()} 筆{search || type ? "（符合條件）" : ""}
+          共 {result.total.toLocaleString()} 筆
         </p>
       </header>
 

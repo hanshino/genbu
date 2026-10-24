@@ -45,7 +45,7 @@ export default async function AchievementsPage({ searchParams }: PageProps) {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">成就圖鑑</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          共 {total.toLocaleString("zh-TW")} 個成就,依遊戲內分類瀏覽
+          共 {total.toLocaleString("zh-TW")} 個成就
         </p>
       </header>
 
@@ -200,10 +200,7 @@ function RewardGroups() {
           <h2 className="text-lg font-medium">永久屬性加成</h2>
           {attrGroups.map(([attr, list]) => (
             <div key={attr} className="space-y-2">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className="text-base font-medium">{attr}</h3>
-                <span className="text-xs text-muted-foreground">{list.length} 個成就</span>
-              </div>
+              <h3 className="text-base font-medium">{attr}</h3>
               <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
                 {list.map((a) => (
                   <AchievementRow key={a.id} achievement={a} />
@@ -218,10 +215,7 @@ function RewardGroups() {
         if (list.length === 0) return null;
         return (
           <section key={type} className="space-y-2">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="text-lg font-medium">{label}</h2>
-              <span className="text-xs text-muted-foreground">{list.length} 個成就</span>
-            </div>
+            <h2 className="text-lg font-medium">{label}</h2>
             <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-card">
               {list.map((a) => (
                 <AchievementRow key={a.id} achievement={a} />

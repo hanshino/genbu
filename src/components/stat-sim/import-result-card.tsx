@@ -141,7 +141,6 @@ export function ImportResultCard({
             aria-hidden
           />
           全部都對得上，沒有要提醒你的地方。
-          <span className="text-xs text-muted-foreground">直接去右邊面板看數字就行。</span>
         </p>
       ) : (
         GROUPS.map(({ severity, title, Icon, tone, bar }) => {

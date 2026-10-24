@@ -7,8 +7,10 @@ export interface NavEntry {
   label: string;
   /** 首頁卡片標題；沒給就用 label */
   title?: string;
-  /** 首頁卡片說明；沒給代表首頁不顯示這個入口（例如 navbar 專用的「工具總覽」） */
+  /** 首頁卡片說明；標題已自明的入口不給，卡片就只顯示標題 */
   description?: string;
+  /** 不上首頁卡片（例如 navbar 專用的「工具總覽」） */
+  hideOnHome?: boolean;
   /** 搜尋同義詞，使用者不一定打得出正式名稱 */
   keywords?: string[];
   /** navbar 高亮只比對完整路徑，不含子路徑 */
@@ -37,19 +39,19 @@ export const NAV_SECTIONS: NavSection[] = [
       {
         href: "/skills",
         label: "技能",
-        description: "14 門派技能瀏覽、等級成長對照",
+        description: "14 門派技能與成長",
         keywords: ["武功", "門派"],
       },
       {
         href: "/monsters",
         label: "怪物",
-        description: "等級、屬性、掉落反查一次找齊",
+        description: "等級、屬性、掉落",
         keywords: ["掉落", "魔物"],
       },
       {
         href: "/heroes",
         label: "英雄",
-        description: "英雄清單、相惜組合，還能試排隊伍編成",
+        description: "相惜組合與隊伍編成",
         keywords: ["相惜"],
       },
       {
@@ -61,26 +63,22 @@ export const NAV_SECTIONS: NavSection[] = [
       {
         href: "/maps",
         label: "地圖",
-        description: "全部場景地圖、所屬區域與屬性",
         keywords: ["場景"],
       },
       {
         href: "/npcs",
         label: "NPC",
         title: "NPC 位置",
-        description: "搜尋 NPC 名稱，查它出現在哪些地圖",
         keywords: ["位置", "人物"],
       },
       {
         href: "/training-spots",
         label: "練功地圖",
-        description: "輸入等級，找適合練功的地圖",
         keywords: ["練功", "練等", "升級"],
       },
       {
         href: "/compounds",
         label: "煉化",
-        description: "煉化配方來源、產出與機率",
         keywords: ["煉化", "合成"],
       },
       {
@@ -97,7 +95,7 @@ export const NAV_SECTIONS: NavSection[] = [
       {
         href: "/shops",
         label: "商店",
-        description: "NPC 商店販售與收購價，查哪裡買得到",
+        description: "販售與收購價",
         keywords: ["商店", "購買", "收購"],
       },
     ],
@@ -123,7 +121,7 @@ export const NAV_SECTIONS: NavSection[] = [
     label: "工具",
     overview: "/tools",
     items: [
-      { href: "/tools", label: "工具總覽", exact: true, keywords: ["工具"] },
+      { href: "/tools", label: "工具總覽", exact: true, hideOnHome: true, keywords: ["工具"] },
       {
         href: "/tools/enhance",
         label: "強化查詢",

@@ -105,11 +105,9 @@ function Destination({ option, sameMap }: { option: PortalOption; sameMap: boole
         )}
         {landings.length === 0 && <span className="text-xs text-muted-foreground">落點未收錄</span>}
       </div>
-      {sameMap
-        ? landings.length > 0 && (
-            <p className="text-xs text-muted-foreground">目的地就是本圖，落點已標在地圖上。</p>
-          )
-        : img && <Thumb key={option.key} img={img} landings={landings} name={dest.name} />}
+      {!sameMap && img && (
+        <Thumb key={option.key} img={img} landings={landings} name={dest.name} />
+      )}
       {!sameMap && img && landings.length > 0 && (
         <p className="text-xs text-muted-foreground">
           縮圖上的點是傳過去後的落點（{landings.length} 處）。

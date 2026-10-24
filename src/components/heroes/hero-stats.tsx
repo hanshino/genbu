@@ -32,9 +32,6 @@ export function HeroStats({ stats }: { stats: HeroStatsData }) {
           </div>
         ))}
       </dl>
-      <p className="text-xs text-muted-foreground">
-        以上為 hero 表的原始欄位值，數值 0 是資料中的實際內容，不代表資料缺漏。
-      </p>
     </section>
   );
 }

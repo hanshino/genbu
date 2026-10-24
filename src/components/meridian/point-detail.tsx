@@ -102,7 +102,7 @@ export function PointDetail({
 
       {own.size > 0 && (
         <div className="mb-3">
-          <SectionLabel>目前這個穴位給的加成</SectionLabel>
+          <SectionLabel>目前加成</SectionLabel>
           <div className="flex flex-wrap gap-1.5">
             {[...own].map(([st, v]) => (
               <Badge
@@ -117,9 +117,7 @@ export function PointDetail({
         </div>
       )}
 
-      {maxed || !lv ? (
-        <p className="text-sm text-muted-foreground">這個穴位已經點滿了。</p>
-      ) : (
+      {maxed || !lv ? null : (
         <>
           <Separator className="my-3" />
           <SectionLabel>下一級 · Lv{next}</SectionLabel>

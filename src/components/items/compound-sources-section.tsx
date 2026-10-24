@@ -41,7 +41,6 @@ export function CompoundSourcesSection({
           <div key={groupName} className="space-y-2">
             <div className="flex items-center gap-2">
               <Badge variant="outline">{groupName}</Badge>
-              <span className="text-xs text-muted-foreground">{items.length} 條</span>
             </div>
 
             <div className="rounded-lg border border-border/60 overflow-x-auto">
