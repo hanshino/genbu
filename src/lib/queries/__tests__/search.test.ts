@@ -67,6 +67,21 @@ describe("searchAll（真實資料庫）", () => {
     for (const hit of items.hits) expect(hit.meta).not.toMatch(/^[A-Z_]+$/);
   });
 
+  it("技能 meta 顯示中文門派而非 CLASS_ 代碼", () => {
+    const skills = searchAll("劍").groups.find((g) => g.type === "skill")!;
+    for (const hit of skills.hits) expect(hit.meta ?? "").not.toMatch(/CLASS_/);
+  });
+
+  it("同組同名的結果在 meta 補上 #id 以便區分", () => {
+    const dup = getDb()
+      .prepare("SELECT name FROM items GROUP BY name HAVING COUNT(*) > 1 ORDER BY length(name) DESC LIMIT 1")
+      .get() as { name: string };
+    const items = searchAll(dup.name).groups.find((g) => g.type === "item")!;
+    const same = items.hits.filter((h) => h.name === dup.name);
+    expect(same.length).toBeGreaterThan(1);
+    for (const hit of same) expect(hit.meta).toContain(`#${hit.id}`);
+  });
+
   it("完全同名的道具排在組內第一，total 大於 perType 時 hits 被截斷", () => {
     const names = getDb()
       .prepare("SELECT DISTINCT name FROM items WHERE length(name) BETWEEN 1 AND 2 AND name NOT GLOB '*[0-9]*' ORDER BY length(name), id LIMIT 50")
