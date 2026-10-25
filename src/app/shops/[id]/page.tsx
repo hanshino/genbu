@@ -16,6 +16,7 @@ import { ItemIcon } from "@/components/common/item-icon";
 import { getItemIconMap } from "@/lib/queries/images";
 import { getShopDetail } from "@/lib/queries/shops";
 import { getNpcIdsByNames } from "@/lib/queries/npcs";
+import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import {
   castleLabel,
   shopCurrencyLabel,
@@ -143,12 +144,12 @@ export default async function ShopDetailPage({ params }: PageProps) {
                         href={`/items/${e.itemId}`}
                         className="font-medium underline decoration-dotted underline-offset-2 hover:decoration-solid"
                       >
-                        {e.itemName ?? `#${e.itemId}`}
+                        {e.itemName || `#${e.itemId}`}
                       </Link>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {e.itemType ?? "—"}
+                    {e.itemType ? (ITEM_TYPE_LABELS[e.itemType] ?? e.itemType) : "—"}
                   </TableCell>
                   <TableCell className="text-right font-mono text-sm">
                     <span className="inline-flex items-center justify-end gap-1.5">
