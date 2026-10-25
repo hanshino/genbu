@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { BackLink } from "@/components/common/back-link";
+import { DetailBreadcrumb } from "@/components/common/detail-breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { HeroStats } from "@/components/heroes/hero-stats";
 import { HeroCombinationList } from "@/components/heroes/hero-combination-list";
@@ -38,9 +38,7 @@ export default async function HeroDetailPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
-      <nav className="text-sm text-muted-foreground">
-        <BackLink href="/heroes" />
-      </nav>
+      <DetailBreadcrumb parent={{ href: "/heroes", label: "英雄" }} current={hero.name} />
 
       <header className="space-y-2">
         <div className="flex flex-wrap items-baseline gap-2">

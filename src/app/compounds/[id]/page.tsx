@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { BackLink } from "@/components/common/back-link";
+import { DetailBreadcrumb } from "@/components/common/detail-breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import {
   COMPOUND_TYPE_LABELS,
@@ -70,9 +70,7 @@ export default async function CompoundGroupDetailPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-      <nav className="text-sm text-muted-foreground">
-        <BackLink href="/compounds" />
-      </nav>
+      <DetailBreadcrumb parent={{ href: "/compounds", label: "煉化" }} current={group.name ?? `#${group.id}`} />
 
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">

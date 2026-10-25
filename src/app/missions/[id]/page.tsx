@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { BackLink } from "@/components/common/back-link";
+import { DetailBreadcrumb } from "@/components/common/detail-breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { EntityPortrait } from "@/components/common/entity-portrait";
 import { MissionStepText } from "@/components/missions/mission-step-text";
@@ -250,9 +250,7 @@ export default async function MissionDetailPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
-      <nav className="text-sm text-muted-foreground">
-        <BackLink href="/missions" />
-      </nav>
+      <DetailBreadcrumb parent={{ href: "/missions", label: "任務" }} current={mission.name ?? `任務 ${mission.id}`} />
 
       <header className="space-y-2">
         <div className="flex flex-wrap items-baseline gap-2">

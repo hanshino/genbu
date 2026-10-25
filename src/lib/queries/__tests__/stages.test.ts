@@ -50,3 +50,14 @@ describe("區域名稱", () => {
     expect(getAllStageGroupStats().find((g) => g.groupId === 1)?.label).toBe("特殊場景");
   });
 });
+
+describe("NPC ↔ 商店", () => {
+  it("開店 NPC 查得到 NPC 頁 id，NPC 也查得回自己的店", async () => {
+    const { getNpcIdsByNames } = await import("@/lib/queries/npcs");
+    const { getShopsForNpc } = await import("@/lib/queries/shops");
+    const ids = getNpcIdsByNames(["洛陽道具商", "不存在的人"]);
+    expect(ids.has("洛陽道具商")).toBe(true);
+    expect(ids.has("不存在的人")).toBe(false);
+    expect(getShopsForNpc("洛陽道具商").length).toBeGreaterThan(0);
+  });
+});

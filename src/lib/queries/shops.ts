@@ -235,3 +235,8 @@ export function getShopsSellingItem(itemId: number): ItemShopSale[] {
     };
   });
 }
+
+/** 這個 NPC（以名稱比對，與商店頁的開店 NPC 同一來源）開的店，NPC 頁用。 */
+export function getShopsForNpc(name: string): ShopSummary[] {
+  return getShops().filter((s) => s.npcNames.includes(name));
+}

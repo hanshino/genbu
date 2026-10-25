@@ -7,7 +7,7 @@ import { MonsterDetailView } from "@/components/monsters/monster-detail";
 import { MonsterDropTable } from "@/components/monsters/monster-drop-table";
 import { MonsterStageSpawns } from "@/components/monsters/monster-stage-spawns";
 import { HitRequirementPanel } from "@/components/monsters/hit-requirement-panel";
-import { BackLink } from "@/components/common/back-link";
+import { DetailBreadcrumb } from "@/components/common/detail-breadcrumb";
 import { SKILL_PICKS, type SkillSchool } from "@/lib/constants/skill-picks";
 
 export const dynamic = "force-dynamic";
@@ -52,9 +52,7 @@ export default async function MonsterDetailPage({ params, searchParams }: PagePr
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
-      <nav className="text-sm text-muted-foreground">
-        <BackLink href="/monsters" />
-      </nav>
+      <DetailBreadcrumb parent={{ href: "/monsters", label: "怪物" }} current={monster.name} />
 
       <MonsterDetailView monster={monster} portrait={portrait} />
 

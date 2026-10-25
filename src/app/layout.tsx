@@ -5,6 +5,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { CompareBar } from "@/components/compare/compare-bar";
 import { UmamiAnalytics } from "@/components/analytics/umami";
+import { NavigationTracker } from "@/lib/nav-history";
 import { getCurrentUser } from "@/lib/auth/session";
 
 const notoSansTC = Noto_Sans_TC({
@@ -72,6 +73,7 @@ export default async function RootLayout({
         <Footer />
         <CompareBar />
         <UmamiAnalytics />
+        <NavigationTracker />
       </body>
     </html>
   );
