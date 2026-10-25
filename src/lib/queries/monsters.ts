@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db";
 import { buildOrderBy, nullsLastSorts, type SortDir } from "@/lib/sort";
 import { MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL } from "@/lib/constants/monster-level";
 import { MONSTER_COLUMNS } from "@/lib/constants/monster-columns";
+import { PLACEHOLDER_MONSTER_SQL } from "@/lib/placeholder-data";
 import { getNpcImageMap } from "./images";
 import { getSkillsByCodesBatch } from "./magic";
 import { getStatusById } from "./status";
@@ -79,6 +80,8 @@ export interface GetMonstersParams {
   elemental?: string;
   hasDrop?: boolean;
   isNormal?: boolean;
+  /** 沒有搜尋字時也列出佔位怪物（測試怪、沒出沒也沒掉落的）。有搜尋字時一律列出。 */
+  includePlaceholders?: boolean;
   /** 等級下限（含）。非數字/空 → 不限。會 clamp 到 [MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL]。 */
   levelMin?: number;
   /** 等級上限（含）。非數字/空 → 不限。會 clamp 到 [MIN_MONSTER_LEVEL, MAX_MONSTER_LEVEL]。 */
@@ -147,6 +150,12 @@ export function getMonsters(params: GetMonstersParams = {}): GetMonstersResult {
       conditions.push("n.name LIKE ?");
       args.push(`%${q}%`);
     }
+  }
+
+  // 瀏覽時藏掉佔位怪物；查名字的人要找得到，所以有搜尋字就不藏。
+  // 算在基準條件裡：清除篩選後回到的列表同樣不含佔位怪物，「清除後有幾筆」才對得上。
+  if (!params.search?.trim() && !params.includePlaceholders) {
+    conditions.push(`NOT ${PLACEHOLDER_MONSTER_SQL}`);
   }
 
   // 搜尋字 + 基準條件（n.type > 0），不含任何使用者篩選；

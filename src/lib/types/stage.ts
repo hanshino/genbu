@@ -39,6 +39,8 @@ export interface StageListItem {
   flags: string[];
   /** 多少張地圖把這裡列為 appear/logout 目的地（hub 程度指標）。 */
   inboundCount: number;
+  /** 測試／保留／活動空殼等佔位地圖，列表預設隱藏 */
+  placeholder?: boolean;
 }
 
 /** 群組統計（hub 用）。 */

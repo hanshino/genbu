@@ -43,7 +43,7 @@ describe("parseDropItem", () => {
 
 describe("getMonsters", () => {
   it("returns paginated combatants (npc LEFT JOIN monsters, type > 0)", () => {
-    const result = getMonsters({ pageSize: 10 });
+    const result = getMonsters({ pageSize: 10, includePlaceholders: true });
     expect(result.monsters.length).toBeLessThanOrEqual(10);
     expect(result.monsters.length).toBeGreaterThan(0);
     expect(result.total).toBe(3135);
@@ -61,7 +61,7 @@ describe("getMonsters", () => {
   });
 
   it("filters by type", () => {
-    const type17 = getMonsters({ type: 17, pageSize: 5 });
+    const type17 = getMonsters({ type: 17, pageSize: 5, includePlaceholders: true });
     expect(type17.total).toBe(1156);
     for (const m of type17.monsters) expect(m.type).toBe(17);
   });
@@ -71,6 +71,16 @@ describe("getMonsters", () => {
     for (const m of normals.monsters) {
       expect(m.name.startsWith("▲") || m.name.startsWith("●")).toBe(true);
     }
+  });
+
+  it("瀏覽時預設藏掉佔位怪物（沒出沒也沒掉落、測試怪），有搜尋字時照常列出", () => {
+    const all = getMonsters({ pageSize: 5, includePlaceholders: true });
+    const browsing = getMonsters({ pageSize: 50 });
+    expect(browsing.total).toBeLessThan(all.total);
+    for (const m of browsing.monsters) expect(m.name).not.toMatch(/測試|活動用|預留/);
+
+    const searched = getMonsters({ search: "活動用" });
+    expect(searched.total).toBeGreaterThan(0);
   });
 
   it("searches by integer id", () => {
@@ -164,19 +174,19 @@ describe("distinct helpers", () => {
 
 describe("getMonsters — level range", () => {
   it("filters by levelMin (level >= min)", () => {
-    const result = getMonsters({ levelMin: 100, pageSize: 20 });
+    const result = getMonsters({ levelMin: 100, pageSize: 20, includePlaceholders: true });
     expect(result.total).toBe(1394);
     for (const m of result.monsters) expect(m.level).toBeGreaterThanOrEqual(100);
   });
 
   it("filters by levelMax (level <= max)", () => {
-    const result = getMonsters({ levelMax: 10, pageSize: 20 });
+    const result = getMonsters({ levelMax: 10, pageSize: 20, includePlaceholders: true });
     expect(result.total).toBe(157);
     for (const m of result.monsters) expect(m.level).toBeLessThanOrEqual(10);
   });
 
   it("filters by both bounds (inclusive)", () => {
-    const result = getMonsters({ levelMin: 50, levelMax: 60, pageSize: 100 });
+    const result = getMonsters({ levelMin: 50, levelMax: 60, pageSize: 100, includePlaceholders: true });
     expect(result.total).toBe(216);
     for (const m of result.monsters) {
       expect(m.level).toBeGreaterThanOrEqual(50);
@@ -185,19 +195,19 @@ describe("getMonsters — level range", () => {
   });
 
   it("swaps bounds when min > max (forgiving)", () => {
-    const swapped = getMonsters({ levelMin: 60, levelMax: 50, pageSize: 100 });
+    const swapped = getMonsters({ levelMin: 60, levelMax: 50, pageSize: 100, includePlaceholders: true });
     expect(swapped.total).toBe(216);
   });
 
   it("clamps out-of-range bounds to [1, 200]", () => {
     // 0 clamps to 1 (min possible level) → no effective lower bound
-    expect(getMonsters({ levelMin: 0 }).total).toBe(3135);
+    expect(getMonsters({ levelMin: 0, includePlaceholders: true }).total).toBe(3135);
     // 999 clamps to 200 (max possible level) → no effective upper bound
-    expect(getMonsters({ levelMax: 999 }).total).toBe(3135);
+    expect(getMonsters({ levelMax: 999, includePlaceholders: true }).total).toBe(3135);
   });
 
   it("ignores non-finite bounds (treated as unbounded)", () => {
-    expect(getMonsters({ levelMin: Number.NaN, levelMax: Number.NaN }).total).toBe(3135);
+    expect(getMonsters({ levelMin: Number.NaN, levelMax: Number.NaN, includePlaceholders: true }).total).toBe(3135);
   });
 });
 

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MapList } from "../map-list";
 import type { StageGroupStats, StageListItem } from "@/lib/types/stage";
@@ -17,6 +18,7 @@ vi.mock("next/link", () => ({
 const stages: StageListItem[] = [
   { id: 1, kind: "stage", name: "洛陽", groupId: 1, flags: [], inboundCount: 0 },
   { id: 12, kind: "stage", name: "長安", groupId: 1, flags: [], inboundCount: 0 },
+  { id: 386, kind: "stage", name: "TEST", groupId: 1, flags: [], inboundCount: 0, placeholder: true },
 ];
 const groups: StageGroupStats[] = [{ groupId: 1, count: 2, preview: "洛陽、長安" }];
 
@@ -105,5 +107,23 @@ describe("MapList 搜尋 ↔ URL", () => {
     );
     expect(searchBox()).toHaveValue("洛");
     expect(shown()).toEqual(["/maps/1"]);
+  });
+});
+
+describe("MapList 佔位地圖", () => {
+  it("預設隱藏，勾選後顯示並寫入 URL；搜尋時一律列出", async () => {
+    vi.useRealTimers();
+    const user = userEvent.setup();
+    render(<MapList stages={stages} groups={groups} />);
+    expect(shown()).toEqual(["/maps/1", "/maps/12"]);
+
+    await user.click(screen.getByRole("checkbox", { name: "顯示測試／保留地圖" }));
+    expect(shown()).toEqual(["/maps/1", "/maps/12", "/maps/386"]);
+    expect(window.location.search).toBe("?all=1");
+
+    await user.click(screen.getByRole("checkbox", { name: "顯示測試／保留地圖" }));
+    fireEvent.change(searchBox(), { target: { value: "TEST" } });
+    expect(shown()).toEqual(["/maps/386"]);
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   });
 });

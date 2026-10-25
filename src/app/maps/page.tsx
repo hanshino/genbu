@@ -19,7 +19,7 @@ export default function MapsHubPage() {
   const stages = getAllStageListItems();
   const groups = getAllStageGroupStats();
 
-  const total = stages.length;
+  const total = stages.filter((s) => !s.placeholder).length;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
