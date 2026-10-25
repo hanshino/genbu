@@ -58,14 +58,9 @@ export function MapList({ stages, groups }: Props) {
     [grouped],
   );
 
-  const previewById = useMemo(() => {
-    const m = new Map<number, string>();
-    for (const g of groups) m.set(g.groupId, g.preview);
-    return m;
-  }, [groups]);
+  const groupById = useMemo(() => new Map(groups.map((g) => [g.groupId, g])), [groups]);
 
-  const chipBase =
-    "rounded-md border border-border/60 bg-card px-2.5 py-1 font-mono text-xs";
+  const chipBase = "rounded-md border border-border/60 bg-card px-2.5 py-1 text-xs";
 
   return (
     <div className="space-y-4">
@@ -73,7 +68,7 @@ export function MapList({ stages, groups }: Props) {
         <div className="-mx-1 flex flex-wrap gap-1.5 px-1">
           {groups.map((g) => {
             const key = g.groupId;
-            const label = `#${g.groupId}`;
+            const label = g.label;
             if (!visibleGroupIds.has(g.groupId)) {
               return (
                 <span
@@ -142,7 +137,7 @@ export function MapList({ stages, groups }: Props) {
 
       <div className="space-y-6 pt-2">
         {grouped.map(({ groupId, items }) => {
-          const preview = groupId != null ? previewById.get(groupId) : null;
+          const group = groupId != null ? groupById.get(groupId) : undefined;
           return (
             <section
               key={groupId ?? "uncat"}
@@ -151,14 +146,14 @@ export function MapList({ stages, groups }: Props) {
             >
               <div className="sticky top-[6.5rem] z-20 -mx-4 flex items-baseline gap-2 border-b border-border/60 bg-background/95 px-4 py-1.5 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                 <h2 className="text-sm font-medium">
-                  {groupId == null ? "未分類" : `區域 #${groupId}`}
+                  {group?.label ?? "未分類"}
                 </h2>
                 <span className="text-xs text-muted-foreground">
                   {items.length} 張
                 </span>
-                {preview && (
+                {group?.preview && (
                   <span className="ml-2 hidden truncate text-xs text-muted-foreground/80 sm:inline">
-                    {preview}
+                    {group.preview}
                   </span>
                 )}
               </div>

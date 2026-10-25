@@ -45,20 +45,23 @@ export function getAllStageGroupStats(): StageGroupStats[] {
     names.push(r.name);
     byGroup.set(r.groupId, names);
   }
-  return [...byGroup].map(([groupId, names]) => ({
-    groupId,
-    count: names.length,
-    preview: previewNames(names),
-  }));
+  return [...byGroup].map(([groupId, names]) => {
+    // 去重、略過佔位地圖名（整組都是佔位時才用原名）
+    const real = names.filter((n) => !isPlaceholderStageName(n));
+    const unique = [...new Set(real.length > 0 ? real : names)];
+    const label = GROUP_LABEL_OVERRIDES[groupId] ?? unique[0];
+    const rest = unique.filter((n) => n !== label);
+    return {
+      groupId,
+      count: names.length,
+      label,
+      preview: rest.length <= 3 ? rest.join("、") : `${rest.slice(0, 3).join("、")}…`,
+    };
+  });
 }
 
-/** 群組預覽：去重、略過佔位地圖名（整組都是佔位時才用原名），最多四個。 */
-function previewNames(names: string[]): string {
-  const real = names.filter((n) => !isPlaceholderStageName(n));
-  const parts = [...new Set(real.length > 0 ? real : names)];
-  if (parts.length <= 4) return parts.join("、");
-  return `${parts.slice(0, 4).join("、")}…`;
-}
+// 第一張地圖代表不了整區的群組。區域 1 是寵物練功場、魔族巢穴、比武校場、秘境等雜項。
+const GROUP_LABEL_OVERRIDES: Record<number, string> = { 1: "特殊場景" };
 
 /** Hub 用的全量地圖清單。 */
 export function getAllStageListItems(): StageListItem[] {

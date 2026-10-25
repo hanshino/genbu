@@ -41,7 +41,7 @@ import { cn } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "強化查詢 · 玄武",
+  title: "強化配方反查 · 玄武",
   description: "選一個想加的屬性，反查加得到它的真元、魂珠與魂石配方。",
 };
 

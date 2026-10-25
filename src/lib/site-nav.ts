@@ -124,9 +124,9 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/tools", label: "工具總覽", exact: true, hideOnHome: true, keywords: ["工具"] },
       {
         href: "/tools/enhance",
-        label: "強化查詢",
+        label: "強化配方反查",
         description: "依屬性反查真元、魂石強化配方與機率",
-        keywords: ["強化", "真元", "魂石"],
+        keywords: ["強化", "真元", "魂石", "強化查詢"],
       },
       {
         href: "/tools/160",

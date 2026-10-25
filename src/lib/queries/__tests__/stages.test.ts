@@ -39,3 +39,14 @@ describe("getAllStageGroupStats", () => {
     }
   });
 });
+
+describe("區域名稱", () => {
+  it("每個區域都有名稱，不是編號也不是佔位地圖名", () => {
+    for (const g of getAllStageGroupStats()) {
+      expect(g.label).toBeTruthy();
+      expect(g.label).not.toMatch(/^#?\d+$/);
+      if (g.groupId !== 1) expect(isPlaceholderStageName(g.label)).toBe(false);
+    }
+    expect(getAllStageGroupStats().find((g) => g.groupId === 1)?.label).toBe("特殊場景");
+  });
+});

@@ -47,7 +47,9 @@ export interface StageListItem {
 export interface StageGroupStats {
   groupId: number;
   count: number;
-  /** 用前幾張地圖名拼出群組預覽（無正式群組名）。 */
+  /** 區域名稱：遊戲沒有正式區域名，取區內第一張正式地圖（多半是入口或主城）。 */
+  label: string;
+  /** label 之外的幾張地圖名。 */
   preview: string;
 }
 

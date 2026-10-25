@@ -20,7 +20,7 @@ const stages: StageListItem[] = [
   { id: 12, kind: "stage", name: "長安", groupId: 1, flags: [], inboundCount: 0 },
   { id: 386, kind: "stage", name: "TEST", groupId: 1, flags: [], inboundCount: 0, placeholder: true },
 ];
-const groups: StageGroupStats[] = [{ groupId: 1, count: 2, preview: "洛陽、長安" }];
+const groups: StageGroupStats[] = [{ groupId: 1, count: 2, label: "洛陽", preview: "長安" }];
 
 const realReplace = window.history.replaceState.bind(window.history);
 let replaceSpy: ReturnType<typeof vi.spyOn>;
