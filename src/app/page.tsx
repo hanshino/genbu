@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDb } from "@/lib/db";
 import { cn } from "@/lib/utils";
-import { NAV_SECTIONS, type NavSection } from "@/lib/site-nav";
+import { NAV_SECTIONS, splitSubgroups, type NavSection } from "@/lib/site-nav";
 import { getItemsByIds } from "@/lib/queries/items";
 import { getRecentReports } from "@/lib/queries/market-prices";
 import { SERVERS, formatAmount, relativeTime } from "@/lib/market-price";
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 const SECTION_ICONS: Record<string, LucideIcon> = {
   攻略: RouteIcon,
   資料庫: DatabaseIcon,
-  裝備: ShieldIcon,
+  配裝: ShieldIcon,
   工具: WrenchIcon,
 };
 
@@ -41,7 +41,8 @@ interface Feature {
 interface FeatureGroup {
   label: string;
   icon: LucideIcon;
-  features: Feature[];
+  /** 依小分類切段；沒有小分類時只有一段、label 為 null */
+  subgroups: { label: string | null; features: Feature[] }[];
   // 只有真的有總覽頁的組才給「全部」連結
   overview?: string;
 }
@@ -52,9 +53,14 @@ function toFeatureGroup(section: NavSection): FeatureGroup {
     label: section.label,
     icon: SECTION_ICONS[section.label],
     overview: section.overview,
-    features: section.items.flatMap((e) =>
-      e.hideOnHome ? [] : [{ title: e.title ?? e.label, description: e.description, href: e.href }],
-    ),
+    subgroups: splitSubgroups(section.items.filter((e) => !e.hideOnHome)).map((sub) => ({
+      label: sub.label,
+      features: sub.items.map((e) => ({
+        title: e.title ?? e.label,
+        description: e.description,
+        href: e.href,
+      })),
+    })),
   };
 }
 
@@ -165,13 +171,23 @@ export default function HomePage() {
       {/* 攻略放最前面並加框：新玩家／回鍋玩家最需要的是「從哪開始」 */}
       <section className="mt-10 rounded-xl border border-primary/30 bg-primary/5 p-4 sm:p-5">
         <GroupHeading group={guideGroup} className="mt-0" />
-        <FeatureGrid features={guideGroup.features} className="sm:grid-cols-2 lg:grid-cols-2" />
+        <FeatureGrid
+          features={guideGroup.subgroups.flatMap((s) => s.features)}
+          className="sm:grid-cols-2 lg:grid-cols-2"
+        />
       </section>
 
       {groups.map((g) => (
         <section key={g.label}>
           <GroupHeading group={g} />
-          <FeatureGrid features={g.features} />
+          <div className="space-y-4">
+            {g.subgroups.map((sub) => (
+              <div key={sub.label ?? "all"}>
+                {sub.label && <h3 className="mb-2 text-xs text-muted-foreground">{sub.label}</h3>}
+                <FeatureGrid features={sub.features} />
+              </div>
+            ))}
+          </div>
         </section>
       ))}
     </div>

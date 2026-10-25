@@ -15,6 +15,8 @@ export interface NavEntry {
   keywords?: string[];
   /** navbar 高亮只比對完整路徑，不含子路徑 */
   exact?: boolean;
+  /** 組內小分類；同一小分類的入口要相鄰，選單與首頁依序切段並顯示小標 */
+  subgroup?: string;
 }
 
 export interface NavSection {
@@ -35,73 +37,89 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "道具",
         description: "13,000+ 道具的屬性、隨機詞條、掉落來源",
         keywords: ["裝備", "物品"],
+        subgroup: "圖鑑",
       },
       {
         href: "/skills",
         label: "技能",
         description: "14 門派技能與成長",
         keywords: ["武功", "門派"],
+        subgroup: "圖鑑",
       },
       {
         href: "/monsters",
         label: "怪物",
         description: "等級、屬性、掉落",
         keywords: ["掉落", "魔物"],
+        subgroup: "圖鑑",
       },
       {
         href: "/heroes",
         label: "英雄",
         description: "相惜組合與隊伍編成",
         keywords: ["相惜"],
-      },
-      {
-        href: "/missions",
-        label: "任務",
-        description: "任務步驟、所需物品、地點與 NPC",
-        keywords: ["劇情"],
+        subgroup: "圖鑑",
       },
       {
         href: "/maps",
         label: "地圖",
+        description: "怪物分布、NPC 與傳送點",
         keywords: ["場景"],
+        subgroup: "地點",
       },
       {
         href: "/npcs",
         label: "NPC",
         title: "NPC 位置",
+        description: "出現在哪張地圖、哪個位置",
         keywords: ["位置", "人物"],
+        subgroup: "地點",
       },
       {
         href: "/training-spots",
         label: "練功地圖",
+        description: "輸入等級，找適合的野外練功點",
         keywords: ["練功", "練等", "升級"],
-      },
-      {
-        href: "/compounds",
-        label: "煉化",
-        keywords: ["煉化", "合成"],
-      },
-      {
-        href: "/zhenjie",
-        label: "真解",
-        description: "70 本真解的星數、強度範圍與加成數值",
-        keywords: ["真解", "技能強化"],
-      },
-      {
-        href: "/achievements",
-        label: "成就",
-        description: "1,200+ 成就的點數、描述與獎勵",
+        subgroup: "地點",
       },
       {
         href: "/shops",
         label: "商店",
         description: "販售與收購價",
         keywords: ["商店", "購買", "收購"],
+        subgroup: "地點",
+      },
+      {
+        href: "/missions",
+        label: "任務",
+        description: "任務步驟、所需物品、地點與 NPC",
+        keywords: ["劇情"],
+        subgroup: "任務與養成",
+      },
+      {
+        href: "/compounds",
+        label: "煉化",
+        description: "煉化配方與所需材料",
+        keywords: ["煉化", "合成"],
+        subgroup: "任務與養成",
+      },
+      {
+        href: "/zhenjie",
+        label: "真解",
+        description: "70 本真解的星數、強度範圍與加成數值",
+        keywords: ["真解", "技能強化"],
+        subgroup: "任務與養成",
+      },
+      {
+        href: "/achievements",
+        label: "成就",
+        description: "1,200+ 成就的點數、描述與獎勵",
+        subgroup: "任務與養成",
       },
     ],
   },
   {
-    label: "裝備",
+    label: "配裝",
     items: [
       {
         href: "/ranking",
@@ -228,4 +246,16 @@ export function getSearchablePages(): SearchablePage[] {
   ];
   const seen = new Set<string>();
   return pages.filter((p) => !seen.has(p.href) && seen.add(p.href));
+}
+
+/** 依 subgroup 把入口切段（相鄰同名為一段）；沒有 subgroup 的整組是一段、標題為 null。 */
+export function splitSubgroups(items: NavEntry[]): { label: string | null; items: NavEntry[] }[] {
+  const out: { label: string | null; items: NavEntry[] }[] = [];
+  for (const item of items) {
+    const label = item.subgroup ?? null;
+    const last = out.at(-1);
+    if (last && last.label === label) last.items.push(item);
+    else out.push({ label, items: [item] });
+  }
+  return out;
 }

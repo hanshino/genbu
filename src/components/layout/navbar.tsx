@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { ChevronDownIcon, LogInIcon, LogOutIcon, MenuIcon, XIcon } from "lucide-react";
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { buttonVariants } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import {
   CHANGELOG_LINK,
   HOME_LINK,
   NAV_SECTIONS,
+  splitSubgroups,
   type NavSection,
 } from "@/lib/site-nav";
 
@@ -119,23 +121,12 @@ export function Navbar({ user }: { user: AccountUser | null }) {
                   />
 
                   {navGroups.map((group) => (
-                    <div key={group.label}>
-                      <p className="text-muted-foreground px-3 pb-1.5 text-xs font-medium tracking-wider uppercase">
-                        {group.label}
-                      </p>
-                      <div className="flex flex-col gap-1">
-                        {group.items.map((item) => (
-                          <MobileLink
-                            key={item.href}
-                            href={item.href}
-                            label={item.label}
-                            exact={item.exact}
-                            pathname={pathname}
-                            onNavigate={() => setOpen(false)}
-                          />
-                        ))}
-                      </div>
-                    </div>
+                    <MobileGroup
+                      key={group.label}
+                      group={group}
+                      pathname={pathname}
+                      onNavigate={() => setOpen(false)}
+                    />
                   ))}
 
                   <MobileLink
@@ -285,25 +276,81 @@ function DesktopGroup({ group, pathname }: { group: NavSection; pathname: string
               "data-[side=bottom]:slide-in-from-top-2",
             )}
           >
-            {group.items.map((item) => {
-              const itemActive = isActive(pathname, item.href, item.exact);
-              return (
-                <MenuPrimitive.Item
-                  key={item.href}
-                  render={<Link href={item.href} />}
-                  className={cn(
-                    "data-highlighted:bg-muted flex cursor-pointer items-center rounded-md px-3 py-1.5 text-sm transition-colors outline-hidden",
-                    itemActive && "bg-secondary text-secondary-foreground font-medium",
-                  )}
-                >
-                  {item.label}
-                </MenuPrimitive.Item>
-              );
-            })}
+            {splitSubgroups(group.items).map((sub) => (
+              <MenuPrimitive.Group
+                key={sub.label ?? "all"}
+                className="border-border/60 not-first:mt-1 not-first:border-t not-first:pt-1"
+              >
+                {sub.label && (
+                  <MenuPrimitive.GroupLabel className="text-muted-foreground px-3 pt-1 pb-0.5 text-xs">
+                    {sub.label}
+                  </MenuPrimitive.GroupLabel>
+                )}
+                {sub.items.map((item) => {
+                  const itemActive = isActive(pathname, item.href, item.exact);
+                  return (
+                    <MenuPrimitive.Item
+                      key={item.href}
+                      render={<Link href={item.href} />}
+                      className={cn(
+                        "data-highlighted:bg-muted flex cursor-pointer items-center rounded-md px-3 py-1.5 text-sm transition-colors outline-hidden",
+                        itemActive && "bg-secondary text-secondary-foreground font-medium",
+                      )}
+                    >
+                      {item.label}
+                    </MenuPrimitive.Item>
+                  );
+                })}
+              </MenuPrimitive.Group>
+            ))}
           </MenuPrimitive.Popup>
         </MenuPrimitive.Positioner>
       </MenuPrimitive.Portal>
     </MenuPrimitive.Root>
+  );
+}
+
+// 手機抽屜：各組可收合，只預設展開目前所在的那組，不然一打開就是近 30 個連結的長清單。
+function MobileGroup({
+  group,
+  pathname,
+  onNavigate,
+}: {
+  group: NavSection;
+  pathname: string;
+  onNavigate: () => void;
+}) {
+  return (
+    <Collapsible defaultOpen={isGroupActive(pathname, group)}>
+      <CollapsibleTrigger className="group/trigger text-foreground hover:bg-muted flex items-center justify-between rounded-md px-3 py-2.5 text-base font-medium">
+        {group.label}
+        <ChevronDownIcon
+          className="text-muted-foreground size-4 transition-transform duration-150 group-data-panel-open/trigger:rotate-180"
+          aria-hidden
+        />
+      </CollapsibleTrigger>
+      <CollapsiblePanel>
+        <div className="flex flex-col gap-1 pt-1 pl-3">
+          {splitSubgroups(group.items).map((sub) => (
+            <div key={sub.label ?? "all"} className="flex flex-col gap-1">
+              {sub.label && (
+                <p className="text-muted-foreground px-3 pt-1.5 text-xs">{sub.label}</p>
+              )}
+              {sub.items.map((item) => (
+                <MobileLink
+                  key={item.href}
+                  href={item.href}
+                  label={item.label}
+                  exact={item.exact}
+                  pathname={pathname}
+                  onNavigate={onNavigate}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      </CollapsiblePanel>
+    </Collapsible>
   );
 }
 
