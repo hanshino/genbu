@@ -52,7 +52,7 @@ export function ItemTable({
   const nameCol = stickyNameCol(show.has("id"));
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border/60">
+    <div className="scroll-hint-x overflow-hidden rounded-lg border border-border/60">
       <Table>
         <TableHeader>
           <TableRow className="group/row">

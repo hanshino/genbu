@@ -91,12 +91,13 @@ describe("MarketPriceSection", () => {
     expect(reference().getByText(/由 1 筆回報算出/)).toBeInTheDocument(); // 但沒算進去
   });
 
-  it("沒有任何回報時給空狀態，未登入不顯示回報按鈕", async () => {
+  it("沒有任何回報時收成一行，未登入只給登入連結", async () => {
     mockPrices([]);
     render(<MarketPriceSection itemId={24086} itemName="玄鐵重劍" user={null} />);
 
     expect(await screen.findByText(/還沒有人報過價/)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "我來報第一筆" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "參考價" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "回報價格" })).not.toBeInTheDocument();
     expect(screen.getByText("使用 LINE 登入")).toBeInTheDocument();
   });
 
@@ -111,7 +112,10 @@ describe("MarketPriceSection", () => {
       />,
     );
 
-    const amount = await screen.findByLabelText(/價格/);
+    // 沒人報過時是收合的一行，按「回報價格」才展開表單並聚焦金額
+    await user.click(await screen.findByRole("button", { name: "回報價格" }));
+    const amount = screen.getByLabelText(/價格/);
+    expect(amount).toHaveFocus();
     // 1,000 銀兩是合法回報，不該被逼著用「萬」，也不必回放。
     await user.type(amount, "1000");
     expect(screen.queryByText(/^= /)).not.toBeInTheDocument();

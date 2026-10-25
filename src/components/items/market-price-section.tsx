@@ -88,6 +88,8 @@ export function MarketPriceSection({
   const [currency, setCurrency] = useState<CurrencyId>("silver");
   const [rate, setRate] = useTwdRate();
   const [status, setStatus] = useState<Status>(null);
+  // 兩個伺服器都沒人報過時先收成一行，要回報才展開整個區塊。
+  const [expanded, setExpanded] = useState(false);
   const amountRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -121,6 +123,10 @@ export function MarketPriceSection({
   const serverName = SERVERS.find((s) => s.id === server)!.name;
   // 正在看台幣卻沒設匯率：主數字是「—」，得給個出口。
   const needsRate = currency === "twd" && rate == null;
+
+  useEffect(() => {
+    if (expanded) amountRef.current?.focus();
+  }, [expanded]);
 
   async function vote(report: PriceReport, value: 1 | -1) {
     if (!user) {
@@ -166,6 +172,30 @@ export function MarketPriceSection({
     } catch {
       setStatus({ kind: "error", message: "連線失敗，請稍後再試。" });
     }
+  }
+
+  if (reports != null && reports.length === 0 && !expanded) {
+    return (
+      <section
+        aria-labelledby="market-price"
+        className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-card p-4"
+      >
+        <div className="min-w-0">
+          <h2 id="market-price" className="text-sm font-medium">
+            玩家回報市價
+          </h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">「{itemName}」還沒有人報過價</p>
+        </div>
+        {user ? (
+          <Button type="button" variant="outline" onClick={() => setExpanded(true)}>
+            <CoinsIcon aria-hidden />
+            回報價格
+          </Button>
+        ) : (
+          <LineLoginLink returnTo={returnTo} />
+        )}
+      </section>
+    );
   }
 
   return (
@@ -272,7 +302,9 @@ export function MarketPriceSection({
           {loadError ? "無法載入市價資料，請重新整理頁面。" : "載入市價資料…"}
         </p>
       ) : reports.length === 0 ? (
-        <EmptyState itemName={itemName} onReport={() => amountRef.current?.focus()} user={user} />
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          還沒有人報過價，價錢差很多也沒關係，大家會用投票把它喬回來。
+        </p>
       ) : rows.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">
           {serverName}還沒有人回報，但另一個伺服器有。
@@ -373,18 +405,24 @@ export function MarketPriceSection({
               站上不會顯示你的 LINE 名字，只顯示你自己設的暱稱加末五碼。
             </p>
           </div>
-          {/* LINE 綠是全站唯一的品牌色例外，跟登入頁一致。 */}
-          <a
-            href={loginHref(returnTo)}
-            onClick={() => track("login_start", { source: "market_price" })}
-            className="flex h-9 items-center justify-center gap-2 rounded-lg bg-[#06C755] px-4 text-sm font-medium text-white shadow-sm transition-colors outline-none hover:bg-[#05A948] focus-visible:ring-3 focus-visible:ring-[#06C755]/45 active:translate-y-px max-sm:w-full"
-          >
-            <LineIcon className="size-4" />
-            使用 LINE 登入
-          </a>
+          <LineLoginLink returnTo={returnTo} />
         </div>
       )}
     </section>
+  );
+}
+
+function LineLoginLink({ returnTo }: { returnTo: string }) {
+  return (
+    // LINE 綠是全站唯一的品牌色例外，跟登入頁一致。
+    <a
+      href={loginHref(returnTo)}
+      onClick={() => track("login_start", { source: "market_price" })}
+      className="flex h-9 items-center justify-center gap-2 rounded-lg bg-[#06C755] px-4 text-sm font-medium text-white shadow-sm transition-colors outline-none hover:bg-[#05A948] focus-visible:ring-3 focus-visible:ring-[#06C755]/45 active:translate-y-px max-sm:w-full"
+    >
+      <LineIcon className="size-4" />
+      使用 LINE 登入
+    </a>
   );
 }
 
@@ -898,32 +936,5 @@ function RatePopover({
         </div>
       </PopoverContent>
     </Popover>
-  );
-}
-
-function EmptyState({
-  itemName,
-  user,
-  onReport,
-}: {
-  itemName: string;
-  user: AccountUser | null;
-  onReport: () => void;
-}) {
-  return (
-    <div className="px-4 pt-5 pb-4 text-center">
-      <span className="mx-auto flex size-11 items-center justify-center rounded-full border border-border/60 bg-muted text-primary">
-        <CoinsIcon className="size-5" aria-hidden />
-      </span>
-      <p className="font-heading mt-3 text-[15px] font-semibold">「{itemName}」還沒有人報過價</p>
-      <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground">
-        你最近在市集看到多少？隨手丟一筆上來，後面來查的人就有個底。價錢差很多也沒關係，大家會用投票把它喬回來。
-      </p>
-      {user && (
-        <Button type="button" size="lg" onClick={onReport} className="mt-4">
-          我來報第一筆
-        </Button>
-      )}
-    </div>
   );
 }
