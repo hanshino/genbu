@@ -14,6 +14,12 @@ import { WelcomeBanner } from "@/components/auth/welcome-banner";
 import { track } from "@/lib/analytics/track";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import {
+  SearchDialog,
+  SearchTrigger,
+  focusPageSearch,
+  useSearchHotkey,
+} from "@/components/search/search-command";
+import {
   ABOUT_LINK,
   CHANGELOG_LINK,
   HOME_LINK,
@@ -36,6 +42,10 @@ function isGroupActive(pathname: string, group: NavSection) {
 export function Navbar({ user }: { user: AccountUser | null }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  // 首頁與 /search 頁面上已有大搜尋框，navbar 不再放一個
+  const pageHasSearch = pathname === "/" || pathname === "/search";
+  useSearchHotkey(() => (pageHasSearch ? focusPageSearch() : setSearchOpen(true)));
 
   return (
     <header className="border-border/60 bg-background/80 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 border-b backdrop-blur">
@@ -58,6 +68,7 @@ export function Navbar({ user }: { user: AccountUser | null }) {
         </nav>
 
         <div className="ml-auto hidden items-center gap-2 md:flex">
+          {!pageHasSearch && <SearchTrigger onOpen={() => setSearchOpen(true)} />}
           <DesktopLink
             href={ABOUT_LINK.href}
             label={ABOUT_LINK.label}
@@ -69,6 +80,7 @@ export function Navbar({ user }: { user: AccountUser | null }) {
         </div>
 
         <div className="ml-auto flex items-center gap-1 md:hidden">
+          {!pageHasSearch && <SearchTrigger compact onOpen={() => setSearchOpen(true)} />}
           <ThemeToggle />
           <AccountMenuCompact user={user} />
 
@@ -150,6 +162,7 @@ export function Navbar({ user }: { user: AccountUser | null }) {
         </div>
       </div>
 
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
       <WelcomeBanner user={user} />
     </header>
   );

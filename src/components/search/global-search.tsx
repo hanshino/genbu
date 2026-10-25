@@ -32,7 +32,7 @@ interface Row {
   all?: boolean;
 }
 
-interface RowGroup {
+export interface RowGroup {
   value: string;
   label: string | null;
   items: Row[];
@@ -66,19 +66,13 @@ function toRowGroups(result: SearchResult): RowGroup[] {
   return groups;
 }
 
-export function GlobalSearch({
-  defaultValue = "",
-  className,
-}: {
-  defaultValue?: string;
-  className?: string;
-}) {
-  const formRef = useRef<HTMLFormElement>(null);
+/**
+ * 輸入框文字 → 分組建議。首頁大搜尋框與 navbar 搜尋面板共用。
+ * 使用者真的打字之後才查詢；帶著 defaultValue 進來時不重複打 API，也不自動展開。
+ */
+export function useSearchSuggestions(defaultValue = "") {
   const [query, setQuery] = useState(defaultValue);
-  // 注音等組字期間 Autocomplete 不會回報輸入值，組字結束才觸發，所以不用另外處理 IME。
-  // 使用者真的打字之後才查詢；/search 頁帶著 defaultValue 進來時不重複打 API，也不自動展開。
   const [dirty, setDirty] = useState(false);
-  const [open, setOpen] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
 
   const trimmed = query.trim();
@@ -106,7 +100,94 @@ export function GlobalSearch({
 
   // 輸入清空就收起，不用等舊結果被清掉。
   const active = trimmed ? result : null;
-  const rows = active ? toRowGroups(active) : [];
+
+  return {
+    query,
+    trimmed,
+    active,
+    rows: active ? toRowGroups(active) : [],
+    // 注音等組字期間 Autocomplete 不會回報輸入值，組字結束才觸發，所以不用另外處理 IME。
+    setQuery: (v: string) => {
+      setQuery(v);
+      setDirty(true);
+    },
+  };
+}
+
+/** AutocompleteList 的內容：分組標題、結果列、最後一列「查看全部」。 */
+export function SearchSuggestionList({
+  trimmed,
+  onPick,
+  className,
+}: {
+  trimmed: string;
+  onPick: () => void;
+  className?: string;
+}) {
+  return (
+    <>
+      <AutocompleteEmpty>找不到「{trimmed}」相關結果</AutocompleteEmpty>
+      <AutocompleteList className={className}>
+        {(group: RowGroup) => (
+          <div key={group.value}>
+            {group.label === null && <AutocompleteSeparator />}
+            <AutocompleteGroup items={group.items}>
+              {group.label !== null && <AutocompleteLabel>{group.label}</AutocompleteLabel>}
+              <AutocompleteCollection>
+                {(row: Row) => (
+                  <AutocompleteItem
+                    key={row.key}
+                    value={row}
+                    render={<Link href={row.href} prefetch={false} />}
+                    onClick={onPick}
+                  >
+                    {row.all ? (
+                      <>
+                        <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                          {row.name}
+                        </span>
+                        <ArrowRightIcon aria-hidden />
+                      </>
+                    ) : (
+                      <>
+                        <span className="min-w-0 flex-1 pl-2">
+                          <span className="block truncate">{row.name}</span>
+                          {row.snippet && (
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {row.snippet}
+                            </span>
+                          )}
+                        </span>
+                        {row.meta && (
+                          <span className="max-w-[40%] shrink-0 truncate text-xs text-muted-foreground">
+                            {row.meta}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </AutocompleteItem>
+                )}
+              </AutocompleteCollection>
+            </AutocompleteGroup>
+          </div>
+        )}
+      </AutocompleteList>
+    </>
+  );
+}
+
+export const rowToString = (row: Row) => row.name;
+
+export function GlobalSearch({
+  defaultValue = "",
+  className,
+}: {
+  defaultValue?: string;
+  className?: string;
+}) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const { query, trimmed, active, rows, setQuery } = useSearchSuggestions(defaultValue);
+  const [open, setOpen] = useState(false);
 
   return (
     <form
@@ -120,13 +201,10 @@ export function GlobalSearch({
         mode="none"
         items={rows}
         value={query}
-        onValueChange={(v) => {
-          setQuery(v);
-          setDirty(true);
-        }}
+        onValueChange={setQuery}
         open={open && active !== null}
         onOpenChange={setOpen}
-        itemToStringValue={(row: Row) => row.name}
+        itemToStringValue={rowToString}
       >
         <AutocompleteInput
           type="text"
@@ -138,52 +216,7 @@ export function GlobalSearch({
           showClear
         />
         <AutocompleteContent anchor={formRef}>
-          <AutocompleteEmpty>找不到「{trimmed}」相關結果</AutocompleteEmpty>
-          <AutocompleteList>
-            {(group: RowGroup) => (
-              <div key={group.value}>
-                {group.label === null && <AutocompleteSeparator />}
-                <AutocompleteGroup items={group.items}>
-                  {group.label !== null && <AutocompleteLabel>{group.label}</AutocompleteLabel>}
-                  <AutocompleteCollection>
-                    {(row: Row) => (
-                      <AutocompleteItem
-                        key={row.key}
-                        value={row}
-                        render={<Link href={row.href} prefetch={false} />}
-                        onClick={() => setOpen(false)}
-                      >
-                        {row.all ? (
-                          <>
-                            <span className="min-w-0 flex-1 truncate text-muted-foreground">
-                              {row.name}
-                            </span>
-                            <ArrowRightIcon aria-hidden />
-                          </>
-                        ) : (
-                          <>
-                            <span className="min-w-0 flex-1 pl-2">
-                              <span className="block truncate">{row.name}</span>
-                              {row.snippet && (
-                                <span className="block truncate text-xs text-muted-foreground">
-                                  {row.snippet}
-                                </span>
-                              )}
-                            </span>
-                            {row.meta && (
-                              <span className="max-w-[40%] shrink-0 truncate text-xs text-muted-foreground">
-                                {row.meta}
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </AutocompleteItem>
-                    )}
-                  </AutocompleteCollection>
-                </AutocompleteGroup>
-              </div>
-            )}
-          </AutocompleteList>
+          <SearchSuggestionList trimmed={trimmed} onPick={() => setOpen(false)} />
         </AutocompleteContent>
       </Autocomplete>
       <Button type="submit" size="lg">
