@@ -39,13 +39,17 @@ export interface StageListItem {
   flags: string[];
   /** 多少張地圖把這裡列為 appear/logout 目的地（hub 程度指標）。 */
   inboundCount: number;
+  /** 測試／保留／活動空殼等佔位地圖，列表預設隱藏 */
+  placeholder?: boolean;
 }
 
 /** 群組統計（hub 用）。 */
 export interface StageGroupStats {
   groupId: number;
   count: number;
-  /** 用前幾張地圖名拼出群組預覽（無正式群組名）。 */
+  /** 區域名稱：遊戲沒有正式區域名，取區內第一張正式地圖（多半是入口或主城）。 */
+  label: string;
+  /** label 之外的幾張地圖名。 */
   preview: string;
 }
 

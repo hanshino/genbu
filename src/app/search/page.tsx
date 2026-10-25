@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { SearchBeacon } from "@/components/analytics/search-beacon";
 import { GlobalSearch } from "@/components/search/global-search";
@@ -5,6 +6,8 @@ import { SearchGroupSection } from "@/components/search/search-group-section";
 import { SearchTypeNav } from "@/components/search/search-type-nav";
 import { searchAll } from "@/lib/queries/search";
 import { isSearchType } from "@/lib/search-types";
+import { NAV_SECTIONS, splitSubgroups } from "@/lib/site-nav";
+import { buttonVariants } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +50,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
       </header>
 
       {!q || !all ? (
-        null
+        <BrowseShortcuts />
       ) : (
         <>
           <SearchBeacon scope="global" query={q} hasFilter={!!type} resultCount={resultCount} />
@@ -90,6 +93,31 @@ export default async function SearchPage({ searchParams }: PageProps) {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+// 還沒輸入關鍵字時，給「不知道要搜什麼」的人直接逛的入口
+function BrowseShortcuts() {
+  const db = NAV_SECTIONS.find((s) => s.label === "資料庫")!;
+  return (
+    <div className="space-y-4">
+      {splitSubgroups(db.items).map((sub) => (
+        <section key={sub.label ?? "all"}>
+          {sub.label && <h2 className="mb-2 text-xs text-muted-foreground">{sub.label}</h2>}
+          <div className="flex flex-wrap gap-2">
+            {sub.items.map((e) => (
+              <Link
+                key={e.href}
+                href={e.href}
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                {e.title ?? e.label}
+              </Link>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

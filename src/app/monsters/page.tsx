@@ -34,6 +34,7 @@ interface PageProps {
     elemental?: string;
     hasDrop?: string;
     isNormal?: string;
+    all?: string;
     levelMin?: string;
     levelMax?: string;
     page?: string;
@@ -50,6 +51,7 @@ export default async function MonstersPage({ searchParams }: PageProps) {
   const elemental = params.elemental ?? "";
   const hasDrop = params.hasDrop === "1";
   const isNormal = params.isNormal === "1";
+  const includePlaceholders = params.all === "1";
   const levelMinRaw = params.levelMin ?? "";
   const levelMaxRaw = params.levelMax ?? "";
   const page = Number(params.page) || 1;
@@ -70,6 +72,7 @@ export default async function MonstersPage({ searchParams }: PageProps) {
     elemental: elemental || undefined,
     hasDrop,
     isNormal,
+    includePlaceholders,
     levelMin: levelMinNum,
     levelMax: levelMaxNum,
     page,
@@ -100,6 +103,7 @@ export default async function MonstersPage({ searchParams }: PageProps) {
             initialElemental={elemental}
             initialHasDrop={hasDrop}
             initialIsNormal={isNormal}
+            initialShowAll={includePlaceholders}
             initialLevelMin={levelMinRaw}
             initialLevelMax={levelMaxRaw}
             availableTypes={availableTypes}

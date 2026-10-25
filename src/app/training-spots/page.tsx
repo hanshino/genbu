@@ -72,13 +72,6 @@ function windowOf(level: number) {
 
 function SourceBlock() {
   const rows: Array<[string, React.ReactNode]> = [
-    ["來源等級", "資料庫（database）"],
-    [
-      "使用資料表",
-      <span key="tables" className="font-mono text-[0.7rem] text-foreground">
-        monster_spawns · stages · map_warps · npc · monsters · magic
-      </span>,
-    ],
     [
       "方法",
       <>
@@ -97,7 +90,6 @@ function SourceBlock() {
       "取一般怪中最高的閃躲，套用怪物頁同一條公式：閃躲 × 100 ÷ 招式命中參數，範圍為該門派最好中與最難中的招式。",
     ],
     ["限制", "不含劇情觸發或腳本生成的怪物；不代表官方推薦、進入保證或實際經驗效率。"],
-    ["資料庫版本", "未標記"],
   ];
 
   return (
@@ -110,7 +102,7 @@ function SourceBlock() {
         className="mb-3 flex items-center gap-2 border-b border-border/60 pb-3 text-sm font-medium"
       >
         <DatabaseIcon className="size-4 text-muted-foreground" aria-hidden />
-        資料來源與方法
+        怎麼算的
       </h2>
       <dl className="grid grid-cols-[max-content_1fr] gap-x-3.5 gap-y-2 text-xs leading-relaxed">
         {rows.map(([label, value]) => (

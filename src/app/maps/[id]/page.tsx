@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ChevronRightIcon } from "lucide-react";
-import { BackLink } from "@/components/common/back-link";
+import { DetailBreadcrumb } from "@/components/common/detail-breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { StageFlagBadge } from "@/components/maps/stage-flag-badge";
 import { sortStageFlags } from "@/lib/constants/stage-flags";
@@ -247,9 +247,7 @@ export default async function MapDetailPage({ params, searchParams }: PageProps)
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-      <nav className="text-sm text-muted-foreground">
-        <BackLink href="/maps" />
-      </nav>
+      <DetailBreadcrumb parent={{ href: "/maps", label: "地圖" }} current={stage.name} />
 
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="space-y-2">

@@ -2,9 +2,14 @@ import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { MapPinOffIcon } from "lucide-react";
 import { getNpcDetail } from "@/lib/queries/npcs";
-import { BackLink } from "@/components/common/back-link";
+import { getShopsForNpc } from "@/lib/queries/shops";
+import { DetailBreadcrumb } from "@/components/common/detail-breadcrumb";
 import { NpcPortrait } from "@/components/missions/npc-portrait";
-import { NpcMapsSection, NpcMissionsSection } from "@/components/npcs/npc-sections";
+import {
+  NpcMapsSection,
+  NpcMissionsSection,
+  NpcShopsSection,
+} from "@/components/npcs/npc-sections";
 
 export const dynamic = "force-dynamic";
 
@@ -39,9 +44,7 @@ export default async function NpcDetailPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
-      <nav className="text-sm text-muted-foreground">
-        <BackLink href="/npcs" />
-      </nav>
+      <DetailBreadcrumb parent={{ href: "/npcs", label: "NPC" }} current={npc.name} />
 
       <header className="flex items-center gap-4 sm:gap-6">
         <NpcPortrait image={npc.image} name={npc.name} className="size-24 sm:size-32" />
@@ -63,6 +66,8 @@ export default async function NpcDetailPage({ params }: PageProps) {
       ) : (
         <NpcMapsSection maps={npc.maps} />
       )}
+
+      <NpcShopsSection shops={getShopsForNpc(npc.name)} />
 
       <NpcMissionsSection missions={npc.missions} />
     </div>

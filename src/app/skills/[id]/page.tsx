@@ -13,7 +13,7 @@ import { SkillDetail } from "@/components/skills/skill-detail";
 import { SkillEffectPlayer } from "@/components/skills/skill-effect-player";
 import { SkillLevelTable } from "@/components/skills/skill-level-table";
 import { RelatedSkills } from "@/components/skills/related-skills";
-import { BackLink } from "@/components/common/back-link";
+import { DetailBreadcrumb } from "@/components/common/detail-breadcrumb";
 import type { Magic } from "@/lib/types/magic";
 
 export const dynamic = "force-dynamic";
@@ -76,9 +76,7 @@ export default async function SkillDetailPage({ params, searchParams }: PageProp
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
-      <nav className="text-sm text-muted-foreground">
-        <BackLink href="/skills" />
-      </nav>
+      <DetailBreadcrumb parent={{ href: "/skills", label: "技能" }} current={base.name} />
 
       <SkillDetail
         skill={base}

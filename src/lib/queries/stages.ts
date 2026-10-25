@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import { parseStageFlags } from "@/lib/constants/stage-flags";
+import { isPlaceholderStageName } from "@/lib/placeholder-data";
 import type {
   InboundLink,
   StageDetail,
@@ -32,32 +33,35 @@ export function getAllStageGroupStats(): StageGroupStats[] {
   const db = getDb();
   const rows = db
     .prepare(
-      `SELECT [group]   AS groupId,
-              COUNT(*)  AS count,
-              GROUP_CONCAT(name, '、') AS preview
-       FROM (
-         SELECT [group], name
-         FROM stages
-         WHERE name IS NOT NULL AND [group] IS NOT NULL
-         ORDER BY [group], id
-       )
-       GROUP BY groupId
-       ORDER BY groupId`,
+      `SELECT [group] AS groupId, name
+       FROM stages
+       WHERE name IS NOT NULL AND [group] IS NOT NULL
+       ORDER BY [group], id`,
     )
-    .all() as Array<{ groupId: number; count: number; preview: string }>;
-  return rows.map((r) => ({
-    groupId: r.groupId,
-    count: r.count,
-    preview: trimPreview(r.preview),
-  }));
+    .all() as Array<{ groupId: number; name: string }>;
+  const byGroup = new Map<number, string[]>();
+  for (const r of rows) {
+    const names = byGroup.get(r.groupId) ?? [];
+    names.push(r.name);
+    byGroup.set(r.groupId, names);
+  }
+  return [...byGroup].map(([groupId, names]) => {
+    // 去重、略過佔位地圖名（整組都是佔位時才用原名）
+    const real = names.filter((n) => !isPlaceholderStageName(n));
+    const unique = [...new Set(real.length > 0 ? real : names)];
+    const label = GROUP_LABEL_OVERRIDES[groupId] ?? unique[0];
+    const rest = unique.filter((n) => n !== label);
+    return {
+      groupId,
+      count: names.length,
+      label,
+      preview: rest.length <= 3 ? rest.join("、") : `${rest.slice(0, 3).join("、")}…`,
+    };
+  });
 }
 
-function trimPreview(raw: string | null): string {
-  if (!raw) return "";
-  const parts = raw.split("、");
-  if (parts.length <= 4) return parts.join("、");
-  return `${parts.slice(0, 4).join("、")}…`;
-}
+// 第一張地圖代表不了整區的群組。區域 1 是寵物練功場、魔族巢穴、比武校場、秘境等雜項。
+const GROUP_LABEL_OVERRIDES: Record<number, string> = { 1: "特殊場景" };
 
 /** Hub 用的全量地圖清單。 */
 export function getAllStageListItems(): StageListItem[] {
@@ -94,6 +98,7 @@ export function getAllStageListItems(): StageListItem[] {
     groupId: r.groupId,
     flags: parseStageFlags(r.flag),
     inboundCount: r.inboundCount,
+    ...(isPlaceholderStageName(r.name) ? { placeholder: true } : {}),
   }));
 }
 
@@ -114,8 +119,8 @@ export function getStageDetail(id: number): StageDetail | null {
   if (!row) return null;
   const stage = asRow(row);
 
-  // 同群組鄰居（不含自己）
-  const siblings: { id: number; name: string }[] =
+  // 同群組鄰居（不含自己）。略過佔位地圖；同名的多層／多分流只留第一張，也不列跟自己同名的。
+  const siblingRows: { id: number; name: string }[] =
     stage.group != null
       ? (db
           .prepare(
@@ -125,6 +130,10 @@ export function getStageDetail(id: number): StageDetail | null {
           )
           .all(stage.group, stage.id) as Array<{ id: number; name: string }>)
       : [];
+  const seenNames = new Set<string>(stage.name ? [stage.name] : []);
+  const siblings = siblingRows.filter(
+    (s) => !isPlaceholderStageName(s.name) && !seenNames.has(s.name) && seenNames.add(s.name),
+  );
 
   // 名稱解析（appear / logout 指向）
   const lookupIds = new Set<number>();

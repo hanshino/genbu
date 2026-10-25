@@ -1,4 +1,5 @@
 import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
+import { MAGIC_CLAN_LABELS } from "@/lib/constants/magic-clan";
 import { getDb } from "@/lib/db";
 import { getGuide, getGuides } from "@/lib/guides";
 import { NPC_MAPS_SQL } from "@/lib/queries/npcs";
@@ -169,6 +170,24 @@ const DB_SPECS: DbSpec[] = [
   },
 ];
 
+// 道具類型、技能門派在 DB 裡是代碼，顯示前轉中文
+function displayMeta(type: SearchType, meta: string): string {
+  if (type === "item") return ITEM_TYPE_LABELS[meta] ?? meta;
+  if (type === "skill") return MAGIC_CLAN_LABELS[meta] ?? meta;
+  return meta;
+}
+
+/** 同組裡名稱重複的結果在 meta 後補上 #id，否則兩筆看起來一模一樣、分不出該點哪個。 */
+function markDuplicateNames(hits: SearchHit[]): SearchHit[] {
+  const counts = new Map<string, number>();
+  for (const h of hits) counts.set(h.name, (counts.get(h.name) ?? 0) + 1);
+  return hits.map((h) =>
+    (counts.get(h.name) ?? 0) > 1 && /^\d+$/.test(h.id)
+      ? { ...h, meta: h.meta ? `${h.meta} · #${h.id}` : `#${h.id}` }
+      : h,
+  );
+}
+
 function searchDbType(
   spec: DbSpec,
   q: string,
@@ -221,7 +240,7 @@ function searchDbType(
         id: spec.hitId ? spec.hitId(r) : String(r.id),
         name: r.name,
         href: spec.href(r),
-        ...(r.meta ? { meta: spec.type === "item" ? (ITEM_TYPE_LABELS[r.meta] ?? r.meta) : r.meta } : {}),
+        ...(r.meta ? { meta: displayMeta(spec.type, r.meta) } : {}),
         ...(r.rank === RANK_TEXT && r.ktext ? { snippet: snippetAround(r.ktext, q) } : {}),
       },
     })),
@@ -330,7 +349,12 @@ export function searchAll(q: string, opts: SearchOptions = {}): SearchResult {
     if (total === 0) continue;
     found.push({
       best: hits[0].rank,
-      group: { type, label: SEARCH_TYPE_LABELS[type], total, hits: hits.map((h) => h.hit) },
+      group: {
+        type,
+        label: SEARCH_TYPE_LABELS[type],
+        total,
+        hits: markDuplicateNames(hits.map((h) => h.hit)),
+      },
     });
   }
 

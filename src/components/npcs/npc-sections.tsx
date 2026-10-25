@@ -2,7 +2,9 @@ import Link from "next/link";
 import { MapPinIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { LinkListRow, LinkListSection } from "@/components/common/link-list";
+import { shopLabel } from "@/lib/constants/shop";
 import type { NpcMap, NpcMission } from "@/lib/types/npc";
+import type { ShopSummary } from "@/lib/types/shop";
 
 const EVENT_LABEL: Record<string, string> = {
   accept: "接取",
@@ -57,6 +59,21 @@ export function NpcMapsSection({ maps }: { maps: NpcMap[] }) {
           </li>
         );
       })}
+    </LinkListSection>
+  );
+}
+
+export function NpcShopsSection({ shops }: { shops: ShopSummary[] }) {
+  if (shops.length === 0) return null;
+  return (
+    <LinkListSection title="開的商店">
+      {shops.map((s) => (
+        <LinkListRow key={s.id} href={`/shops/${s.id}`}>
+          {/* 店名預設就是 NPC 名，這頁改顯示店型與主商品 */}
+          <span className="font-medium">{shopLabel({ ...s, npcNames: [] })}</span>
+          <span className="ml-auto text-xs text-muted-foreground">{s.sellCount} 種商品</span>
+        </LinkListRow>
+      ))}
     </LinkListSection>
   );
 }

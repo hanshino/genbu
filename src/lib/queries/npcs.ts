@@ -92,3 +92,16 @@ export function getNpcDetail(id: number): NpcDetail | null {
   const missions = rows.map((row) => ({ ...row, eventTypes: JSON.parse(row.eventTypes) as string[] }));
   return { ...npc, missions };
 }
+
+/** NPC 名稱 → NPC 頁的代表 id（與 /npcs/[id] 同名合併、取最小 id 的規則一致）。查不到的名稱不在結果裡。 */
+export function getNpcIdsByNames(names: string[]): Map<string, number> {
+  if (names.length === 0) return new Map();
+  const rows = getDb()
+    .prepare(
+      `SELECT name, MIN(id) AS id FROM (${NPC_MAPS_SQL})
+       WHERE name IN (SELECT value FROM json_each(?))
+       GROUP BY name`,
+    )
+    .all(JSON.stringify(names)) as Array<{ name: string; id: number }>;
+  return new Map(rows.map((r) => [r.name, r.id]));
+}

@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { SortableHead, type SortContext } from "@/components/common/sortable-head";
 import { ItemIcon } from "@/components/common/item-icon";
+import { isUnidentifiedNote } from "@/lib/item-note";
 import { EmptyResult } from "@/components/common/empty-result";
 import type { Item } from "@/lib/types/item";
 import type { EntityImage } from "@/lib/queries/images";
@@ -51,7 +52,7 @@ export function ItemTable({
   const nameCol = stickyNameCol(show.has("id"));
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border/60">
+    <div className="scroll-hint-x overflow-hidden rounded-lg border border-border/60">
       <Table>
         <TableHeader>
           <TableRow className="group/row">
@@ -86,7 +87,7 @@ export function ItemTable({
                     <Link href={`/items/${item.id}`} className="font-medium hover:underline">
                       {item.name}
                     </Link>
-                    {item.note && (
+                    {item.note && !isUnidentifiedNote(item.note) && (
                       <span className="ml-2 text-xs text-muted-foreground">{item.note}</span>
                     )}
                   </div>

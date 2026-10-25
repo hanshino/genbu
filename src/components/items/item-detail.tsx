@@ -3,6 +3,7 @@ import { ItemCover } from "@/components/items/item-cover";
 import type { Item } from "@/lib/types/item";
 import { displayableAttributeKeys, itemAttributeNames } from "@/lib/constants/i18n";
 import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
+import { isUnidentifiedNote } from "@/lib/item-note";
 import type { EquipmentImage } from "@/lib/equipment-images";
 import type { EntityImage } from "@/lib/queries/images";
 
@@ -52,6 +53,7 @@ export function ItemDetail({ item, maxValues, cover, fallbackIcon }: ItemDetailP
           </div>
           {item.note && (
             <p className="whitespace-pre-line text-sm text-muted-foreground">
+              {isUnidentifiedNote(item.note) && "未鑑定時顯示為："}
               {item.note.replace(/\\n/g, "\n")}
             </p>
           )}

@@ -186,3 +186,32 @@
 body.has-compare-bar {
   padding-bottom: 5rem;
 }
+
+/* 手機上寬表格右緣的淡出，提示還能往右滑；捲到底時淡掉（不支援 scroll timeline 的瀏覽器就常駐）。 */
+@media (max-width: 767px) {
+  .scroll-hint-x {
+    position: relative;
+    timeline-scope: --scroll-hint-x;
+  }
+  .scroll-hint-x [data-slot="table-container"] {
+    scroll-timeline: --scroll-hint-x inline;
+  }
+  .scroll-hint-x::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    right: 0;
+    width: 2.5rem;
+    pointer-events: none;
+    background: linear-gradient(to left, var(--background), transparent);
+    animation: scroll-hint-x-out linear both;
+    animation-timeline: --scroll-hint-x;
+    animation-range: 85% 100%;
+  }
+}
+
+@keyframes scroll-hint-x-out {
+  to {
+    opacity: 0;
+  }
+}

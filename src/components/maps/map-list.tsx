@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { SearchIcon } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useUrlFilters } from "@/lib/hooks/use-url-filters";
@@ -15,15 +16,21 @@ interface Props {
   groups: StageGroupStats[];
 }
 
-const URL_KEYS = ["q"] as const;
+const URL_KEYS = ["q", "all"] as const;
 
 export function MapList({ stages, groups }: Props) {
   const { values, update, composition } = useUrlFilters(URL_KEYS);
   const query = values.q;
 
   const trimmed = query.trim();
+  const showAll = values.all === "1";
+  // 瀏覽時藏掉佔位地圖；搜尋時一律列出，查得到名字的人才找得到
+  const listed = useMemo(
+    () => (showAll ? stages : stages.filter((s) => !s.placeholder)),
+    [stages, showAll],
+  );
   const filtered = useMemo(() => {
-    if (!trimmed) return stages;
+    if (!trimmed) return listed;
     const q = trimmed.toLowerCase();
     const isNumeric = /^\d+$/.test(trimmed);
     return stages.filter((s) => {
@@ -31,7 +38,7 @@ export function MapList({ stages, groups }: Props) {
       if (s.name.toLowerCase().includes(q)) return true;
       return false;
     });
-  }, [stages, trimmed]);
+  }, [stages, listed, trimmed]);
 
   const grouped = useMemo(() => {
     const map = new Map<number | null, StageListItem[]>();
@@ -51,14 +58,9 @@ export function MapList({ stages, groups }: Props) {
     [grouped],
   );
 
-  const previewById = useMemo(() => {
-    const m = new Map<number, string>();
-    for (const g of groups) m.set(g.groupId, g.preview);
-    return m;
-  }, [groups]);
+  const groupById = useMemo(() => new Map(groups.map((g) => [g.groupId, g])), [groups]);
 
-  const chipBase =
-    "rounded-md border border-border/60 bg-card px-2.5 py-1 font-mono text-xs";
+  const chipBase = "rounded-md border border-border/60 bg-card px-2.5 py-1 text-xs";
 
   return (
     <div className="space-y-4">
@@ -66,7 +68,7 @@ export function MapList({ stages, groups }: Props) {
         <div className="-mx-1 flex flex-wrap gap-1.5 px-1">
           {groups.map((g) => {
             const key = g.groupId;
-            const label = `#${g.groupId}`;
+            const label = g.label;
             if (!visibleGroupIds.has(g.groupId)) {
               return (
                 <span
@@ -111,6 +113,15 @@ export function MapList({ stages, groups }: Props) {
             className="pl-9"
           />
         </div>
+        {!trimmed && (
+          <label className="mt-1 inline-flex min-h-9 cursor-pointer items-center gap-2 text-sm select-none">
+            <Checkbox
+              checked={showAll}
+              onCheckedChange={(checked) => update({ all: checked === true ? "1" : "" })}
+            />
+            <span>顯示測試／保留地圖</span>
+          </label>
+        )}
         {trimmed && filtered.length > 0 && (
           <p className="mt-1.5 text-xs text-muted-foreground">
             顯示 {filtered.length.toLocaleString()} / {stages.length.toLocaleString()} 張地圖
@@ -126,7 +137,7 @@ export function MapList({ stages, groups }: Props) {
 
       <div className="space-y-6 pt-2">
         {grouped.map(({ groupId, items }) => {
-          const preview = groupId != null ? previewById.get(groupId) : null;
+          const group = groupId != null ? groupById.get(groupId) : undefined;
           return (
             <section
               key={groupId ?? "uncat"}
@@ -135,14 +146,14 @@ export function MapList({ stages, groups }: Props) {
             >
               <div className="sticky top-[6.5rem] z-20 -mx-4 flex items-baseline gap-2 border-b border-border/60 bg-background/95 px-4 py-1.5 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                 <h2 className="text-sm font-medium">
-                  {groupId == null ? "未分類" : `區域 #${groupId}`}
+                  {group?.label ?? "未分類"}
                 </h2>
                 <span className="text-xs text-muted-foreground">
                   {items.length} 張
                 </span>
-                {preview && (
+                {group?.preview && (
                   <span className="ml-2 hidden truncate text-xs text-muted-foreground/80 sm:inline">
-                    {preview}
+                    {group.preview}
                   </span>
                 )}
               </div>

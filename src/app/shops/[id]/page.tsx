@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { CoinsIcon } from "lucide-react";
-import { BackLink } from "@/components/common/back-link";
+import { DetailBreadcrumb } from "@/components/common/detail-breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -15,6 +15,8 @@ import {
 import { ItemIcon } from "@/components/common/item-icon";
 import { getItemIconMap } from "@/lib/queries/images";
 import { getShopDetail } from "@/lib/queries/shops";
+import { getNpcIdsByNames } from "@/lib/queries/npcs";
+import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import {
   castleLabel,
   shopCurrencyLabel,
@@ -47,6 +49,9 @@ export default async function ShopDetailPage({ params }: PageProps) {
   const shop = getShopDetail(shopId);
   if (!shop) notFound();
 
+  // 開店 NPC 的名字連到 NPC 頁，「去哪買」才接得上「這個人在哪」
+  const npcIds = getNpcIdsByNames(shop.npcNames);
+
   const iconMap = getItemIconMap([
     ...shop.sells.map((e) => e.itemId),
     ...(shop.currency.itemId != null ? [shop.currency.itemId] : []),
@@ -66,13 +71,30 @@ export default async function ShopDetailPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
-      <nav className="text-sm text-muted-foreground">
-        <BackLink href="/shops" />
-      </nav>
+      <DetailBreadcrumb parent={{ href: "/shops", label: "商店" }} current={shopLabel(shop)} />
 
       <header className="flex flex-wrap items-baseline gap-2">
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-          {shopLabel(shop)}
+          {shop.npcNames.length > 0
+            ? shop.npcNames.map((name, i) => {
+                const npcId = npcIds.get(name);
+                return (
+                  <span key={name}>
+                    {i > 0 && "、"}
+                    {npcId != null ? (
+                      <Link
+                        href={`/npcs/${npcId}`}
+                        className="underline decoration-dotted decoration-1 underline-offset-4 hover:decoration-solid"
+                      >
+                        {name}
+                      </Link>
+                    ) : (
+                      name
+                    )}
+                  </span>
+                );
+              })
+            : shopLabel(shop)}
         </h1>
         <span className="font-mono text-sm text-muted-foreground">#{shop.id}</span>
         {shop.castleId != null && (
@@ -122,12 +144,12 @@ export default async function ShopDetailPage({ params }: PageProps) {
                         href={`/items/${e.itemId}`}
                         className="font-medium underline decoration-dotted underline-offset-2 hover:decoration-solid"
                       >
-                        {e.itemName ?? `#${e.itemId}`}
+                        {e.itemName || `#${e.itemId}`}
                       </Link>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {e.itemType ?? "—"}
+                    {e.itemType ? (ITEM_TYPE_LABELS[e.itemType] ?? e.itemType) : "—"}
                   </TableCell>
                   <TableCell className="text-right font-mono text-sm">
                     <span className="inline-flex items-center justify-end gap-1.5">

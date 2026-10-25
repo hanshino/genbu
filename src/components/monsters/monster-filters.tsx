@@ -21,6 +21,7 @@ export function MonsterFilters({
   initialElemental,
   initialHasDrop,
   initialIsNormal,
+  initialShowAll = false,
   initialLevelMin,
   initialLevelMax,
   availableTypes,
@@ -32,6 +33,7 @@ export function MonsterFilters({
   initialElemental: string;
   initialHasDrop: boolean;
   initialIsNormal: boolean;
+  initialShowAll?: boolean;
   initialLevelMin: string;
   initialLevelMax: string;
   availableTypes: number[];
@@ -46,6 +48,7 @@ export function MonsterFilters({
   const [elemental, setElemental] = useState(initialElemental || FILTER_ALL);
   const [hasDrop, setHasDrop] = useState(initialHasDrop);
   const [isNormal, setIsNormal] = useState(initialIsNormal);
+  const [showAll, setShowAll] = useState(initialShowAll);
   const [levelMin, setLevelMin] = useState(initialLevelMin);
   const [levelMax, setLevelMax] = useState(initialLevelMax);
   const composingRef = useRef(false);
@@ -99,6 +102,19 @@ export function MonsterFilters({
     if (currentQs.toString() === nextQs) return;
     startTransition(() => {
       router.push(`/monsters${nextQs ? `?${nextQs}` : ""}`);
+    });
+  }
+
+  // 「顯示未出沒的怪物」只在沒有搜尋字時有作用（有搜尋字一律全列），pushState 會原樣保留 all 參數。
+  function toggleShowAll(next: boolean) {
+    setShowAll(next);
+    const params = new URLSearchParams(searchParams.toString());
+    if (next) params.set("all", "1");
+    else params.delete("all");
+    params.delete("page");
+    const qs = params.toString();
+    startTransition(() => {
+      router.push(`/monsters${qs ? `?${qs}` : ""}`);
     });
   }
 
@@ -244,6 +260,15 @@ export function MonsterFilters({
           />
           <span>僅顯示一般怪 (▲ / ●)</span>
         </label>
+        {!search.trim() && (
+          <label className="inline-flex min-h-11 cursor-pointer select-none items-center gap-2 py-1">
+            <Checkbox
+              checked={showAll}
+              onCheckedChange={(checked) => toggleShowAll(checked === true)}
+            />
+            <span>顯示未出沒的怪物</span>
+          </label>
+        )}
       </div>
     </div>
   );

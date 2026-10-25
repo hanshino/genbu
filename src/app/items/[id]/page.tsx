@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ChevronRightIcon, HammerIcon, PackageSearchIcon, TrendingUpIcon } from "lucide-react";
-import { BackLink } from "@/components/common/back-link";
+import { DetailBreadcrumb } from "@/components/common/detail-breadcrumb";
 import { getItemById, getItemRands, getItemRandsByIds, getItemsByType } from "@/lib/queries/items";
 import { getMonstersByDropItem } from "@/lib/queries/monsters";
 import { getStagesForMonsters } from "@/lib/queries/monster-spawns";
@@ -156,9 +156,7 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
-      <nav className="text-sm text-muted-foreground">
-        <BackLink href={from === "ranking" ? "/ranking" : "/items"} />
-      </nav>
+      <DetailBreadcrumb parent={from === "ranking" ? { href: "/ranking", label: "排行榜" } : { href: "/items", label: "道具" }} current={item.name} />
 
       <ItemDetail
         item={item}
