@@ -1,0 +1,1103 @@
+{
+  "version": "7.2.7.2",
+  "date": "2026-10-28",
+  "summary": {
+    "added": 257,
+    "changed": 296149,
+    "removed": 40
+  },
+  "addedTables": [],
+  "removedTables": [],
+  "tables": [
+    {
+      "table": "items",
+      "label": "道具",
+      "tier": "rich",
+      "counts": {
+        "added": 1,
+        "changed": 4,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "34397"
+          ],
+          "name": "萬聖金鈴禮盒",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "萬聖金鈴禮盒"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "打開有機會獲得全新背飾「萬魅金鈴」、萬壽袋熊、凜冬之刺、仙凰守御、鎏金龍騎、繁星盛月系列外裝及副門派進階書等超值好禮。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "100"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "BONUS"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "27051"
+          ],
+          "name": "桃木枝",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "春雨精華",
+              "to": "桃木枝"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "[活動道具]\\n\\n活動結束將統一回收。",
+              "to": "[活動道具]\\n相傳桃木具有驅邪避凶之效，是修整儺戲面具的重要材料。 \\n\\n活動結束後，將統一回收。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "27052"
+          ],
+          "name": "蜂蜜",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "植物養料",
+              "to": "蜂蜜"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "[活動道具]\\n\\n活動結束將統一回收。",
+              "to": "[活動道具]\\n盛滿金黃蜂蜜的天然蜜巢，散發濃郁香甜氣息。 \\n\\n活動結束後，將統一回收。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "52084"
+          ],
+          "name": "萬魅金鈴",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試道具",
+              "to": "萬魅金鈴"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "霧鎖銀河，蝠影掠過殘月，古鈴忽傳清響，幾點幽光躲在鈴下，似怕驚醒人間，卻又忍不住偷笑於微涼秋風。"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "from": "0",
+              "to": "4000"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "from": "0",
+              "to": "800"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "from": "0",
+              "to": "15"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "from": "0",
+              "to": "15"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "from": "0",
+              "to": "450"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "from": "0",
+              "to": "75"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "54109"
+          ],
+          "name": "奇幻戲法箱",
+          "fields": [
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "可愛的幻彩箱子裡似乎藏有什麼玄機。沒想到一轉動把手...竟然躲著搗蛋兔兔！",
+              "to": "[外裝]可愛的幻彩箱子裡似乎藏有什麼玄機。沒想到一轉動把手...竟然躲著搗蛋兔兔！"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "achievements",
+      "label": "成就",
+      "tier": "rich",
+      "counts": {
+        "added": 1,
+        "changed": 0,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "30022"
+          ],
+          "name": "方相開道不給糖就搗蛋",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "方相開道不給糖就搗蛋"
+            },
+            {
+              "col": "description",
+              "label": "描述",
+              "value": "完成活動任務：儺戲驅疫平安夜6次"
+            },
+            {
+              "col": "points",
+              "label": "點數",
+              "value": "0"
+            },
+            {
+              "col": "reward_amount",
+              "label": "獎勵數量",
+              "value": "500"
+            },
+            {
+              "col": "prereq_achievement_id",
+              "label": "前置成就",
+              "value": "0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "mission_steps",
+      "label": "任務步驟",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 8,
+        "removed": 15
+      },
+      "removed": [
+        {
+          "idParts": [
+            "10729",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "10730",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待0",
+              "to": "協助收集桃木枝[item27051×3]給面具匠人"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待1",
+              "to": "將東西交給里正"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待2",
+              "to": "收集蜂蜜[item27052×3]給藥鋪娘子"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待3",
+              "to": "回去找里正"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待4",
+              "to": "與一歲愛打架對話"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待5",
+              "to": "與拿蔥大嬸對話"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待6",
+              "to": "與歌姬珮對話"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10730",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待7",
+              "to": "回去找里正"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "missions",
+      "label": "任務",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 1,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "10730"
+          ],
+          "name": "儺戲驅疫平安夜",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留",
+              "to": "儺戲驅疫平安夜"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "from": "敬請期待",
+              "to": "江湖市井自古有儺戲驅疫之俗，每逢深秋晦夜，百姓與幫派子弟皆戴青面獠牙面具嬉鬧走街。相傳若有頑童假扮夜叉登門，主人家必贈祛邪糖丸以換取平安夜合家無恙。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc",
+      "label": "NPC",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 3,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "7171"
+          ],
+          "name": "里正",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "香兒",
+              "to": "里正"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7172"
+          ],
+          "name": "面具匠人",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "香兒娘",
+              "to": "面具匠人"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "7173"
+          ],
+          "name": "藥鋪娘子",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "蘇婆婆",
+              "to": "藥鋪娘子"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc_strings",
+      "label": "NPC 對話",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 3,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "30880"
+          ],
+          "name": "里正",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "香兒",
+              "to": "里正"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30881"
+          ],
+          "name": "面具匠人",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "香兒娘",
+              "to": "面具匠人"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30882"
+          ],
+          "name": "藥鋪娘子",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "蘇婆婆",
+              "to": "藥鋪娘子"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "achievement_targets",
+      "label": "achievement_targets",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 58,
+        "removed": 0
+      }
+    },
+    {
+      "table": "dialogue_edges",
+      "label": "dialogue_edges",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 64456,
+        "removed": 7
+      }
+    },
+    {
+      "table": "dialogue_rewards",
+      "label": "dialogue_rewards",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 4534,
+        "removed": 0
+      }
+    },
+    {
+      "table": "doll_frame_images",
+      "label": "doll_frame_images",
+      "tier": "count",
+      "counts": {
+        "added": 20,
+        "changed": 0,
+        "removed": 0
+      }
+    },
+    {
+      "table": "doll_parts",
+      "label": "doll_parts",
+      "tier": "count",
+      "counts": {
+        "added": 22,
+        "changed": 0,
+        "removed": 0
+      }
+    },
+    {
+      "table": "item_doll",
+      "label": "item_doll",
+      "tier": "count",
+      "counts": {
+        "added": 2,
+        "changed": 0,
+        "removed": 0
+      }
+    },
+    {
+      "table": "item_images",
+      "label": "item_images",
+      "tier": "count",
+      "counts": {
+        "added": 3,
+        "changed": 2,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_dims",
+      "label": "map_dims",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 7,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_event_ops",
+      "label": "map_event_ops",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 37882,
+        "removed": 14
+      }
+    },
+    {
+      "table": "map_events",
+      "label": "map_events",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 7095,
+        "removed": 3
+      }
+    },
+    {
+      "table": "map_images",
+      "label": "map_images",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 2,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_placements",
+      "label": "map_placements",
+      "tier": "count",
+      "counts": {
+        "added": 3,
+        "changed": 42721,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_walkability",
+      "label": "map_walkability",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 5,
+        "removed": 0
+      }
+    },
+    {
+      "table": "messages",
+      "label": "對話訊息",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 377,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_events",
+      "label": "mission_events",
+      "tier": "count",
+      "counts": {
+        "added": 36,
+        "changed": 13007,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_refs",
+      "label": "任務關聯",
+      "tier": "count",
+      "counts": {
+        "added": 2,
+        "changed": 877,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_requirements",
+      "label": "mission_requirements",
+      "tier": "count",
+      "counts": {
+        "added": 2,
+        "changed": 2280,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_rewards",
+      "label": "mission_rewards",
+      "tier": "count",
+      "counts": {
+        "added": 2,
+        "changed": 1252,
+        "removed": 0
+      }
+    },
+    {
+      "table": "monster_spawns",
+      "label": "monster_spawns",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 18093,
+        "removed": 1
+      }
+    },
+    {
+      "table": "npc_images",
+      "label": "npc_images",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 2,
+        "removed": 0
+      }
+    },
+    {
+      "table": "op_defs",
+      "label": "op_defs",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 17,
+        "removed": 0
+      }
+    },
+    {
+      "table": "trigger_ops",
+      "label": "trigger_ops",
+      "tier": "count",
+      "counts": {
+        "added": 161,
+        "changed": 103463,
+        "removed": 0
+      }
+    }
+  ],
+  "ai": {
+    "model": "claude-opus-5-5",
+    "edited": false,
+    "highlights": [
+      "🎃 萬聖活動任務「儺戲驅疫平安夜」上線！原本「保留／敬請期待」的任務格這次正式填上內容。流程：先收集桃木枝×3 交給面具匠人，再收集蜂蜜×3 交給藥鋪娘子，接著分別找一歲愛打架、拿蔥大嬸、歌姬珮對話，每段都要回去找里正交差",
+      "🔔 新背飾「萬魅金鈴」實裝：原本的「測試道具」改成正式裝備。數值有體力 +4000、真氣 +800、內勁 +450、命中 +75、技巧 +15、玄學 +15，數值給得不手軟",
+      "🎁 新增「萬聖金鈴禮盒」（類型 BONUS，販售價 100）。依道具說明，打開有機會拿到全新背飾「萬魅金鈴」、萬壽袋熊、凜冬之刺、仙凰守御、鎏金龍騎、繁星盛月系列外裝和副門派進階書",
+      "🏆 新成就「方相開道不給糖就搗蛋」：完成活動任務「儺戲驅疫平安夜」6 次就能解鎖，獎勵數量 500",
+      "🧑‍🌾 活動 NPC 換了新名字：香兒 → 里正、香兒娘 → 面具匠人、蘇婆婆 → 藥鋪娘子，對話顯示名也跟著改",
+      "🍯 活動道具換成本次活動用的：春雨精華改成「桃木枝」（修整儺戲面具的材料），植物養料改成「蜂蜜」，兩樣活動結束後都會統一回收。另外「奇幻戲法箱」的說明前面多了 [外裝] 標籤",
+      "🔧 對話、地圖事件、觸發器、怪物配置、任務事件等底層表都有數萬筆計數異動，屬於整包重新建置造成的編號位移，玩法本身沒變，不用緊張"
+    ],
+    "tables": {
+      "items": {
+        "mode": "detail",
+        "note": "新增萬聖金鈴禮盒；測試道具轉正為背飾萬魅金鈴（有完整數值）；換上活動道具桃木枝和蜂蜜；奇幻戲法箱說明加了 [外裝] 標籤"
+      },
+      "missions": {
+        "mode": "detail",
+        "note": "原本的保留任務填入內容，就是新活動「儺戲驅疫平安夜」"
+      },
+      "mission_steps": {
+        "mode": "detail",
+        "note": "8 條「敬請期待」步驟換成活動流程；刪掉的 15 筆是空白佔位列"
+      },
+      "achievements": {
+        "mode": "detail",
+        "note": "新成就「方相開道不給糖就搗蛋」，需完成活動 6 次"
+      },
+      "npc": {
+        "mode": "detail",
+        "note": "香兒、香兒娘、蘇婆婆分別改名為里正、面具匠人、藥鋪娘子，作為活動 NPC"
+      },
+      "npc_strings": {
+        "mode": "summary",
+        "note": "顯示名跟著 NPC 改名一起同步"
+      },
+      "doll_parts": {
+        "mode": "summary",
+        "note": "新外觀部件，應該是新背飾的紙娃娃素材"
+      },
+      "doll_frame_images": {
+        "mode": "summary",
+        "note": "新外觀的動畫影格素材"
+      },
+      "item_doll": {
+        "mode": "summary",
+        "note": "新道具對應的外觀綁定"
+      },
+      "item_images": {
+        "mode": "summary",
+        "note": "新道具和改名道具的圖示"
+      },
+      "dialogue_edges": {
+        "mode": "summary",
+        "note": "6 萬多筆異動，是建置重編造成的"
+      },
+      "dialogue_rewards": {
+        "mode": "summary",
+        "note": "大批計數異動屬於建置調整"
+      },
+      "trigger_ops": {
+        "mode": "summary",
+        "note": "10 萬多筆異動，是建置重編造成的"
+      },
+      "map_event_ops": {
+        "mode": "summary",
+        "note": "大批計數異動屬於建置調整"
+      },
+      "map_events": {
+        "mode": "summary",
+        "note": "大批計數異動屬於建置調整"
+      },
+      "map_placements": {
+        "mode": "summary",
+        "note": "大批計數異動屬於建置調整，新增 3 筆應該是活動 NPC 的擺放位置"
+      },
+      "monster_spawns": {
+        "mode": "summary",
+        "note": "大批計數異動屬於建置調整"
+      },
+      "mission_events": {
+        "mode": "summary",
+        "note": "大批計數異動屬於建置調整，新增的是活動任務事件"
+      },
+      "mission_refs": {
+        "mode": "summary",
+        "note": "建置調整"
+      },
+      "mission_requirements": {
+        "mode": "summary",
+        "note": "建置調整"
+      },
+      "mission_rewards": {
+        "mode": "summary",
+        "note": "建置調整"
+      },
+      "achievement_targets": {
+        "mode": "summary",
+        "note": "新增一筆對應新成就，其餘屬於建置調整"
+      },
+      "messages": {
+        "mode": "summary",
+        "note": "對話訊息的批量異動"
+      },
+      "map_dims": {
+        "mode": "summary",
+        "note": "地圖資料的小幅調整"
+      },
+      "map_images": {
+        "mode": "summary",
+        "note": "地圖素材的小幅更新"
+      },
+      "map_walkability": {
+        "mode": "summary",
+        "note": "地圖通行資料的小幅調整"
+      },
+      "npc_images": {
+        "mode": "summary",
+        "note": "NPC 圖像的小幅更新"
+      },
+      "op_defs": {
+        "mode": "summary",
+        "note": "腳本指令定義的調整"
+      }
+    }
+  }
+}
