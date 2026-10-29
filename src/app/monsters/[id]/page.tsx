@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getMonsterById, getDropsForMonster } from "@/lib/queries/monsters";
+import { getMonsterById, getDropsForMonster, isPlaceholderMonster } from "@/lib/queries/monsters";
 import { getStagesForMonster } from "@/lib/queries/monster-spawns";
 import { getNpcImage, getItemIconMap } from "@/lib/queries/images";
 import { MonsterDetailView } from "@/components/monsters/monster-detail";
@@ -23,8 +23,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!monster) return { title: "怪物不存在 · 玄武" };
   return {
     title: `${monster.name} · 武林同萌傳怪物 · 玄武`,
-    description: `${monster.name} 的屬性、掉落與出現資訊`,
+    description: `${monster.name}（Lv${monster.level}）的屬性、掉落與出現地圖`,
     alternates: { canonical: `/monsters/${monster.id}` },
+    robots: isPlaceholderMonster(monster.id) ? { index: false } : undefined,
   };
 }
 

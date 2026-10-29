@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { StageFlagBadge } from "@/components/maps/stage-flag-badge";
 import { sortStageFlags } from "@/lib/constants/stage-flags";
 import { getStageDetail } from "@/lib/queries/stages";
+import { isPlaceholderStageName } from "@/lib/placeholder-data";
 import { getMonstersAtStage } from "@/lib/queries/monster-spawns";
 import { getNpcImageMap } from "@/lib/queries/images";
 import {
@@ -34,6 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `${stage.name ?? `地圖 ${stage.id}`} · 武林同萌傳地圖 · 玄武`,
     description: `${stage.name} 的屬性、入口、相關任務`,
     alternates: { canonical: `/maps/${stage.id}` },
+    robots: !stage.name || isPlaceholderStageName(stage.name) ? { index: false } : undefined,
   };
 }
 

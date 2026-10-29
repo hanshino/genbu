@@ -9,6 +9,13 @@ export function isPlaceholderStageName(name: string): boolean {
   return PLACEHOLDER_STAGE_NAME.test(name.trim());
 }
 
+// 道具：測試裝、「副本獎勵保留」這類空殼，或乾脆沒有名字。只用於 sitemap / noindex，列表不受影響。
+const PLACEHOLDER_ITEM_NAME = /TEST|測試|保留|預留/i;
+
+export function isPlaceholderItemName(name: string | null): boolean {
+  return !name?.trim() || PLACEHOLDER_ITEM_NAME.test(name);
+}
+
 /**
  * 佔位怪物（SQL 條件，n = npc、m = monsters）：
  * 沒有任何出沒地點也沒有掉落，或名稱就是測試／預留用。

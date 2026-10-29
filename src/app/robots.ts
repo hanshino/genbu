@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { BASE_URL, DETAIL_SITEMAP_SEGMENTS } from "@/lib/sitemap";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -7,6 +8,9 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/", "/login", "/me", "/search"],
     },
-    sitemap: "https://genbu.hanshino.dev/sitemap.xml",
+    sitemap: [
+      `${BASE_URL}/sitemap.xml`,
+      ...DETAIL_SITEMAP_SEGMENTS.map((seg) => `${BASE_URL}/${seg}/sitemap.xml`),
+    ],
   };
 }
