@@ -312,12 +312,30 @@ export function getDropsForMonster(monsterId: number): MonsterDropTable {
   return { drops, totalWeight };
 }
 
-/** 全部怪物 id（sitemap 用的輕量查詢）。與 getMonsterById 相同的 type > 0 過濾條件。 */
+/** 全部怪物 id（sitemap 用的輕量查詢）。與 getMonsterById 相同的 type > 0 過濾條件，另略過佔位怪物（這些頁面也會 noindex）。 */
 export function getAllMonsterIds(): number[] {
   const db = getDb();
   return (
-    db.prepare(`SELECT id FROM npc WHERE type > 0`).all() as { id: number }[]
+    db
+      .prepare(
+        `SELECT n.id FROM npc n LEFT JOIN monsters m ON n.id = m.id
+         WHERE n.type > 0 AND NOT ${PLACEHOLDER_MONSTER_SQL}`,
+      )
+      .all() as { id: number }[]
   ).map((r) => r.id);
+}
+
+/** 單一怪物是否為佔位資料（詳情頁用來決定 noindex）。 */
+export function isPlaceholderMonster(id: number): boolean {
+  const db = getDb();
+  return (
+    db
+      .prepare(
+        `SELECT 1 FROM npc n LEFT JOIN monsters m ON n.id = m.id
+         WHERE n.id = ? AND ${PLACEHOLDER_MONSTER_SQL}`,
+      )
+      .get(id) !== undefined
+  );
 }
 
 /**

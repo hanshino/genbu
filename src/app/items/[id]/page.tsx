@@ -30,7 +30,8 @@ import {
   expectedRandom,
   scoreWithShared,
 } from "@/lib/scoring";
-import { isPhase2Type } from "@/lib/constants/item-types";
+import { ITEM_TYPE_LABELS, isPhase2Type } from "@/lib/constants/item-types";
+import { isPlaceholderItemName } from "@/lib/placeholder-data";
 import { ItemDetail } from "@/components/items/item-detail";
 import { ItemRandTable } from "@/components/items/item-rand-table";
 import { ZhenjieItemSection } from "@/components/zhenjie/zhenjie-item-section";
@@ -71,11 +72,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { id } = await params;
   const item = getItemById(Number(id));
   if (!item) return { title: "道具不存在 · 玄武" };
+  // 很多道具共用同一句說明，前面補等級與類型，讓每頁的 description 不一樣
+  const facts = [item.level > 0 ? `Lv${item.level}` : null, item.type ? ITEM_TYPE_LABELS[item.type] : null]
+    .filter(Boolean)
+    .join(" ");
+  // 遊戲資料用字面 `\n`（少數打成 `/n`）當換行，meta 裡換成空白
+  const blurb = (item.summary ?? item.note ?? "詳細屬性與取得來源").replace(/[\\/]n/g, " ");
   return {
     title: `${item.name} · 武林同萌傳道具 · 玄武`,
-    // 遊戲資料用字面 `\n`（少數打成 `/n`）當換行，meta 裡換成空白
-    description: (item.summary ?? item.note ?? `${item.name} 的詳細屬性與掉落來源`).replace(/[\\/]n/g, " "),
+    description: `${item.name}${facts ? `（${facts}）` : ""}：${blurb}`,
     alternates: { canonical: `/items/${item.id}` },
+    robots: isPlaceholderItemName(item.name) ? { index: false } : undefined,
     twitter: { card: "summary_large_image" },
   };
 }

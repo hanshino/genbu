@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db";
+import { isPlaceholderItemName } from "@/lib/placeholder-data";
 import { buildOrderBy, nullsLastSorts, type SortDir } from "@/lib/sort";
 import { ITEM_COLUMNS } from "@/lib/constants/item-columns";
 import type { Item, ItemRand } from "@/lib/types/item";
@@ -183,10 +184,12 @@ export function getItems(params: GetItemsParams = {}): GetItemsResult {
   };
 }
 
-/** 全部 item id（sitemap 用的輕量查詢，不 join 其他表）。 */
+/** 全部 item id（sitemap 用的輕量查詢，不 join 其他表）。略過測試／保留道具，這些頁面也會 noindex。 */
 export function getAllItemIds(): number[] {
   const db = getDb();
-  return (db.prepare(`SELECT id FROM items`).all() as { id: number }[]).map((r) => r.id);
+  return (db.prepare(`SELECT id, name FROM items`).all() as { id: number; name: string | null }[])
+    .filter((r) => !isPlaceholderItemName(r.name))
+    .map((r) => r.id);
 }
 
 export function getItemById(id: number): Item | null {
