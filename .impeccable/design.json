@@ -1,0 +1,476 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-30T04:06:40.694745+00:00",
+  "title": "Design System: 玄武 Genbu",
+  "extensions": {
+    "colorMeta": {
+      "cinnabar": {
+        "role": "primary",
+        "displayName": "朱砂 Cinnabar Seal",
+        "canonical": "oklch(0.52 0.17 27)",
+        "tonalRamp": [
+          "oklch(0.15 0.071 27)",
+          "oklch(0.25 0.096 27)",
+          "oklch(0.35 0.121 27)",
+          "oklch(0.48 0.153 27)",
+          "oklch(0.6 0.158 27)",
+          "oklch(0.72 0.128 27)",
+          "oklch(0.85 0.096 27)",
+          "oklch(0.95 0.071 27)"
+        ]
+      },
+      "cinnabar-ring": {
+        "role": "primary",
+        "displayName": "朱砂餘韻 Cinnabar Echo",
+        "canonical": "oklch(0.65 0.15 27)",
+        "tonalRamp": [
+          "oklch(0.15 0.063 27)",
+          "oklch(0.25 0.085 27)",
+          "oklch(0.35 0.106 27)",
+          "oklch(0.48 0.135 27)",
+          "oklch(0.6 0.139 27)",
+          "oklch(0.72 0.113 27)",
+          "oklch(0.85 0.085 27)",
+          "oklch(0.95 0.063 27)"
+        ]
+      },
+      "cinnabar-lit": {
+        "role": "primary",
+        "displayName": "燭下朱砂 Cinnabar Lit",
+        "canonical": "oklch(0.65 0.18 28)",
+        "tonalRamp": [
+          "oklch(0.15 0.075 28)",
+          "oklch(0.25 0.101 28)",
+          "oklch(0.35 0.128 28)",
+          "oklch(0.48 0.162 28)",
+          "oklch(0.6 0.167 28)",
+          "oklch(0.72 0.135 28)",
+          "oklch(0.85 0.101 28)",
+          "oklch(0.95 0.075 28)"
+        ]
+      },
+      "rice-paper": {
+        "role": "neutral",
+        "displayName": "宣紙 Rice Paper",
+        "canonical": "oklch(0.975 0.008 85)",
+        "tonalRamp": [
+          "oklch(0.15 0.003 85)",
+          "oklch(0.25 0.005 85)",
+          "oklch(0.35 0.006 85)",
+          "oklch(0.48 0.007 85)",
+          "oklch(0.6 0.007 85)",
+          "oklch(0.72 0.006 85)",
+          "oklch(0.85 0.005 85)",
+          "oklch(0.95 0.003 85)"
+        ]
+      },
+      "paper-card": {
+        "role": "neutral",
+        "displayName": "素箋 Paper Card",
+        "canonical": "oklch(0.985 0.006 85)",
+        "tonalRamp": [
+          "oklch(0.15 0.003 85)",
+          "oklch(0.25 0.003 85)",
+          "oklch(0.35 0.004 85)",
+          "oklch(0.48 0.005 85)",
+          "oklch(0.6 0.006 85)",
+          "oklch(0.72 0.005 85)",
+          "oklch(0.85 0.003 85)",
+          "oklch(0.95 0.003 85)"
+        ]
+      },
+      "paper-wash": {
+        "role": "neutral",
+        "displayName": "淡墨渲 Paper Wash",
+        "canonical": "oklch(0.935 0.012 85)",
+        "tonalRamp": [
+          "oklch(0.15 0.005 85)",
+          "oklch(0.25 0.007 85)",
+          "oklch(0.35 0.009 85)",
+          "oklch(0.48 0.011 85)",
+          "oklch(0.6 0.011 85)",
+          "oklch(0.72 0.009 85)",
+          "oklch(0.85 0.007 85)",
+          "oklch(0.95 0.005 85)"
+        ]
+      },
+      "paper-muted": {
+        "role": "neutral",
+        "displayName": "薄宣 Paper Muted",
+        "canonical": "oklch(0.95 0.008 85)",
+        "tonalRamp": [
+          "oklch(0.15 0.003 85)",
+          "oklch(0.25 0.005 85)",
+          "oklch(0.35 0.006 85)",
+          "oklch(0.48 0.007 85)",
+          "oklch(0.6 0.007 85)",
+          "oklch(0.72 0.006 85)",
+          "oklch(0.85 0.005 85)",
+          "oklch(0.95 0.003 85)"
+        ]
+      },
+      "brush-line": {
+        "role": "neutral",
+        "displayName": "筆線 Brush Line",
+        "canonical": "oklch(0.88 0.012 85)",
+        "tonalRamp": [
+          "oklch(0.15 0.005 85)",
+          "oklch(0.25 0.007 85)",
+          "oklch(0.35 0.009 85)",
+          "oklch(0.48 0.011 85)",
+          "oklch(0.6 0.011 85)",
+          "oklch(0.72 0.009 85)",
+          "oklch(0.85 0.007 85)",
+          "oklch(0.95 0.005 85)"
+        ]
+      },
+      "cool-ink": {
+        "role": "neutral",
+        "displayName": "冷墨 Cool Ink",
+        "canonical": "oklch(0.22 0.015 260)",
+        "tonalRamp": [
+          "oklch(0.15 0.006 260)",
+          "oklch(0.25 0.008 260)",
+          "oklch(0.35 0.011 260)",
+          "oklch(0.48 0.013 260)",
+          "oklch(0.6 0.014 260)",
+          "oklch(0.72 0.011 260)",
+          "oklch(0.85 0.008 260)",
+          "oklch(0.95 0.006 260)"
+        ]
+      },
+      "faded-ink": {
+        "role": "neutral",
+        "displayName": "淡墨 Faded Ink",
+        "canonical": "oklch(0.48 0.018 260)",
+        "tonalRamp": [
+          "oklch(0.15 0.008 260)",
+          "oklch(0.25 0.01 260)",
+          "oklch(0.35 0.013 260)",
+          "oklch(0.48 0.016 260)",
+          "oklch(0.6 0.017 260)",
+          "oklch(0.72 0.014 260)",
+          "oklch(0.85 0.01 260)",
+          "oklch(0.95 0.008 260)"
+        ]
+      },
+      "xuan-night": {
+        "role": "neutral",
+        "displayName": "玄夜 Xuan Night",
+        "canonical": "oklch(0.165 0.015 260)",
+        "tonalRamp": [
+          "oklch(0.15 0.006 260)",
+          "oklch(0.25 0.008 260)",
+          "oklch(0.35 0.011 260)",
+          "oklch(0.48 0.013 260)",
+          "oklch(0.6 0.014 260)",
+          "oklch(0.72 0.011 260)",
+          "oklch(0.85 0.008 260)",
+          "oklch(0.95 0.006 260)"
+        ]
+      },
+      "xuan-card": {
+        "role": "neutral",
+        "displayName": "玄卡 Xuan Card",
+        "canonical": "oklch(0.21 0.018 260)",
+        "tonalRamp": [
+          "oklch(0.15 0.008 260)",
+          "oklch(0.25 0.01 260)",
+          "oklch(0.35 0.013 260)",
+          "oklch(0.48 0.016 260)",
+          "oklch(0.6 0.017 260)",
+          "oklch(0.72 0.014 260)",
+          "oklch(0.85 0.01 260)",
+          "oklch(0.95 0.008 260)"
+        ]
+      },
+      "candle-ivory": {
+        "role": "neutral",
+        "displayName": "燭光 Candle Ivory",
+        "canonical": "oklch(0.92 0.012 85)",
+        "tonalRamp": [
+          "oklch(0.15 0.005 85)",
+          "oklch(0.25 0.007 85)",
+          "oklch(0.35 0.009 85)",
+          "oklch(0.48 0.011 85)",
+          "oklch(0.6 0.011 85)",
+          "oklch(0.72 0.009 85)",
+          "oklch(0.85 0.007 85)",
+          "oklch(0.95 0.005 85)"
+        ]
+      },
+      "warning-red": {
+        "role": "error",
+        "displayName": "警示紅 Warning Red",
+        "canonical": "oklch(0.55 0.2 22)",
+        "tonalRamp": [
+          "oklch(0.15 0.084 22)",
+          "oklch(0.25 0.113 22)",
+          "oklch(0.35 0.142 22)",
+          "oklch(0.48 0.18 22)",
+          "oklch(0.6 0.185 22)",
+          "oklch(0.72 0.151 22)",
+          "oklch(0.85 0.113 22)",
+          "oklch(0.95 0.084 22)"
+        ]
+      },
+      "celadon": {
+        "role": "tertiary",
+        "displayName": "青瓷 Celadon",
+        "canonical": "oklch(0.62 0.08 165)",
+        "tonalRamp": [
+          "oklch(0.15 0.033 165)",
+          "oklch(0.25 0.045 165)",
+          "oklch(0.35 0.057 165)",
+          "oklch(0.48 0.072 165)",
+          "oklch(0.6 0.074 165)",
+          "oklch(0.72 0.06 165)",
+          "oklch(0.85 0.045 165)",
+          "oklch(0.95 0.033 165)"
+        ]
+      },
+      "indigo-dye": {
+        "role": "tertiary",
+        "displayName": "靛青 Indigo Dye",
+        "canonical": "oklch(0.48 0.1 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.042 250)",
+          "oklch(0.25 0.056 250)",
+          "oklch(0.35 0.071 250)",
+          "oklch(0.48 0.09 250)",
+          "oklch(0.6 0.093 250)",
+          "oklch(0.72 0.075 250)",
+          "oklch(0.85 0.056 250)",
+          "oklch(0.95 0.042 250)"
+        ]
+      },
+      "antique-gold": {
+        "role": "tertiary",
+        "displayName": "鎏金 Antique Gold",
+        "canonical": "oklch(0.7 0.12 78)",
+        "tonalRamp": [
+          "oklch(0.15 0.05 78)",
+          "oklch(0.25 0.068 78)",
+          "oklch(0.35 0.085 78)",
+          "oklch(0.48 0.108 78)",
+          "oklch(0.6 0.111 78)",
+          "oklch(0.72 0.09 78)",
+          "oklch(0.85 0.068 78)",
+          "oklch(0.95 0.05 78)"
+        ]
+      },
+      "ink-plum": {
+        "role": "tertiary",
+        "displayName": "墨紫 Ink Plum",
+        "canonical": "oklch(0.48 0.09 320)",
+        "tonalRamp": [
+          "oklch(0.15 0.038 320)",
+          "oklch(0.25 0.051 320)",
+          "oklch(0.35 0.064 320)",
+          "oklch(0.48 0.081 320)",
+          "oklch(0.6 0.083 320)",
+          "oklch(0.72 0.068 320)",
+          "oklch(0.85 0.051 320)",
+          "oklch(0.95 0.038 320)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "頁面 h1（宋體）。"
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "區塊大標（宋體）。"
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "卡片與側欄標題（宋體）。"
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "預設工作字級（黑體 text-sm）。"
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "表頭、badge、說明，全站最常用字級。"
+      },
+      "numeric": {
+        "displayName": "Numeric",
+        "purpose": "屬性值、機率、等級，等寬對齊。"
+      }
+    },
+    "shadows": [
+      {
+        "name": "popover",
+        "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+        "purpose": "下拉選單與 popover。"
+      },
+      {
+        "name": "drawer",
+        "value": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+        "purpose": "手機導覽抽屜。"
+      },
+      {
+        "name": "seal",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "玄字印等識別元素。"
+      },
+      {
+        "name": "card-ring",
+        "value": "0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent)",
+        "purpose": "卡片描邊（ring-1），取代陰影。"
+      }
+    ],
+    "motion": [
+      {
+        "name": "state",
+        "value": "150ms ease",
+        "purpose": "hover、chevron 翻轉等狀態轉換。"
+      },
+      {
+        "name": "drawer",
+        "value": "200ms",
+        "purpose": "抽屜滑入、浮層 fade + zoom-95。"
+      },
+      {
+        "name": "press",
+        "value": "translateY(1px)",
+        "purpose": "按鈕按下下沉。"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px",
+        "note": "navbar 由抽屜切換為桌機分組選單；寬表格捲動提示在此以下啟用"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "一處一印：畫面上唯一的主要動作。",
+      "html": "<button class=\"ds-btn-primary\">加入比較</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 10px;border-radius:10px;border:1px solid transparent;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;outline:none;font-family:var(--font-sans-tc),\"Noto Sans TC\",system-ui,sans-serif;background:var(--primary,oklch(0.52 0.17 27));color:var(--primary-foreground,oklch(0.975 0.008 85));}.ds-btn-primary:hover{background:color-mix(in oklch,var(--primary,oklch(0.52 0.17 27)) 80%,transparent);}.ds-btn-primary:focus-visible{box-shadow:0 0 0 3px color-mix(in oklch,var(--ring,oklch(0.65 0.15 27)) 50%,transparent);border-color:var(--ring,oklch(0.65 0.15 27));}.ds-btn-primary:active{transform:translateY(1px);}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "次要動作，宣紙底筆線框。",
+      "html": "<button class=\"ds-btn-outline\">重設</button>",
+      "css": ".ds-btn-outline{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 10px;border-radius:10px;border:1px solid transparent;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;outline:none;font-family:var(--font-sans-tc),\"Noto Sans TC\",system-ui,sans-serif;background:var(--background,oklch(0.975 0.008 85));color:var(--foreground,oklch(0.22 0.015 260));border-color:var(--border,oklch(0.88 0.012 85));}.ds-btn-outline:hover{background:var(--muted,oklch(0.95 0.008 85));}.ds-btn-outline:focus-visible{box-shadow:0 0 0 3px color-mix(in oklch,var(--ring,oklch(0.65 0.15 27)) 50%,transparent);border-color:var(--ring,oklch(0.65 0.15 27));}.ds-btn-outline:active{transform:translateY(1px);}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost-hover",
+      "description": "工具列與導覽的預設按鈕。",
+      "html": "<button class=\"ds-btn-ghost\">展開全部</button>",
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 10px;border-radius:10px;border:1px solid transparent;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;outline:none;font-family:var(--font-sans-tc),\"Noto Sans TC\",system-ui,sans-serif;background:transparent;color:var(--foreground,oklch(0.22 0.015 260));}.ds-btn-ghost:hover{background:var(--muted,oklch(0.95 0.008 85));}.ds-btn-ghost:focus-visible{box-shadow:0 0 0 3px color-mix(in oklch,var(--ring,oklch(0.65 0.15 27)) 50%,transparent);border-color:var(--ring,oklch(0.65 0.15 27));}"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "32px 高、筆線框，focus 轉朱砂餘韻。",
+      "html": "<input class=\"ds-input\" placeholder=\"搜尋道具、怪物、NPC…\">",
+      "css": ".ds-input{height:32px;width:280px;padding:4px 10px;border-radius:10px;border:1px solid var(--input,oklch(0.88 0.012 85));background:transparent;color:var(--foreground,oklch(0.22 0.015 260));font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s;font-family:var(--font-sans-tc),\"Noto Sans TC\",system-ui,sans-serif;}.ds-input::placeholder{color:var(--muted-foreground,oklch(0.48 0.018 260));}.ds-input:focus-visible{box-shadow:0 0 0 3px color-mix(in oklch,var(--ring,oklch(0.65 0.15 27)) 50%,transparent);border-color:var(--ring,oklch(0.65 0.15 27));}"
+    },
+    {
+      "name": "Navbar",
+      "kind": "nav",
+      "refersTo": "nav-link-active",
+      "description": "品牌字朱砂、目前頁用淡墨渲而非朱砂。",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-brand\" href=\"#\"><b>玄武</b><span>Genbu</span></a><a class=\"ds-nav-link\" href=\"#\">首頁</a><button class=\"ds-nav-link ds-nav-active\">資料 <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"/></svg></button><button class=\"ds-nav-link\">工具 <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"/></svg></button><a class=\"ds-nav-link\" href=\"#\">改版紀錄</a></nav>",
+      "css": ".ds-nav{display:flex;align-items:center;gap:4px;height:56px;padding:0 16px;border-bottom:1px solid color-mix(in oklch,var(--border,oklch(0.88 0.012 85)) 60%,transparent);background:color-mix(in oklch,var(--background,oklch(0.975 0.008 85)) 80%,transparent);backdrop-filter:blur(8px);font-family:var(--font-sans-tc),\"Noto Sans TC\",system-ui,sans-serif;}.ds-nav-brand{display:flex;align-items:baseline;gap:8px;margin-right:12px;text-decoration:none;}.ds-nav-brand b{font-family:var(--font-serif-tc),'Noto Serif TC',serif;font-size:20px;color:var(--primary,oklch(0.52 0.17 27));}.ds-nav-brand span{font-size:12px;color:var(--muted-foreground,oklch(0.48 0.018 260));}.ds-nav-link{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:8px;border:0;background:transparent;color:var(--foreground,oklch(0.22 0.015 260));font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;transition:background .15s;font-family:inherit;}.ds-nav-link:hover{background:var(--muted,oklch(0.95 0.008 85));}.ds-nav-link:focus-visible{outline:none;box-shadow:0 0 0 3px color-mix(in oklch,var(--ring,oklch(0.65 0.15 27)) 50%,transparent);border-color:var(--ring,oklch(0.65 0.15 27));}.ds-nav-active{background:var(--secondary,oklch(0.935 0.012 85));}"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "分類標記；朱砂實心版只留給真正要強調的狀態。",
+      "html": "<span class=\"ds-badge\">武器</span> <span class=\"ds-badge ds-badge-outline\">通用</span> <span class=\"ds-badge ds-badge-seal\">新</span>",
+      "css": ".ds-badge{display:inline-flex;align-items:center;height:20px;padding:2px 8px;border-radius:9999px;border:1px solid transparent;background:var(--secondary,oklch(0.935 0.012 85));color:var(--secondary-foreground,oklch(0.28 0.015 260));font-size:12px;font-weight:500;font-family:var(--font-sans-tc),\"Noto Sans TC\",system-ui,sans-serif;}.ds-badge-outline{background:transparent;border-color:var(--border,oklch(0.88 0.012 85));}.ds-badge-seal{background:var(--primary,oklch(0.52 0.17 27));color:var(--primary-foreground,oklch(0.975 0.008 85));}"
+    },
+    {
+      "name": "Data Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "平放在紙上：素箋底、10% 墨色細環、無陰影，數字等寬。",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">青龍偃月刀</div><dl class=\"ds-card-stats\"><dt>攻擊</dt><dd>1,280</dd><dt>命中</dt><dd>96</dd><dt>需求等級</dt><dd>150</dd></dl></div>",
+      "css": ".ds-card{width:260px;padding:16px;border-radius:14px;background:var(--card,oklch(0.985 0.006 85));color:var(--card-foreground,oklch(0.22 0.015 260));box-shadow:0 0 0 1px color-mix(in oklch,var(--foreground,oklch(0.22 0.015 260)) 10%,transparent);font-family:var(--font-sans-tc),\"Noto Sans TC\",system-ui,sans-serif;}.ds-card-title{font-family:var(--font-serif-tc),'Noto Serif TC',serif;font-weight:600;font-size:16px;margin-bottom:12px;}.ds-card-stats{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin:0;font-size:12px;}.ds-card-stats dt{color:var(--muted-foreground,oklch(0.48 0.018 260));}.ds-card-stats dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-family:var(--font-geist-mono),ui-monospace,monospace;}"
+    },
+    {
+      "name": "玄字印 Seal",
+      "kind": "custom",
+      "description": "全站唯一的具象古風元素，只用在品牌位置。",
+      "html": "<span class=\"ds-seal\" aria-hidden=\"true\">玄</span>",
+      "css": ".ds-seal{display:inline-flex;align-items:center;justify-content:center;width:80px;height:80px;border-radius:8px;border:2px solid var(--primary,oklch(0.52 0.17 27));background:color-mix(in oklch,var(--primary,oklch(0.52 0.17 27)) 5%,transparent);color:var(--primary,oklch(0.52 0.17 27));font-family:var(--font-serif-tc),'Noto Serif TC',serif;font-size:36px;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.05);}"
+    }
+  ],
+  "narrative": {
+    "northStar": "江湖案頭 (The Wuxia Ledger)",
+    "overview": "玄武是一張攤在桌上的江湖帳冊。底是溫潤的宣紙，字是偏冷的墨，資料一筆一筆排得密而整齊；朱砂只在要緊處蓋一印：品牌字、主要動作、你現在在哪裡。古風住在材質與用色裡，不住在裝飾裡：沒有卷軸邊框、沒有毛筆筆觸貼圖，介面本身仍是精準的工具。\n\n這是一個 Operate 為主的資料站。密度高，`text-xs` 與 `text-sm` 是工作字級，數字一律等寬。標題用宋體（Noto Serif TC）提供書卷氣，內文與資料用黑體（Noto Sans TC）確保掃讀速度。暗色主題「玄」把宣紙換成深夜藍、墨換成燭光象牙白，朱砂提亮以維持辨識。",
+    "keyCharacteristics": [
+      "宣紙暖底、冷墨字，兩個色相（85° 與 260°）構成整套中性色",
+      "朱砂是唯一的強調色，用量刻意稀少",
+      "宋體標題 × 黑體內文 × 等寬數字",
+      "扁平、細框線，陰影只給浮層",
+      "雙主題同等完整：亮色「宣紙」、暗色「玄」"
+    ],
+    "rules": [
+      {
+        "name": "一處一印 Rule",
+        "body": "朱砂只蓋在品牌字、主要 CTA、目前所在位置與 focus ring。大面積一律宣紙與墨；一個畫面同時出現三處以上朱砂實心塊，就是用多了。",
+        "section": "colors"
+      },
+      {
+        "name": "兩色相 Rule",
+        "body": "所有中性色只在暖紙（hue 85）與冷墨（hue 260）兩個色相上取值。新增表面色時沿用這兩個色相調明度，不要引入純灰或其他色相。",
+        "section": "colors"
+      },
+      {
+        "name": "宋題黑文 Rule",
+        "body": "h1–h3 一律宋體（`font-heading`，全域 base 已套用），資料與 UI 控制項一律黑體。不要用宋體排表格或按鈕。",
+        "section": "typography"
+      },
+      {
+        "name": "數字等寬 Rule",
+        "body": "會被拿來上下比較的數字一定 `tabular-nums`（必要時 `font-mono`）。",
+        "section": "typography"
+      },
+      {
+        "name": "紙面平放 Rule",
+        "body": "頁面上的卡片、表格、區塊都平放在紙上，不加陰影；只有會蓋住其他內容的東西才有影子。",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** 用 shadcn 元件（`src/components/ui/`）與 lucide-react 圖示組 UI，hand-roll 時沿用 `rounded-md`/`rounded-lg`、`border-border/60`、`bg-card`、`text-muted-foreground`、`hover:bg-muted/50`。",
+      "**Do** 每個新表面同時檢查亮色「宣紙」與暗色「玄」兩個主題。",
+      "**Do** 對要比較的數字使用 `tabular-nums`。",
+      "**Do** 圖表配色依序取 `chart-1`～`chart-5`。"
+    ],
+    "donts": [
+      "**Don't** 把朱砂當成大面積底色或一般標題色（一處一印 Rule）。",
+      "**Don't** 用 Unicode 符號（`×`、`▾`、`✓`）或 emoji 代替圖示。",
+      "**Don't** 引入 Tailwind 預設色板（`amber-500`、`emerald-500` 等）做新 UI；需要語意色時先擴充 token。",
+      "**Don't** 用卷軸、毛筆筆觸、雲紋等裝飾圖貼古風。",
+      "**Don't** 給平放在頁面上的卡片加陰影。",
+      "**Don't** 寫不必要的次要標籤或說明文字，讓版面自己說明。"
+    ]
+  }
+}
