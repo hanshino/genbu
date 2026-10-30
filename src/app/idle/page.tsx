@@ -19,7 +19,7 @@ export default async function IdlePage() {
       ) : (
         <div className="py-8 sm:py-12">
           <div className="mb-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-            <h1 className="font-heading text-center text-2xl font-black tracking-wide sm:text-3xl">
+            <h1 className="font-heading text-center text-2xl font-bold tracking-wide sm:text-3xl">
               摸魚練功房
             </h1>
             <TrialBadge />

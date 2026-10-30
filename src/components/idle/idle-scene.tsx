@@ -84,7 +84,7 @@ export function IdleScene({ rt, data, scene, reducedMotion, drawRef, children }:
   }, [rt, data, scene, reducedMotion, drawRef]);
 
   return (
-    <div className="relative h-[220px] w-full overflow-hidden bg-[#c9b27c] sm:h-[360px]">
+    <div className="relative h-[220px] w-full overflow-hidden bg-scene-ground sm:h-[360px]">
       <canvas ref={canvasRef} role="img" aria-label="掛機場景" className="absolute inset-0 size-full" />
       {children}
     </div>

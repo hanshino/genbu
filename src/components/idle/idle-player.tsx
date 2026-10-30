@@ -28,6 +28,7 @@ import {
   type LogContext,
 } from "@/lib/idle/view";
 import { ATTRIBUTE_KEYS } from "@/lib/types/stat-sim";
+import { cn } from "@/lib/utils";
 import { getSave, postBeacon, postJson, type IdleBoot, type IdleView } from "./api";
 import { prefetchBundle } from "./bundles";
 import { CharacterTab, type Draft } from "./character-tab";
@@ -37,7 +38,7 @@ import { LogTab } from "./log-tab";
 import { OfflineDialog } from "./offline-dialog";
 import type { LogEntry, Runtime } from "./runtime";
 import { SkillsTab } from "./skills-tab";
-import { TrialBadge, TrialNote } from "./trial-label";
+import { TrialBadge } from "./trial-label";
 
 type TabKey = "character" | "skills" | "log";
 type SaveStatus = { kind: "saved"; at: number } | { kind: "syncing"; at: number } | { kind: "error"; at: number };
@@ -427,53 +428,37 @@ export function IdlePlayer({
 
   return (
     <div className="space-y-4">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h1 className="font-heading text-2xl font-black tracking-wide sm:text-3xl">
-              摸魚練功房
-            </h1>
-            <TrialBadge />
-          </div>
-          <p className="text-muted-foreground text-sm">
-            {snap.name ? `${snap.name}　` : ""}
-            {scene.presetLabel}　練功地點：{scene.stageName}
-          </p>
-          <TrialNote />
+      <header className="space-y-1">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h1 className="font-heading text-2xl font-bold tracking-wide sm:text-3xl">摸魚練功房</h1>
+          <TrialBadge />
         </div>
-        <Badge variant="outline" className="h-7 gap-1.5 px-2.5 text-[13px]" aria-live="polite">
-          {save.kind === "syncing" ? (
-            <RefreshCwIcon className="motion-safe:animate-spin" aria-hidden />
-          ) : save.kind === "error" ? (
-            <TriangleAlertIcon className="text-destructive" aria-hidden />
-          ) : (
-            <CheckIcon aria-hidden />
-          )}
-          {save.kind === "syncing" ? "存檔中…" : save.kind === "error" ? "存檔失敗，稍後重試" : `已存檔 · ${agoLabel(now - save.at)}`}
-        </Badge>
+        <p className="text-muted-foreground text-sm">
+          {[snap.name, scene.presetLabel, `練功地點：${scene.stageName}`].filter(Boolean).join("・")}
+        </p>
       </header>
 
       <Card className="gap-0 py-0">
         <IdleScene rt={rt} data={data} scene={scene} reducedMotion={reducedMotion} drawRef={drawRef}>
           <div className="absolute top-2.5 left-2.5 sm:top-3.5 sm:left-4">
             {phase.kind === "blocked" ? (
-              <Badge className="h-7 gap-1.5 bg-red-950/90 px-3 text-sm text-red-100 sm:h-8 dark:bg-red-950/90">
+              <Badge className="bg-destructive text-destructive-foreground h-7 gap-1.5 px-3 text-sm sm:h-8">
                 <TriangleAlertIcon aria-hidden />
                 命中不足
               </Badge>
             ) : phase.kind === "searching" ? (
-              <Badge className="h-7 gap-1.5 bg-black/75 px-3 text-sm text-white sm:h-8" role="status">
+              <Badge className="bg-scene-overlay text-scene-overlay-foreground h-7 gap-1.5 px-3 text-sm sm:h-8" role="status">
                 <SearchIcon aria-hidden />
                 找怪中…
               </Badge>
             ) : (
-              <Badge className="h-7 gap-1.5 bg-primary/90 px-3 text-sm sm:h-8" role="status">
+              <Badge className="bg-scene-overlay text-scene-overlay-foreground h-7 gap-1.5 px-3 text-sm sm:h-8" role="status">
                 <SwordsIcon aria-hidden />
                 戰鬥中 · {activeName}
               </Badge>
             )}
           </div>
-          <div className="absolute top-3.5 right-4 hidden rounded-md bg-black/70 px-3 py-1.5 text-[13px] text-white sm:block">
+          <div className="bg-scene-overlay text-scene-overlay-foreground absolute top-3.5 right-4 hidden rounded-md px-3 py-1.5 text-[13px] sm:block">
             本次掛機 {sessionMinutes < 1 ? "不到 1" : sessionMinutes} 分 · 擊倒 {formatNumber(vitals.sessionKills)}
           </div>
         </IdleScene>
@@ -504,7 +489,7 @@ export function IdlePlayer({
           <Progress
             value={pct}
             aria-label="經驗"
-            className="min-w-0 flex-[1_1_240px] flex-col gap-1.5"
+            className="[&_[data-slot=progress-indicator]]:bg-foreground/75 min-w-0 flex-[1_1_240px] flex-col gap-1.5"
             getAriaValueText={() => `${snap.exp} / ${Number.isFinite(need) ? need : "—"}`}
           >
             <div className="text-muted-foreground flex w-full justify-between text-xs">
@@ -514,7 +499,7 @@ export function IdlePlayer({
               </span>
             </div>
           </Progress>
-          <div className="flex gap-5 text-sm">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
             <div>
               <span className="text-muted-foreground">金錢 </span>
               <b className="tabular-nums">{formatNumber(snap.money)}</b>
@@ -523,11 +508,25 @@ export function IdlePlayer({
               <span className="text-muted-foreground">每小時 </span>
               <b className="tabular-nums">{vitals.rate == null ? "—" : `約 ${formatNumber(vitals.rate)} 隻`}</b>
             </div>
+            <span
+              aria-live="polite"
+              title={save.kind === "saved" ? `已存檔 · ${agoLabel(now - save.at)}` : save.kind === "error" ? "存檔失敗，稍後會自動重試" : undefined}
+              className={cn("flex items-center gap-1 text-xs [&_svg]:size-3.5", save.kind === "error" ? "text-destructive" : "text-muted-foreground")}
+            >
+              {save.kind === "syncing" ? (
+                <RefreshCwIcon className="motion-safe:animate-spin" aria-hidden />
+              ) : save.kind === "error" ? (
+                <TriangleAlertIcon aria-hidden />
+              ) : (
+                <CheckIcon aria-hidden />
+              )}
+              {save.kind === "syncing" ? "存檔中" : save.kind === "error" ? "存檔失敗" : "已存檔"}
+            </span>
           </div>
           {jobReady && (
             <Badge
               variant="outline"
-              className="border-primary text-primary h-7 px-3 text-[13px]"
+              className="h-7 px-3 text-[13px]"
               render={<button type="button" aria-label="可轉職，選擇門派" onClick={() => setJobOpen(true)} />}
             >
               <ScrollTextIcon aria-hidden />

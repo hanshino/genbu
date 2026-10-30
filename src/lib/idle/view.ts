@@ -95,7 +95,7 @@ export const formatNumber = (n: number): string => nf.format(n);
 
 export const NORMAL_ATTACK_NAME = "普通攻擊";
 
-/** 事件 → 紀錄一行；不值得記的（找怪、施放、一般命中）回傳 null。 */
+/** 事件 → 紀錄一行；不值得記的（找怪、施放、一般命中、未命中）回傳 null。 */
 export function describeEvent(event: IdleEvent, ctx: LogContext): LogLine | null {
   switch (event.type) {
     case "encounter":
@@ -104,8 +104,6 @@ export function describeEvent(event: IdleEvent, ctx: LogContext): LogLine | null
       return event.kind === "crit"
         ? { text: `${ctx.skillName}重擊 ${ctx.monsterName}`, gain: `${formatNumber(event.damage)} 傷害` }
         : null;
-    case "miss":
-      return { text: `${ctx.skillName}未命中 ${ctx.monsterName}`, gain: "" };
     case "kill":
       return {
         text: `擊倒 ${ctx.monsterName}`,
