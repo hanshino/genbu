@@ -54,13 +54,13 @@ describe("describeEvent", () => {
     const e: IdleEvent = { t: 0, type: "kill", monsterId: 5407, exp: 85, money: 3 };
     expect(describeEvent(e, ctx)).toEqual({ text: "擊倒 ▲沙包海馬", gain: "+85 經驗　+3 金錢" });
   });
-  it("只記重擊與未命中，一般命中不記", () => {
+  it("只記重擊，一般命中與未命中不記", () => {
     expect(describeEvent({ t: 0, type: "hit", damage: 12, kind: "hit" }, ctx)).toBeNull();
     expect(describeEvent({ t: 0, type: "hit", damage: 1234, kind: "crit" }, ctx)).toEqual({
       text: "普通攻擊重擊 ▲沙包海馬",
       gain: "1,234 傷害",
     });
-    expect(describeEvent({ t: 0, type: "miss" }, ctx)?.text).toBe("普通攻擊未命中 ▲沙包海馬");
+    expect(describeEvent({ t: 0, type: "miss" }, ctx)).toBeNull();
   });
   it("升級與命中不足", () => {
     expect(describeEvent({ t: 0, type: "level-up", level: 4, points: 3 }, ctx)).toEqual({

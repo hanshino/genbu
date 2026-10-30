@@ -20,10 +20,16 @@ import {
   type Attributes,
   type PanelResult,
 } from "@/lib/types/stat-sim";
+import { STAT_LABELS, fmt } from "@/components/stat-sim/labels";
+import { cn } from "@/lib/utils";
+import { AttributeStepper } from "./attribute-stepper";
 import { CharacterWindow } from "./character-window";
 import { useWindowScale } from "./window-scale";
 
 export type Draft = Partial<Record<AttributeKey, number>>;
+
+/** 手機版列表下方的面板數值：配點時最常看的幾項。 */
+const MOBILE_STATS = ["atk", "matk", "hit", "attack_speed", "def", "dodge"] as const;
 
 const draftTotal = (draft: Draft) => ATTRIBUTE_KEYS.reduce((sum, k) => sum + (draft[k] ?? 0), 0);
 
@@ -115,24 +121,74 @@ export function CharacterTab({
 
   const addable = (key: AttributeKey) =>
     !("error" in applyAllocation(state, { ...draft, [key]: (draft[key] ?? 0) + 1 }));
+  const costOf = (key: AttributeKey) => nextCost(state.attributes[key] + (draft[key] ?? 0));
+  const add = (key: AttributeKey) => onDraft({ ...draft, [key]: (draft[key] ?? 0) + 1 });
 
   return (
     <div ref={holder} className="w-full">
       <div className="mx-auto max-w-full space-y-4" style={{ width: layout.width * scale }}>
-        <CharacterWindow
-          layout={layout}
-          scale={scale}
-          state={state}
-          panel={panel}
-          need={need}
-          pending={draft}
-          pointsLeft={remaining}
-          busy={busy}
-          canAdd={addable}
-          costOf={(key) => nextCost(state.attributes[key] + (draft[key] ?? 0))}
-          onAdd={(key) => onDraft({ ...draft, [key]: (draft[key] ?? 0) + 1 })}
-          attackSpeedHint={attackSpeedHint}
-        />
+        <div className="hidden sm:block">
+          <CharacterWindow
+            layout={layout}
+            scale={scale}
+            state={state}
+            panel={panel}
+            need={need}
+            pending={draft}
+            pointsLeft={remaining}
+            busy={busy}
+            canAdd={addable}
+            costOf={costOf}
+            onAdd={add}
+            attackSpeedHint={attackSpeedHint}
+          />
+        </div>
+
+        {/* 手機：遊戲視窗縮到手機寬度字只剩幾 px，改用一般的加點列表。 */}
+        <Card size="sm" className="sm:hidden">
+          <CardContent className="space-y-3">
+            <div className="flex items-baseline justify-between text-sm">
+              <span className="text-muted-foreground">剩餘屬性點</span>
+              <output
+                className={cn(
+                  "font-mono text-lg font-semibold tabular-nums",
+                  remaining < 0 && "text-destructive",
+                )}
+                aria-label={`剩餘屬性點 ${remaining}`}
+              >
+                {remaining}
+              </output>
+            </div>
+            <ul className="divide-border/60 divide-y border-t">
+              {ATTRIBUTE_KEYS.map((key) => (
+                <AttributeStepper
+                  key={key}
+                  name={STAT_LABELS[key]}
+                  value={state.attributes[key]}
+                  delta={draft[key] ?? 0}
+                  hint={`下一點需要 ${costOf(key)} 點`}
+                  canAdd={!busy && addable(key)}
+                  canRemove={!busy && (draft[key] ?? 0) > 0}
+                  onAdd={() => add(key)}
+                  onRemove={() => onDraft({ ...draft, [key]: (draft[key] ?? 0) - 1 })}
+                />
+              ))}
+            </ul>
+            <dl className="grid grid-cols-3 gap-x-3 gap-y-2 border-t pt-3">
+              {MOBILE_STATS.map((key) => {
+                const v = panel.stats[key].value;
+                return (
+                  <div key={key} title={key === "attack_speed" ? attackSpeedHint : undefined}>
+                    <dt className="text-muted-foreground text-xs">{STAT_LABELS[key]}</dt>
+                    <dd className="font-mono text-base tabular-nums">
+                      {v == null ? "—" : fmt(Math.floor(v))}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+          </CardContent>
+        </Card>
 
         <div className="flex flex-wrap items-center gap-2">
           <Button className="h-11 px-4" disabled={busy || spent === 0} onClick={onConfirm}>
@@ -147,9 +203,7 @@ export function CharacterTab({
             取消
           </Button>
           <span className="text-muted-foreground text-xs">
-            {state.unspentPoints > 0
-              ? "按視窗裡的 + 加點，確認後才會生效。"
-              : "升級時會得到新的屬性點。"}
+            {state.unspentPoints > 0 ? "按 + 加點，確認後才會生效。" : "升級時會得到新的屬性點。"}
           </span>
         </div>
         {error && (

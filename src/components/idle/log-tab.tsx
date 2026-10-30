@@ -37,7 +37,7 @@ export function LogTab({ entries }: { entries: LogEntry[] }) {
                 ))}
               </TableBody>
             </Table>
-            <p className="text-muted-foreground mt-2 text-xs">只保留最近 {LOG_LIMIT} 筆；一般命中不記。</p>
+            <p className="text-muted-foreground mt-2 text-xs">只保留最近 {LOG_LIMIT} 筆；一般命中與未命中不記。</p>
           </>
         )}
       </CardContent>

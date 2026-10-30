@@ -28,6 +28,10 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-scene-overlay: var(--scene-overlay);
+  --color-scene-overlay-foreground: var(--scene-overlay-foreground);
+  --color-scene-ground: var(--scene-ground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -66,6 +70,11 @@
   --accent: oklch(0.93 0.015 85);
   --accent-foreground: oklch(0.28 0.015 260);
   --destructive: oklch(0.55 0.2 22);
+  --destructive-foreground: oklch(0.975 0.008 85);
+  /* 掛機場景：畫布底色固定不跟主題（加算混合特效需要），疊在上面的標籤是半透明深墨＋燭光字 */
+  --scene-ground: oklch(0.77 0.076 87); /* 沙地，背景圖載入前的底色 */
+  --scene-overlay: oklch(0.2 0.015 260 / 0.78);
+  --scene-overlay-foreground: oklch(0.96 0.008 85);
   --border: oklch(0.88 0.012 85); /* brush line */
   --input: oklch(0.88 0.012 85);
   --ring: oklch(0.65 0.15 27); /* cinnabar echo on focus */
@@ -126,6 +135,11 @@
   --accent: oklch(0.27 0.02 260); /* hover surface */
   --accent-foreground: oklch(0.92 0.012 85);
   --destructive: oklch(0.68 0.19 22);
+  --destructive-foreground: oklch(0.16 0.015 260); /* 亮的警示紅上用深墨字 */
+  /* 場景底色兩主題相同；疊層在暗色主題壓深一點，和周圍的玄夜底接得上 */
+  --scene-ground: oklch(0.77 0.076 87);
+  --scene-overlay: oklch(0.14 0.015 260 / 0.82);
+  --scene-overlay-foreground: oklch(0.96 0.008 85);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.62 0.15 28);

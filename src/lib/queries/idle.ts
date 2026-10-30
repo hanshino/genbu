@@ -96,7 +96,8 @@ function loadMonsters(ids: number[]): Record<number, IdleMonster> {
       row.id,
       {
         ...row,
-        name: row.name ?? "",
+        // 練功點都是一般怪，名稱前的 ▲／● 在掛機畫面只是雜訊。
+        name: (row.name ?? "").replace(/^[▲●]/, ""),
         level: row.level ?? 1,
         extraDef: row.extraDef ?? 0,
         magicDef: row.magicDef ?? 0,

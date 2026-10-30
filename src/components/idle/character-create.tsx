@@ -8,10 +8,15 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type ChangeEvent,
   type CSSProperties,
   type FormEvent,
   type PointerEvent,
 } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { NAME_MAX_BYTES } from "@/configs/idle";
 import {
   START_POINTS,
@@ -32,9 +37,10 @@ import type { IdleGender } from "@/lib/idle/types";
 import type { IdleCreateAssets } from "@/lib/queries/idle";
 import { ATTRIBUTE_KEYS, type AttributeKey } from "@/lib/types/stat-sim";
 import { postJson, type IdleView } from "./api";
+import { AttributeStepper } from "./attribute-stepper";
 import { CreateDoll, availableActions } from "./create-doll";
 import styles from "./character-create.module.css";
-import { TrialBadge, TrialNote } from "./trial-label";
+import { TrialBadge } from "./trial-label";
 import { scaleFor } from "./window-scale";
 
 /** 輸入框內部的字至少要 16 px（iOS 聚焦時小於 16 px 會自動放大頁面），再整個縮回遊戲大小。 */
@@ -88,6 +94,15 @@ function subscribeMotion(onChange: () => void) {
   return () => mq.removeEventListener("change", onChange);
 }
 const reducedMotionNow = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** sm（640px）以上才顯示遊戲視窗。 */
+const WIDE_MQ = "(min-width: 640px)";
+function subscribeWide(onChange: () => void) {
+  const mq = window.matchMedia(WIDE_MQ);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+const wideNow = () => window.matchMedia(WIDE_MQ).matches;
 
 function GameButton({
   button,
@@ -163,7 +178,9 @@ export function CharacterCreate({
   const router = useRouter();
   const layout = useMemo(() => createLayout(assets.window), [assets]);
   const reducedMotion = useSyncExternalStore(subscribeMotion, reducedMotionNow, () => false);
+  const wide = useSyncExternalStore(subscribeWide, wideNow, () => true);
   const descId = useId();
+  const genderId = useId();
   const messageId = useId();
 
   const holder = useRef<HTMLDivElement>(null);
@@ -197,7 +214,7 @@ export function CharacterCreate({
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [layout.width]);
+  }, [layout.width, wide]);
 
   // 先把 hover / 按下的圖與兩種性別的動作圖載進快取，切換時才不會閃一下。
   useEffect(() => {
@@ -305,17 +322,135 @@ export function CharacterCreate({
   const fontScale = Math.max(1, MIN_INPUT_PX / (INPUT_FONT * scale));
   const winStyle = { width: layout.width * scale, "--s": scale, "--f": fontScale } as CSSProperties;
 
+  // 名字與生日的輸入框：桌機疊在遊戲視窗上，手機放在一般表單裡，行為相同。
+  const nameProps = {
+    ref: nameInput,
+    value: name,
+    onChange: (e: ChangeEvent<HTMLInputElement>) => edit(setName)(e.target.value),
+    onBlur: () => setNameTouched(true),
+    maxLength: 40,
+    autoComplete: "off",
+    autoCapitalize: "off",
+    spellCheck: false,
+    enterKeyHint: "done",
+    "aria-label": "名字",
+    "aria-invalid": showNameError,
+    "aria-describedby": messageId,
+    "aria-required": true,
+  } as const;
+  const birthdayProps = (part: "月" | "日", value: string, set: (v: string) => void) =>
+    ({
+      value,
+      onChange: (e: ChangeEvent<HTMLInputElement>) => edit(set)(e.target.value),
+      onBlur: () => setBirthdayTouched(true),
+      inputMode: "numeric",
+      maxLength: 2,
+      autoComplete: "off",
+      "aria-label": `生日：${part}（選填）`,
+      "aria-invalid": showBirthdayError,
+      "aria-describedby": messageId,
+    }) as const;
+
   return (
     <div className="space-y-4">
       <header className="space-y-1 text-center">
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-          <h1 className="font-heading text-2xl font-black tracking-wide sm:text-3xl">建立角色</h1>
+          <h1 className="font-heading text-2xl font-bold tracking-wide sm:text-3xl">建立角色</h1>
           <TrialBadge />
         </div>
         <p className="text-muted-foreground text-sm">摸魚練功房的新角色都從入門弟子出發。</p>
-        <TrialNote />
       </header>
 
+      {!wide ? (
+        // 手機：遊戲視窗縮到手機寬度，按鈕只剩 10 px 左右，改用一般表單。
+        <form className="space-y-4" onSubmit={submit} noValidate aria-label="創造角色">
+          <Card size="sm">
+            <CardContent className="space-y-4">
+              <label className="block space-y-1.5">
+                <span className="text-sm font-medium">名字</span>
+                <Input {...nameProps} aria-label={undefined} className="h-11" />
+              </label>
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <fieldset className="space-y-1.5">
+                  <legend className="mb-1.5 text-sm font-medium">生日（選填）</legend>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Input
+                      ref={monthInput}
+                      {...birthdayProps("月", month, setMonth)}
+                      className="h-11 w-14 text-center"
+                    />
+                    月
+                    <Input
+                      {...birthdayProps("日", day, setDay)}
+                      className="h-11 w-14 text-center"
+                    />
+                    日
+                  </div>
+                </fieldset>
+                <div className="space-y-1.5">
+                  <span id={genderId} className="block text-sm font-medium">
+                    性別
+                  </span>
+                  <ToggleGroup
+                    aria-labelledby={genderId}
+                    value={[gender]}
+                    onValueChange={(v) => v[0] && setGender(v[0] as IdleGender)}
+                  >
+                    {(["m", "f"] as const).map((g) => (
+                      <ToggleGroupItem key={g} value={g} className="h-10 px-5">
+                        {GENDER_LABEL[g]}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card size="sm">
+            <CardContent className="space-y-3">
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="text-muted-foreground">剩餘屬性點</span>
+                <output
+                  className="font-mono text-lg font-semibold tabular-nums"
+                  aria-label={`剩餘屬性點 ${points}`}
+                >
+                  {points}
+                </output>
+              </div>
+              <ul className="divide-border/60 divide-y border-t">
+                {ATTRIBUTE_KEYS.map((key) => (
+                  <AttributeStepper
+                    key={key}
+                    name={ATTRIBUTE_INFO[key].name}
+                    value={attributes[key]}
+                    hint={ATTRIBUTE_INFO[key].effect}
+                    canAdd={points > 0 && !busy}
+                    canRemove={attributes[key] > 1 && !busy}
+                    onAdd={() => changeAttribute(key, 1)}
+                    onRemove={() => changeAttribute(key, -1)}
+                  />
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11"
+              disabled={busy}
+              onClick={goBack}
+            >
+              回上一頁
+            </Button>
+            <Button type="submit" className="h-11" disabled={nameError !== null || busy}>
+              {busy ? "建立中…" : "設定完成"}
+            </Button>
+          </div>
+        </form>
+      ) : (
       <div ref={holder} className="w-full">
         <form className={styles.win} style={winStyle} onSubmit={submit} noValidate aria-label="創造角色">
           {/* eslint-disable-next-line @next/next/no-img-element -- 遊戲原圖 hotlink，需要 pixelated 與絕對定位 */}
@@ -370,51 +505,13 @@ export function CharacterCreate({
 
             {/* 名字與生日 */}
             <div className={styles.field} style={place(layout.name)}>
-              <input
-                ref={nameInput}
-                className={styles.input}
-                value={name}
-                onChange={(e) => edit(setName)(e.target.value)}
-                onBlur={() => setNameTouched(true)}
-                maxLength={40}
-                autoComplete="off"
-                autoCapitalize="off"
-                spellCheck={false}
-                enterKeyHint="done"
-                aria-label="名字"
-                aria-invalid={showNameError}
-                aria-describedby={messageId}
-                aria-required
-              />
+              <input {...nameProps} className={styles.input} />
             </div>
             <div className={styles.field} style={place(layout.month)}>
-              <input
-                ref={monthInput}
-                className={styles.input}
-                value={month}
-                onChange={(e) => edit(setMonth)(e.target.value)}
-                onBlur={() => setBirthdayTouched(true)}
-                inputMode="numeric"
-                maxLength={2}
-                autoComplete="off"
-                aria-label="生日：月（選填）"
-                aria-invalid={showBirthdayError}
-                aria-describedby={messageId}
-              />
+              <input ref={monthInput} {...birthdayProps("月", month, setMonth)} className={styles.input} />
             </div>
             <div className={styles.field} style={place(layout.day)}>
-              <input
-                className={styles.input}
-                value={day}
-                onChange={(e) => edit(setDay)(e.target.value)}
-                onBlur={() => setBirthdayTouched(true)}
-                inputMode="numeric"
-                maxLength={2}
-                autoComplete="off"
-                aria-label="生日：日（選填）"
-                aria-invalid={showBirthdayError}
-                aria-describedby={messageId}
-              />
+              <input {...birthdayProps("日", day, setDay)} className={styles.input} />
             </div>
 
             {/* 選擇列：只有性別能換，其餘先固定 */}
@@ -530,6 +627,7 @@ export function CharacterCreate({
           </div>
         </form>
       </div>
+      )}
 
       <div
         id={messageId}

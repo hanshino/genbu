@@ -66,7 +66,7 @@ export function SkillsTab({
   const hasSkills = choice.options.length > 0;
   const activeId = hasSkills ? (state.skillId != null && choice.options.some((o) => o.skillId === state.skillId) ? state.skillId : choice.defaultSkillId) : null;
   const weaponName = data.weapon?.name ?? "空手";
-  const refName = ref?.name.replace(/^▲/, "") ?? "";
+  const refName = ref?.name ?? "";
 
   return (
     <Card>
