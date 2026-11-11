@@ -9,6 +9,12 @@ import {
   getDistinctElementals,
   getNpcCombatStats,
 } from "../monsters";
+import { getDb } from "@/lib/db";
+
+// 筆數會隨每週資料更新變動，不寫死：直接對 npc 表獨立計數（不經 getMonsters 的 JOIN 與條件組裝）。
+const countNpc = (where = "1") =>
+  (getDb().prepare(`SELECT COUNT(*) AS c FROM npc WHERE type > 0 AND ${where}`).get() as { c: number }).c;
+const totalAll = () => getMonsters({ includePlaceholders: true }).total;
 
 describe("parseDropItem", () => {
   it("parses canonical new format", () => {
@@ -46,7 +52,8 @@ describe("getMonsters", () => {
     const result = getMonsters({ pageSize: 10, includePlaceholders: true });
     expect(result.monsters.length).toBeLessThanOrEqual(10);
     expect(result.monsters.length).toBeGreaterThan(0);
-    expect(result.total).toBe(3135);
+    // LEFT JOIN 不能漏列也不能把列變多
+    expect(result.total).toBe(countNpc());
     for (const m of result.monsters) {
       expect(m.id).toBeGreaterThan(0);
       expect(typeof m.hasDrop).toBe("boolean");
@@ -56,13 +63,14 @@ describe("getMonsters", () => {
   it("filters by hasDrop", () => {
     const withDrop = getMonsters({ hasDrop: true, pageSize: 5 });
     expect(withDrop.total).toBeGreaterThan(0);
-    expect(withDrop.total).toBeLessThan(3120);
+    expect(withDrop.total).toBeLessThan(totalAll());
     for (const m of withDrop.monsters) expect(m.hasDrop).toBe(true);
   });
 
   it("filters by type", () => {
     const type17 = getMonsters({ type: 17, pageSize: 5, includePlaceholders: true });
-    expect(type17.total).toBe(1156);
+    expect(type17.total).toBeGreaterThan(0);
+    expect(type17.total).toBe(countNpc("type = 17"));
     for (const m of type17.monsters) expect(m.type).toBe(17);
   });
 
@@ -175,19 +183,22 @@ describe("distinct helpers", () => {
 describe("getMonsters — level range", () => {
   it("filters by levelMin (level >= min)", () => {
     const result = getMonsters({ levelMin: 100, pageSize: 20, includePlaceholders: true });
-    expect(result.total).toBe(1394);
+    expect(result.total).toBeGreaterThan(0);
+    expect(result.total).toBe(countNpc("level >= 100"));
     for (const m of result.monsters) expect(m.level).toBeGreaterThanOrEqual(100);
   });
 
   it("filters by levelMax (level <= max)", () => {
     const result = getMonsters({ levelMax: 10, pageSize: 20, includePlaceholders: true });
-    expect(result.total).toBe(157);
+    expect(result.total).toBeGreaterThan(0);
+    expect(result.total).toBe(countNpc("level <= 10"));
     for (const m of result.monsters) expect(m.level).toBeLessThanOrEqual(10);
   });
 
   it("filters by both bounds (inclusive)", () => {
     const result = getMonsters({ levelMin: 50, levelMax: 60, pageSize: 100, includePlaceholders: true });
-    expect(result.total).toBe(216);
+    expect(result.total).toBeGreaterThan(0);
+    expect(result.total).toBe(countNpc("level BETWEEN 50 AND 60"));
     for (const m of result.monsters) {
       expect(m.level).toBeGreaterThanOrEqual(50);
       expect(m.level).toBeLessThanOrEqual(60);
@@ -196,18 +207,20 @@ describe("getMonsters — level range", () => {
 
   it("swaps bounds when min > max (forgiving)", () => {
     const swapped = getMonsters({ levelMin: 60, levelMax: 50, pageSize: 100, includePlaceholders: true });
-    expect(swapped.total).toBe(216);
+    const ordered = getMonsters({ levelMin: 50, levelMax: 60, pageSize: 100, includePlaceholders: true });
+    expect(swapped.total).toBeGreaterThan(0);
+    expect(swapped.total).toBe(ordered.total);
   });
 
   it("clamps out-of-range bounds to [1, 200]", () => {
     // 0 clamps to 1 (min possible level) → no effective lower bound
-    expect(getMonsters({ levelMin: 0, includePlaceholders: true }).total).toBe(3135);
+    expect(getMonsters({ levelMin: 0, includePlaceholders: true }).total).toBe(totalAll());
     // 999 clamps to 200 (max possible level) → no effective upper bound
-    expect(getMonsters({ levelMax: 999, includePlaceholders: true }).total).toBe(3135);
+    expect(getMonsters({ levelMax: 999, includePlaceholders: true }).total).toBe(totalAll());
   });
 
   it("ignores non-finite bounds (treated as unbounded)", () => {
-    expect(getMonsters({ levelMin: Number.NaN, levelMax: Number.NaN, includePlaceholders: true }).total).toBe(3135);
+    expect(getMonsters({ levelMin: Number.NaN, levelMax: Number.NaN, includePlaceholders: true }).total).toBe(totalAll());
   });
 });
 

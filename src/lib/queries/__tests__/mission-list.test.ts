@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { getAllMissionListItems } from "../missions";
+import { getDb } from "@/lib/db";
 
 describe("getAllMissionListItems", () => {
   const all = getAllMissionListItems();
   const byId = new Map(all.map((m) => [m.id, m]));
 
   it("全部任務都在（沒有客戶端資料的也要出現）", () => {
-    expect(all.length).toBe(1311);
+    // 筆數隨資料更新變動，不寫死：LEFT JOIN 後應與 missions 表一列對一列
+    const { c } = getDb().prepare(`SELECT COUNT(*) AS c FROM missions`).get() as { c: number };
+    expect(all.length).toBe(c);
+    expect(new Set(all.map((m) => m.id)).size).toBe(c);
     expect(all.filter((m) => m.acceptNpcs == null).length).toBeGreaterThan(0);
   });
 
