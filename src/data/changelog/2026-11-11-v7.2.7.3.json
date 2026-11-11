@@ -1,0 +1,1750 @@
+{
+  "version": "7.2.7.3",
+  "date": "2026-11-11",
+  "summary": {
+    "added": 285,
+    "changed": 290541,
+    "removed": 50
+  },
+  "addedTables": [],
+  "removedTables": [],
+  "tables": [
+    {
+      "table": "items",
+      "label": "道具",
+      "tier": "rich",
+      "counts": {
+        "added": 1,
+        "changed": 3,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "34398"
+          ],
+          "name": "醉芒仙使禮盒",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "醉芒仙使禮盒"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "打開有機會獲得全新坐騎「醉芒仙使」、忘機夜鷺、感恩喵喵、織夢俠心、醉夢狐影、金魚髮帶系列外裝及副門派進階書等超值好禮。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "100"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "BONUS"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "33243"
+          ],
+          "name": "融棘赤炎草",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "白糖",
+              "to": "融棘赤炎草"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "解毒、潤肺、清肺熱不宜多食。\\n\\n活動道具，活動結束後將回收。",
+              "to": "《活動道具》\\n\\n此草暖如炭火，荊棘遇之自化，走遍荒野不怕刺。\\n\\n活動道具，活動結束後將回收。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "50693"
+          ],
+          "name": "醉芒仙使",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試物品",
+              "to": "醉芒仙使"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "絨毛蓬鬆如芒花吐絮，金穗輕垂，白翼薄似蟬紗，蜜罐裡盛著半盞秋光，一晃便溢出甜香，醉了風，也醉了那片搖曳的原野"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "from": "0",
+              "to": "4000"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "from": "0",
+              "to": "800"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "from": "0",
+              "to": "15"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "from": "0",
+              "to": "10"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "from": "0",
+              "to": "200"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "from": "0",
+              "to": "200"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "from": "0",
+              "to": "200"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "from": "0",
+              "to": "90"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "53863"
+          ],
+          "name": "紫魅魔獅",
+          "fields": [
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "輕輕走過帶起一片如夢似幻的輕煙，當你沉浸其中的時後，就再也無法醒來。",
+              "to": "[外裝]輕輕走過帶起一片如夢似幻的輕煙，當你沉浸其中的時後，就再也無法醒來。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "achievements",
+      "label": "成就",
+      "tier": "rich",
+      "counts": {
+        "added": 1,
+        "changed": 0,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "30023"
+          ],
+          "name": "薪火守夜人",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "薪火守夜人"
+            },
+            {
+              "col": "description",
+              "label": "描述",
+              "value": "完成活動任務：風雪守夜人6次"
+            },
+            {
+              "col": "points",
+              "label": "點數",
+              "value": "0"
+            },
+            {
+              "col": "reward_amount",
+              "label": "獎勵數量",
+              "value": "500"
+            },
+            {
+              "col": "prereq_achievement_id",
+              "label": "前置成就",
+              "value": "0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "mission_steps",
+      "label": "任務步驟",
+      "tier": "rich",
+      "counts": {
+        "added": 14,
+        "changed": 3,
+        "removed": 16
+      },
+      "added": [
+        {
+          "idParts": [
+            "20512",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "1臧"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20512",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "2童"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20512",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "3苦"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20512",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20512",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20512",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20512",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20512",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20512",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20512",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20512",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20512",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20512",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "20512",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "14"
+            }
+          ]
+        }
+      ],
+      "removed": [
+        {
+          "idParts": [
+            "10729",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10729",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "10731",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待0",
+              "to": "往玄冰頂掃除雪原寒狼"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待1",
+              "to": "前往斷魂崖採集融棘赤炎草[item33243×10]。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10731",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待2",
+              "to": "前往斷魂崖修復青銅大鐘。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "missions",
+      "label": "任務",
+      "tier": "rich",
+      "counts": {
+        "added": 1,
+        "changed": 1,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "20512"
+          ],
+          "name": "主線三人組",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "主線三人組"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "value": "347三人組"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "10731"
+          ],
+          "name": "風雪守夜人",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留",
+              "to": "風雪守夜人"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "from": "敬請期待",
+              "to": "暴雪漫天，村裡為何罵聲連連？老人緊握破火鉗怒視風雪，究竟出了何事？快去一探究竟！"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc",
+      "label": "NPC",
+      "tier": "rich",
+      "counts": {
+        "added": 22,
+        "changed": 8,
+        "removed": 2
+      },
+      "added": [
+        {
+          "idParts": [
+            "13253"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "126"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13254"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "126"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13255"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "126"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13256"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "127"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13257"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "127"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13258"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "127"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13259"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "127"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13260"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "130"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13261"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "130"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13262"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "130"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13263"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "130"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13264"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "130"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13265"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "110"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13266"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "110"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13267"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "110"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13268"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "110"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13269"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "110"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13270"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "劇情保留"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "110"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "17999"
+          ],
+          "name": "編號只到這",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "編號只到這"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "18001"
+          ],
+          "name": "黑凌風",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "黑凌風"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "18002"
+          ],
+          "name": "紅玫瑰",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "紅玫瑰"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "19999"
+          ],
+          "name": "佔位999",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "佔位999"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        }
+      ],
+      "removed": [
+        {
+          "idParts": [
+            "9251"
+          ],
+          "name": "新的跳號喔",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "新的跳號喔"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9999"
+          ],
+          "name": "佔位999",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "佔位999"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "7091"
+          ],
+          "name": "厲國民",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "小胖阿智",
+              "to": "厲國民"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "8315"
+          ],
+          "name": "▲雪原寒狼",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "▲山道惡猿",
+              "to": "▲雪原寒狼"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13247"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "level",
+              "label": "等級",
+              "from": "110",
+              "to": "126"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13248"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "level",
+              "label": "等級",
+              "from": "110",
+              "to": "126"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13249"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "level",
+              "label": "等級",
+              "from": "110",
+              "to": "126"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13250"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "level",
+              "label": "等級",
+              "from": "110",
+              "to": "126"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13251"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "level",
+              "label": "等級",
+              "from": "110",
+              "to": "126"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "13252"
+          ],
+          "name": "劇情保留",
+          "fields": [
+            {
+              "col": "level",
+              "label": "等級",
+              "from": "110",
+              "to": "126"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc_strings",
+      "label": "NPC 對話",
+      "tier": "rich",
+      "counts": {
+        "added": 2,
+        "changed": 1,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "31429"
+          ],
+          "name": "黑凌風",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "value": "黑凌風"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31430"
+          ],
+          "name": "紅玫瑰",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "value": "紅玫瑰"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "30813"
+          ],
+          "name": "厲國民",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "三狐",
+              "to": "厲國民"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "achievement_targets",
+      "label": "achievement_targets",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 185,
+        "removed": 26
+      }
+    },
+    {
+      "table": "dialogue_edges",
+      "label": "dialogue_edges",
+      "tier": "count",
+      "counts": {
+        "added": 51,
+        "changed": 77321,
+        "removed": 0
+      }
+    },
+    {
+      "table": "dialogue_rewards",
+      "label": "dialogue_rewards",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 647,
+        "removed": 0
+      }
+    },
+    {
+      "table": "doll_frame_images",
+      "label": "doll_frame_images",
+      "tier": "count",
+      "counts": {
+        "added": 20,
+        "changed": 0,
+        "removed": 0
+      }
+    },
+    {
+      "table": "item_doll",
+      "label": "item_doll",
+      "tier": "count",
+      "counts": {
+        "added": 2,
+        "changed": 0,
+        "removed": 0
+      }
+    },
+    {
+      "table": "item_images",
+      "label": "item_images",
+      "tier": "count",
+      "counts": {
+        "added": 3,
+        "changed": 1,
+        "removed": 0
+      }
+    },
+    {
+      "table": "magic_effect_timelines",
+      "label": "magic_effect_timelines",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 553,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_dims",
+      "label": "map_dims",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 5,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_event_ops",
+      "label": "map_event_ops",
+      "tier": "count",
+      "counts": {
+        "added": 16,
+        "changed": 35599,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_events",
+      "label": "map_events",
+      "tier": "count",
+      "counts": {
+        "added": 3,
+        "changed": 6617,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_images",
+      "label": "map_images",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 1,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_placements",
+      "label": "map_placements",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 40659,
+        "removed": 4
+      }
+    },
+    {
+      "table": "map_walkability",
+      "label": "map_walkability",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 1,
+        "removed": 0
+      }
+    },
+    {
+      "table": "messages",
+      "label": "對話訊息",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 116,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_events",
+      "label": "mission_events",
+      "tier": "count",
+      "counts": {
+        "added": 9,
+        "changed": 6782,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_refs",
+      "label": "任務關聯",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 877,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_requirements",
+      "label": "mission_requirements",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 1335,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_rewards",
+      "label": "mission_rewards",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 841,
+        "removed": 0
+      }
+    },
+    {
+      "table": "monster_spawns",
+      "label": "monster_spawns",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 17248,
+        "removed": 0
+      }
+    },
+    {
+      "table": "npc_images",
+      "label": "npc_images",
+      "tier": "count",
+      "counts": {
+        "added": 22,
+        "changed": 8,
+        "removed": 2
+      }
+    },
+    {
+      "table": "op_defs",
+      "label": "op_defs",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 15,
+        "removed": 0
+      }
+    },
+    {
+      "table": "trigger_ops",
+      "label": "trigger_ops",
+      "tier": "count",
+      "counts": {
+        "added": 114,
+        "changed": 101714,
+        "removed": 0
+      }
+    }
+  ],
+  "ai": {
+    "model": "claude-opus-5-5",
+    "edited": false,
+    "highlights": [
+      "❄️ 新活動任務「風雪守夜人」上線！原本的「保留／敬請期待」任務格位正式填入：「暴雪漫天，村裡為何罵聲連連？老人緊握破火鉗怒視風雪，究竟出了何事？快去一探究竟！」",
+      "任務流程：往玄冰頂掃除雪原寒狼 → 前往斷魂崖採集融棘赤炎草×10 → 前往斷魂崖修復青銅大鐘",
+      "🐺 新怪「▲雪原寒狼」登場（沿用原本「▲山道惡猿」的欄位），就是風雪守夜人要掃的那群狼",
+      "🌿 活動道具「融棘赤炎草」（原「白糖」欄位改用）：「此草暖如炭火，荊棘遇之自化，走遍荒野不怕刺。」屬活動道具，活動結束後會回收",
+      "🏆 新成就「薪火守夜人」：完成活動任務「風雪守夜人」6 次，獎勵數量 500",
+      "🦄 新坐騎「醉芒仙使」實裝（原測試物品格位）：體力 4000、真氣 800、內力 15、根骨 10、內勁 200、防禦 200、護勁 200、命中 90",
+      "🎁 新禮盒「醉芒仙使禮盒」：說明寫開箱有機會拿到全新坐騎「醉芒仙使」，還有忘機夜鷺、感恩喵喵、織夢俠心、醉夢狐影、金魚髮帶系列外裝及副門派進階書等好禮",
+      "其他小改：「紫魅魔獅」說明前面加上 [外裝] 標記；新增 NPC「黑凌風」「紅玫瑰」；「小胖阿智」改名為「厲國民」",
+      "trigger_ops、dialogue_edges、map_placements、monster_spawns 等底層表有數萬筆計數變動，加上一批「劇情保留」佔位 NPC 調了等級，都是建置／重新編號造成的，不是玩法變更"
+    ],
+    "tables": {
+      "items": {
+        "mode": "detail",
+        "note": "醉芒仙使坐騎數值、醉芒仙使禮盒（內容物照說明轉述）、活動道具融棘赤炎草；紫魅魔獅只是說明加了 [外裝] 標記"
+      },
+      "missions": {
+        "mode": "detail",
+        "note": "「風雪守夜人」從保留格位轉成正式活動任務；另一筆新增的「主線三人組」（說明為「347三人組」）看起來是內部用條目，不另外報"
+      },
+      "mission_steps": {
+        "mode": "detail",
+        "note": "只報風雪守夜人三個從「敬請期待」填入的步驟；新增的 14 筆編號步驟（1臧、2童、3苦、4…14）和刪掉的 16 筆空白步驟都是佔位重排"
+      },
+      "achievements": {
+        "mode": "detail",
+        "note": "新成就「薪火守夜人」，條件是完成風雪守夜人 6 次"
+      },
+      "npc": {
+        "mode": "detail",
+        "note": "重點是新怪「▲雪原寒狼」、新 NPC「黑凌風」「紅玫瑰」、「厲國民」改名；大量「劇情保留」「佔位999」「編號只到這」屬佔位，不列"
+      },
+      "npc_strings": {
+        "mode": "summary",
+        "note": "黑凌風、紅玫瑰顯示名新增，三狐→厲國民，跟 NPC 表同步"
+      },
+      "npc_images": {
+        "mode": "summary",
+        "note": "配合 NPC 增減的圖檔對應"
+      },
+      "trigger_ops": {
+        "mode": "summary",
+        "note": "十萬筆等級的計數變動，屬建置重編"
+      },
+      "dialogue_edges": {
+        "mode": "summary",
+        "note": "七萬多筆變動，屬建置重編"
+      },
+      "map_placements": {
+        "mode": "summary",
+        "note": "四萬多筆變動，屬建置重編"
+      },
+      "map_event_ops": {
+        "mode": "summary",
+        "note": "三萬多筆變動，屬建置重編"
+      },
+      "monster_spawns": {
+        "mode": "summary",
+        "note": "一萬多筆變動，屬建置重編"
+      },
+      "mission_events": {
+        "mode": "summary",
+        "note": "批量重編，新增的幾筆對應新任務"
+      },
+      "map_events": {
+        "mode": "summary",
+        "note": "批量重編"
+      },
+      "mission_requirements": {
+        "mode": "summary",
+        "note": "批量重編"
+      },
+      "mission_rewards": {
+        "mode": "summary",
+        "note": "批量重編"
+      },
+      "mission_refs": {
+        "mode": "summary",
+        "note": "批量重編"
+      },
+      "dialogue_rewards": {
+        "mode": "summary",
+        "note": "批量重編"
+      },
+      "magic_effect_timelines": {
+        "mode": "summary",
+        "note": "批量變動，不是技能平衡調整"
+      },
+      "achievement_targets": {
+        "mode": "summary",
+        "note": "批量重編"
+      },
+      "messages": {
+        "mode": "summary",
+        "note": "對話訊息小批量變動"
+      },
+      "op_defs": {
+        "mode": "summary",
+        "note": "底層定義調整"
+      },
+      "doll_frame_images": {
+        "mode": "summary",
+        "note": "新坐騎／外裝用的圖檔"
+      },
+      "item_doll": {
+        "mode": "summary",
+        "note": "新坐騎／外裝的紙娃娃對應"
+      },
+      "item_images": {
+        "mode": "summary",
+        "note": "新道具圖示"
+      },
+      "map_dims": {
+        "mode": "summary",
+        "note": "少量地圖尺寸調整"
+      },
+      "map_images": {
+        "mode": "summary",
+        "note": "少量地圖圖檔調整"
+      },
+      "map_walkability": {
+        "mode": "summary",
+        "note": "少量地圖通行區調整"
+      }
+    }
+  }
+}
