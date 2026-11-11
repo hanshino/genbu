@@ -125,9 +125,10 @@ describe("doll.ts", () => {
     }
   });
 
-  it("排除 base 後男衣服有 102 種外觀，包含鬼道陰陽衣", () => {
+  it("男衣服外觀 key 不重複，包含鬼道陰陽衣", () => {
     const looks = getDollLooks("m", "body");
-    expect(looks).toHaveLength(102);
+    expect(looks.length).toBeGreaterThan(0);
+    expect(new Set(looks.map((look) => look.key)).size).toBe(looks.length);
     const look = looks.find((look) => look.items.some((item) => item.itemId === BODY_ITEM_ID));
     expect(look).toMatchObject({
       key: "body:102872", slot: "body", layers: [{ slot: "body", sequence: 102872 }],

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { getHeroById, getHeroCombinations, getHeroCombinationsForHero, getHeroes } from "../heroes";
 import type { HeroCombination } from "@/lib/types/hero";
+import { getDb } from "@/lib/db";
+
+// 筆數會隨資料更新變動（新英雄、新組合），不寫死：直接對資料表獨立計數。
+const dbCount = (table: string) =>
+  (getDb().prepare(`SELECT COUNT(*) AS c FROM ${table}`).get() as { c: number }).c;
 
 /** 掃過所有英雄收集組合，用來驗證 hero_connect 的整體資料契約。 */
 function collectCombinations(): { all: HeroCombination[]; unique: Map<number, HeroCombination> } {
@@ -16,10 +21,11 @@ function collectCombinations(): { all: HeroCombination[]; unique: Map<number, He
 }
 
 describe("getHeroes", () => {
-  it("回傳 84 位英雄且 id 唯一", () => {
+  it("回傳全部英雄且 id 唯一", () => {
     const heroes = getHeroes();
-    expect(heroes).toHaveLength(84);
-    expect(new Set(heroes.map((h) => h.id)).size).toBe(84);
+    expect(heroes.length).toBeGreaterThan(0);
+    expect(heroes).toHaveLength(dbCount("hero"));
+    expect(new Set(heroes.map((h) => h.id)).size).toBe(heroes.length);
   });
 
   it("依 group、id 排序", () => {
@@ -28,9 +34,10 @@ describe("getHeroes", () => {
     expect(heroes.map((h) => h.id)).toEqual(sorted.map((h) => h.id));
   });
 
-  it("combinationCount 總和 = hero_connect 的 192 個成員參照", () => {
+  it("combinationCount 總和 = hero_connect 的成員參照數", () => {
     const total = getHeroes().reduce((sum, h) => sum + h.combinationCount, 0);
-    expect(total).toBe(192);
+    expect(total).toBeGreaterThan(0);
+    expect(total).toBe(collectCombinations().all.length);
   });
 
   it("英雄 1 出現在 4 組組合中", () => {
@@ -107,10 +114,11 @@ describe("getHeroCombinationsForHero", () => {
 });
 
 describe("hero_connect 資料契約", () => {
-  it("共 75 組唯一組合、192 個成員參照", () => {
+  it("逐一英雄反查能涵蓋 hero_connect 的每一組，成員參照數 = 各組成員數總和", () => {
     const { all, unique } = collectCombinations();
-    expect(unique.size).toBe(75);
-    expect(all.length).toBe(192);
+    expect(unique.size).toBe(dbCount("hero_connect"));
+    const memberRefs = [...unique.values()].reduce((sum, combo) => sum + combo.members.length, 0);
+    expect(all.length).toBe(memberRefs);
   });
 
   it("每位成員都能解析出 hero 名稱，沒有 fallback 佔位", () => {
@@ -152,10 +160,11 @@ describe("hero_connect 資料契約", () => {
 });
 
 describe("getHeroCombinations", () => {
-  it("回傳全部 75 組唯一組合，依 id 排序", () => {
+  it("回傳全部唯一組合，依 id 排序", () => {
     const combos = getHeroCombinations();
-    expect(combos).toHaveLength(75);
-    expect(new Set(combos.map((c) => c.id)).size).toBe(75);
+    expect(combos.length).toBeGreaterThan(0);
+    expect(combos).toHaveLength(dbCount("hero_connect"));
+    expect(new Set(combos.map((c) => c.id)).size).toBe(combos.length);
     expect(combos.map((c) => c.id)).toEqual([...combos.map((c) => c.id)].sort((a, b) => a - b));
   });
 

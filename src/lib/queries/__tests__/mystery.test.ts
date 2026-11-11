@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getMysteryBoxInfo, getMysteryContents, getMysterySources } from "../mystery";
 import { formatDrop, formatProb } from "@/components/items/mystery-sections";
 import type { MysteryBoxContents } from "@/lib/types/mystery";
+import { getDb } from "@/lib/db";
 
 const byName = (c: MysteryBoxContents, name: string) => c.entries.find((e) => e.itemName === name);
 
@@ -28,8 +29,14 @@ describe("隨機寶箱內容", () => {
     });
   });
 
-  it("32403 北斗七星靈盤：113 項", () => {
-    expect(getMysteryContents(32403)!.entries).toHaveLength(113);
+  it("32403 北斗七星靈盤：大型寶箱的內容一項不漏", () => {
+    const c = getMysteryContents(32403)!;
+    // 項數隨資料更新變動，不寫死：對 mystery_box_items 獨立計數
+    const { n } = getDb()
+      .prepare(`SELECT COUNT(*) AS n FROM mystery_box_items WHERE mystery_id = ?`)
+      .get(c.info.mysteryId) as { n: number };
+    expect(n).toBeGreaterThan(100);
+    expect(c.entries).toHaveLength(n);
   });
 
   it("24066 好運刮刮樂：每次開出 2–4 樣", () => {

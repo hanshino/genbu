@@ -63,10 +63,15 @@ describe("parseModProb", () => {
   });
 });
 
+// 筆數會隨每週資料更新變動，不寫死：直接對資料表獨立計數。
+const dbCount = (from: string) =>
+  (getDb().prepare(`SELECT COUNT(*) AS c FROM ${from}`).get() as { c: number }).c;
+const EQUIPMENT_COUNT = () => dbCount(`compounds WHERE type = 'ITEM_COMPOUND_EQUIPMENT'`);
+
 describe("compound queries", () => {
-  it("lists all 27 known compound_groups", () => {
+  it("lists all known compound_groups", () => {
     const groups = getCompoundGroups();
-    expect(groups.length).toBe(27);
+    expect(groups.length).toBe(dbCount("compound_groups"));
     expect(groups[0].id).toBe(2);
     expect(groups[0].name).toBe("魂石武器強化");
   });
@@ -105,7 +110,8 @@ describe("compound queries", () => {
 
   it("getCompoundsByType filters by type", () => {
     const equipment = getCompoundsByType("ITEM_COMPOUND_EQUIPMENT");
-    expect(equipment.length).toBe(1026);
+    expect(equipment.length).toBeGreaterThan(0);
+    expect(equipment.length).toBe(EQUIPMENT_COUNT());
     for (const r of equipment) expect(r.type).toBe("ITEM_COMPOUND_EQUIPMENT");
   });
 
@@ -301,14 +307,17 @@ describe("getCompoundsByGroupEnriched", () => {
 });
 
 describe("getAllCompoundGroupsWithStats", () => {
-  it("lists all 27 groups with type breakdown + level range", () => {
+  it("lists all groups with type breakdown + level range", () => {
     const stats = getAllCompoundGroupsWithStats();
-    expect(stats.length).toBe(27);
-    // group 70 = 武器強化 應該有 182 條 ITEM_COMPOUND_EQUIPMENT
+    expect(stats.length).toBe(dbCount("compound_groups"));
+    // group 70 = 武器強化，全部都是 ITEM_COMPOUND_EQUIPMENT
     const g70 = stats.find((s) => s.id === 70);
     expect(g70?.name).toBe("武器強化");
-    expect(g70?.typeBreakdown.ITEM_COMPOUND_EQUIPMENT).toBe(182);
-    expect(g70?.count).toBe(182);
+    expect(g70?.count).toBeGreaterThan(0);
+    expect(g70?.count).toBe(dbCount(`compounds WHERE "group" = 70`));
+    expect(g70?.typeBreakdown.ITEM_COMPOUND_EQUIPMENT).toBe(
+      dbCount(`compounds WHERE "group" = 70 AND type = 'ITEM_COMPOUND_EQUIPMENT'`),
+    );
     expect(g70?.minLevel).toBeGreaterThan(0);
     expect(g70?.maxLevel).toBeGreaterThan(g70!.minLevel!);
     expect(g70?.maxLevel).toBeLessThanOrEqual(200);
@@ -322,7 +331,7 @@ describe("getAllCompoundGroupsWithStats", () => {
       expect(group.minLevel).toBeNull();
       expect(group.maxLevel).toBeNull();
     }
-    expect(stats.find((s) => s.id === 2)?.count).toBe(56);
+    expect(stats.find((s) => s.id === 2)?.count).toBe(dbCount(`compounds WHERE "group" = 2`));
     expect(stats.every((group) => group.maxLevel == null || group.maxLevel <= 200)).toBe(true);
   });
 });
@@ -389,12 +398,13 @@ describe("enhancementFamily", () => {
     expect(enhancementFamily(use!.name)).toBe("pearl");
   });
 
-  it("四家族總數為 真元 502／魂石 240／其他 180／魂珠 104，合計 1,026", () => {
+  it("每筆裝備強化配方都落在四家族之一，且四家族都有配方", () => {
     const counts: Record<string, number> = { yuan: 0, pearl: 0, stone: 0, other: 0 };
     const all = getCompoundsByType("ITEM_COMPOUND_EQUIPMENT");
     for (const c of all) counts[enhancementFamily(c.name)]++;
-    expect(counts).toEqual({ yuan: 502, pearl: 104, stone: 240, other: 180 });
-    expect(counts.yuan + counts.pearl + counts.stone + counts.other).toBe(1026);
+    expect(Object.keys(counts).sort()).toEqual(["other", "pearl", "stone", "yuan"]);
+    for (const n of Object.values(counts)) expect(n).toBeGreaterThan(0);
+    expect(counts.yuan + counts.pearl + counts.stone + counts.other).toBe(all.length);
   });
 
   it("反向 regression：存在 group 落在 70–110 卻屬 pearl 的配方（禁止改回 group range 二分）", () => {
@@ -402,12 +412,12 @@ describe("enhancementFamily", () => {
     const pearlInYuanRange = all.filter(
       (c) => enhancementFamily(c.name) === "pearl" && c.group != null && c.group >= 70 && c.group <= 110,
     );
-    expect(pearlInYuanRange.length).toBe(104);
+    expect(pearlInYuanRange.length).toBeGreaterThan(0);
     // 「其他」同樣混在 70–110，用 group 二分會一併誤標
     const otherInYuanRange = all.filter(
       (c) => enhancementFamily(c.name) === "other" && c.group != null && c.group >= 70 && c.group <= 110,
     );
-    expect(otherInYuanRange.length).toBe(180);
+    expect(otherInYuanRange.length).toBeGreaterThan(0);
   });
 });
 
@@ -483,9 +493,10 @@ describe("mergeBonus", () => {
     expect(merged.max).toBeGreaterThan(segs[0].max!);
   });
 
-  it("全 1,026 筆掃描：任一屬性合併後 prob <= 1,000,000，0 筆例外", () => {
+  it("全庫掃描：任一屬性合併後 prob <= 1,000,000，0 筆例外", () => {
     const byRecipe = scanAllMergedBonuses();
-    expect(byRecipe.size).toBe(1026);
+    // 每筆裝備強化配方都至少掃到一種屬性
+    expect(byRecipe.size).toBe(EQUIPMENT_COUNT());
     let over = 0;
     for (const list of byRecipe.values()) {
       for (const r of list) {
@@ -496,45 +507,47 @@ describe("mergeBonus", () => {
     expect(over).toBe(0);
   });
 
-  it("同屬性多級距配方 143 筆、多種不同屬性 3 筆", () => {
+  it("同屬性多級距配方、多種不同屬性配方都存在，且分類互斥", () => {
     const byRecipe = scanAllMergedBonuses();
-    // 單一屬性但拆成多級距 → 必須合併才正確的 143 筆
+    // 單一屬性但拆成多級距 → 必須合併才正確
     const singleAttrMultiSegment = [...byRecipe.values()].filter(
       (list) => list.length === 1 && list[0].target.segments > 1,
     );
-    const multiAttribute = [...byRecipe.values()].filter((list) => list.length > 1);
-    expect(singleAttrMultiSegment.length).toBe(143);
-    expect(multiAttribute.length).toBe(3);
-    // 那 3 筆是 愛珀/信珀/義珀魂珠強化（MDEF + DEF）
-    const multiEntries = [...byRecipe.entries()].filter(([, l]) => l.length > 1);
-    expect(multiEntries.map(([id]) => id).sort((a, b) => a - b)).toEqual([10795, 10796, 10797]);
-    for (const [, list] of multiEntries) {
-      expect(list.map((r) => r.target.rawType).sort()).toEqual([
+    expect(singleAttrMultiSegment.length).toBeGreaterThan(0);
+    // 多屬性配方至少包含 愛珀/信珀/義珀魂珠強化（MDEF + DEF）
+    const multiEntries = new Map([...byRecipe.entries()].filter(([, l]) => l.length > 1));
+    for (const id of [10795, 10796, 10797]) {
+      expect(multiEntries.get(id)?.map((r) => r.target.rawType).sort()).toEqual([
         "ITEM_BONUS_DEF",
         "ITEM_BONUS_MDEF",
       ]);
     }
-    // plan 的三分類是互斥的；實際「需要合併」的配方是 143 + 那 3 筆多屬性（其 MDEF 也是 5 段）= 146
+    // 「需要合併」= 單屬性多級距 + 含多級距的多屬性配方；其餘全是單一屬性單一級距
     const needsMerge = [...byRecipe.values()].filter((list) =>
       list.some((r) => r.target.segments > 1),
     );
-    expect(needsMerge.length).toBe(146);
-    // 剩下的就是單一屬性單一級距 880 筆
-    expect(byRecipe.size - needsMerge.length).toBe(880);
+    const multiAttrNeedsMerge = [...multiEntries.values()].filter((list) =>
+      list.some((r) => r.target.segments > 1),
+    );
+    expect(needsMerge.length).toBe(singleAttrMultiSegment.length + multiAttrNeedsMerge.length);
+    const plain = [...byRecipe.values()].filter(
+      (list) => list.length === 1 && list[0].target.segments === 1,
+    );
+    expect(plain.length).toBeGreaterThan(0);
+    expect(plain.length + singleAttrMultiSegment.length + multiEntries.size).toBe(byRecipe.size);
   });
 });
 
 describe("getEnhancementsByBonus", () => {
-  it("ATK 為 60 筆（配方數，不是 94 條目數）", () => {
-    const results = getEnhancementsByBonus({ bonusType: "ITEM_BONUS_ATK", family: "all", slot: null });
-    expect(results).toHaveLength(60);
-    expect(new Set(results.map((r) => r.use.id)).size).toBe(60);
-  });
-
-  it("DEF 為 91 筆（最大結果集）", () => {
-    expect(
-      getEnhancementsByBonus({ bonusType: "ITEM_BONUS_DEF", family: "all", slot: null }),
-    ).toHaveLength(91);
+  it("ATK／DEF 每筆配方只出現一次（配方數，不是級距條目數）", () => {
+    for (const bonusType of ["ITEM_BONUS_ATK", "ITEM_BONUS_DEF"] as const) {
+      const results = getEnhancementsByBonus({ bonusType, family: "all", slot: null });
+      expect(results.length).toBeGreaterThan(0);
+      expect(new Set(results.map((r) => r.use.id)).size).toBe(results.length);
+    }
+    // 10742 的 ATK 拆成 4 個級距，合併後仍只算一筆
+    const atk = getEnhancementsByBonus({ bonusType: "ITEM_BONUS_ATK", family: "all", slot: null });
+    expect(atk.filter((r) => r.use.id === 10742)).toHaveLength(1);
   });
 
   it("每筆結果的 target.rawType 等於查詢屬性、prob > 0，且不含 type=\"0\"", () => {
@@ -637,9 +650,9 @@ describe("期望消耗顆數", () => {
     expect(target.expectedMaterials).toBeCloseTo(amount / (target.target.prob / 1_000_000), 10);
   });
 
-  it("全 1,026 筆的期望顆數皆可計算，無任何一筆為 null", () => {
+  it("全庫的期望顆數皆可計算，無任何一筆為 null", () => {
     const byRecipe = scanAllMergedBonuses();
-    expect(byRecipe.size).toBe(1026);
+    expect(byRecipe.size).toBe(EQUIPMENT_COUNT());
     let nulls = 0;
     for (const r of [...byRecipe.values()].flat()) {
       if (r.expectedMaterials == null) nulls++;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getHeroes } from "../heroes";
 import { getHeroTokenSources } from "../mission-logic";
+import { getDb } from "@/lib/db";
 
 describe("getHeroTokenSources（英雄頁符令來源）", () => {
   it("英雄 1（小魚兒）有 2 個禮盒來源，含選項路徑", () => {
@@ -16,10 +17,17 @@ describe("getHeroTokenSources（英雄頁符令來源）", () => {
     expect(ids).toEqual([33084, 33982]);
   });
 
-  it("84 位英雄都有禮盒來源，合計 108 筆（is_gm=0）", () => {
+  it("每位英雄都有禮盒來源，合計筆數 = item_box_rewards 的 hero_token（is_gm=0）", () => {
     const all = getHeroes().flatMap((h) => getHeroTokenSources(h.id));
     expect(getHeroes().every((h) => getHeroTokenSources(h.id).length > 0)).toBe(true);
-    expect(all.filter((s) => s.kind === "box")).toHaveLength(108);
+    // 筆數隨資料更新變動，不寫死：對資料表獨立計數，確認沒有漏列或重複
+    const { c } = getDb()
+      .prepare(
+        `SELECT COUNT(*) AS c FROM item_box_rewards ibr JOIN hero_codes hc ON hc.id = ibr.ref_id
+         WHERE ibr.is_gm = 0 AND ibr.reward_type = 'hero_token'`,
+      )
+      .get() as { c: number };
+    expect(all.filter((s) => s.kind === "box")).toHaveLength(c);
   });
 
   // ponytail: 目前資料沒有任何 mission_rewards.hero_token（is_mission=1, is_gm=0），
