@@ -144,7 +144,7 @@ function publish() {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [cmd, ...rest] = process.argv.slice(2);
   const run =
-    cmd === "pull" ? () => pull(rest.includes("--force")) : cmd === "publish" ? publish : null;
+    cmd === "pull" ? () => pull(rest.includes("--force") || process.env.npm_config_force === "true") : cmd === "publish" ? publish : null;
   if (!run) {
     console.error("用法：node scripts/db-release.mjs <pull [--force]|publish>");
     process.exit(1);
