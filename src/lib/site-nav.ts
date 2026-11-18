@@ -90,6 +90,14 @@ export const NAV_SECTIONS: NavSection[] = [
         subgroup: "地點",
       },
       {
+        href: "/market",
+        label: "市集",
+        title: "市集掛單",
+        description: "成都市集的擺攤：誰在賣、開多少、裝備素質",
+        keywords: ["市集", "擺攤", "掛單", "攤位", "買賣"],
+        subgroup: "地點",
+      },
+      {
         href: "/missions",
         label: "任務",
         description: "任務步驟、所需物品、地點與 NPC",

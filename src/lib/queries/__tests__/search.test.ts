@@ -152,13 +152,31 @@ describe("searchAll（真實資料庫）", () => {
   });
 });
 
+/** 網址片段對到 page.tsx；路由群組 (xxx) 不佔網址，可以夾在任何一層。 */
+function hasPage(dir: string, segments: string[]): boolean {
+  if (!fs.existsSync(dir)) return false;
+  const [head, ...rest] = segments;
+  if (
+    head === undefined
+      ? fs.existsSync(path.join(dir, "page.tsx"))
+      : hasPage(path.join(dir, head), rest)
+  ) {
+    return true;
+  }
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
+    .some(
+      (d) =>
+        d.isDirectory() && /^\(.+\)$/.test(d.name) && hasPage(path.join(dir, d.name), segments),
+    );
+}
+
 describe("site-nav", () => {
   it("每個入口的 href 都對應到 src/app 底下存在的 page.tsx", () => {
     const entries = [...NAV_SECTIONS.flatMap((s) => s.items), ...getSearchablePages()];
     for (const { href } of entries) {
       const segments = href.split("?")[0].split("/").filter(Boolean);
-      const file = path.join(process.cwd(), "src", "app", ...segments, "page.tsx");
-      expect(fs.existsSync(file), `${href} → ${file}`).toBe(true);
+      expect(hasPage(path.join(process.cwd(), "src", "app"), segments), href).toBe(true);
     }
   });
 

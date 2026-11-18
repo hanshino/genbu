@@ -13,6 +13,7 @@ colors:
   faded-ink: "oklch(0.48 0.018 260)"
   warning-red: "oklch(0.55 0.2 22)"
   celadon: "oklch(0.62 0.08 165)"
+  celadon-ink: "oklch(0.42 0.08 165)"
   indigo-dye: "oklch(0.48 0.1 250)"
   antique-gold: "oklch(0.7 0.12 78)"
   ink-plum: "oklch(0.48 0.09 320)"
@@ -121,7 +122,7 @@ components:
 
 **Key Characteristics:**
 - 宣紙暖底、冷墨字，兩個色相（85° 與 260°）構成整套中性色
-- 朱砂是唯一的強調色，用量刻意稀少
+- 朱砂是唯一的強調色，用量刻意稀少；唯一的例外是裝備附加素質用的青瓷墨（見色彩一節）
 - 宋體標題 × 黑體內文 × 等寬數字
 - 扁平、細框線，陰影只給浮層
 - 雙主題同等完整：亮色「宣紙」、暗色「玄」
@@ -136,6 +137,7 @@ components:
 
 ### Tertiary（資料視覺化專用）
 - **青瓷 Celadon**、**靛青 Indigo Dye**、**鎏金 Antique Gold**、**墨紫 Ink Plum**：圖表 `chart-2`～`chart-5`，`chart-1` 為朱砂。只用在 Recharts 與資料標記，不拿來當 UI 裝飾色。
+- **青瓷墨 Celadon Ink**：青瓷的深色階，只用在裝備卡片的「附加素質」數值，底色為 12% 青瓷。素質是玩家挑裝備時最先看的資訊，對應遊戲內素質的綠字。不用在按鈕、連結、標題或其他狀態；暗色主題用亮青瓷 `oklch(0.72 0.08 165)`。
 - 地圖另有專用色組（`--marker-1..12` 怪物標記、`--walk-*` 可行走通道、`--hazard` 危險區、`--route-*` 路線），定義在 `src/app/globals.css`，針對暗色地圖底圖與色盲辨識調過，不得挪作他用。
 
 ### Neutral

@@ -26,6 +26,7 @@ const STATIC_ROUTES: Array<{
   { path: "/npcs", changeFrequency: "weekly", priority: 0.6, data: true },
   { path: "/missions", changeFrequency: "weekly", priority: 0.7, data: true },
   { path: "/shops", changeFrequency: "weekly", priority: 0.6, data: true },
+  { path: "/market", changeFrequency: "hourly", priority: 0.6 },
   { path: "/compounds", changeFrequency: "weekly", priority: 0.6, data: true },
   { path: "/zhenjie", changeFrequency: "monthly", priority: 0.6, data: true },
   { path: "/heroes", changeFrequency: "weekly", priority: 0.6, data: true },

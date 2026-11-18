@@ -56,6 +56,7 @@ import {
 import { MysteryContentsSection, MysterySourcesSection } from "@/components/items/mystery-sections";
 import { ItemSectionGroup, summarizeSourceRoutes } from "@/components/items/item-section-group";
 import { MarketPriceSection } from "@/components/items/market-price-section";
+import { ItemMarketListings } from "@/components/market/item-market-listings";
 import { CompareButton } from "@/components/items/compare-button";
 import { ItemTags } from "@/components/items/item-tags";
 import { PresetPercentile } from "@/components/items/preset-percentile";
@@ -202,6 +203,9 @@ export default async function ItemDetailPage({ params, searchParams }: PageProps
       ) : (
         <ItemRandTable rands={rands} />
       )}
+
+      {/* 市集掛單是賣家開的價，和下面玩家回報的成交價分開兩塊。 */}
+      <ItemMarketListings itemId={item.id} />
 
       {/* 「這是什麼 → 值多少 → 哪裡拿 → 拿來幹嘛」：市價接在道具本身的數值之後、
           入手途徑之前。資料由 client 自己打 API，不影響這頁的伺服器渲染。 */}
