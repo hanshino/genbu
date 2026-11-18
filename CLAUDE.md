@@ -36,6 +36,8 @@ genbu/
 npm run dev       # Start dev server
 npm run build     # Production build
 npm run lint      # ESLint
+npm test          # Vitest (run once)
+npm run typecheck # tsc --noEmit
 ```
 
 ## Database
