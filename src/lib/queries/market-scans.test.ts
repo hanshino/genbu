@@ -61,6 +61,7 @@ describe("ingestScan", () => {
       ended: input.ended,
       item_count: 2,
       received_at: NOW,
+      stage: null,
     });
     const ownerHash = createHash("sha256").update(item.owner).digest("hex").slice(0, 16);
     const listings = db.prepare("SELECT * FROM market_listings ORDER BY item_id").all();
@@ -133,6 +134,72 @@ describe("ingestScan", () => {
       { item_count: 0 },
       { item_count: 0 },
     ]);
+  });
+
+  it("舊格式（沒有 stage / stalls）照收，stage 存 NULL、不寫攤位", () => {
+    expect(ingestScan(scan())).toEqual({ scanId: 1, inserted: 1, duplicate: false });
+    expect(db.prepare("SELECT stage FROM market_scans").get()).toEqual({ stage: null });
+    expect(db.prepare("SELECT COUNT(*) AS n FROM market_stalls").get()).toEqual({ n: 0 });
+  });
+
+  it("寫入 stage 與攤位：招牌 trim、name / 座標可為 null、重複 owner 不讓整筆失敗", () => {
+    const owner = "0123456789abcdefabcd";
+    const input: ScanInput = {
+      ...scan(),
+      stage: 173,
+      stalls: [
+        { owner, name: "某攤主", sign: "  缺錢 便宜賣\uFFFD \n", x: 30, y: 38 },
+        { owner: "ffff", name: null, sign: "", x: null, y: null },
+        { owner, name: "重複", sign: "重複", x: 1, y: 1 },
+      ],
+    };
+    expect(ingestScan(input)).toEqual({ scanId: 1, inserted: 1, duplicate: false });
+    expect(db.prepare("SELECT stage FROM market_scans").get()).toEqual({ stage: 173 });
+    const hash = (value: string) => createHash("sha256").update(value).digest("hex").slice(0, 16);
+    const stalls = db.prepare("SELECT * FROM market_stalls ORDER BY name IS NULL").all();
+    expect(stalls).toEqual([
+      {
+        scan_id: 1,
+        owner_hash: hash(owner),
+        name: "某攤主",
+        sign: "缺錢 便宜賣\uFFFD",
+        x: 30,
+        y: 38,
+      },
+      { scan_id: 1, owner_hash: hash("ffff"), name: null, sign: "", x: null, y: null },
+    ]);
+    expect(JSON.stringify(stalls)).not.toContain(owner);
+    // 同一次掃描內可以用 (scan_id, owner_hash) 把商品對回攤位。
+    expect(
+      db
+        .prepare(
+          `SELECT s.name FROM market_listings l
+           JOIN market_stalls s ON s.scan_id = l.scan_id AND s.owner_hash = l.owner_hash`,
+        )
+        .all(),
+    ).toEqual([{ name: "某攤主" }]);
+  });
+
+  it("重複 scanId 不寫入攤位", () => {
+    ingestScan(scan());
+    expect(
+      ingestScan({
+        ...scan(),
+        stage: 173,
+        stalls: [{ owner: "abcd", name: "甲", sign: "招牌", x: 1, y: 2 }],
+      }),
+    ).toEqual({ scanId: 1, inserted: 0, duplicate: true });
+    expect(db.prepare("SELECT COUNT(*) AS n FROM market_stalls").get()).toEqual({ n: 0 });
+    expect(db.prepare("SELECT stage FROM market_scans").get()).toEqual({ stage: null });
+  });
+
+  it("保留期限清理一併刪除過期掃描的攤位", () => {
+    const stalls = [{ owner: "abcd", name: "甲", sign: "招牌", x: 1, y: 2 }];
+    vi.mocked(Date.now).mockReturnValue((NOW - WINDOW - 1) * 1000);
+    ingestScan({ ...scan(1, NOW - WINDOW - 1), stalls });
+    vi.mocked(Date.now).mockReturnValue(NOW * 1000);
+    ingestScan({ ...scan(2), stalls });
+    expect(db.prepare("SELECT scan_id FROM market_stalls").all()).toEqual([{ scan_id: 2 }]);
   });
 
   it("任一商品寫入失敗時整筆掃描 rollback", () => {

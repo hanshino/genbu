@@ -5,7 +5,7 @@ const globalDb = globalThis as typeof globalThis & {
   _userDb?: Database.Database;
 };
 
-// price_reports 後來才加的欄位。CREATE TABLE IF NOT EXISTS 對既有的表什麼都不做，
+// 後來才加的欄位。CREATE TABLE IF NOT EXISTS 對既有的表什麼都不做，
 // 所以開連線時自己比對一次；全部可為 NULL，舊資料不用回填（NULL 就是「沒填」）。
 const PRICE_REPORT_COLUMNS: readonly [string, string][] = [
   ["awaken", "INTEGER"],
@@ -13,13 +13,18 @@ const PRICE_REPORT_COLUMNS: readonly [string, string][] = [
   ["bind_expand", "INTEGER"],
   ["enhance", "TEXT"],
 ];
+const MARKET_SCAN_COLUMNS: readonly [string, string][] = [["stage", "INTEGER"]];
 
-function addMissingColumns(db: Database.Database): void {
+function addMissingColumns(
+  db: Database.Database,
+  table: string,
+  columns: readonly [string, string][],
+): void {
   const existing = new Set(
-    (db.pragma("table_info(price_reports)") as { name: string }[]).map((column) => column.name),
+    (db.pragma(`table_info(${table})`) as { name: string }[]).map((column) => column.name),
   );
-  for (const [name, type] of PRICE_REPORT_COLUMNS) {
-    if (!existing.has(name)) db.exec(`ALTER TABLE price_reports ADD COLUMN ${name} ${type}`);
+  for (const [name, type] of columns) {
+    if (!existing.has(name)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${type}`);
   }
 }
 
@@ -45,7 +50,7 @@ export function getUserDb(): Database.Database {
         created_at INTEGER NOT NULL
       )`);
       db.exec(`CREATE INDEX IF NOT EXISTS idx_price_reports_item ON price_reports(item_id)`);
-      addMissingColumns(db);
+      addMissingColumns(db, "price_reports", PRICE_REPORT_COLUMNS);
       db.exec(`CREATE TABLE IF NOT EXISTS votes (
         report_id INTEGER NOT NULL,
         voter_sub TEXT NOT NULL,
@@ -58,8 +63,10 @@ export function getUserDb(): Database.Database {
         started REAL NOT NULL,
         ended REAL,
         item_count INTEGER NOT NULL,
-        received_at INTEGER NOT NULL
+        received_at INTEGER NOT NULL,
+        stage INTEGER
       )`);
+      addMissingColumns(db, "market_scans", MARKET_SCAN_COLUMNS);
       db.exec(`CREATE TABLE IF NOT EXISTS market_listings (
         scan_id INTEGER NOT NULL,
         owner_hash TEXT NOT NULL,
@@ -71,6 +78,16 @@ export function getUserDb(): Database.Database {
       )`);
       db.exec(`CREATE INDEX IF NOT EXISTS idx_market_listings_item ON market_listings(item_id)`);
       db.exec(`CREATE INDEX IF NOT EXISTS idx_market_listings_scan ON market_listings(scan_id)`);
+      // 攤位：owner_hash 與 market_listings 同一種雜湊，同一次掃描內用 (scan_id, owner_hash) 對回商品。
+      db.exec(`CREATE TABLE IF NOT EXISTS market_stalls (
+        scan_id INTEGER NOT NULL,
+        owner_hash TEXT NOT NULL,
+        name TEXT,
+        sign TEXT NOT NULL,
+        x INTEGER,
+        y INTEGER,
+        PRIMARY KEY (scan_id, owner_hash)
+      )`);
       // 放置掛機存檔：state 是版本化 JSON（見 src/lib/idle/types.ts），之後的階段只加欄位、用 version 判斷。
       db.exec(`CREATE TABLE IF NOT EXISTS idle_saves (
         sub TEXT PRIMARY KEY,

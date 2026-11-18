@@ -37,6 +37,15 @@ beforeAll(() => {
        VALUES (1, 'fish', 'silver', 100, 'U_a', 1000)`,
     )
     .run();
+  legacy.exec(`CREATE TABLE market_scans (
+    scan_id INTEGER PRIMARY KEY,
+    server TEXT NOT NULL,
+    started REAL NOT NULL,
+    ended REAL,
+    item_count INTEGER NOT NULL,
+    received_at INTEGER NOT NULL
+  )`);
+  legacy.prepare("INSERT INTO market_scans VALUES (1, 'flower', 1000.5, NULL, 0, 1000)").run();
   legacy.close();
 
   process.env.GENBU_USER_DB_PATH = file;
@@ -62,9 +71,23 @@ describe("getUserDb", () => {
     expect(row).toEqual({ amount: 100, awaken: null, enhance: null });
   });
 
+  it("舊的 market_scans 補上 stage 欄位，既有掃描為 NULL，並建好 market_stalls", () => {
+    const db = getUserDb();
+    expect(db.prepare("SELECT scan_id, stage FROM market_scans").get()).toEqual({
+      scan_id: 1,
+      stage: null,
+    });
+    expect(
+      (db.pragma("table_info(market_stalls)") as { name: string }[]).map((c) => c.name),
+    ).toEqual(["scan_id", "owner_hash", "name", "sign", "x", "y"]);
+  });
+
   it("再開一次不會重複補欄位而炸掉", () => {
     forgetCachedConnection();
     expect(() => getUserDb()).not.toThrow();
     expect(columnsOf(getUserDb())).toContain("enhance");
+    expect(
+      (getUserDb().pragma("table_info(market_scans)") as { name: string }[]).map((c) => c.name),
+    ).toContain("stage");
   });
 });

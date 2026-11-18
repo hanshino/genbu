@@ -32,7 +32,7 @@ PK 是 `(scan_id, owner)`。
 
 | 欄位 | 說明 |
 |---|---|
-| `owner` | 攤主的 10 bytes key，以 hex 表示。同一個攤主在不同掃描之間會一樣，可以用來追同一攤 |
+| `owner` | 攤主的 10 bytes key，以 hex 表示。**玩家重登就會換**，不能跨掃描辨識同一攤 |
 | `sign` | 招牌文字，玩家自己寫的，例如「缺錢 便宜賣」 |
 | `result` | `ok`（有讀到）、`empty`、`no_reply`（沒回應，沒有商品）、`partial` |
 | `count` | 攤位上的商品數 |
@@ -79,9 +79,24 @@ PK 是 `(scan_id, owner)`。
 1. **`price = 99999999` 是上限值**。實測約 23% 的商品是這個價（2026-10 的資料：23,203 筆裡有 5,264 筆）。推測是只放著展示或亂喊的價格，算參考價時要排除（推論，未經遊戲端驗證）。
 2. **沒有伺服器欄位**。genbu 的價格回報有分 `fish` / `flower`，但 market.db 沒記是哪個伺服器掃的。目前所有掃描來自同一台伺服器；要分伺服器的話，得先在 tthol-headless 加欄位。
 3. **同一攤會在每次掃描重複出現**。要算「一個東西賣多少」，只看最近一次掃描，或在一段時間內依 `(owner, item_id, price)` 去重。不要把所有掃描的資料全部加總。
-4. **隱私**：`character` 不能讀也不能顯示。`owner` 只拿來去重，不要公開。`sign` 在遊戲裡大家都看得到，要不要顯示由 genbu 自己決定。
+4. **隱私**：探子角色名 `character` 絕不送進 genbu，也不存、不顯示。攤主名稱與招牌在遊戲內大家都看得到，使用者已決定在 genbu 公開顯示。`owner` 原始 key 不存，genbu 只存它的雜湊。
 5. **WAL 模式**：這個檔案開著 WAL，旁邊會有 `-wal` 和 `-shm`。只複製主檔會漏掉還沒 checkpoint 的資料。要給 genbu 用，請用 SQLite 的 online backup 產生一份一致的快照，例如 `sqlite3 market.db ".backup market-snapshot.db"`，或 Python 的 `sqlite3.Connection.backup`。genbu 用 `better-sqlite3` 以 `{ readonly: true }` 開那份快照。
 6. **資料量**：一天大約 20 次掃描，約 5 MB。tthol-headless 目前還沒有保留期限，給 genbu 的快照建議只匯出需要的時間範圍，並拿掉 `raw` 和 `character`。
+
+## genbu 端怎麼存（`POST /api/market/scans`）
+
+tthol-headless 把每次掃描 POST 到 genbu，存在使用者資料庫（`src/lib/user-db.ts`），保留 30 天：
+
+- `market_scans`：多一欄 `stage`（地圖 id，可為 NULL）。
+- `market_listings`：商品，`owner_hash` = `sha256(owner)` 的 hex 前 16 碼。
+- `market_stalls`：攤位，PK `(scan_id, owner_hash)`，欄位 `name`（攤主名稱，可為 NULL）、`sign`（招牌，已 trim 頭尾空白，U+FFFD 原樣保留）、`x` / `y`（同時有值或同時為 NULL）。
+  同一次掃描內用 `(scan_id, owner_hash)` 把商品對回攤位；商品找不到對應攤位也照收。
+
+使用攤位資料前要知道：
+
+1. **owner key 玩家重登就會換**，`owner_hash` 只在同一次掃描內有意義，不能跨掃描辨識同一攤；跨掃描只能靠 `name`。
+2. **座標是每次掃描各自的值**，而且還沒用真 client 對照過遊戲內座標。確認之前，不要當成玩家可以照著走的數字。
+3. **2026-11-18 以前的掃描沒有攤位資料**（`stage` 也是 NULL）。
 
 ## 常用查詢
 

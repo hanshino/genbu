@@ -56,8 +56,52 @@ describe("POST /api/market/scans", () => {
   });
 
   it.each([
+    { ...body, stage: 173, stalls: [] },
+    {
+      ...body,
+      stage: 173,
+      stalls: [
+        { owner: "0123abcd", name: "某攤主", sign: "招牌文字", x: 30, y: 38 },
+        { owner: "0123abce", name: null, sign: "", x: null, y: null },
+        { owner: "0123abcf", name: "a".repeat(32), sign: ` ${"招".repeat(64)} `, x: 0, y: 0 },
+      ],
+    },
+  ])("含 stage / stalls 的新格式回傳 200（案例 %#）", async (payload) => {
+    const response = await POST(request(payload));
+    expect(response.status).toBe(200);
+    expect(scans.ingestScan).toHaveBeenCalledWith(payload);
+  });
+
+  const stall = { owner: "0123abcd", name: "某攤主", sign: "招牌", x: 1, y: 2 };
+
+  it.each([
     null,
     [],
+    { ...body, stage: 0 },
+    { ...body, stage: 1.5 },
+    { ...body, stage: "173" },
+    { ...body, stalls: {} },
+    { ...body, stalls: "[]" },
+    { ...body, stalls: Array(5_001).fill(stall) },
+    ...[
+      null,
+      [],
+      { ...stall, owner: "" },
+      { ...stall, owner: "not-hex" },
+      { ...stall, name: "" },
+      { ...stall, name: "a".repeat(33) },
+      { ...stall, name: 123 },
+      { ...stall, name: undefined },
+      { ...stall, sign: null },
+      { ...stall, sign: undefined },
+      { ...stall, sign: "a".repeat(65) },
+      { ...stall, x: 1, y: null },
+      { ...stall, x: null, y: 1 },
+      { ...stall, x: -1 },
+      { ...stall, y: 1.5 },
+      { ...stall, x: "1" },
+      { ...stall, x: undefined, y: undefined },
+    ].map((s) => ({ ...body, stalls: [s] })),
     { ...body, scanId: 0 },
     { ...body, scanId: 1.5 },
     { ...body, scanId: "1" },
