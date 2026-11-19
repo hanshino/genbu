@@ -1,12 +1,15 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { DetailBreadcrumb } from "@/components/common/detail-breadcrumb";
 import { buttonVariants } from "@/components/ui/button";
 import { StaleNotice, StallOwner, scanCaption } from "@/components/market/listing-parts";
+import { ShowcaseSwitch } from "@/components/market/showcase-switch";
 import { StallListings } from "@/components/market/stall-listings";
 import {
   isOwnerHash,
+  isShowcasePrice,
   normalizeSearchParams,
   shownListingCount,
   type MarketItemInfo,
@@ -48,7 +51,8 @@ function load(server: string | undefined, ownerHash: string): Data | null {
   const scans = getLatestScans();
   if (scans.length === 0) return null;
   const scan = scans.find((s) => s.server === server) ?? scans[0];
-  const listings = getStallListings(scan.scanId, ownerHash);
+  // 展示價一律先拿：只擺展示價的攤位也要認得出來，不能當成「已經不在了」。
+  const listings = getStallListings(scan.scanId, ownerHash, true);
   const items = getMarketItemInfo(listings.map((l) => l.itemId));
   const stones = getStoneInfo(listings.flatMap((l) => l.stones));
   return { scan, listings, items, stones };
@@ -58,14 +62,17 @@ function Shell({ children }: { children: React.ReactNode }) {
   return <div className="mx-auto max-w-6xl space-y-5 px-4 py-8">{children}</div>;
 }
 
-function marketHref(scan?: MarketScan): string {
-  return scan ? `/market?view=stalls&server=${scan.server}` : "/market?view=stalls";
+function marketHref(scan?: MarketScan, showcase = false): string {
+  const tail = showcase ? "&showcase=1" : "";
+  return scan ? `/market?view=stalls&server=${scan.server}${tail}` : "/market?view=stalls";
 }
 
 export default async function MarketStallPage({ params, searchParams }: PageProps) {
   const { ownerHash } = await params;
   if (!isOwnerHash(ownerHash)) notFound();
-  const { server } = normalizeSearchParams(await searchParams);
+  const search = normalizeSearchParams(await searchParams);
+  const server = search.server;
+  const showcase = search.showcase === "1";
 
   let data: Data | null;
   try {
@@ -89,10 +96,11 @@ export default async function MarketStallPage({ params, searchParams }: PageProp
     );
   }
 
-  const { scan, listings, items, stones } = data;
+  const { scan, listings: all, items, stones } = data;
+  const listings = showcase ? all : all.filter((l) => !isShowcasePrice(l.price));
   const count = shownListingCount(listings, items);
 
-  if (count === 0) {
+  if (shownListingCount(all, items) === 0) {
     return (
       <Shell>
         <DetailBreadcrumb parent={{ href: marketHref(scan), label: "市集" }} current="攤位" />
@@ -113,12 +121,15 @@ export default async function MarketStallPage({ params, searchParams }: PageProp
     );
   }
 
-  const { sign, name } = listings[0];
+  const { sign, name } = all[0];
   const title = sign || "（沒有招牌）";
 
   return (
     <Shell>
-      <DetailBreadcrumb parent={{ href: marketHref(scan), label: "市集" }} current={title} />
+      <DetailBreadcrumb
+        parent={{ href: marketHref(scan, showcase), label: "市集" }}
+        current={title}
+      />
       <header className="space-y-1.5">
         <h1 className="text-2xl font-semibold tracking-tight break-all md:text-3xl">{title}</h1>
         <p className="text-sm">
@@ -134,10 +145,19 @@ export default async function MarketStallPage({ params, searchParams }: PageProp
       <StaleNotice scan={scan} />
 
       <section aria-labelledby="stall-listings" className="space-y-3">
-        <h2 id="stall-listings" className="text-sm text-muted-foreground">
-          {count} 筆掛單
-        </h2>
-        <StallListings listings={listings} items={items} stones={stones} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="stall-listings" className="text-sm text-muted-foreground">
+            {count} 筆掛單
+          </h2>
+          <Suspense fallback={null}>
+            <ShowcaseSwitch checked={showcase} />
+          </Suspense>
+        </div>
+        {count === 0 ? (
+          <p className="text-sm text-muted-foreground">這一攤只擺了展示價的商品。</p>
+        ) : (
+          <StallListings listings={listings} items={items} stones={stones} />
+        )}
       </section>
     </Shell>
   );

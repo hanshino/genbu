@@ -146,6 +146,14 @@ describe("getScanListings", () => {
     addListing(1, "b", 102, 3);
     expect(getScanListings(1).map((l) => l.itemId)).toEqual([102, 100]);
   });
+
+  it("includeShowcase 時展示價也列出，排在最貴", () => {
+    addScan(1, "flower", 1000);
+    addListing(1, "a", 100, 5);
+    addListing(1, "a", 101, 99_999_999);
+    expect(getScanListings(1, true).map((l) => l.itemId)).toEqual([100, 101]);
+    expect(getStallListings(1, "a", true).map((l) => l.itemId)).toEqual([100, 101]);
+  });
 });
 
 describe("getStallListings", () => {

@@ -90,14 +90,6 @@ export const NAV_SECTIONS: NavSection[] = [
         subgroup: "地點",
       },
       {
-        href: "/market",
-        label: "市集",
-        title: "市集掛單",
-        description: "成都市集的擺攤：誰在賣、開多少、裝備素質",
-        keywords: ["市集", "擺攤", "掛單", "攤位", "買賣"],
-        subgroup: "地點",
-      },
-      {
         href: "/missions",
         label: "任務",
         description: "任務步驟、所需物品、地點與 NPC",
@@ -220,6 +212,12 @@ export const NAV_SECTIONS: NavSection[] = [
 ];
 
 export const HOME_LINK: NavEntry = { href: "/", label: "首頁" };
+// 市集是掃描來的即時掛單，不是遊戲資料庫的圖鑑，所以不進任何一組，navbar 上獨立一顆。
+export const MARKET_LINK: NavEntry = {
+  href: "/market",
+  label: "市集",
+  keywords: ["市集", "擺攤", "掛單", "攤位", "買賣"],
+};
 export const CHANGELOG_LINK: NavEntry = {
   href: "/changelog",
   label: "更新紀錄",
@@ -249,6 +247,7 @@ export function getSearchablePages(): SearchablePage[] {
   const pages: SearchablePage[] = [
     ...NAV_SECTIONS.flatMap((s) => s.items.map((entry) => ({ ...entry, section: s.label }))),
     ...SEARCH_ONLY_PAGES.map((p) => ({ ...p.entry, section: p.section })),
+    { ...MARKET_LINK, section: "站內" },
     { ...CHANGELOG_LINK, section: "站內" },
     { ...ABOUT_LINK, section: "站內" },
   ];
