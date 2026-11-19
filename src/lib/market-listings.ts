@@ -21,6 +21,11 @@ export function normalizeSearchParams(raw: RawSearchParams): Record<string, stri
 /** 9,999 萬以上是展示用的天價（遊戲上限 99,999,999 附近），讀取時排除，不動原始資料。 */
 export const SHOWCASE_PRICE = 99_990_000;
 
+/** 展示價不是真的要賣這個價，畫面上一律寫「議價」。 */
+export function isShowcasePrice(price: number): boolean {
+  return price >= SHOWCASE_PRICE;
+}
+
 /** 最新掃描超過 3 小時就提醒玩家掛單可能已經賣掉或改價。 */
 export const STALE_AFTER_SECONDS = 3 * 3600;
 
@@ -265,11 +270,11 @@ export function groupByStall(listings: readonly MarketListing[]): StallSummary[]
   );
 }
 
-/** /market 切換伺服器：保留 view、q 等條件，丟掉 group、page、stall（新伺服器不一定有同樣的類型群組或攤位）。 */
+/** /market 切換伺服器：保留 view、q 等條件，丟掉 group、page、stall、item（新伺服器不一定有同樣的類型群組、攤位或道具）。 */
 export function switchServerParams(search: string, server: ServerId): URLSearchParams {
   const params = new URLSearchParams(search);
   params.set("server", server);
-  for (const key of ["group", "page", "stall"]) params.delete(key);
+  for (const key of ["group", "page", "stall", "item"]) params.delete(key);
   return params;
 }
 

@@ -66,8 +66,13 @@ const LISTING_SELECT = `SELECT l.owner_hash, l.item_id, l.price, l.count, l.stre
        FROM market_listings l
        LEFT JOIN market_stalls st ON st.scan_id = l.scan_id AND st.owner_hash = l.owner_hash`;
 
-/** 某次掃描的全部掛單（已排除展示價），由便宜到貴。 */
-export function getScanListings(scanId: number): MarketListing[] {
+/** 價格上限（不含）：預設排除展示價，玩家打開「顯示展示價」才全拿。 */
+function priceCeiling(includeShowcase: boolean): number {
+  return includeShowcase ? Number.MAX_SAFE_INTEGER : SHOWCASE_PRICE;
+}
+
+/** 某次掃描的全部掛單（預設排除展示價），由便宜到貴。 */
+export function getScanListings(scanId: number, includeShowcase = false): MarketListing[] {
   const db = getUserDb();
   const rows = db
     .prepare(
@@ -75,15 +80,19 @@ export function getScanListings(scanId: number): MarketListing[] {
        WHERE l.scan_id = ? AND l.price < ?
        ORDER BY l.price, l.rowid`,
     )
-    .all(scanId, SHOWCASE_PRICE) as ListingRow[];
+    .all(scanId, priceCeiling(includeShowcase)) as ListingRow[];
   return rows.map(toListing);
 }
 
 /**
- * 某次掃描裡一個攤位的全部掛單（已排除展示價），由便宜到貴；排序與 getScanListings 一致。
+ * 某次掃描裡一個攤位的全部掛單（預設排除展示價），由便宜到貴；排序與 getScanListings 一致。
  * owner_hash 只在同一次掃描內有意義（攤主重登就換），找不到時回空陣列，不跨掃描找。
  */
-export function getStallListings(scanId: number, ownerHash: string): MarketListing[] {
+export function getStallListings(
+  scanId: number,
+  ownerHash: string,
+  includeShowcase = false,
+): MarketListing[] {
   const db = getUserDb();
   const rows = db
     .prepare(
@@ -91,7 +100,7 @@ export function getStallListings(scanId: number, ownerHash: string): MarketListi
        WHERE l.scan_id = ? AND l.owner_hash = ? AND l.price < ?
        ORDER BY l.price, l.rowid`,
     )
-    .all(scanId, ownerHash, SHOWCASE_PRICE) as ListingRow[];
+    .all(scanId, ownerHash, priceCeiling(includeShowcase)) as ListingRow[];
   return rows.map(toListing);
 }
 

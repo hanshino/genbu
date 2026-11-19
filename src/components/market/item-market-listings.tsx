@@ -56,6 +56,45 @@ function countText(listings: MarketListing[]): string {
   return `${stalls} 攤 ${pieces.toLocaleString("zh-TW")} 件`;
 }
 
+/** 一件道具的全部掛單連同攤位：有個體差異的用裝備卡，一般道具一攤一列（同攤同價合併）。 */
+export function ItemListingList({
+  listings,
+  item,
+  scan,
+  stones,
+  showcase = false,
+}: {
+  listings: readonly MarketListing[];
+  item: MarketItemInfo;
+  scan: MarketScan;
+  stones: Map<number, StoneInfo>;
+  /** 攤位連結要不要帶著「顯示展示價」 */
+  showcase?: boolean;
+}) {
+  if (listings.some((l) => isIndividualListing(l, item.type))) {
+    return (
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,250px),1fr))] gap-3">
+        {listings.map((l, i) => (
+          <EquipmentCard
+            key={i}
+            listing={l}
+            item={item}
+            stones={stones}
+            stall={{ href: l.sign ? stallHref(scan, l.ownerHash, showcase) : undefined }}
+          />
+        ))}
+      </div>
+    );
+  }
+  return (
+    <ul>
+      {mergeStacks(listings).map((l, i) => (
+        <ListingRow key={i} listing={l} stallHref={stallHref(scan, l.ownerHash, showcase)} />
+      ))}
+    </ul>
+  );
+}
+
 function ServerBody({
   scan,
   listings,
@@ -102,25 +141,7 @@ function ServerBody({
         </div>
       )}
       <ListingsCollapsible count={rows.length}>
-        {cards ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,250px),1fr))] gap-3">
-            {listings.map((l, i) => (
-              <EquipmentCard
-                key={i}
-                listing={l}
-                item={item}
-                stones={stones}
-                stall={{ href: l.sign ? stallHref(scan, l.ownerHash) : undefined }}
-              />
-            ))}
-          </div>
-        ) : (
-          <ul>
-            {rows.map((l, i) => (
-              <ListingRow key={i} listing={l} stallHref={stallHref(scan, l.ownerHash)} />
-            ))}
-          </ul>
-        )}
+        <ItemListingList listings={listings} item={item} scan={scan} stones={stones} />
       </ListingsCollapsible>
     </div>
   );

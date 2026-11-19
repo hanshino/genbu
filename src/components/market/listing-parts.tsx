@@ -6,6 +6,7 @@ import { CopyNameButton } from "@/components/market/copy-name-button";
 import { ITEM_TYPE_LABELS } from "@/lib/constants/item-types";
 import { SERVERS, formatSilver, relativeTime } from "@/lib/market-price";
 import {
+  isShowcasePrice,
   isStale,
   listingStateText,
   priceScale,
@@ -22,11 +23,14 @@ export function scanCaption(scan: MarketScan, now?: number): string {
 }
 
 /** 攤位頁。owner_hash 攤主重登就換，這個網址只在這次掃描有效。 */
-export function stallHref(scan: MarketScan, ownerHash: string): string {
-  return `/market/stalls/${ownerHash}?server=${scan.server}`;
+export function stallHref(scan: MarketScan, ownerHash: string, showcase = false): string {
+  return `/market/stalls/${ownerHash}?server=${scan.server}${showcase ? "&showcase=1" : ""}`;
 }
 
 export function Price({ silver, className }: { silver: number; className?: string }) {
+  if (isShowcasePrice(silver)) {
+    return <span className={cn("font-heading font-semibold", className)}>議價</span>;
+  }
   const money = formatSilver(silver);
   return (
     <span className={cn("font-heading font-semibold tabular-nums", className)}>

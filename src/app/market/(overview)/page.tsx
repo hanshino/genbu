@@ -1,8 +1,10 @@
-import { Suspense } from "react";
+import { Fragment, Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { ChevronDownIcon } from "lucide-react";
 import { Pagination } from "@/components/common/pagination";
 import { ItemIcon } from "@/components/common/item-icon";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -11,7 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ItemListingList } from "@/components/market/item-market-listings";
 import { MarketFilters } from "@/components/market/market-filters";
+import { ShowcaseSwitch } from "@/components/market/showcase-switch";
 import { ServerQueryToggle } from "@/components/market/server-switch";
 import { StallCollapsible } from "@/components/market/stall-collapsible";
 import {
@@ -68,11 +72,11 @@ type Data = {
   stones: Map<number, StoneInfo>;
 };
 
-function load(server: string | undefined): Data | null {
+function load(server: string | undefined, showcase: boolean): Data | null {
   const scans = getLatestScans();
   if (scans.length === 0) return null;
   const scan = scans.find((s) => s.server === server) ?? scans[0];
-  const listings = getScanListings(scan.scanId);
+  const listings = getScanListings(scan.scanId, showcase);
   const items = getMarketItemInfo(listings.map((l) => l.itemId));
   const stones = getStoneInfo(listings.flatMap((l) => l.stones));
   return { scans, scan, listings, items, stones };
@@ -93,8 +97,7 @@ function Notice({ children }: { children: React.ReactNode }) {
 function ViewSwitch({ view, base }: { view: "items" | "stalls"; base: URLSearchParams }) {
   const href = (v: "items" | "stalls") => {
     const params = new URLSearchParams(base);
-    params.delete("page");
-    params.delete("stall");
+    for (const key of ["page", "stall", "item"]) params.delete(key);
     if (v === "stalls") params.set("view", "stalls");
     else params.delete("view");
     return `/market${params.size > 0 ? `?${params}` : ""}`;
@@ -127,13 +130,33 @@ function ViewSwitch({ view, base }: { view: "items" | "stalls"; base: URLSearchP
   );
 }
 
+/** 依道具：每列的攤數是個開關，點了在下面攤開這件道具的每一筆掛單與攤位（網址的 item）。 */
 function ItemsView({
   rows,
   items,
+  listings,
+  scan,
+  stones,
+  base,
+  expanded,
+  showcase,
 }: {
   rows: ReturnType<typeof summarizeByItem>;
   items: Map<number, MarketItemInfo>;
+  /** 已套用篩選、由便宜到貴的掛單 */
+  listings: MarketListing[];
+  scan: MarketScan;
+  stones: Map<number, StoneInfo>;
+  base: URLSearchParams;
+  expanded: number | null;
+  showcase: boolean;
 }) {
+  const toggleHref = (itemId: number) => {
+    const params = new URLSearchParams(base);
+    if (expanded === itemId) params.delete("item");
+    else params.set("item", String(itemId));
+    return `/market${params.size > 0 ? `?${params}` : ""}`;
+  };
   return (
     <div className="rounded-lg border border-border/60 bg-card">
       <Table>
@@ -150,35 +173,72 @@ function ItemsView({
           {rows.map((row) => {
             const item = items.get(row.itemId);
             const sub = item ? typeLevelText(item) : "";
+            const open = item != null && expanded === row.itemId;
             return (
-              <TableRow key={row.itemId}>
-                <TableCell className="whitespace-normal">
-                  <span className="flex items-center gap-2.5">
-                    <ItemIcon image={item?.icon} alt="" pixelated />
-                    <span className="min-w-0">
-                      <Link
-                        href={`/items/${row.itemId}`}
-                        className="rounded-sm font-medium hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                      >
-                        {item?.name ?? `#${row.itemId}`}
-                      </Link>
-                      {sub && <span className="block text-xs text-muted-foreground">{sub}</span>}
+              <Fragment key={row.itemId}>
+                <TableRow>
+                  <TableCell className="whitespace-normal">
+                    <span className="flex items-center gap-2.5">
+                      <ItemIcon image={item?.icon} alt="" pixelated />
+                      <span className="min-w-0">
+                        <Link
+                          href={`/items/${row.itemId}`}
+                          className="rounded-sm font-medium hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                        >
+                          {item?.name ?? `#${row.itemId}`}
+                        </Link>
+                        {sub && <span className="block text-xs text-muted-foreground">{sub}</span>}
+                      </span>
                     </span>
-                  </span>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Price silver={row.min} className="font-mono text-sm font-normal" />
-                </TableCell>
-                <TableCell className="hidden text-right sm:table-cell">
-                  {row.max !== row.min && (
-                    <Price silver={row.max} className="font-mono text-sm font-normal" />
-                  )}
-                </TableCell>
-                <TableCell className="text-right font-mono tabular-nums">{row.stalls}</TableCell>
-                <TableCell className="hidden text-right font-mono tabular-nums sm:table-cell">
-                  {row.pieces.toLocaleString("zh-TW")}
-                </TableCell>
-              </TableRow>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Price silver={row.min} className="font-mono text-sm font-normal" />
+                  </TableCell>
+                  <TableCell className="hidden text-right sm:table-cell">
+                    {row.max !== row.min && (
+                      <Price silver={row.max} className="font-mono text-sm font-normal" />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {item ? (
+                      <Link
+                        href={toggleHref(row.itemId)}
+                        scroll={false}
+                        aria-expanded={open}
+                        aria-label={`${item.name}，${row.stalls} 攤在賣`}
+                        className={cn(
+                          buttonVariants({ variant: open ? "secondary" : "ghost", size: "sm" }),
+                          "-mr-2 font-mono tabular-nums",
+                        )}
+                      >
+                        {row.stalls}
+                        <ChevronDownIcon
+                          className={cn("size-3.5 transition-transform", open && "rotate-180")}
+                          aria-hidden
+                        />
+                      </Link>
+                    ) : (
+                      <span className="font-mono tabular-nums">{row.stalls}</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="hidden text-right font-mono tabular-nums sm:table-cell">
+                    {row.pieces.toLocaleString("zh-TW")}
+                  </TableCell>
+                </TableRow>
+                {open && (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={5} className="bg-muted/30 p-3 whitespace-normal sm:p-4">
+                      <ItemListingList
+                        listings={listings.filter((l) => l.itemId === row.itemId)}
+                        item={item}
+                        scan={scan}
+                        stones={stones}
+                        showcase={showcase}
+                      />
+                    </TableCell>
+                  </TableRow>
+                )}
+              </Fragment>
             );
           })}
         </TableBody>
@@ -194,12 +254,14 @@ function StallRow({
   items,
   stones,
   open,
+  showcase,
 }: {
   stall: StallSummary;
   scan: MarketScan;
   items: Map<number, MarketItemInfo>;
   stones: Map<number, StoneInfo>;
   open: boolean;
+  showcase: boolean;
 }) {
   const iconIds = [...new Set(stall.listings.map((l) => l.itemId))];
   const sign = stall.sign || "（沒有招牌）";
@@ -234,7 +296,7 @@ function StallRow({
           items={items}
           stones={stones}
           limit={STALL_PREVIEW_LIMIT}
-          moreHref={stallHref(scan, stall.ownerHash)}
+          moreHref={stallHref(scan, stall.ownerHash, showcase)}
         />
       </StallCollapsible>
     </article>
@@ -246,10 +308,11 @@ export default async function MarketPage({ searchParams }: PageProps) {
   const view = params.view === "stalls" ? "stalls" : "items";
   const query = (params.q ?? "").trim();
   const group = params.group ?? "";
+  const showcase = params.showcase === "1";
 
   let data: Data | null;
   try {
-    data = load(params.server);
+    data = load(params.server, showcase);
   } catch (error) {
     console.error("market page read failed", error);
     return (
@@ -303,7 +366,16 @@ export default async function MarketPage({ searchParams }: PageProps) {
       rows.length === 0 ? (
         <Notice>找不到符合條件的掛單</Notice>
       ) : (
-        <ItemsView rows={pageRows} items={items} />
+        <ItemsView
+          rows={pageRows}
+          items={items}
+          listings={filtered}
+          scan={scan}
+          stones={stones}
+          base={base}
+          expanded={Number(params.item) || null}
+          showcase={showcase}
+        />
       );
     pagination = totalPages > 1 ? { page, totalPages } : null;
     footer =
@@ -340,6 +412,7 @@ export default async function MarketPage({ searchParams }: PageProps) {
               items={items}
               stones={stones}
               open={s.ownerHash === params.stall}
+              showcase={showcase}
             />
           ))}
         </div>
@@ -358,7 +431,10 @@ export default async function MarketPage({ searchParams }: PageProps) {
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">市集</h1>
           <p className="mt-1 text-sm text-muted-foreground">{caption}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            掛單價是賣家開的價，不代表成交價。9,999 萬以上的展示價不列入。
+            掛單價是賣家開的價，不代表成交價。
+            {showcase
+              ? "標「議價」的是開 9,999 萬以上的展示價，價錢要找攤主談。"
+              : "9,999 萬以上的展示價不列入。"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -373,15 +449,22 @@ export default async function MarketPage({ searchParams }: PageProps) {
 
       <StaleNotice scan={scan} />
 
-      <Suspense fallback={null}>
-        <MarketFilters
-          key={view}
-          initialQuery={query}
-          group={group}
-          groups={groups}
-          placeholder={view === "items" ? "搜尋道具名稱" : "搜尋招牌、攤主或道具"}
-        />
-      </Suspense>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <Suspense fallback={null}>
+            <MarketFilters
+              key={view}
+              initialQuery={query}
+              group={group}
+              groups={groups}
+              placeholder={view === "items" ? "搜尋道具名稱" : "搜尋招牌、攤主或道具"}
+            />
+          </Suspense>
+        </div>
+        <Suspense fallback={null}>
+          <ShowcaseSwitch checked={showcase} />
+        </Suspense>
+      </div>
 
       {body}
 
