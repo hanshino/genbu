@@ -24,6 +24,7 @@ import {
   ABOUT_LINK,
   CHANGELOG_LINK,
   HOME_LINK,
+  MARKET_LINK,
   NAV_SECTIONS,
   splitSubgroups,
   type NavSection,
@@ -62,6 +63,7 @@ export function Navbar({ user }: { user: AccountUser | null }) {
           {navGroups.map((group) => (
             <DesktopGroup key={group.label} group={group} pathname={pathname} />
           ))}
+          <DesktopLink href={MARKET_LINK.href} label={MARKET_LINK.label} pathname={pathname} />
           <DesktopLink
             href={CHANGELOG_LINK.href}
             label={CHANGELOG_LINK.label}
@@ -128,6 +130,13 @@ export function Navbar({ user }: { user: AccountUser | null }) {
                       onNavigate={() => setOpen(false)}
                     />
                   ))}
+
+                  <MobileLink
+                    href={MARKET_LINK.href}
+                    label={MARKET_LINK.label}
+                    pathname={pathname}
+                    onNavigate={() => setOpen(false)}
+                  />
 
                   <MobileLink
                     href={CHANGELOG_LINK.href}

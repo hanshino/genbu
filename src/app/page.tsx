@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDb } from "@/lib/db";
 import { cn } from "@/lib/utils";
-import { NAV_SECTIONS, splitSubgroups, type NavSection } from "@/lib/site-nav";
+import { MARKET_LINK, NAV_SECTIONS, splitSubgroups, type NavSection } from "@/lib/site-nav";
 import { getItemsByIds } from "@/lib/queries/items";
 import { getRecentReports } from "@/lib/queries/market-prices";
 import { SERVERS, formatAmount, relativeTime } from "@/lib/market-price";
@@ -131,7 +131,16 @@ export default function HomePage() {
 
       {/* 市價本來只在物品詳情頁看得到，沒逛到那頁的人不知道可以報價，放首頁當入口。 */}
       <section className="mt-10 rounded-lg border border-border/60 bg-card p-4">
-        <h2 className="text-sm font-medium">最近的市價回報</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-medium">最近的市價回報</h2>
+          <Link
+            href={MARKET_LINK.href}
+            className="inline-flex items-center gap-1 text-xs text-primary underline-offset-3 hover:underline"
+          >
+            市集掛單
+            <ArrowRightIcon className="size-3" aria-hidden />
+          </Link>
+        </div>
 
         {recent.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">
