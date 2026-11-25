@@ -1,0 +1,4099 @@
+{
+  "version": "7.2.7.5",
+  "date": "2026-11-25",
+  "summary": {
+    "added": 312,
+    "changed": 297185,
+    "removed": 30
+  },
+  "addedTables": [],
+  "removedTables": [],
+  "tables": [
+    {
+      "table": "items",
+      "label": "道具",
+      "tier": "rich",
+      "counts": {
+        "added": 22,
+        "changed": 5,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "33656"
+          ],
+          "name": "物品保留A1",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留A1"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33657"
+          ],
+          "name": "物品保留A2",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留A2"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33658"
+          ],
+          "name": "物品保留A3",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留A3"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33659"
+          ],
+          "name": "物品保留A4",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留A4"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33660"
+          ],
+          "name": "物品保留A5",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留A5"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33661"
+          ],
+          "name": "物品保留A6",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留A6"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33662"
+          ],
+          "name": "物品保留A7",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留A7"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33663"
+          ],
+          "name": "物品保留A8",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留A8"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33664"
+          ],
+          "name": "物品保留A9",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留A9"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33665"
+          ],
+          "name": "物品保留A10",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留A10"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33666"
+          ],
+          "name": "物品保留A11",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留A11"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33667"
+          ],
+          "name": "物品保留A12",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留A12"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33668"
+          ],
+          "name": "物品保留A13",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留A13"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33669"
+          ],
+          "name": "物品保留A14",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留A14"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33670"
+          ],
+          "name": "物品保留B1",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留B1"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33671"
+          ],
+          "name": "物品保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33672"
+          ],
+          "name": "物品保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33673"
+          ],
+          "name": "物品保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33674"
+          ],
+          "name": "物品保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33675"
+          ],
+          "name": "物品保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33676"
+          ],
+          "name": "物品保留",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "物品保留"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "50000"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "NORMAL_ITEM"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "34399"
+          ],
+          "name": "感恩霞裳禮盒",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "感恩霞裳禮盒"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "value": "打開有機會獲得全新背飾「楓華霞裳」、嘯風敦猻、極寒之心、蛛誓大吉、暖喵聖囊、西裝、女僕系列外裝及副門派進階書等超值好禮。"
+            },
+            {
+              "col": "value",
+              "label": "販售價",
+              "value": "100"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "value": "0"
+            },
+            {
+              "col": "matk",
+              "label": "內勁",
+              "value": "0"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "value": "0"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "value": "0"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "value": "0"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "value": "0"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "value": "0"
+            },
+            {
+              "col": "dodge",
+              "label": "閃躲",
+              "value": "0"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "value": "0"
+            },
+            {
+              "col": "pow",
+              "label": "內力",
+              "value": "0"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "value": "0"
+            },
+            {
+              "col": "dex",
+              "label": "技巧",
+              "value": "0"
+            },
+            {
+              "col": "agi",
+              "label": "身法",
+              "value": "0"
+            },
+            {
+              "col": "wis",
+              "label": "玄學",
+              "value": "0"
+            },
+            {
+              "col": "damage_min",
+              "label": "傷害下限",
+              "value": "0"
+            },
+            {
+              "col": "damage_max",
+              "label": "傷害上限",
+              "value": "0"
+            },
+            {
+              "col": "base_lv",
+              "label": "需求等級",
+              "value": "0"
+            },
+            {
+              "col": "type_name",
+              "label": "類型",
+              "value": "BONUS"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "33248"
+          ],
+          "name": "秋宴火雞肉",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "香菜",
+              "to": "秋宴火雞肉"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "健胃消食、發汗透疹、利尿通便、驅風解毒。\\n\\n活動道具，活動結束後將回收。",
+              "to": "《活動道具》\\n\\n秋宴上的大明星，補血益氣，吃出團圓好氣色。\\n\\n活動道具，活動結束後將回收。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33249"
+          ],
+          "name": "秋熟南瓜",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "妖丹",
+              "to": "秋熟南瓜"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "妖怪們透過修煉凝結而成的生命精華。\\n\\n活動道具，活動結束後將回收。",
+              "to": "《活動道具》\\n\\n金黃飽滿的秋熟南瓜，甜香入口，脾胃都跟著笑開懷。\\n\\n活動道具，活動結束後將回收。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "33250"
+          ],
+          "name": "暖燈燈芯",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "老友的信",
+              "to": "暖燈燈芯"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "有些情誼不會隨著時間、距離的變化而漸漸淡掉。\\n\\n活動道具，活動結束後將回收。",
+              "to": "《活動道具》\\n\\n細細燈芯燃起溫柔光亮，驅寒安神，點亮的是心底的暖意。\\n\\n活動道具，活動結束後將回收。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "52082"
+          ],
+          "name": "楓華霞裳",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "測試道具",
+              "to": "楓華霞裳"
+            },
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "此為測試用物品，無論您從何種管道取得，一經查覺都將回收。",
+              "to": "朱霞裁作雙翎，楓影綴成金夢，\\n翩然一舞驚醒滿庭秋色，\\n彷彿那些未及言說的心意，\\n都在暮光深處化作長久相守。"
+            },
+            {
+              "col": "hp",
+              "label": "體力",
+              "from": "0",
+              "to": "3900"
+            },
+            {
+              "col": "mp",
+              "label": "真氣",
+              "from": "0",
+              "to": "700"
+            },
+            {
+              "col": "str",
+              "label": "外功",
+              "from": "0",
+              "to": "15"
+            },
+            {
+              "col": "vit",
+              "label": "根骨",
+              "from": "0",
+              "to": "10"
+            },
+            {
+              "col": "atk",
+              "label": "物攻",
+              "from": "0",
+              "to": "200"
+            },
+            {
+              "col": "extra_def",
+              "label": "防禦",
+              "from": "0",
+              "to": "200"
+            },
+            {
+              "col": "magic_def",
+              "label": "護勁",
+              "from": "0",
+              "to": "200"
+            },
+            {
+              "col": "hit",
+              "label": "命中",
+              "from": "0",
+              "to": "90"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "54166"
+          ],
+          "name": "飛燕雙歸",
+          "fields": [
+            {
+              "col": "summary",
+              "label": "說明",
+              "from": "雙飛燕子幾時回？夾岸桃花蘸水開。春雨斷橋人不度，小舟撐出柳陰來。",
+              "to": "[外裝]雙飛燕子幾時回？夾岸桃花蘸水開。春雨斷橋人不度，小舟撐出柳陰來。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "achievements",
+      "label": "成就",
+      "tier": "rich",
+      "counts": {
+        "added": 4,
+        "changed": 0,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "15210"
+          ],
+          "name": "機關木人巷仗劍力會四天王",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "機關木人巷仗劍力會四天王"
+            },
+            {
+              "col": "description",
+              "label": "描述",
+              "value": "打敗以下所有位於機關木人巷的天王：10次：增長天王、持國天王、廣目天王、多聞天王"
+            },
+            {
+              "col": "points",
+              "label": "點數",
+              "value": "5"
+            },
+            {
+              "col": "reward_amount",
+              "label": "獎勵數量",
+              "value": "0"
+            },
+            {
+              "col": "prereq_achievement_id",
+              "label": "前置成就",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "15211"
+          ],
+          "name": "機關木人巷熟破四天王合擊",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "機關木人巷熟破四天王合擊"
+            },
+            {
+              "col": "description",
+              "label": "描述",
+              "value": "打敗以下所有位於機關木人巷的天王：30次：增長天王、持國天王、廣目天王、多聞天王"
+            },
+            {
+              "col": "points",
+              "label": "點數",
+              "value": "5"
+            },
+            {
+              "col": "reward_amount",
+              "label": "獎勵數量",
+              "value": "0"
+            },
+            {
+              "col": "prereq_achievement_id",
+              "label": "前置成就",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "15212"
+          ],
+          "name": "機關木人巷四天王哭求回天宮",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "機關木人巷四天王哭求回天宮"
+            },
+            {
+              "col": "description",
+              "label": "描述",
+              "value": "打敗以下所有位於機關木人巷的天王：100次：增長天王、持國天王、廣目天王、多聞天王"
+            },
+            {
+              "col": "points",
+              "label": "點數",
+              "value": "10"
+            },
+            {
+              "col": "reward_amount",
+              "label": "獎勵數量",
+              "value": "1"
+            },
+            {
+              "col": "prereq_achievement_id",
+              "label": "前置成就",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "30024"
+          ],
+          "name": "宴謝江湖",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "宴謝江湖"
+            },
+            {
+              "col": "description",
+              "label": "描述",
+              "value": "一席秋宴謝江湖"
+            },
+            {
+              "col": "points",
+              "label": "點數",
+              "value": "0"
+            },
+            {
+              "col": "reward_amount",
+              "label": "獎勵數量",
+              "value": "500"
+            },
+            {
+              "col": "prereq_achievement_id",
+              "label": "前置成就",
+              "value": "0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "mission_steps",
+      "label": "任務步驟",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 3,
+        "removed": 12
+      },
+      "removed": [
+        {
+          "idParts": [
+            "10732",
+            "4"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待3"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "5"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待4"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "6"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待5"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "7"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待6"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "8"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待7"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "9"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待8"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "10"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待9"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "11"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待10"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "12"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待11"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "13"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待12"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "14"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待13"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "15"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "value": "敬請期待14"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "10732",
+            "1"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待0",
+              "to": "前往收集秋宴火雞肉[item33248×10]給謝小滿。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "2"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待1",
+              "to": "前往崑崙草原採集秋熟南瓜[item33249×10]。"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "10732",
+            "3"
+          ],
+          "fields": [
+            {
+              "col": "plain_text",
+              "label": "步驟文字",
+              "from": "敬請期待2",
+              "to": "前往收集暖燈燈芯[item33250×10]並返回忘憂村與謝小滿對話。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "missions",
+      "label": "任務",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 1,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "10732"
+          ],
+          "name": "一席秋宴謝江湖",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "保留",
+              "to": "一席秋宴謝江湖"
+            },
+            {
+              "col": "help",
+              "label": "說明",
+              "from": "敬請期待",
+              "to": "忘憂村村中爐火正旺，某個活潑亂跳的女子卻喊著要清庫存？秋收備宴究竟有何用意？"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc",
+      "label": "NPC",
+      "tier": "rich",
+      "counts": {
+        "added": 36,
+        "changed": 1,
+        "removed": 0
+      },
+      "added": [
+        {
+          "idParts": [
+            "9501"
+          ],
+          "name": "不佔專用1",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用1"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9502"
+          ],
+          "name": "不佔專用2",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用2"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9503"
+          ],
+          "name": "不佔專用3",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用3"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9504"
+          ],
+          "name": "不佔專用4",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用4"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9505"
+          ],
+          "name": "不佔專用5",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用5"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9506"
+          ],
+          "name": "不佔專用6",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用6"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9507"
+          ],
+          "name": "不佔專用7",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用7"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9508"
+          ],
+          "name": "不佔專用8",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用8"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9509"
+          ],
+          "name": "不佔專用9",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用9"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9510"
+          ],
+          "name": "不佔專用10",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用10"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9511"
+          ],
+          "name": "不佔專用11",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用11"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9512"
+          ],
+          "name": "不佔專用12",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用12"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9513"
+          ],
+          "name": "不佔專用13",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用13"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9514"
+          ],
+          "name": "不佔專用14",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用14"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9515"
+          ],
+          "name": "不佔專用15",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用15"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9516"
+          ],
+          "name": "不佔專用16",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用16"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9517"
+          ],
+          "name": "不佔專用17",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用17"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9518"
+          ],
+          "name": "不佔專用18",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用18"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9519"
+          ],
+          "name": "不佔專用19",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用19"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9520"
+          ],
+          "name": "不佔專用20",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用20"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9521"
+          ],
+          "name": "不佔專用21",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用21"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9522"
+          ],
+          "name": "不佔專用22",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用22"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9523"
+          ],
+          "name": "不佔專用23",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用23"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9524"
+          ],
+          "name": "不佔專用24",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用24"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9525"
+          ],
+          "name": "不佔專用25",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用25"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9526"
+          ],
+          "name": "不佔專用26",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用26"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9527"
+          ],
+          "name": "不佔專用27",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用27"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9528"
+          ],
+          "name": "不佔專用28",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用28"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9529"
+          ],
+          "name": "不佔專用29",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用29"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9530"
+          ],
+          "name": "不佔專用30",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用30"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9531"
+          ],
+          "name": "不佔專用31",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用31"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9532"
+          ],
+          "name": "不佔專用32",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用32"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9533"
+          ],
+          "name": "不佔專用33",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用33"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9534"
+          ],
+          "name": "不佔專用34",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用34"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9535"
+          ],
+          "name": "不佔專用35",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用35"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "9536"
+          ],
+          "name": "不佔專用36",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "value": "不佔專用36"
+            },
+            {
+              "col": "level",
+              "label": "等級",
+              "value": "0"
+            }
+          ]
+        }
+      ],
+      "changed": [
+        {
+          "idParts": [
+            "7204"
+          ],
+          "name": "謝小滿",
+          "fields": [
+            {
+              "col": "name",
+              "label": "名稱",
+              "from": "雪情",
+              "to": "謝小滿"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "npc_strings",
+      "label": "NPC 對話",
+      "tier": "rich",
+      "counts": {
+        "added": 0,
+        "changed": 2,
+        "removed": 0
+      },
+      "changed": [
+        {
+          "idParts": [
+            "30910"
+          ],
+          "name": "謝小滿",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "雪情",
+              "to": "謝小滿"
+            }
+          ]
+        },
+        {
+          "idParts": [
+            "31421"
+          ],
+          "name": "小黑鳥．影",
+          "fields": [
+            {
+              "col": "name",
+              "label": "顯示名",
+              "from": "宗次2",
+              "to": "小黑鳥．影"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "table": "achievement_targets",
+      "label": "achievement_targets",
+      "tier": "count",
+      "counts": {
+        "added": 10,
+        "changed": 920,
+        "removed": 0
+      }
+    },
+    {
+      "table": "dialogue_edges",
+      "label": "dialogue_edges",
+      "tier": "count",
+      "counts": {
+        "added": 39,
+        "changed": 77299,
+        "removed": 0
+      }
+    },
+    {
+      "table": "dialogue_rewards",
+      "label": "dialogue_rewards",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 717,
+        "removed": 0
+      }
+    },
+    {
+      "table": "doll_frame_images",
+      "label": "doll_frame_images",
+      "tier": "count",
+      "counts": {
+        "added": 20,
+        "changed": 0,
+        "removed": 0
+      }
+    },
+    {
+      "table": "item_doll",
+      "label": "item_doll",
+      "tier": "count",
+      "counts": {
+        "added": 2,
+        "changed": 0,
+        "removed": 0
+      }
+    },
+    {
+      "table": "item_images",
+      "label": "item_images",
+      "tier": "count",
+      "counts": {
+        "added": 45,
+        "changed": 3,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_dims",
+      "label": "map_dims",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 3,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_event_ops",
+      "label": "map_event_ops",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 38966,
+        "removed": 13
+      }
+    },
+    {
+      "table": "map_events",
+      "label": "map_events",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 6967,
+        "removed": 2
+      }
+    },
+    {
+      "table": "map_images",
+      "label": "map_images",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 2,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_object_images",
+      "label": "map_object_images",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 3,
+        "removed": 0
+      }
+    },
+    {
+      "table": "map_placements",
+      "label": "map_placements",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 43545,
+        "removed": 2
+      }
+    },
+    {
+      "table": "map_walkability",
+      "label": "map_walkability",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 2,
+        "removed": 0
+      }
+    },
+    {
+      "table": "messages",
+      "label": "對話訊息",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 42,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_events",
+      "label": "mission_events",
+      "tier": "count",
+      "counts": {
+        "added": 9,
+        "changed": 6754,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_refs",
+      "label": "任務關聯",
+      "tier": "count",
+      "counts": {
+        "added": 3,
+        "changed": 877,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_requirements",
+      "label": "mission_requirements",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 1333,
+        "removed": 0
+      }
+    },
+    {
+      "table": "mission_rewards",
+      "label": "mission_rewards",
+      "tier": "count",
+      "counts": {
+        "added": 1,
+        "changed": 838,
+        "removed": 0
+      }
+    },
+    {
+      "table": "monster_spawns",
+      "label": "monster_spawns",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 17278,
+        "removed": 1
+      }
+    },
+    {
+      "table": "npc_images",
+      "label": "npc_images",
+      "tier": "count",
+      "counts": {
+        "added": 36,
+        "changed": 1,
+        "removed": 0
+      }
+    },
+    {
+      "table": "op_defs",
+      "label": "op_defs",
+      "tier": "count",
+      "counts": {
+        "added": 0,
+        "changed": 15,
+        "removed": 0
+      }
+    },
+    {
+      "table": "trigger_ops",
+      "label": "trigger_ops",
+      "tier": "count",
+      "counts": {
+        "added": 84,
+        "changed": 101608,
+        "removed": 0
+      }
+    }
+  ],
+  "ai": {
+    "model": "claude-opus-5-5",
+    "edited": false,
+    "highlights": [
+      "🍂 秋季新活動「一席秋宴謝江湖」上線（原本寫「保留／敬請期待」的任務這次補上內容）：忘憂村的謝小滿嚷著要清庫存、辦秋宴。流程是收集秋宴火雞肉×10 交給謝小滿 → 到崑崙草原採集秋熟南瓜×10 → 收集暖燈燈芯×10，再回忘憂村找謝小滿對話",
+      "🦃 這次的活動道具是秋宴火雞肉、秋熟南瓜、暖燈燈芯，都用舊的道具欄位改名而來（原本是香菜、妖丹、老友的信），說明都寫著「活動結束後將回收」，別囤太多",
+      "🏅 新成就「宴謝江湖」（一席秋宴謝江湖），獎勵數量 500",
+      "🪽 全新背飾「楓華霞裳」數值出爐：體力 +3900、真氣 +700、外功 +15、根骨 +10、物攻 +200、防禦 +200、護勁 +200、命中 +90",
+      "🎁 新禮盒「感恩霞裳禮盒」：說明寫打開有機會拿到背飾「楓華霞裳」、嘯風敦猻、極寒之心、蛛誓大吉、暖喵聖囊、西裝、女僕系列外裝和副門派進階書等獎品",
+      "⚔️ 機關木人巷新增 3 個四天王成就：增長、持國、廣目、多聞四位天王全部打過 10 次／30 次／100 次。點數依序是 5／5／10，打滿 100 次的「四天王哭求回天宮」有獎勵（獎勵數量 1）",
+      "🔧 其他小改：「飛燕雙歸」說明加上 [外裝] 標記；NPC 雪情改名為謝小滿；「宗次2」的顯示名改成「小黑鳥．影」",
+      "📦 後台建置：新增 21 個「物品保留」測試道具（說明寫明取得一律回收）和 36 個「不佔專用」NPC 預留位。地圖、觸發、對話、任務、刷怪等表有幾萬到十幾萬筆計數變動，屬於重新編號一類的建置調整，跟玩法無關"
+    ],
+    "tables": {
+      "items": {
+        "mode": "detail",
+        "note": "重點是楓華霞裳的數值、新的感恩霞裳禮盒，以及 3 個秋宴活動道具（改名重用舊欄位）。另外 21 個「物品保留」測試道具是佔位用的，不用列出來"
+      },
+      "missions": {
+        "mode": "detail",
+        "note": "原本寫「保留／敬請期待」的任務補上內容，就是新活動「一席秋宴謝江湖」"
+      },
+      "mission_steps": {
+        "mode": "detail",
+        "note": "三個原本寫「敬請期待」的步驟換成秋宴任務的流程；移除的 12 筆 digest 裡沒有內容，不寫進日誌"
+      },
+      "achievements": {
+        "mode": "detail",
+        "note": "機關木人巷四天王 10/30/100 次成就，加上秋宴成就「宴謝江湖」"
+      },
+      "npc": {
+        "mode": "summary",
+        "note": "36 個「不佔專用」是預留 NPC；只有雪情改名謝小滿和活動有關"
+      },
+      "npc_strings": {
+        "mode": "summary",
+        "note": "改了兩個顯示名：謝小滿、小黑鳥．影"
+      },
+      "achievement_targets": {
+        "mode": "summary",
+        "note": "新增的是新成就的條件，其他變動是建置重排"
+      },
+      "dialogue_edges": {
+        "mode": "summary",
+        "note": "約 7.7 萬筆計數變動，屬於建置調整"
+      },
+      "dialogue_rewards": {
+        "mode": "summary",
+        "note": "建置重排"
+      },
+      "doll_frame_images": {
+        "mode": "summary",
+        "note": "新外觀的紙娃娃圖檔"
+      },
+      "item_doll": {
+        "mode": "summary",
+        "note": "新外觀的紙娃娃對應"
+      },
+      "item_images": {
+        "mode": "summary",
+        "note": "新道具圖示"
+      },
+      "map_dims": {
+        "mode": "summary"
+      },
+      "map_event_ops": {
+        "mode": "summary",
+        "note": "大量計數變動，屬於建置調整"
+      },
+      "map_events": {
+        "mode": "summary",
+        "note": "大量計數變動，屬於建置調整"
+      },
+      "map_images": {
+        "mode": "summary"
+      },
+      "map_object_images": {
+        "mode": "summary"
+      },
+      "map_placements": {
+        "mode": "summary",
+        "note": "大量計數變動，屬於建置調整"
+      },
+      "map_walkability": {
+        "mode": "summary"
+      },
+      "messages": {
+        "mode": "summary",
+        "note": "42 筆對話訊息有改動，摘要沒有內容可看"
+      },
+      "mission_events": {
+        "mode": "summary",
+        "note": "新增的應該是秋宴任務用的事件，其他是重排"
+      },
+      "mission_refs": {
+        "mode": "summary"
+      },
+      "mission_requirements": {
+        "mode": "summary"
+      },
+      "mission_rewards": {
+        "mode": "summary"
+      },
+      "monster_spawns": {
+        "mode": "summary",
+        "note": "上萬筆計數變動，屬於建置調整，不是怪物分布改了"
+      },
+      "npc_images": {
+        "mode": "summary",
+        "note": "預留 NPC 的圖"
+      },
+      "op_defs": {
+        "mode": "summary"
+      },
+      "trigger_ops": {
+        "mode": "summary",
+        "note": "超過 10 萬筆計數變動，屬於建置調整"
+      }
+    }
+  }
+}
